@@ -1,0 +1,11 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/HWHLKFramework/TestFramework/Generated Files
+/HWHLKFramework/TestFramework/Debug
+/HWHLKFramework/Debug/TestFramework
+/.vs
+/HWHLKFramework/.vs/HWHLKFramework/v16
+/Tests/Gamma/.vs/Gamma
+/Tests/Gamma/Debug

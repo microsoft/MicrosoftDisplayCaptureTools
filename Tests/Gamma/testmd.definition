@@ -1,0 +1,20 @@
+{
+  "$schema": "http://universaltest/schema/testmddefinition-4.json",
+  "Package": {
+    "ComponentName": "",
+    "SubComponentName": ""
+  },
+  "Execution": {
+    "Type": "TAEF",
+    "Parameter": ""
+  },
+  "Dependencies": {
+    "Files": [],
+    "RemoteFiles": [],
+    "Packages": [],
+    "DriverPackages": []
+  },
+  "Logs": [],
+  "Plugins": [],
+  "Profiles": []
+}
