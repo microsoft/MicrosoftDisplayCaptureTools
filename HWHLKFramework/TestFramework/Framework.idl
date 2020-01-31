@@ -1,9 +1,0 @@
-namespace TestFramework
-{
-    [default_interface]
-    runtimeclass Framework
-    {
-        Framework();
-        Int32 MyProperty;
-    }
-}
