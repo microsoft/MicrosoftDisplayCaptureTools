@@ -35,7 +35,7 @@ namespace SamplePlugin
         HRESULT InitializeCaptureInput([in] UINT32 displayId, [out][retval] GraphicsCaptureDeviceInput** captureDeviceInput);
 
         HRESULT GetCaptureInputCount([out][retval] UINT32* inputCount);
-        HRESULT GetCaptureInputDisplayIds([in] UINT32 entryCount, [ref][out][size_is(entryCount)] UINT32 diplayIds[*]);
+        HRESULT GetCaptureInputDisplayIds([in] UINT32 entryCount, [ref][out][size_is(entryCount)] UINT32 displayIds[*]);
     };
 
     [exclusiveto(GraphicsCaptureDeviceInput)]

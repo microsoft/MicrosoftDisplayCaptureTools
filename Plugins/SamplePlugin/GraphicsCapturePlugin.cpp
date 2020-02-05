@@ -12,7 +12,7 @@ namespace winrt::SamplePlugin::implementation
     {
         throw hresult_not_implemented();
     }
-    void GraphicsCapturePlugin::GetCaptureInputDisplayIds(array_view<uint32_t> diplayIds)
+    void GraphicsCapturePlugin::GetCaptureInputDisplayIds(array_view<uint32_t> displayIds)
     {
         throw hresult_not_implemented();
     }

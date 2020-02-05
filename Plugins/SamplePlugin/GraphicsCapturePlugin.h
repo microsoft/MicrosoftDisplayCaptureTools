@@ -9,7 +9,7 @@ namespace winrt::SamplePlugin::implementation
 
         SamplePlugin::GraphicsCaptureDeviceInput InitializeCaptureInput(uint32_t displayId);
         uint32_t GetCaptureInputCount();
-        void GetCaptureInputDisplayIds(array_view<uint32_t> diplayIds);
+        void GetCaptureInputDisplayIds(array_view<uint32_t> displayIds);
     };
 }
 namespace winrt::SamplePlugin::factory_implementation
