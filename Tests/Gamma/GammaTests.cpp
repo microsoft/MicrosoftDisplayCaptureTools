@@ -6,6 +6,8 @@
 */
 #include "StdAfx.h"
 #include <WexTestClass.h>
+#include <winrt/TestFramework.h>
+
 using namespace WEX::Common;
 
 using namespace WEX::Logging;
@@ -15,7 +17,7 @@ namespace GammaTests
 {
     class GammaTests
     {
-        //shared_ptr<Framework> framework;
+        std::shared_ptr<winrt::TestFramework::Framework> framework;
 
         TEST_CLASS(GammaTests)
 
@@ -23,8 +25,9 @@ namespace GammaTests
         {
             String configurationPath;
             RuntimeParameters::TryGetValue(L"ConfigPath", configurationPath);
-            // framework = make_shared<HwHlkFramework>(configurationPath);
-            // VERIFY_IS_TRUE((bool)framework);
+            
+            framework = std::make_shared<winrt::TestFramework::Framework>();
+            //VERIFY_IS_TRUE((bool)framework);
 
             return true;
         }
@@ -34,6 +37,9 @@ namespace GammaTests
             BEGIN_TEST_METHOD_PROPERTIES()
                 TEST_METHOD_PROPERTY(L"Data:AdvancedColorMode", L"{SDR, HDR}")
             END_TEST_METHOD_PROPERTIES()
+
+
+            framework->Initialize(winrt::hstring(L"blah"));
 
             String advancedColorMode;
             VERIFY_SUCCEEDED(TestData::TryGetValue(L"AdvancedColorMode", advancedColorMode));
@@ -45,18 +51,25 @@ namespace GammaTests
             //        useHDR
             //        );
 
-            // if(!SUCCEEDED(framework.SetupNewTest(reqs))
-            //{
+            // HRESULT setupNewTest = framework->SetupNewTest(reqs);
+            // if(setupNewTest == ERROR_DEVICE_BUSY)
+            // {
+            //    Log::Result(TestResults::Blocked, L"Device is busy, check to make sure tests are not running in parallel.\n");
+            //    return;
+            // }
+            // else if (FAILED(setupNewTest))
+            // {
             //    Log::Result(TestResults::Skipped, L"Device doesn't support the requirements for this test\n");
             //    return;
-            //}
+            // }
 
             // auto matrix = Framework::OSOverrides::Matrix(0, 1, 0,
             //                                              1, 0, 0,
             //                                              0, 0, 1);
 
-            // VERIFY_SUCCEEDED(framework.OSOverrides.SetMatrix(matrix));
-            // VERIFY_SUCCEEDED(framework.CompareResultsAgainstSoftware());
+            // 
+            // VERIFY_SUCCEEDED(framework->GetOSOverrides()->SetMatrix(matrix));
+            // VERIFY_SUCCEEDED(framework->CompareResultsAgainstSoftware());
         }
     };
 } /* namespace GammaTests */ 

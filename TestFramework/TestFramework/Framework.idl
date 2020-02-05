@@ -1,9 +1,19 @@
 namespace TestFramework
 {
-    [default_interface]
+    runtimeclass Framework;
+
+    [exclusiveto(TestFramework.Framework)]
+    [uuid(aa874818-45bc-4d64-974b-bfb45cf657b5)]
+    [version(1.0)]
+    interface IFramework : IInspectable
+    {
+        HRESULT Initialize(String configPath);
+    }
+
+    [activatable(1.0)]
+    [version(1.0)]
     runtimeclass Framework
     {
-        Framework();
-        Int32 MyProperty;
+        [default] interface IFramework;
     }
 }

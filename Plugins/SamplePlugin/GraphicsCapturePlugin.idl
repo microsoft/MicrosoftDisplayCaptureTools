@@ -1,0 +1,92 @@
+namespace SamplePlugin
+{
+    [version(1.0)]
+    struct CaptureCapabilities
+    {
+        boolean getImage;
+        float tolerance; // percentage error allowed - set 0 for raw capture.
+    };
+
+    [version(1.0)]
+    enum PixelFormat
+    {
+        RGB8, BGR8, 
+        RGB10, BGR10
+    };
+
+    [version(1.0)]
+    struct FrameCharacteristics
+    {
+        UInt32 height;
+        UInt32 width;
+        PixelFormat format;
+        UInt32 bytes;
+    };
+
+    runtimeclass GraphicsCapturePlugin;
+    runtimeclass GraphicsCaptureDeviceInput;
+    runtimeclass GraphicsCapturedFrame;
+
+    [exclusiveto(GraphicsCapturePlugin)]
+    [uuid(C6628DC6-6CED-4CC0-9893-3C21C3F29B6E)]
+    [version(1.0)]
+    interface IGraphicsCapturePlugin : IInspectable
+    {
+        HRESULT InitializeCaptureInput([in] INT32 displayId, [out][retval] GraphicsCaptureDeviceInput** captureDeviceInput);
+    };
+
+    [exclusiveto(GraphicsCaptureDeviceInput)]
+    [uuid(0B512994-5DBA-4C95-A77D-C23DF626C017)]
+    [version(1.0)]
+    interface IGraphicsCaptureDeviceInput : IInspectable
+    {
+        HRESULT GetId([out][retval] INT32 * displayId);
+        HRESULT GetCaptureCaps([out][retval] CaptureCapabilities* caps);
+        HRESULT CaptureFrame([out][retval] GraphicsCapturedFrame** frame);
+    };
+
+    [exclusiveto(GraphicsCapturedFrame)]
+    [uuid(12862A95-C88A-4195-B1F9-D756182EF0D5)]
+    [version(1.0)]
+    interface IGraphicsCapturedFrame : IInspectable
+    {
+    };
+
+    // optional interface to get actual pixel data from the frame
+    [exclusiveto(GraphicsCapturedFrame)]
+    [uuid(734A87B3-E605-42A4-9122-994AD97C1809)]
+    [version(1.0)]
+    interface IGraphicsCapturedFrameImage : IInspectable
+    {
+        HRESULT GetFrameCharacteristics([out][retval] FrameCharacteristics* frameCharacteristics);
+        HRESULT GetFramePixels([in] UINT32 maxSize, [ref][out][size_is(maxSize)] byte buffer[*]);
+    };
+
+    //---------------------------------------------------------------------------------------------
+    // ONLY TOUCH THIS FILE BELOW THIS POINT
+    //---------------------------------------------------------------------------------------------
+
+    [activatable(1.0)]
+    [version(1.0)]
+    runtimeclass GraphicsCapturePlugin
+    {
+        [default] interface IGraphicsCapturePlugin;
+    }
+
+    [activatable(1.0)]
+    [version(1.0)]
+    runtimeclass GraphicsCaptureDeviceInput
+    {
+        [default] interface IGraphicsCaptureDeviceInput;
+    }
+
+    [activatable(1.0)]
+    [version(1.0)]
+    runtimeclass GraphicsCapturedFrame
+    {
+        [default] interface IGraphicsCapturedFrame;
+
+        // Add implemented frame interfaces to this runtimeclass.
+        interface IGraphicsCapturedFrameImage;
+    }
+}

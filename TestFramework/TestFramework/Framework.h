@@ -1,5 +1,4 @@
-﻿#pragma once
-
+#pragma once
 #include "Framework.g.h"
 
 namespace winrt::TestFramework::implementation
@@ -8,11 +7,9 @@ namespace winrt::TestFramework::implementation
     {
         Framework() = default;
 
-        int32_t MyProperty();
-        void MyProperty(int32_t value);
+        HRESULT Initialize(hstring const& configPath);
     };
 }
-
 namespace winrt::TestFramework::factory_implementation
 {
     struct Framework : FrameworkT<Framework, implementation::Framework>
