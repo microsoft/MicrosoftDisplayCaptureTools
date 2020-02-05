@@ -32,7 +32,10 @@ namespace SamplePlugin
     [version(1.0)]
     interface IGraphicsCapturePlugin : IInspectable
     {
-        HRESULT InitializeCaptureInput([in] INT32 displayId, [out][retval] GraphicsCaptureDeviceInput** captureDeviceInput);
+        HRESULT InitializeCaptureInput([in] UINT32 displayId, [out][retval] GraphicsCaptureDeviceInput** captureDeviceInput);
+
+        HRESULT GetCaptureInputCount([out][retval] UINT32* inputCount);
+        HRESULT GetCaptureInputDisplayIds([in] UINT32 entryCount, [ref][out][size_is(entryCount)] UINT32 diplayIds[*]);
     };
 
     [exclusiveto(GraphicsCaptureDeviceInput)]
@@ -40,7 +43,7 @@ namespace SamplePlugin
     [version(1.0)]
     interface IGraphicsCaptureDeviceInput : IInspectable
     {
-        HRESULT GetId([out][retval] INT32 * displayId);
+        HRESULT GetId([out][retval] UINT32* displayId);
         HRESULT GetCaptureCaps([out][retval] CaptureCapabilities* caps);
         HRESULT CaptureFrame([out][retval] GraphicsCapturedFrame** frame);
     };

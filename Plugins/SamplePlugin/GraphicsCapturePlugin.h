@@ -7,7 +7,9 @@ namespace winrt::SamplePlugin::implementation
     {
         GraphicsCapturePlugin() = default;
 
-        SamplePlugin::GraphicsCaptureDeviceInput InitializeCaptureInput(int32_t displayId);
+        SamplePlugin::GraphicsCaptureDeviceInput InitializeCaptureInput(uint32_t displayId);
+        uint32_t GetCaptureInputCount();
+        void GetCaptureInputDisplayIds(array_view<uint32_t> diplayIds);
     };
 }
 namespace winrt::SamplePlugin::factory_implementation

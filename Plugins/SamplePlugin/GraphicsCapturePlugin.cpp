@@ -4,10 +4,16 @@
 
 namespace winrt::SamplePlugin::implementation
 {
-    SamplePlugin::GraphicsCaptureDeviceInput GraphicsCapturePlugin::InitializeCaptureInput(int32_t displayId)
+    SamplePlugin::GraphicsCaptureDeviceInput GraphicsCapturePlugin::InitializeCaptureInput(uint32_t displayId)
     {
-        (void)displayId;
-
+        throw hresult_not_implemented();
+    }
+    uint32_t GraphicsCapturePlugin::GetCaptureInputCount()
+    {
+        throw hresult_not_implemented();
+    }
+    void GraphicsCapturePlugin::GetCaptureInputDisplayIds(array_view<uint32_t> diplayIds)
+    {
         throw hresult_not_implemented();
     }
 }

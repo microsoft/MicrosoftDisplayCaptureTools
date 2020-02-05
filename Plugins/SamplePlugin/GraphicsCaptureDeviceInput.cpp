@@ -4,7 +4,7 @@
 
 namespace winrt::SamplePlugin::implementation
 {
-    int32_t GraphicsCaptureDeviceInput::GetId()
+    uint32_t GraphicsCaptureDeviceInput::GetId()
     {
         throw hresult_not_implemented();
     }
