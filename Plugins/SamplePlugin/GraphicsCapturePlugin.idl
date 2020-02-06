@@ -39,6 +39,14 @@ namespace SamplePlugin
     };
 
     [exclusiveto(GraphicsCaptureDeviceInput)]
+    [uuid(57D6EEA6-F941-4D11-93DC-E5D1B279C6FC)]
+    [version(1.0)]
+    interface IGraphicsCaptureDeviceInputFactory : IInspectable
+    {
+        HRESULT CreateGraphicsCaptureDeviceInput([in] UINT32 captureInputUniqueId, [in] GraphicsCapturePlugin* parentCapturePlugin, [out][retval] GraphicsCaptureDeviceInput** instance);
+    };
+
+    [exclusiveto(GraphicsCaptureDeviceInput)]
     [uuid(0B512994-5DBA-4C95-A77D-C23DF626C017)]
     [version(1.0)]
     interface IGraphicsCaptureDeviceInput : IInspectable
@@ -76,7 +84,7 @@ namespace SamplePlugin
         [default] interface IGraphicsCapturePlugin;
     }
 
-    [activatable(1.0)]
+    [activatable(IGraphicsCaptureDeviceInputFactory, 1.0)]
     [version(1.0)]
     runtimeclass GraphicsCaptureDeviceInput
     {
