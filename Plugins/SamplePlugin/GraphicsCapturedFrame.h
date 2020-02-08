@@ -7,8 +7,12 @@ namespace winrt::SamplePlugin::implementation
     {
         GraphicsCapturedFrame() = default;
 
+        GraphicsCapturedFrame(SamplePlugin::FrameCharacteristics const& frameCharacteristics);
         SamplePlugin::FrameCharacteristics GetFrameCharacteristics();
         void GetFramePixels(array_view<uint8_t> buffer);
+
+    private:
+        SamplePlugin::FrameCharacteristics m_characteristics;
     };
 }
 namespace winrt::SamplePlugin::factory_implementation

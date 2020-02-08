@@ -7,7 +7,8 @@ namespace winrt::TestFramework::implementation
     {
         Framework() = default;
 
-        HRESULT Initialize(hstring const& configPath);
+        Framework(hstring const& hardwareConfigPath);
+        TestFramework::TestEnvironment CreateTestEnvironment(TestFramework::TestRequirements const& testRequirements);
     };
 }
 namespace winrt::TestFramework::factory_implementation

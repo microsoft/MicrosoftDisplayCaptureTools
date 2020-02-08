@@ -11,11 +11,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="TestEnvironment.cpp" />
+    <ClCompile Include="OSOverrides.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="TestEnvironment.h" />
+    <ClInclude Include="OSOverrides.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestFramework.def" />

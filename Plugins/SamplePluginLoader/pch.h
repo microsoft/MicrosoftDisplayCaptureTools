@@ -2,5 +2,14 @@
 #include <Windows.h>
 #include <hstring.h>
 #include <winstring.h>
+#include <MemoryBuffer.h>
+#include <iostream>
+#include <string>
+#include <sstream>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Foundation.Metadata.h>
+#include <winrt/Windows.Foundation.Numerics.h>
+#include <winrt/Windows.Graphics.Imaging.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.Streams.h>

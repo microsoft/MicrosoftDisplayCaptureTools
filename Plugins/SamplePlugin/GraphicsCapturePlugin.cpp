@@ -10,10 +10,10 @@ namespace winrt::SamplePlugin::implementation
     }
     uint32_t GraphicsCapturePlugin::GetCaptureInputCount()
     {
-        throw hresult_not_implemented();
+        return 1;
     }
-    void GraphicsCapturePlugin::GetCaptureInputDisplayIds(array_view<uint32_t> displayIds)
+    void GraphicsCapturePlugin::GetCaptureInputDisplayIds(array_view<uint32_t> captureInputUniqueId)
     {
-        throw hresult_not_implemented();
+        captureInputUniqueId[0] = 65500;
     }
 }

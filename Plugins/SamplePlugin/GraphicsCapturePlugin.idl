@@ -1,20 +1,19 @@
 namespace SamplePlugin
 {
-    [version(1.0)]
     struct CaptureCapabilities
     {
-        boolean getImage;
-        float tolerance; // percentage error allowed - set 0 for raw capture.
+        Boolean getImage;
+        Single tolerance; // percentage error allowed - set 0 for raw capture.
     };
 
-    [version(1.0)]
     enum PixelFormat
     {
-        RGB8, BGR8, 
-        RGB10, BGR10
+        RGB8 = 0,
+        YCbCr8 = 1,
+        RGB16 = 2,
+        YCbCr16 = 3
     };
 
-    [version(1.0)]
     struct FrameCharacteristics
     {
         UInt32 height;
@@ -23,81 +22,29 @@ namespace SamplePlugin
         UInt32 bytes;
     };
 
-    runtimeclass GraphicsCapturePlugin;
-    runtimeclass GraphicsCaptureDeviceInput;
-    runtimeclass GraphicsCapturedFrame;
-
-    [exclusiveto(GraphicsCapturePlugin)]
-    [uuid(C6628DC6-6CED-4CC0-9893-3C21C3F29B6E)]
-    [version(1.0)]
-    interface IGraphicsCapturePlugin : IInspectable
-    {
-        HRESULT InitializeCaptureInput([in] UINT32 displayId, [out][retval] GraphicsCaptureDeviceInput** captureDeviceInput);
-
-        HRESULT GetCaptureInputCount([out][retval] UINT32* inputCount);
-        HRESULT GetCaptureInputDisplayIds([in] UINT32 entryCount, [ref][out][size_is(entryCount)] UINT32 displayIds[*]);
-    };
-
-    [exclusiveto(GraphicsCaptureDeviceInput)]
-    [uuid(57D6EEA6-F941-4D11-93DC-E5D1B279C6FC)]
-    [version(1.0)]
-    interface IGraphicsCaptureDeviceInputFactory : IInspectable
-    {
-        HRESULT CreateGraphicsCaptureDeviceInput([in] UINT32 captureInputUniqueId, [in] GraphicsCapturePlugin* parentCapturePlugin, [out][retval] GraphicsCaptureDeviceInput** instance);
-    };
-
-    [exclusiveto(GraphicsCaptureDeviceInput)]
-    [uuid(0B512994-5DBA-4C95-A77D-C23DF626C017)]
-    [version(1.0)]
-    interface IGraphicsCaptureDeviceInput : IInspectable
-    {
-        HRESULT GetId([out][retval] UINT32* displayId);
-        HRESULT GetCaptureCaps([out][retval] CaptureCapabilities* caps);
-        HRESULT CaptureFrame([out][retval] GraphicsCapturedFrame** frame);
-    };
-
-    [exclusiveto(GraphicsCapturedFrame)]
-    [uuid(12862A95-C88A-4195-B1F9-D756182EF0D5)]
-    [version(1.0)]
-    interface IGraphicsCapturedFrame : IInspectable
-    {
-    };
-
-    // optional interface to get actual pixel data from the frame
-    [exclusiveto(GraphicsCapturedFrame)]
-    [uuid(734A87B3-E605-42A4-9122-994AD97C1809)]
-    [version(1.0)]
-    interface IGraphicsCapturedFrameImage : IInspectable
-    {
-        HRESULT GetFrameCharacteristics([out][retval] FrameCharacteristics* frameCharacteristics);
-        HRESULT GetFramePixels([in] UINT32 maxSize, [ref][out][size_is(maxSize)] byte buffer[*]);
-    };
-
-    //---------------------------------------------------------------------------------------------
-    // ONLY TOUCH THIS FILE BELOW THIS POINT
-    //---------------------------------------------------------------------------------------------
-
-    [activatable(1.0)]
-    [version(1.0)]
     runtimeclass GraphicsCapturePlugin
     {
-        [default] interface IGraphicsCapturePlugin;
+        GraphicsCapturePlugin();
+        GraphicsCaptureDeviceInput InitializeCaptureInput(UInt32 displayId);
+
+        UInt32 GetCaptureInputCount();
+        void GetCaptureInputDisplayIds(ref UInt32[] captureInputUniqueId);
     }
 
-    [activatable(IGraphicsCaptureDeviceInputFactory, 1.0)]
-    [version(1.0)]
     runtimeclass GraphicsCaptureDeviceInput
     {
-        [default] interface IGraphicsCaptureDeviceInput;
+        GraphicsCaptureDeviceInput(UInt32 captureInputUniqueId, GraphicsCapturePlugin plugin);
+
+        CaptureCapabilities GetCaptureCaps();
+        GraphicsCapturedFrame CaptureFrame();
+
+        UInt32 UniqueId { get; };
     }
 
-    [activatable(1.0)]
-    [version(1.0)]
     runtimeclass GraphicsCapturedFrame
     {
-        [default] interface IGraphicsCapturedFrame;
-
-        // Add implemented frame interfaces to this runtimeclass.
-        interface IGraphicsCapturedFrameImage;
+        GraphicsCapturedFrame(FrameCharacteristics frameCharacteristics);
+        FrameCharacteristics GetFrameCharacteristics();
+        void GetFramePixels(ref UInt8[] buffer);
     }
 }

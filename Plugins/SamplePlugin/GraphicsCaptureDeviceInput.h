@@ -7,10 +7,14 @@ namespace winrt::SamplePlugin::implementation
     {
         GraphicsCaptureDeviceInput() = default;
 
-        GraphicsCaptureDeviceInput(uint32_t captureInputUniqueId, SamplePlugin::GraphicsCapturePlugin const& parentCapturePlugin);
-        uint32_t GetId();
+        GraphicsCaptureDeviceInput(uint32_t captureInputUniqueId, SamplePlugin::GraphicsCapturePlugin const& plugin);
         SamplePlugin::CaptureCapabilities GetCaptureCaps();
         SamplePlugin::GraphicsCapturedFrame CaptureFrame();
+        uint32_t UniqueId();
+
+    private:
+        uint32_t m_uniqueId;
+        const SamplePlugin::GraphicsCapturePlugin* m_plugin;
     };
 }
 namespace winrt::SamplePlugin::factory_implementation

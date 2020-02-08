@@ -1,19 +1,58 @@
 namespace TestFramework
 {
-    runtimeclass Framework;
-
-    [exclusiveto(TestFramework.Framework)]
-    [uuid(aa874818-45bc-4d64-974b-bfb45cf657b5)]
-    [version(1.0)]
-    interface IFramework : IInspectable
+    [flags]
+    enum RequiredDDIs
     {
-        HRESULT Initialize(String configPath);
-    }
+        None = 0x0000,
+        Gamma3x4 = 0x0001,
+        Gamma256x3 = 0x0002
+    };
 
-    [activatable(1.0)]
-    [version(1.0)]
+    struct TestRequirements
+    {
+        Boolean comparetoSoftware;
+        Single maxPixelErrorTolerance;
+        RequiredDDIs requiredDDIs;
+    };
+
+    struct LUID
+    {
+        UInt32 LowPart;
+        Int32 HighPart;
+    };
+
+    struct DisplayPath
+    {
+        UInt32 targetId;
+        LUID adapterId;
+    };
+
+    struct Matrix3x4
+    {
+        Single m00, m10, m20, m30;
+        Single m01, m11, m21, m31;
+        Single m02, m12, m22, m32;
+    };
+
+    runtimeclass TestEnvironment;
+    runtimeclass Framework;
+    runtimeclass OSOverrides;
+
     runtimeclass Framework
     {
-        [default] interface IFramework;
+        Framework(String hardwareConfigPath);
+        TestEnvironment CreateTestEnvironment(TestRequirements testRequirements);
+    };
+
+    runtimeclass TestEnvironment
+    {
+        TestEnvironment(DisplayPath[] displayPaths);
+        void Run();
+        OSOverrides GetOSOverrides();
+    };
+
+    runtimeclass OSOverrides
+    {
+        void SetMatrix3x4(Matrix3x4 transform);
     }
 }

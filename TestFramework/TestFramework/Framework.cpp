@@ -4,9 +4,12 @@
 
 namespace winrt::TestFramework::implementation
 {
-    HRESULT Framework::Initialize(hstring const& configPath)
+    Framework::Framework(hstring const& hardwareConfigPath)
     {
-        winrt::hstring str(configPath);
-        return S_OK;
+        throw hresult_not_implemented();
+    }
+    TestFramework::TestEnvironment Framework::CreateTestEnvironment(TestFramework::TestRequirements const& testRequirements)
+    {
+        throw hresult_not_implemented();
     }
 }
