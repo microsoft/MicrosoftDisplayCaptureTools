@@ -35,13 +35,9 @@ HRESULT __stdcall WINRT_RoGetActivationFactory(HSTRING classId, GUID const& iid,
     std::wstring_view name{ WindowsGetStringRawBuffer(classId, nullptr), WindowsGetStringLen(classId) };
     HMODULE library{ nullptr };
 
-    if (starts_with(name, L"ComponentA."))
+    if (starts_with(name, L"SamplePlugin."))
     {
-        library = LoadLibraryW(L"ComponentA.dll");
-    }
-    else if (starts_with(name, L"ComponentB."))
-    {
-        library = LoadLibraryW(L"ComponentB.dll");
+        library = LoadLibraryW(L"SamplePlugin.dll");
     }
     else
     {
@@ -118,6 +114,19 @@ private:
     const UINT32 m_count;
 };
 
+template<typename T>
+struct pixelDataRGB
+{
+    T R, G, B;
+};
+
+template<typename T>
+struct pixelDataRGBA
+{
+    T R, G, B, A;
+};
+
+
 int main()
 {
     init_apartment();
@@ -140,42 +149,78 @@ int main()
 
         auto frame = input.CaptureFrame();
         auto characteristics = frame.GetFrameCharacteristics();
-        std::cout << "\t pixel format=" << (uint32_t)characteristics.format << " dimensions=" << characteristics.width << "x" << characteristics.height << " bytecount=" << characteristics.bytes << "\n";
+        std::cout << "\t pixel format=" << (uint32_t)characteristics.format << " dimensions=" << characteristics.width << "x" << characteristics.height << " bytecount=" << characteristics.byteCount << " stide=" << characteristics.stride << "\n";
 
-        auto pixels = ProcessHeapArray<uint8_t>(characteristics.bytes);
+        auto pixels = ProcessHeapArray<uint8_t>(characteristics.byteCount);
         frame.GetFramePixels(pixels.GetArrayView());
 
-        auto bitmap = SoftwareBitmap(BitmapPixelFormat::Rgba8, characteristics.width, characteristics.height);
-        uint8_t* bufferBytes{};
-        uint32_t bufferSize{};
+        auto bitmap = SoftwareBitmap((characteristics.format == PixelFormat::RGB8 ? BitmapPixelFormat::Rgba8 : BitmapPixelFormat::Rgba16), characteristics.width, characteristics.height);
+
         {
+            uint8_t* bufferBytes{};
+            uint32_t bufferSize{};
+
             auto bitmapBuffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
             auto bitmapBufferRef = bitmapBuffer.CreateReference();
             auto bitmapBufferAccess = bitmapBufferRef.as< IMemoryBufferByteAccess >();
             bitmapBufferAccess->GetBuffer(&bufferBytes, &bufferSize);
             auto bufferLayout = bitmapBuffer.GetPlaneDescription(0);
 
-            for (int x = 0; x < bufferLayout.Width; x++)
+            for (int y = 0; y < bufferLayout.Height; y++)
             {
-                for (int y = 0; y < bufferLayout.Height; y++)
+                switch (characteristics.format)
                 {
-                    int stride = characteristics.height * 3 * sizeof(uint8_t);
-                    uint8_t* pixelsStart = &pixels[x * stride + 3 * y];
+                case PixelFormat::RGB8:
+                    {
+                        pixelDataRGB<uint8_t>* srcPixelLine = reinterpret_cast<pixelDataRGB<uint8_t>*>(&pixels[characteristics.stride * y]);
+                        pixelDataRGBA<uint8_t>* destPixelLine = reinterpret_cast<pixelDataRGBA<uint8_t>*>(&bufferBytes[bufferLayout.StartIndex + bufferLayout.Stride * y]);
 
-                    bufferBytes[bufferLayout.StartIndex + bufferLayout.Stride * y + 4 * x + 0] = *(pixelsStart + 0);
-                    bufferBytes[bufferLayout.StartIndex + bufferLayout.Stride * y + 4 * x + 1] = *(pixelsStart + 1);
-                    bufferBytes[bufferLayout.StartIndex + bufferLayout.Stride * y + 4 * x + 2] = *(pixelsStart + 2);
-                    bufferBytes[bufferLayout.StartIndex + bufferLayout.Stride * y + 4 * x + 3] = 0xFF;
+                        for (int x = 0; x < bufferLayout.Width; x++)
+                        {
+                            destPixelLine[x] = { srcPixelLine[x].R, srcPixelLine[x].G, srcPixelLine[x].B, 0xFF };
+                        }
+                    }
+                    break;
+                case PixelFormat::RGB16:
+                    {
+                        pixelDataRGB<uint16_t>* srcPixelLine = reinterpret_cast<pixelDataRGB<uint16_t>*>(&pixels[characteristics.stride * y]);
+                        pixelDataRGBA<uint16_t>* destPixelLine = reinterpret_cast<pixelDataRGBA<uint16_t>*>(&bufferBytes[bufferLayout.StartIndex + bufferLayout.Stride * y]);
+
+                        for (int x = 0; x < bufferLayout.Width; x++)
+                        {
+                            destPixelLine[x] = { srcPixelLine[x].R, srcPixelLine[x].G, srcPixelLine[x].B, 0xFFFF };
+                        }
+                    }
+                    break;
+                default:
+                    throw(hresult_not_implemented());
                 }
             }
         }
 
         std::wstringstream filenameStream;
-        filenameStream << L"OutputFile-" << id << L".bmp";
+        filenameStream << L"OutputFile-" << id << L".jpg";
         std::wstring filename = filenameStream.str();
 
         auto folder = KnownFolders::GetFolderForUserAsync(nullptr /* current user */, KnownFolderId::PicturesLibrary).get();
-        auto file = folder.CreateFileAsync(winrt::hstring(filename)).get();
+        IStorageFile file;
+        try 
+        {
+            file = folder.GetFileAsync(winrt::hstring(filename)).get();
+        }
+        catch (winrt::hresult_error const& err)
+        {
+            if (err.to_abi() == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+            {
+                file = folder.CreateFileAsync(winrt::hstring(filename)).get();
+            }
+            else
+            {
+                throw(err);
+            }
+        }
+
+        //auto file = folder.CreateFileAsync(winrt::hstring(filename)).get();
         auto stream = file.OpenAsync(FileAccessMode::ReadWrite).get();
         auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::BmpEncoderId(), stream).get();
         encoder.SetSoftwareBitmap(bitmap);

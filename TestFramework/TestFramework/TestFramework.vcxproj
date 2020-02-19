@@ -109,20 +109,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Framework.h" />
     <ClInclude Include="OSOverrides.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Framework.h">
-      <DependentUpon>Framework.idl</DependentUpon>
-    </ClInclude>
     <ClInclude Include="TestEnvironment.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Framework.cpp" />
     <ClCompile Include="OSOverrides.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Framework.cpp">
-      <DependentUpon>Framework.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="TestEnvironment.cpp" />

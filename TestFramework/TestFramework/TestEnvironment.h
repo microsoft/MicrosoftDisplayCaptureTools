@@ -7,7 +7,7 @@ namespace winrt::TestFramework::implementation
     {
         TestEnvironment() = default;
 
-        TestEnvironment(array_view<TestFramework::DisplayPath const> displayPaths);
+        TestEnvironment(array_view<Windows::Devices::Display::Core::DisplayTarget const> displayTargets);
         void Run();
         TestFramework::OSOverrides GetOSOverrides();
     };

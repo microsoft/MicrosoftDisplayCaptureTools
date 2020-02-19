@@ -9,9 +9,14 @@ namespace SamplePlugin
     enum PixelFormat
     {
         RGB8 = 0,
-        YCbCr8 = 1,
-        RGB16 = 2,
-        YCbCr16 = 3
+        RGB16 = 1
+    };
+
+    enum DeviceInputState
+    {
+        NotActive = 0,
+        Active = 1,
+        Pending = 2
     };
 
     struct FrameCharacteristics
@@ -19,7 +24,8 @@ namespace SamplePlugin
         UInt32 height;
         UInt32 width;
         PixelFormat format;
-        UInt32 bytes;
+        UInt32 stride;
+        UInt32 byteCount;
     };
 
     runtimeclass GraphicsCapturePlugin
@@ -35,6 +41,7 @@ namespace SamplePlugin
     {
         GraphicsCaptureDeviceInput(UInt32 captureInputUniqueId, GraphicsCapturePlugin plugin);
 
+        DeviceInputState GetState();
         CaptureCapabilities GetCaptureCaps();
         GraphicsCapturedFrame CaptureFrame();
 

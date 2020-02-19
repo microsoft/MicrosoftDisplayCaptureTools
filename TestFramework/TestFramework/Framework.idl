@@ -15,18 +15,6 @@ namespace TestFramework
         RequiredDDIs requiredDDIs;
     };
 
-    struct LUID
-    {
-        UInt32 LowPart;
-        Int32 HighPart;
-    };
-
-    struct DisplayPath
-    {
-        UInt32 targetId;
-        LUID adapterId;
-    };
-
     struct Matrix3x4
     {
         Single m00, m10, m20, m30;
@@ -46,7 +34,7 @@ namespace TestFramework
 
     runtimeclass TestEnvironment
     {
-        TestEnvironment(DisplayPath[] displayPaths);
+        TestEnvironment(Windows.Devices.Display.Core.DisplayTarget[] displayTargets);
         void Run();
         OSOverrides GetOSOverrides();
     };
