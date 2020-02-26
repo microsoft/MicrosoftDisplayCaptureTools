@@ -2,6 +2,54 @@
 #include "TestEnvironment.h"
 #include "TestEnvironment.g.cpp"
 
+#define MAX_HMD_TARGET_PER_ADAPTER 16
+#define EDID_V1_BLOCK_SIZE 128
+
+typedef struct _D3DKMT_HMD_DISPLAY_ENUM
+{
+    LUID AdapterLuid;   // In: Adapter LUID
+    UINT TargetIdListSize;   // Out: Size of the populated TargetIdList array
+    D3DDDI_VIDEO_PRESENT_TARGET_ID TargetIdList[MAX_HMD_TARGET_PER_ADAPTER];   // Out: Array for TargetIds
+} D3DKMT_HMD_DISPLAY_ENUM, * PD3DKMT_HMD_DISPLAY_ENUM;
+
+typedef enum
+{
+    D3DKMT_HMD_SET_DISPLAY_ON = 0,
+    D3DKMT_HMD_SET_DISPLAY_OFF = 1,
+    D3DKMT_HMD_GET_DISPLAY_STATE = 2,
+} D3DKMT_HMD_DISPLAY_REQUEST;
+
+typedef struct _D3DKMT_HMD_DISPLAY_CONTROL
+{
+    LUID AdapterLuid;   // In: Adapter LUID
+    D3DDDI_VIDEO_PRESENT_TARGET_ID TargetId;    // In: Target ID for a unique HMD
+    D3DKMT_HMD_DISPLAY_REQUEST HmdDisplayRequest;   // In: HMD Request type
+    BOOLEAN bIsHmdDisplayOn;    // Out : HMD's current On/Off state
+} D3DKMT_HMD_DISPLAY_CONTROL, * PD3DKMT_HMD_DISPLAY_CONTROL;
+
+typedef struct _D3DKMT_HMD_GET_EDID
+{
+    LUID AdapterLuid;   // In: Adapter LUID
+    D3DDDI_VIDEO_PRESENT_TARGET_ID TargetId;    // In: Target ID for a unique HMD
+    BYTE EdidBaseBlock[EDID_V1_BLOCK_SIZE];   // Out: EDID base block
+} D3DKMT_HMD_GET_EDID, * PD3DKMT_HMD_GET_EDID;
+
+typedef struct _D3DKMT_SOFTGPU_LUID_TARGET
+{
+    LUID AdapterLuid;   // In: Adapter LUID
+    D3DDDI_VIDEO_PRESENT_TARGET_ID TargetId;   // In: TargetId
+} D3DKMT_SOFTGPU_LUID_TARGET, * PD3DKMT_SOFTGPU_LUID_TARGET;
+
+typedef struct _D3DKMT_SOFTGPU_HMD_CONTROL
+{
+    D3DKMT_SOFTGPU_LUID_TARGET LuidAndTargetList[MAX_HMD_TARGET_PER_ADAPTER];   // In: Array of LUID and TargetId pairs
+    UINT LuidAndTargetListSize;   // In: Size of the populated LuidAndTargetList array
+    BOOLEAN bEnableAsHMD; // In : Tells whether to enable or disable target as HMD
+} D3DKMT_SOFTGPU_HMD_CONTROL, * PD3DKMT_SOFTGPU_HMD_CONTROL;
+
+#define D3DKMT_ESCAPE_SOFTGPU_ENABLE_DISABLE_HMD ((D3DKMT_ESCAPETYPE)27)
+
+
 namespace winrt
 {
     using namespace winrt::Windows::Foundation;
@@ -14,6 +62,23 @@ namespace winrt
 
 namespace winrt::TestFramework::implementation
 {
+    HRESULT ToggleDisplay(DisplayAdapterId adapter, D3DDDI_VIDEO_PRESENT_TARGET_ID target, bool takeControl)
+    {
+        D3DKMT_SOFTGPU_HMD_CONTROL SoftGpuHmdControl;
+
+        SoftGpuHmdControl.LuidAndTargetList[0].AdapterLuid.HighPart = adapter.HighPart;
+        SoftGpuHmdControl.LuidAndTargetList[0].AdapterLuid.LowPart = adapter.LowPart;
+        SoftGpuHmdControl.LuidAndTargetList[0].TargetId = target;
+        SoftGpuHmdControl.LuidAndTargetListSize = 1;
+        SoftGpuHmdControl.bEnableAsHMD = !!takeControl;
+
+        D3DKMT_ESCAPE sEsc = {};
+        sEsc.Type = D3DKMT_ESCAPE_SOFTGPU_ENABLE_DISABLE_HMD;
+        sEsc.pPrivateDriverData = &SoftGpuHmdControl;
+        sEsc.PrivateDriverDataSize = sizeof(SoftGpuHmdControl);
+        return HRESULT_FROM_NT(::D3DKMTEscape(&sEsc));
+    }
+
     // Parameters passed to each render thread
     struct RenderParam
     {
@@ -198,16 +263,23 @@ namespace winrt::TestFramework::implementation
         {
             if (target.IsConnected())
             {
+                // Set the display as specialized
+                check_hresult(ToggleDisplay(target.Adapter().Id(), target.AdapterRelativeId(), true));
+
                 myTargets.Append(target);
+                _displayTargets.push_back(target);
             }
         }
 
-        if (myTargets.Size() < 1) throw_hresult(hresult_access_denied().code());
-
-        std::cout << "Found a display!" << std::endl;
-
         auto stateResult = displayManager.TryAcquireTargetsAndCreateEmptyState(myTargets);
-        check_hresult(stateResult.ExtendedErrorCode());
+   
+        // Make sure to re-add the displays in the event we can't take control of the display for some reason.
+        if (FAILED(stateResult.ExtendedErrorCode()))
+        {
+            CleanDisplays();
+            check_hresult(stateResult.ExtendedErrorCode());
+        }
+
         auto state = stateResult.State();
 
         for (auto&& target : myTargets)
@@ -280,13 +352,39 @@ namespace winrt::TestFramework::implementation
 
             renderThreads.push_back(std::move(renderThread));
         }
+
+        // Render for 10 seconds
+        Sleep(10000);
+
+        // Trigger all render threads to terminate
+        shouldCancelRenderThreads = true;
+
+        // Wait for all threads to complete
+        for (auto&& thread : renderThreads)
+        {
+            thread.join();
+        }
     }
+
     void TestEnvironment::Run()
     {
         throw hresult_not_implemented();
     }
+
     TestFramework::OSOverrides TestEnvironment::GetOSOverrides()
     {
         throw hresult_not_implemented();
+    }
+
+    TestEnvironment::~TestEnvironment()
+    {
+        CleanDisplays();
+    }
+    void TestEnvironment::CleanDisplays()
+    {
+        for (auto target : _displayTargets)
+        {
+            ToggleDisplay(target.Adapter().Id(), target.AdapterRelativeId(), false);
+        }
     }
 }

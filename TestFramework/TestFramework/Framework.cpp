@@ -27,13 +27,12 @@ namespace winrt::TestFramework::implementation
         if (targets.Size() < 1) throw_hresult(hresult_access_denied().code());
 
         auto myTargets = std::vector<winrt::DisplayTarget>();
-        uint32_t targetIndex = 0;
 
         for (auto&& target : targets)
         {
             if (target.IsConnected())
             {
-                myTargets[targetIndex++] = target;
+                myTargets.push_back(target);
                 break;
             }
         }

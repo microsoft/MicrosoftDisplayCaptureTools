@@ -10,6 +10,8 @@
 #include <functional>
 #include <thread>
 
+#include <d3dkmthk.h>
+
 #include <unknwn.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
