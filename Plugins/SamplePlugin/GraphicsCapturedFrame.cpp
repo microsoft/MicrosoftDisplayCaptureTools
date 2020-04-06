@@ -29,7 +29,9 @@ namespace winrt::SamplePlugin::implementation
         }
     };
 
-    GraphicsCapturedFrame::GraphicsCapturedFrame(SamplePlugin::FrameCharacteristics const& frameCharacteristics) :
+    GraphicsCapturedFrame::GraphicsCapturedFrame(
+        SamplePlugin::FrameCharacteristics const& frameCharacteristics, 
+        array_view<uint8_t const> buffer) :
         m_characteristics(frameCharacteristics)
     {
     }

@@ -19,10 +19,9 @@ namespace winrt::SamplePlugin::implementation
         }
     }
 
-    GraphicsCaptureDeviceInput::GraphicsCaptureDeviceInput(uint32_t captureInputUniqueId, SamplePlugin::GraphicsCapturePlugin const& plugin) : 
-        m_uniqueId(captureInputUniqueId),
-        m_plugin(&plugin)
+    void GraphicsCaptureDeviceInput::InitializeFromId(uint32_t captureInputUniqueId, SamplePlugin::GraphicsCapturePlugin const& plugin)
     {
+        throw hresult_not_implemented();
     }
     SamplePlugin::DeviceInputState GraphicsCaptureDeviceInput::GetState()
     {
@@ -51,7 +50,8 @@ namespace winrt::SamplePlugin::implementation
         frameCharacteristics.stride = GetStrides(frameCharacteristics.format, frameCharacteristics.width);
         frameCharacteristics.byteCount = frameCharacteristics.stride * frameCharacteristics.height;
 
-        return SamplePlugin::GraphicsCapturedFrame(frameCharacteristics);
+        winrt::array_view<uint8_t const> arrView = { 0 };
+        return SamplePlugin::GraphicsCapturedFrame(frameCharacteristics, arrView);
     }
     uint32_t GraphicsCaptureDeviceInput::UniqueId()
     {

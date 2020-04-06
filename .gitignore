@@ -27,3 +27,10 @@
 /Plugins/SamplePluginLoader/Release
 /TestFramework/FrameworkSample/x64/Debug
 /TestFramework/x64/Debug
+/Plugins/SamplePlugin/x64/Release
+/Plugins/SamplePlugin/ARM/Debug
+/Plugins/SamplePluginLoader/x64/Release
+/Plugins/SoftGPU plugin/x64
+/Plugins/SoftGPU plugin/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
+/Plugins/SoftGPU plugin/.vs/SoftGPU plugin/v16
+/TestFramework/ARM/Debug

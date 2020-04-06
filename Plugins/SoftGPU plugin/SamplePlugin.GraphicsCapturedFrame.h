@@ -1,5 +1,5 @@
 #pragma once
-#include "GraphicsCapturedFrame.g.h"
+#include "SamplePlugin.GraphicsCapturedFrame.g.h"
 
 namespace winrt::SamplePlugin::implementation
 {
@@ -13,6 +13,7 @@ namespace winrt::SamplePlugin::implementation
 
     private:
         SamplePlugin::FrameCharacteristics m_characteristics;
+        std::vector<BYTE> m_pixels;
     };
 }
 namespace winrt::SamplePlugin::factory_implementation

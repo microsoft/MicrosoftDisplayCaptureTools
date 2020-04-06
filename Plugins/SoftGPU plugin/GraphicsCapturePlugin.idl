@@ -57,7 +57,7 @@ namespace SamplePlugin
 
     runtimeclass GraphicsCapturedFrame
     {
-        GraphicsCapturedFrame(FrameCharacteristics frameCharacteristics, UInt8[] buffer);
+        GraphicsCapturedFrame(FrameCharacteristics frameCharacteristic, UInt8[] buffer);
         FrameCharacteristics GetFrameCharacteristics();
         void GetFramePixels(ref UInt8[] buffer);
     }
