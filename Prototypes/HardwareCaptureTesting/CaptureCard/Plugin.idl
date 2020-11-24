@@ -1,0 +1,27 @@
+namespace HardwareCaptureTesting.CaptureCard
+{
+    [default_interface]
+    runtimeclass Plugin
+    {
+        Plugin();
+
+        // Return plugin-specific identifiers for every input to the capture card. 
+        // These must be unique to each input and persistent over the life of this
+        // Plugin.
+        UInt32[] DiscoverDisplays();
+
+        // Snapshot the current state of the capture card's input. It is up to the 
+        // implementer to decide what form this takes.
+        void CaptureCurrentState();
+
+        // Return the JSON-serialized capture state of the specified display
+        Windows.Data.Json.JsonObject GetCurrentState(UInt32 displayId);
+
+        void SetTolerances(Windows.Data.Json.JsonObject tolerances);
+
+        // Run a comparison between the current capture state of the specified display
+        // and the provided JSON-serialized comparison target. A sample implementation
+        // will be provided by Microsoft.
+        Windows.Data.Json.JsonObject RunComparison(UInt32 displayId, Windows.Data.Json.JsonObject target);
+    }
+}
