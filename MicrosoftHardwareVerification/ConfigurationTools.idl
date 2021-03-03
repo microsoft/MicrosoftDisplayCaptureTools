@@ -1,7 +1,7 @@
 namespace MicrosoftHardwareVerification
 {
     //
-    // This object simply holds a slate of ConfigurationTools
+    // This object simply holds a slate of ConfigurationTools.
     //
     runtimeclass ConfigurationToolbox
     {
@@ -39,7 +39,7 @@ namespace MicrosoftHardwareVerification
     // This enum defines what a particular tool is used for. The testing framework uses this information to determine in 
     // which order to run the tools.
     //
-    // This list as currently stands is used for illustrative purposes, we anticipate adding many more categories
+    // This list as currently stands is used for illustrative purposes, we anticipate adding several more categories
     //
     enum ConfigurationToolCategory
     {
@@ -135,9 +135,9 @@ namespace MicrosoftHardwareVerification
         //          actual display output.
         //
         //          Note: 'Bitmap' is used here for illustrative purposes, the final version will include overrides for 
-        //                both raw CPU-accessible memory as well as D2DImages ready for easy manipulation.
+        //                both raw CPU-accessible memory as well as D2DImages ready for easy manipulation. It will also 
+        //                include specific handling for sub-images which will represent MPO planes.
         //
         void ApplyToSoftwareReference(ref Bitmap referenceImage);
-
     }
 }

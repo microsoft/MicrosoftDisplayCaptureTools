@@ -36,10 +36,6 @@ namespace MicrosoftHardwareVerification
         //      This method will begin running tests based on PICT metadata received through TAEF, along with whichever
         //      Toolboxes have been provided to the framework.
         //
-        // Parameters:
-        //      pluginPath
-        //          This string represents a filepath from which a conformant capture card plugin implementation is exposed.
-        //
         void RunPictTest();
     }
 }
