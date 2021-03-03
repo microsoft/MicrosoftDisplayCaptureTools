@@ -2,15 +2,24 @@ import "Framework.idl", "ConfigurationTools.idl";
 
 namespace MicrosoftHardwareVerification
 {
+    struct DisplayPath
+    {
+        String test;
+    };
+
+    struct CaptureCapabilities
+    {
+        String test;
+    };
+
     struct CaptureTrigger
     {
-        Reference
+        String test;
     };
 
     runtimeclass DisplayCapture
     {
         DisplayCapture();
-
         void CompareToReference();
     }
 
@@ -19,10 +28,39 @@ namespace MicrosoftHardwareVerification
         // A string identifier for this particular captured display, to be used for logging.
         String Name;
 
-        void GetCapabilities();
-        void HPDWithSpecificEDID(Byte[] EDID);
-        DisplayCapture CaptureFrame(Trigger );
+        // MapCaptureInputToDisplayPath
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Return the Windows display path for this captured display. This is how the testing framework knows which 
+        //      display to use as an output. We don't specify how a capture card is meant to do this. However, we will 
+        //      provide an optional lib does this mapping via programmable EDIDs - if the capture card is capable of 
+        //      HPD'ing with specific EDIDs.
+        //
+        DisplayPath MapCaptureInputToDisplayPath();
 
+        // GetCapabilities
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns the capabilities of the capture card for this display. These will be used to determine which tools
+        //      are applicable and which are not.
+        //
+        CaptureCapabilities GetCapabilities();
+
+        // CaptureFrame
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Captures a display frame on the device when certain conditions are met. We expressly do not specify that 
+        //      the captured pixels must be brought back to the host computer - it is valid to keep a representation of the 
+        //      frame only on the capture device, although this inherently limits debuggability.
+        //
+        // Parameters:
+        //      trigger
+        //          This indicates the conditions on which the frame should be captured. These conditions can range from 
+        //          'capture the next frame' to 'capture the next non-empty frame' to 'capture the next frame matching a
+        //          specific pattern'. Supported triggers should be reported in this object's GetCapabilities method, and
+        //          this method should fail if an unsupported trigger is supplied.
+        //
+        DisplayCapture CaptureFrame(CaptureTrigger trigger);
     }
 
     runtimeclass CaptureCardPlugin
