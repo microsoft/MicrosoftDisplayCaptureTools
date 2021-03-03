@@ -1,0 +1,51 @@
+import "Framework.idl", "ConfigurationTools.idl";
+
+namespace MicrosoftHardwareVerification
+{
+    struct CaptureTrigger
+    {
+        Reference
+    };
+
+    runtimeclass DisplayCapture
+    {
+        DisplayCapture();
+
+        void CompareToReference();
+    }
+
+    runtimeclass DisplayInput
+    {
+        // A string identifier for this particular captured display, to be used for logging.
+        String Name;
+
+        void GetCapabilities();
+        void HPDWithSpecificEDID(Byte[] EDID);
+        DisplayCapture CaptureFrame(Trigger );
+
+    }
+
+    runtimeclass CaptureCardPlugin
+    {
+        // A string identifier for this particular implementation of the framework, this is only to be used for logging.
+        String Name;
+
+        // CaptureCardPlugin
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Constructs a CaptureCardPlugin object which will handle interfacing with a physical display capture card.
+        //
+        CaptureCardPlugin();
+
+        // EnumerateDisplayInputs
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Enumerates 
+        //
+        // Parameters:
+        //      pluginPath
+        //          This string represents a filepath from which a conformant capture card plugin implementation is exposed.
+        //
+        void EnumerateDisplayInputs(ref DisplayInput[] displays);
+    }
+}

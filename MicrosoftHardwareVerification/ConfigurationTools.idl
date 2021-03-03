@@ -1,0 +1,38 @@
+namespace MicrosoftHardwareVerification
+{
+    runtimeclass ConfigurationToolbox
+    {
+        // This property provides an identifier for this specific toolbox implementation. This is only intended to be used for logging.
+        String Name;
+
+        ConfigurationToolbox();
+        void GetSupportedTools(ref String[] tools);
+        ConfigurationTool GetTool(String toolName);
+    }
+
+    runtimeclass ConfigurationTool
+    {
+        // The name of the configuration tool, this should exactly match the PICT parameter name that this supports.
+        String Name;
+
+        // GetSupportedConfigurations
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This returns an array of strings which represent the supported PICT configurations for this tool.
+        //
+        void GetSupportedConfigurations(ref String[] supportedConfigurations);
+
+        // SetConfiguration
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This sets the PICT configuration to use for this tool. This value should be used for any subsequent calls 
+        //      to apply this tool.
+        //
+        // Parameters:
+        //      configuration
+        //          This string specifies which PICT configuration for the Tool to use. This value must be in the list 
+        //          returned by GetSupportedConfigurations and must exactly match the PICT parameter values.
+        //
+        void SetConfiguration(String configuration);
+    }
+}

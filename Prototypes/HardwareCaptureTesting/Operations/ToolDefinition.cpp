@@ -2,7 +2,7 @@
 
 namespace winrt::HardwareCaptureTesting::Operations
 {
-    Tool* HardwareCaptureTesting::Operations::Tool::Create(uint32_t id)
+    Tool* HardwareCaptureTesting::Operations::Tool::Create(winrt::hstring name)
     {
         switch (id)
         {
