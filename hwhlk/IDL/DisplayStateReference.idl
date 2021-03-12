@@ -1,0 +1,20 @@
+namespace DisplayStateReference
+{
+    //
+    // This object represents all of the computed state for a particular display for a particular slice in time. Objects of
+    // this type are created and passed between the various configuration tools and are finally sent to the capture card 
+    // plugin, which uses this data to compare the calculated state against the actual state.
+    //
+    [default_interface]
+    runtimeclass StaticReference
+    {
+        // GetSerializedData
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This method returns a JSON object containing the state for this this object. This is intended to be used
+        //      for debugging purposes when 
+        //
+        Windows.Data.Json.JsonObject GetSerializedData();
+
+    }
+}
