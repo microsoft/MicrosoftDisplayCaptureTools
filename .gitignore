@@ -34,3 +34,37 @@
 /Plugins/SoftGPU plugin/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
 /Plugins/SoftGPU plugin/.vs/SoftGPU plugin/v16
 /TestFramework/ARM/Debug
+/hwhlk/TestPlugin/Generated Files
+/hwhlk/TestPlugin/Debug
+/hwhlk/PublicToolbox/Debug
+/hwhlk/PublicToolbox/Generated Files
+/hwhlk/packages/Microsoft.Windows.CppWinRT.2.0.210309.3
+/hwhlk/hwhlk/pict.exe
+/hwhlk/hwhlk/x64/Debug
+/hwhlk/hwhlk/Debug
+/hwhlk/DisplayStateReference/Generated Files
+/hwhlk/DisplayStateReference/Debug
+/hwhlk/Debug
+/hwhlk/Core/x64/Debug
+/hwhlk/Core/Generated Files
+/hwhlk/Core/Debug
+/hwhlk/.vs/hwhlk/v16
+MicrosoftHardwareVerification/.vs/
+MicrosoftHardwareVerification/Debug/
+MicrosoftHardwareVerification/Generated Files/
+MicrosoftHardwareVerification/packages/
+Prototypes/HardwareCaptureTesting/.vs/
+Prototypes/HardwareCaptureTesting/CaptureCard/Generated Files/
+Prototypes/HardwareCaptureTesting/CaptureCard/x64/
+Prototypes/HardwareCaptureTesting/Core/Generated Files/
+Prototypes/HardwareCaptureTesting/Core/x64/
+Prototypes/HardwareCaptureTesting/Operations/Generated Files/
+Prototypes/HardwareCaptureTesting/Operations/x64/
+Prototypes/HardwareCaptureTesting/packages/
+Prototypes/HardwareCaptureTesting/x64/
+hwhlk/DisplayStateReference/x64/
+hwhlk/PublicToolbox/x64/
+hwhlk/TestPlugin/x64/
+hwhlk/x64/
+Prototypes/ReferenceRenderer
+Prototypes/SoftwareRender

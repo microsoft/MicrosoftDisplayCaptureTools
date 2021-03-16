@@ -6,7 +6,7 @@ namespace ConfigurationTools
     runtimeclass ConfigurationToolbox
     {
         // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
-        String Name;
+        String Name { get; };
 
         ConfigurationToolbox();
 
@@ -21,7 +21,7 @@ namespace ConfigurationTools
         //          supply. These strings must match the 'name' field of the individual tools, as well as the identifiers
         //          specified in the PICT file.
         //
-        void GetSupportedTools(ref String[] tools);
+        String[] GetSupportedTools();
 
         // GetTool
         // ----------------------------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ namespace ConfigurationTools
     runtimeclass ConfigurationTool
     {
         // The name of the configuration tool, this should exactly match the PICT parameter name that this supports.
-        String Name;
+        String Name { get; };
 
         // The category for this configuration tool, this will determine when the framework interacts with this tool in 
         // relation to other tools in the test run.
@@ -94,7 +94,7 @@ namespace ConfigurationTools
         // Notes:
         //      This returns an array of strings which represent the supported PICT configurations for this tool.
         //
-        void GetSupportedConfigurations(ref String[] supportedConfigurations);
+        String[] GetSupportedConfigurations();
 
         // SetConfiguration
         // ----------------------------------------------------------------------------------------------------------------

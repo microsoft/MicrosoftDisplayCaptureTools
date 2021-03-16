@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "CaptureCard.DisplayCapture.h"
 #include "CaptureCard.DisplayCapture.g.cpp"
 
 namespace winrt::CaptureCard::implementation

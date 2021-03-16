@@ -1,12 +1,11 @@
 #include "pch.h"
-#include "CaptureCard.DisplayInput.h"
 #include "CaptureCard.DisplayInput.g.cpp"
 
 namespace winrt::CaptureCard::implementation
 {
     hstring DisplayInput::Name()
     {
-        throw hresult_not_implemented();
+        return m_name;
     }
     void DisplayInput::Name(hstring const& value)
     {
@@ -23,5 +22,10 @@ namespace winrt::CaptureCard::implementation
     CaptureCard::DisplayCapture DisplayInput::CaptureFrame(CaptureCard::CaptureTrigger const& trigger)
     {
         throw hresult_not_implemented();
+    }
+
+    void DisplayInput::InitializeWithState(hstring const& identifier)
+    {
+        m_name = identifier;
     }
 }

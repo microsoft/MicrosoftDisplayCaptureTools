@@ -10,6 +10,8 @@ namespace winrt::Core::implementation
         Framework(hstring const& pluginPath);
         void OpenToolbox(hstring const& toolboxPath);
         void RunPictTest();
+
+        std::vector<winrt::ConfigurationTools::ConfigurationToolbox> m_toolboxes;
     };
 }
 namespace winrt::Core::factory_implementation

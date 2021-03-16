@@ -5,12 +5,13 @@ namespace winrt::CaptureCard::implementation
 {
     struct Controller : ControllerT<Controller>
     {
-        Controller() = default;
+        Controller();
 
         hstring Name();
-        void Name(hstring const& value);
-        void EnumerateDisplayInputs(array_view<CaptureCard::DisplayInput> displays);
+        com_array<CaptureCard::DisplayInput> EnumerateDisplayInputs();
         ConfigurationTools::ConfigurationToolbox GetToolbox();
+
+        std::vector<CaptureCard::DisplayInput> m_displayInputs;
     };
 }
 namespace winrt::CaptureCard::factory_implementation

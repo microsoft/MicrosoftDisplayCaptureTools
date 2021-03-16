@@ -8,12 +8,11 @@ namespace winrt::ConfigurationTools::implementation
         ConfigurationTool() = default;
 
         hstring Name();
-        void Name(hstring const& value);
         ConfigurationTools::ConfigurationToolCategory Category();
         void Category(ConfigurationTools::ConfigurationToolCategory const& value);
         ConfigurationTools::ConfigurationToolRequirements Requirements();
         void Requirements(ConfigurationTools::ConfigurationToolRequirements const& value);
-        void GetSupportedConfigurations(array_view<hstring> supportedConfigurations);
+        com_array<hstring> GetSupportedConfigurations();
         void SetConfiguration(hstring const& configuration);
         void ApplyToHardware(Windows::Devices::Display::Core::DisplayTarget const& target);
         void ApplyToSoftwareReference(DisplayStateReference::StaticReference const& reference);

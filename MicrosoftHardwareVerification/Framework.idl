@@ -38,4 +38,10 @@ namespace MicrosoftHardwareVerification
         //
         void RunPictTest();
     }
+
+    struct ReferenceData
+    {
+        // FlushToDisk
+        void FlushToDisk(String filePath);
+    }
 }

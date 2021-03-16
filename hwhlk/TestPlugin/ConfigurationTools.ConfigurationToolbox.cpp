@@ -6,13 +6,9 @@ namespace winrt::ConfigurationTools::implementation
 {
     hstring ConfigurationToolbox::Name()
     {
-        throw hresult_not_implemented();
+        return L"Software Test Plugin Toolbox";
     }
-    void ConfigurationToolbox::Name(hstring const& value)
-    {
-        throw hresult_not_implemented();
-    }
-    void ConfigurationToolbox::GetSupportedTools(array_view<hstring> tools)
+    com_array<hstring> ConfigurationToolbox::GetSupportedTools()
     {
         throw hresult_not_implemented();
     }

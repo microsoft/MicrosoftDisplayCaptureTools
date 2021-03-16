@@ -12,5 +12,13 @@ namespace winrt::CaptureCard::implementation
         Windows::Devices::Display::Core::DisplayTarget MapCaptureInputToDisplayPath();
         CaptureCard::CaptureCapabilities GetCapabilities();
         CaptureCard::DisplayCapture CaptureFrame(CaptureCard::CaptureTrigger const& trigger);
+
+        //
+        // Added to demonstrate adding custom communication between capture components - this can
+        // be used and more methods added without interfering with the Framework/Plugin.
+        //
+        void InitializeWithState(hstring const& stuff);
+
+        hstring m_name = L"";
     };
 }

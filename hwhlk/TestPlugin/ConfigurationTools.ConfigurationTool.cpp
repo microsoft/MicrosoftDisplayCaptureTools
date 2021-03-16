@@ -8,10 +8,6 @@ namespace winrt::ConfigurationTools::implementation
     {
         throw hresult_not_implemented();
     }
-    void ConfigurationTool::Name(hstring const& value)
-    {
-        throw hresult_not_implemented();
-    }
     ConfigurationTools::ConfigurationToolCategory ConfigurationTool::Category()
     {
         throw hresult_not_implemented();
@@ -28,7 +24,7 @@ namespace winrt::ConfigurationTools::implementation
     {
         throw hresult_not_implemented();
     }
-    void ConfigurationTool::GetSupportedConfigurations(array_view<hstring> supportedConfigurations)
+    com_array<hstring> ConfigurationTool::GetSupportedConfigurations()
     {
         throw hresult_not_implemented();
     }

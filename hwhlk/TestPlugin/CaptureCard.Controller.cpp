@@ -1,20 +1,26 @@
 #include "pch.h"
-#include "CaptureCard.Controller.h"
 #include "CaptureCard.Controller.g.cpp"
 
 namespace winrt::CaptureCard::implementation
 {
+    Controller::Controller()
+    {
+        // This sample plugin only supports a single "Display".
+        auto input = winrt::make<CaptureCard::implementation::DisplayInput>();
+        auto customInterface = input.as<CaptureCard::ITestPluginInput>();
+        customInterface.InitializeWithState(L"Display 1");
+
+        m_displayInputs.push_back(input);
+    }
+
     hstring Controller::Name()
     {
-        throw hresult_not_implemented();
+        return L"Software Test Plugin";
     }
-    void Controller::Name(hstring const& value)
+    com_array<CaptureCard::DisplayInput> Controller::EnumerateDisplayInputs()
     {
-        throw hresult_not_implemented();
-    }
-    void Controller::EnumerateDisplayInputs(array_view<CaptureCard::DisplayInput> displays)
-    {
-        throw hresult_not_implemented();
+        auto ret = winrt::com_array<CaptureCard::DisplayInput>(m_displayInputs);
+        return ret;
     }
     ConfigurationTools::ConfigurationToolbox Controller::GetToolbox()
     {

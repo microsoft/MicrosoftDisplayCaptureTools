@@ -8,8 +8,7 @@ namespace winrt::ConfigurationTools::implementation
         ConfigurationToolbox() = default;
 
         hstring Name();
-        void Name(hstring const& value);
-        void GetSupportedTools(array_view<hstring> tools);
+        com_array<hstring> GetSupportedTools();
         ConfigurationTools::ConfigurationTool GetTool(hstring const& toolName);
     };
 }
