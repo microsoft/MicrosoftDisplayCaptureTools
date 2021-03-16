@@ -5,9 +5,10 @@ namespace DisplayStateReference
     // this type are created and passed between the various configuration tools and are finally sent to the capture card 
     // plugin, which uses this data to compare the calculated state against the actual state.
     //
-    [default_interface]
     runtimeclass StaticReference
     {
+        StaticReference();
+
         // GetSerializedData
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

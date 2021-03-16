@@ -72,10 +72,4 @@ bool BaseTest::BaseTestSetup()
 void BaseTest::Test()
 {
     TestFramework::framework->RunPictTest();
-
-    /*String param;
-    if (SUCCEEDED(TestData::TryGetValue(L"Background", param)))
-    {
-        Log::Comment(L"Current test run: " + param);
-    }*/
 }

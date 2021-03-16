@@ -3,6 +3,13 @@
 
 namespace winrt::Core::implementation
 {
+    struct TestRun
+    {
+        std::vector<winrt::ConfigurationTools::ConfigurationTool> toolRunList;
+
+        std::vector<winrt::ConfigurationTools::ConfigurationTool> toolOrderedRunList;
+    };
+
     struct Framework : FrameworkT<Framework>
     {
         Framework() = default;
@@ -12,6 +19,7 @@ namespace winrt::Core::implementation
         void RunPictTest();
 
         std::vector<winrt::ConfigurationTools::ConfigurationToolbox> m_toolboxes;
+        std::shared_ptr<winrt::CaptureCard::IController> m_captureCard;
     };
 }
 namespace winrt::Core::factory_implementation
