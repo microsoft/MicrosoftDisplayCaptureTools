@@ -164,13 +164,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ConfigurationTools.ConfigurationTool.h" />
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
+    <ClInclude Include="PatternTool.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConfigurationTools.ConfigurationTool.cpp" />
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
+    <ClCompile Include="PatternTool.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

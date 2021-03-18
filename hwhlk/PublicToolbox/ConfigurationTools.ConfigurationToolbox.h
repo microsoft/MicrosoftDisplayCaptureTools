@@ -9,7 +9,7 @@ namespace winrt::ConfigurationTools::implementation
 
         hstring Name();
         com_array<hstring> GetSupportedTools();
-        ConfigurationTools::ConfigurationTool GetTool(hstring const& toolName);
+        ConfigurationTools::IConfigurationTool GetTool(hstring const& toolName);
     };
 }
 namespace winrt::ConfigurationTools::factory_implementation

@@ -1,11 +1,20 @@
 #pragma once
-#include "ConfigurationTools.ConfigurationTool.g.h"
+#include "ConfigurationTools.ConfigurationToolbox.g.h"
 
 namespace winrt::ConfigurationTools::implementation
 {
-    struct ConfigurationTool : ConfigurationToolT<ConfigurationTool>
+    enum class Configurations
     {
-        ConfigurationTool() = default;
+        Black,
+        White,
+        Red,
+        Green,
+        Blue
+    };
+
+    struct PatternTool : implements<PatternTool, IConfigurationTool>
+    {
+        PatternTool();
 
         hstring Name();
         ConfigurationTools::ConfigurationToolCategory Category();
@@ -16,5 +25,7 @@ namespace winrt::ConfigurationTools::implementation
         void SetConfiguration(hstring const& configuration);
         void ApplyToHardware(Windows::Devices::Display::Core::DisplayTarget const& target);
         void ApplyToSoftwareReference(DisplayStateReference::StaticReference const& reference);
+
+        Configurations m_currentConfig;
     };
 }

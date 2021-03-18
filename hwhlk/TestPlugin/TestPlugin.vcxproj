@@ -167,7 +167,6 @@
     <ClInclude Include="CaptureCard.Controller.h" />
     <ClInclude Include="CaptureCard.DisplayCapture.h" />
     <ClInclude Include="CaptureCard.DisplayInput.h" />
-    <ClInclude Include="ConfigurationTools.ConfigurationTool.h" />
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -175,7 +174,6 @@
     <ClCompile Include="CaptureCard.Controller.cpp" />
     <ClCompile Include="CaptureCard.DisplayCapture.cpp" />
     <ClCompile Include="CaptureCard.DisplayInput.cpp" />
-    <ClCompile Include="ConfigurationTools.ConfigurationTool.cpp" />
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

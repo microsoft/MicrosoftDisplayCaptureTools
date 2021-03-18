@@ -11,12 +11,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="CaptureCard.Controller.cpp" />
     <ClCompile Include="CaptureCard.DisplayCapture.cpp" />
     <ClCompile Include="CaptureCard.DisplayInput.cpp" />
-    <ClCompile Include="ConfigurationTools.ConfigurationTool.cpp" />
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -24,7 +22,6 @@
     <ClInclude Include="CaptureCard.Controller.h" />
     <ClInclude Include="CaptureCard.DisplayCapture.h" />
     <ClInclude Include="CaptureCard.DisplayInput.h" />
-    <ClInclude Include="ConfigurationTools.ConfigurationTool.h" />
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
   </ItemGroup>
   <ItemGroup>

@@ -12,7 +12,7 @@ namespace winrt::ConfigurationTools::implementation
     {
         throw hresult_not_implemented();
     }
-    ConfigurationTools::ConfigurationTool ConfigurationToolbox::GetTool(hstring const& toolName)
+    ConfigurationTools::IConfigurationTool ConfigurationToolbox::GetTool(hstring const& toolName)
     {
         throw hresult_not_implemented();
     }

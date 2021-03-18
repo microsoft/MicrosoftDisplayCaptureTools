@@ -190,16 +190,17 @@
     <Midl Include="..\IDL\Core.idl" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DisplayStateReference\DisplayStateReference.vcxproj">
+      <Project>{f2587e8d-fcfa-4161-b2eb-40e8d61d5298}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="CaptureCard">
-      <HintPath>..\x64\Debug\TestPlugin\CaptureCard.winmd</HintPath>
+      <HintPath>..\TestPlugin\x64\Debug\Merged\CaptureCard.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
     </Reference>
     <Reference Include="ConfigurationTools">
-      <HintPath>..\x64\Debug\TestPlugin\ConfigurationTools.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="DisplayStateReference">
-      <HintPath>..\x64\Debug\TestPlugin\DisplayStateReference.winmd</HintPath>
+      <HintPath>..\TestPlugin\x64\Debug\Merged\ConfigurationTools.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
     </Reference>
   </ItemGroup>

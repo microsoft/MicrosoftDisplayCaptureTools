@@ -3,13 +3,6 @@
 
 namespace winrt::Core::implementation
 {
-    struct TestRun
-    {
-        std::vector<winrt::ConfigurationTools::ConfigurationTool> toolRunList;
-
-        std::vector<winrt::ConfigurationTools::ConfigurationTool> toolOrderedRunList;
-    };
-
     struct Framework : FrameworkT<Framework>
     {
         Framework() = default;
@@ -20,6 +13,17 @@ namespace winrt::Core::implementation
 
         std::vector<winrt::ConfigurationTools::ConfigurationToolbox> m_toolboxes;
         std::shared_ptr<winrt::CaptureCard::IController> m_captureCard;
+    };
+    
+    struct TestRun
+    {
+        std::vector<winrt::ConfigurationTools::IConfigurationTool> toolRunList;
+        std::vector<winrt::ConfigurationTools::IConfigurationTool> toolOrderedRunList;
+
+        bool operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const
+        {
+            return a.Category() < b.Category();
+        }
     };
 }
 namespace winrt::Core::factory_implementation

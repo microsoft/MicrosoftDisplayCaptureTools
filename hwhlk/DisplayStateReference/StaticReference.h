@@ -10,3 +10,9 @@ namespace winrt::DisplayStateReference::implementation
         Windows::Data::Json::JsonObject GetSerializedData();
     };
 }
+namespace winrt::DisplayStateReference::factory_implementation
+{
+    struct StaticReference : StaticReferenceT<StaticReference, implementation::StaticReference>
+    {
+    };
+}

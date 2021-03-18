@@ -97,6 +97,21 @@ namespace winrt::Core::implementation
         }
 
         // Re-order the tools by their metadata
+        for (auto tool : testRun.toolRunList)
+        {
+            testRun.toolOrderedRunList.push_back(tool);
+        }
+        
+        // Sort list by category
+        std::sort(testRun.toolOrderedRunList.begin(), testRun.toolOrderedRunList.end());
+
+        // Re-iterate through the tools and ensure that requirements are met
+        for (auto tool : testRun.toolOrderedRunList)
+        {
+            auto reqs = tool.Requirements();
+
+            // TODO: add intra-tool requirement support to Requirements struct
+        }
 
         // Retrieve a display matching the all test requirements, from tool metadata and TAEF parameters
         std::shared_ptr<winrt::CaptureCard::DisplayInput> displayUnderTest;
@@ -118,7 +133,11 @@ namespace winrt::Core::implementation
         }
 
         // Run through the tool list and generate the golden image
-        auto reference = winrt::make<winrt::DisplayStateReference::StaticReference>();
+        winrt::DisplayStateReference::StaticReference reference;
+        for (auto tool : testRun.toolOrderedRunList)
+        {
+            tool.ApplyToSoftwareReference(reference);
+        }
 
         // Run through the tool list and output to a display
         if (!runSoftwareOnly)
@@ -128,7 +147,7 @@ namespace winrt::Core::implementation
 
         // Ask the capture card to compare the outputs
         auto captureTrigger = winrt::CaptureCard::CaptureTrigger();
-        captureTrigger.type = winrt::CaptureCard::CaptureTriggerType::Immediate();
+        captureTrigger.type = winrt::CaptureCard::CaptureTriggerType::Immediate;
         auto capture = displayUnderTest->CaptureFrame(captureTrigger);
 
         capture.CompareCaptureToReference(reference);

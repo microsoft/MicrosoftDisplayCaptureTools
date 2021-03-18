@@ -1,1 +1,1 @@
-Background:     Black, White, Red, Green, Blue
+Pattern:     Black, White, Red, Green, Blue

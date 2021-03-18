@@ -4,16 +4,41 @@
 
 namespace winrt::ConfigurationTools::implementation
 {
+    enum class Tools
+    {
+        Pattern
+    };
+
+    std::map<std::wstring, Tools> MapNameToTool =
+    {
+        {L"Pattern", Tools::Pattern}
+    };
+
     hstring ConfigurationToolbox::Name()
     {
         return L"Public Toolbox";
     }
     com_array<hstring> ConfigurationToolbox::GetSupportedTools()
     {
-        throw hresult_not_implemented();
+        auto toolNames = std::vector<hstring>();
+        for (auto tool : MapNameToTool)
+        {
+            toolNames.push_back(hstring(tool.first));
+        }
+
+        return com_array<hstring>(toolNames);
     }
-    ConfigurationTools::ConfigurationTool ConfigurationToolbox::GetTool(hstring const& toolName)
+    ConfigurationTools::IConfigurationTool ConfigurationToolbox::GetTool(hstring const& toolName)
     {
-        throw hresult_not_implemented();
+        switch (MapNameToTool[std::wstring(toolName)])
+        {
+        case Tools::Pattern:
+            auto tool = winrt::make<PatternTool>();
+            return tool;
+            break;
+        }
+
+        // This toolbox does not implement the tool asked for.
+        throw winrt::hresult_not_implemented();
     }
 }
