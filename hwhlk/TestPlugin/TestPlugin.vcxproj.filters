@@ -13,16 +13,16 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="CaptureCard.Controller.cpp" />
-    <ClCompile Include="CaptureCard.DisplayCapture.cpp" />
-    <ClCompile Include="CaptureCard.DisplayInput.cpp" />
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
+    <ClCompile Include="SampleDisplayInput.cpp" />
+    <ClCompile Include="SampleDisplayCapture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="CaptureCard.Controller.h" />
-    <ClInclude Include="CaptureCard.DisplayCapture.h" />
-    <ClInclude Include="CaptureCard.DisplayInput.h" />
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
+    <ClInclude Include="SampleDisplayInput.h" />
+    <ClInclude Include="SampleDisplayCapture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestPlugin.def" />

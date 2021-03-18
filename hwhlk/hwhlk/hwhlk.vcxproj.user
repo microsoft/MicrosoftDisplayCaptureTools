@@ -3,25 +3,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommand>$(FrameworkSdkDir)Testing\Runtimes\TAEF\$(PlatformShortName)\TE.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll /p:TestSoftwareOnly=true</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommand>$(FrameworkSdkDir)Testing\Runtimes\TAEF\$(PlatformShortName)\TE.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll /p:TestSoftwareOnly=true</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommand>$(FrameworkSdkDir)Testing\Runtimes\TAEF\$(PlatformShortName)\TE.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll /p:TestSoftwareOnly=true</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand>$(FrameworkSdkDir)Testing\Runtimes\TAEF\$(PlatformShortName)\TE.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(TargetPath) /inproc /p:AdditionalToolboxPaths=PublicToolbox\Publictoolbox.dll /p:TestSoftwareOnly=true</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

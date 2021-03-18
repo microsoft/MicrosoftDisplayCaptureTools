@@ -72,10 +72,9 @@ namespace winrt::Core::implementation
         {
             // Determine if we should run in software-only mode
             String softwareOnly;
-            if (SUCCEEDED(RuntimeParameters::TryGetValue(L"TestSoftwareOnly", softwareOnly)))
+            if (SUCCEEDED(RuntimeParameters::TryGetValue(L"TestSoftwareOnly", softwareOnly)) && softwareOnly == L"true")
             {
                 runSoftwareOnly = true;
-
                 Log::Comment(L"Running in software-only mode, this is intended only for development and not full testing.");
             }
         }
@@ -114,14 +113,14 @@ namespace winrt::Core::implementation
         }
 
         // Retrieve a display matching the all test requirements, from tool metadata and TAEF parameters
-        std::shared_ptr<winrt::CaptureCard::DisplayInput> displayUnderTest;
+        winrt::CaptureCard::IDisplayInput displayUnderTest;
         auto displayList = m_captureCard->EnumerateDisplayInputs();
         for (auto display : displayList)
         {
             auto capabilities = display.GetCapabilities();
             if (runSoftwareOnly && capabilities.returnRawFramesToHost)
             {
-                displayUnderTest = std::make_shared<winrt::CaptureCard::DisplayInput>(display);
+                displayUnderTest = display;
                 break;
             }
         }
@@ -146,9 +145,9 @@ namespace winrt::Core::implementation
         }
 
         // Ask the capture card to compare the outputs
-        auto captureTrigger = winrt::CaptureCard::CaptureTrigger();
+        winrt::CaptureCard::CaptureTrigger captureTrigger{};
         captureTrigger.type = winrt::CaptureCard::CaptureTriggerType::Immediate;
-        auto capture = displayUnderTest->CaptureFrame(captureTrigger);
+        auto capture = displayUnderTest.CaptureFrame(captureTrigger);
 
         capture.CompareCaptureToReference(reference);
     }

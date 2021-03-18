@@ -4,5 +4,5 @@
 #include <winrt/Windows.Foundation.Collections.h>
 
 #include "CaptureCard.Controller.h"
-#include "CaptureCard.DisplayCapture.h"
-#include "CaptureCard.DisplayInput.h"
+#include "SampleDisplayCapture.h"
+#include "SampleDisplayInput.h"

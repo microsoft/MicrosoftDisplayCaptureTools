@@ -1,5 +1,4 @@
 #pragma once
-#include "ConfigurationTools.ConfigurationToolbox.g.h"
 
 namespace winrt::ConfigurationTools::implementation
 {

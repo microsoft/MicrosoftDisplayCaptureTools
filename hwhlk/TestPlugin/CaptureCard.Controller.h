@@ -8,10 +8,10 @@ namespace winrt::CaptureCard::implementation
         Controller();
 
         hstring Name();
-        com_array<CaptureCard::DisplayInput> EnumerateDisplayInputs();
+        com_array<CaptureCard::IDisplayInput> EnumerateDisplayInputs();
         ConfigurationTools::ConfigurationToolbox GetToolbox();
 
-        std::vector<CaptureCard::DisplayInput> m_displayInputs;
+        std::vector<CaptureCard::IDisplayInput> m_displayInputs;
     };
 }
 namespace winrt::CaptureCard::factory_implementation

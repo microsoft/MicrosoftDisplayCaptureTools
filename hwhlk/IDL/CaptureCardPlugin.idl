@@ -61,7 +61,7 @@ namespace CaptureCard
     // Represents a captured frame. The actual data for the captured frame can be either on PC or on the capture card
     // itself, this object mearly controls 
     //
-    runtimeclass DisplayCapture
+    interface IDisplayCapture
     {
         // CompareCaptureToReference
         // ----------------------------------------------------------------------------------------------------------------
@@ -94,20 +94,8 @@ namespace CaptureCard
         //
         void SaveCaptureToDisk(String path);
     }
-    
-    //
-    // This is an interface demonstrating how DisplayInput might be extended to provide functionality exclusive to a 
-    // particular capture device, outside of the interfaces with the framework
-    //
-    interface ITestPluginInput
-    {
-        void InitializeWithState(String identifier);
-    };
 
-    //
-    // A DisplayInput object represents a single input to a capture card.
-    //
-    runtimeclass DisplayInput : ITestPluginInput
+    interface IDisplayInput
     {
         // A string identifier for this particular captured display, to be used for logging.
         String Name { get; };
@@ -144,7 +132,7 @@ namespace CaptureCard
         //          specific pattern'. Supported triggers should be reported in this object's GetCapabilities method, and
         //          this method should fail if an unsupported trigger is supplied.
         //
-        DisplayCapture CaptureFrame(CaptureTrigger trigger);
+        IDisplayCapture CaptureFrame(CaptureTrigger trigger);
     }
 
     //
@@ -172,7 +160,7 @@ namespace CaptureCard
         //      pluginPath
         //          This string represents a filepath from which a conformant capture card plugin implementation is exposed.
         //
-        DisplayInput[] EnumerateDisplayInputs();
+        IDisplayInput[] EnumerateDisplayInputs();
 
         // GetToolbox
         // ----------------------------------------------------------------------------------------------------------------

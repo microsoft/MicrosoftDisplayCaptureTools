@@ -5,10 +5,11 @@ namespace winrt::CaptureCard::implementation
 {
     Controller::Controller()
     {
-        // This sample plugin only supports a single "Display".
-        auto input = winrt::make<CaptureCard::implementation::DisplayInput>();
-        auto customInterface = input.as<CaptureCard::ITestPluginInput>();
-        customInterface.InitializeWithState(L"Display 1");
+        //
+        // Normally this is where a capture card would initialize and determine its own capabilities and 
+        // inputs. For this sample, we are reporting a single input to this 'fake' capture card.
+        //
+        auto input = winrt::make<CaptureCard::implementation::SampleDisplayInput>();
 
         m_displayInputs.push_back(input);
     }
@@ -17,9 +18,9 @@ namespace winrt::CaptureCard::implementation
     {
         return L"Software Test Plugin";
     }
-    com_array<CaptureCard::DisplayInput> Controller::EnumerateDisplayInputs()
+    com_array<CaptureCard::IDisplayInput> Controller::EnumerateDisplayInputs()
     {
-        auto ret = winrt::com_array<CaptureCard::DisplayInput>(m_displayInputs);
+        auto ret = winrt::com_array<CaptureCard::IDisplayInput>(m_displayInputs);
         return ret;
     }
     ConfigurationTools::ConfigurationToolbox Controller::GetToolbox()
