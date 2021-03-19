@@ -20,10 +20,7 @@ namespace winrt::Core::implementation
         std::vector<winrt::ConfigurationTools::IConfigurationTool> toolRunList;
         std::vector<winrt::ConfigurationTools::IConfigurationTool> toolOrderedRunList;
 
-        bool operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const
-        {
-            return a.Category() < b.Category();
-        }
+        bool operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const;
     };
 }
 namespace winrt::Core::factory_implementation

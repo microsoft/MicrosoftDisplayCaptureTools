@@ -151,4 +151,10 @@ namespace winrt::Core::implementation
 
         capture.CompareCaptureToReference(reference);
     }
+
+    bool TestRun::operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const
+    {
+        // TODO: this needs to become a much more complicated comparison as we continue to add more tools
+        return a.Category() < b.Category();
+    }
 }
