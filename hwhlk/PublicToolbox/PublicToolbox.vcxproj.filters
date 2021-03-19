@@ -32,5 +32,6 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="..\IDL\ConfigurationTools.idl" />
+    <Midl Include="..\IDL\DisplayStateReference.idl" />
   </ItemGroup>
 </Project>

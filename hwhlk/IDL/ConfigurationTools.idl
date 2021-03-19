@@ -1,3 +1,5 @@
+import "DisplayStateReference.idl";
+
 namespace ConfigurationTools
 {
     //
@@ -138,6 +140,6 @@ namespace ConfigurationTools
         //                both raw CPU-accessible memory as well as D2DImages ready for easy manipulation. It will also 
         //                include specific handling for sub-images which will represent MPO planes.
         //
-        void ApplyToSoftwareReference(DisplayStateReference.StaticReference reference);
+        void ApplyToSoftwareReference(DisplayStateReference.IStaticReference reference);
     }
 }

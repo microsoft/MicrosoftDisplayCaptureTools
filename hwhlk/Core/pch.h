@@ -17,10 +17,12 @@
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
+#include <winrt/Windows.Data.Json.h>
 
 #include "winrt/CaptureCard.h"
 #include "winrt/DisplayStateReference.h"
 #include "winrt/ConfigurationTools.h"
+#include "StaticReferenceData.h"
 
 #include <WexTestClass.h>
 #include <Wex.Common.h>

@@ -132,7 +132,7 @@ namespace winrt::Core::implementation
         }
 
         // Run through the tool list and generate the golden image
-        winrt::DisplayStateReference::StaticReference reference;
+        auto reference = winrt::make<winrt::DisplayStateReference::implementation::StaticReferenceData>();
         for (auto tool : testRun.toolOrderedRunList)
         {
             tool.ApplyToSoftwareReference(reference);

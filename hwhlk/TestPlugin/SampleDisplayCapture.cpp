@@ -3,7 +3,7 @@
 
 namespace winrt::CaptureCard::implementation
 {
-    void SampleDisplayCapture::CompareCaptureToReference(DisplayStateReference::StaticReference reference)
+    void SampleDisplayCapture::CompareCaptureToReference(DisplayStateReference::IStaticReference reference)
     {
     }
 

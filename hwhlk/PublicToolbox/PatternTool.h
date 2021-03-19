@@ -23,7 +23,7 @@ namespace winrt::ConfigurationTools::implementation
         com_array<hstring> GetSupportedConfigurations();
         void SetConfiguration(hstring const& configuration);
         void ApplyToHardware(Windows::Devices::Display::Core::DisplayTarget const& target);
-        void ApplyToSoftwareReference(DisplayStateReference::StaticReference const& reference);
+        void ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference);
 
         Configurations m_currentConfig;
     };

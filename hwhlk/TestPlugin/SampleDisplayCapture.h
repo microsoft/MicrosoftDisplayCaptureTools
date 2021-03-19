@@ -6,7 +6,7 @@ namespace winrt::CaptureCard::implementation
     {
         SampleDisplayCapture() = default;
 
-        void CompareCaptureToReference(DisplayStateReference::StaticReference reference);
+        void CompareCaptureToReference(DisplayStateReference::IStaticReference reference);
         void SaveCaptureToDisk(hstring path);
     };
 }

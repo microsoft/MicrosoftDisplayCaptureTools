@@ -37,5 +37,6 @@
   <ItemGroup>
     <Midl Include="..\IDL\CaptureCardPlugin.idl" />
     <Midl Include="..\IDL\ConfigurationTools.idl" />
+    <Midl Include="..\IDL\DisplayStateReference.idl" />
   </ItemGroup>
 </Project>

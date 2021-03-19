@@ -58,7 +58,7 @@ namespace winrt::ConfigurationTools::implementation
         throw hresult_not_implemented();
     }
 
-    void PatternTool::ApplyToSoftwareReference(DisplayStateReference::StaticReference const& reference)
+    void PatternTool::ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference)
     {
         throw hresult_not_implemented();
     }

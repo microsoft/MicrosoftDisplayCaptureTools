@@ -14,11 +14,13 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="Loader.cpp" />
+    <ClCompile Include="StaticReferenceData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Framework.h" />
     <ClInclude Include="Loader.h" />
+    <ClInclude Include="StaticReferenceData.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Core.def" />
