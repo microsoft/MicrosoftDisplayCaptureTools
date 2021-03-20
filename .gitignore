@@ -7,33 +7,33 @@
 /HWHLKFramework/Debug/TestFramework
 /.vs
 /HWHLKFramework/.vs/HWHLKFramework/v16
-/Tests/Gamma/.vs/Gamma
-/Tests/Gamma/Debug
-/Plugins/SamplePlugin/.vs/SamplePlugin/v16
-/Plugins/SamplePlugin/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
-/Plugins/SamplePlugin/Generated Files
-/Plugins/SamplePlugin/Debug
-/TestFramework/TestFramework/Generated Files
-/TestFramework/TestFramework/ARM/Debug
-/TestFramework/ARM/Debug/TestFramework
-/TestFramework/.vs/HWHLKFramework/v16
-/TestFramework/x64/Debug/TestFramework
-/TestFramework/TestFramework/x64/Debug
-/Tests/Gamma/x64/Debug
-/Tests/Gamma/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
-/Plugins/SamplePlugin/x64/Debug
-/Plugins/SamplePluginLoader/x64/Debug
-/Plugins/SamplePlugin/Release
-/Plugins/SamplePluginLoader/Release
-/TestFramework/FrameworkSample/x64/Debug
-/TestFramework/x64/Debug
-/Plugins/SamplePlugin/x64/Release
-/Plugins/SamplePlugin/ARM/Debug
-/Plugins/SamplePluginLoader/x64/Release
-/Plugins/SoftGPU plugin/x64
-/Plugins/SoftGPU plugin/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
-/Plugins/SoftGPU plugin/.vs/SoftGPU plugin/v16
-/TestFramework/ARM/Debug
+Prototypes/Tests/Gamma/.vs/Gamma
+Prototypes/Tests/Gamma/Debug
+Prototypes/Plugins/SamplePlugin/.vs/SamplePlugin/v16
+Prototypes/Plugins/SamplePlugin/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
+Prototypes/Plugins/SamplePlugin/Generated Files
+Prototypes/Plugins/SamplePlugin/Debug
+Prototypes/TestFramework/TestFramework/Generated Files
+Prototypes/TestFramework/TestFramework/ARM/Debug
+Prototypes/TestFramework/ARM/Debug/TestFramework
+Prototypes/TestFramework/.vs/HWHLKFramework/v16
+Prototypes/TestFramework/x64/Debug/TestFramework
+Prototypes/TestFramework/TestFramework/x64/Debug
+Prototypes/Tests/Gamma/x64/Debug
+Prototypes/Tests/Gamma/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
+Prototypes/Plugins/SamplePlugin/x64/Debug
+Prototypes/Plugins/SamplePluginLoader/x64/Debug
+Prototypes/Plugins/SamplePlugin/Release
+Prototypes/Plugins/SamplePluginLoader/Release
+Prototypes/TestFramework/FrameworkSample/x64/Debug
+Prototypes/TestFramework/x64/Debug
+Prototypes/Plugins/SamplePlugin/x64/Release
+Prototypes/Plugins/SamplePlugin/ARM/Debug
+Prototypes/Plugins/SamplePluginLoader/x64/Release
+Prototypes/Plugins/SoftGPU plugin/x64
+Prototypes/Plugins/SoftGPU plugin/packages/Microsoft.Windows.CppWinRT.2.0.200117.5
+Prototypes/Plugins/SoftGPU plugin/.vs/SoftGPU plugin/v16
+Prototypes/TestFramework/ARM/Debug
 /hwhlk/TestPlugin/Generated Files
 /hwhlk/TestPlugin/Debug
 /hwhlk/PublicToolbox/Debug
@@ -50,10 +50,10 @@
 /hwhlk/Core/Debug
 /hwhlk/.vs/hwhlk/v16
 /hwhlk/packages
-MicrosoftHardwareVerification/.vs/
-MicrosoftHardwareVerification/Debug/
-MicrosoftHardwareVerification/Generated Files/
-MicrosoftHardwareVerification/packages/
+Prototypes/MicrosoftHardwareVerification/.vs/
+Prototypes/MicrosoftHardwareVerification/Debug/
+Prototypes/MicrosoftHardwareVerification/Generated Files/
+Prototypes/MicrosoftHardwareVerification/packages/
 Prototypes/HardwareCaptureTesting/.vs/
 Prototypes/HardwareCaptureTesting/CaptureCard/Generated Files/
 Prototypes/HardwareCaptureTesting/CaptureCard/x64/
@@ -69,3 +69,7 @@ hwhlk/TestPlugin/x64/
 hwhlk/x64/
 Prototypes/ReferenceRenderer
 Prototypes/SoftwareRender
+Prototypes/TestFramework/packages/
+Prototypes/Tests/Gamma/packages/
+Prototypes/MicrosoftHardwareVerification/Generated Files/
+Prototypes/MicrosoftHardwareVerification/packages/
