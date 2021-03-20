@@ -141,15 +141,16 @@ namespace CaptureCard
     //
     runtimeclass Controller
     {
-        // A string identifier for this particular implementation of the framework, this is only to be used for logging.
-        String Name { get; };
-
         // Controller
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
         //      Constructs a CaptureCardPlugin object which will handle interfacing with a physical display capture card.
         //
         Controller();
+
+        // A string identifier for this particular implementation of the framework, this is only to be used for logging.
+        String Name{ get; };
+
 
         // EnumerateDisplayInputs
         // ----------------------------------------------------------------------------------------------------------------

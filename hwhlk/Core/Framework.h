@@ -11,8 +11,10 @@ namespace winrt::Core::implementation
         void OpenToolbox(hstring const& toolboxPath);
         void RunPictTest();
 
+    private:
         std::vector<winrt::ConfigurationTools::ConfigurationToolbox> m_toolboxes;
         std::shared_ptr<winrt::CaptureCard::IController> m_captureCard;
+        boolean m_runSoftwareOnly;
     };
     
     struct TestRun

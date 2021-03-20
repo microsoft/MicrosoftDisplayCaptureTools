@@ -2,18 +2,15 @@
 
 namespace winrt::ConfigurationTools::implementation
 {
-    enum class PatternToolConfigurations
+    enum class ResolutionToolConfigurations
     {
-        Black,
-        White,
-        Red,
-        Green,
-        Blue
+        _1080p,
+        _2160p
     };
 
-    struct PatternTool : implements<PatternTool, IConfigurationTool>
+    struct ResolutionTool : implements<ResolutionTool, IConfigurationTool>
     {
-        PatternTool();
+        ResolutionTool();
 
         hstring Name();
         ConfigurationTools::ConfigurationToolCategory Category();
@@ -26,7 +23,6 @@ namespace winrt::ConfigurationTools::implementation
         void ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference);
 
     private:
-        void ApplyToSoftwareReferenceFallback(DisplayStateReference::IStaticReference const& reference);
-        PatternToolConfigurations m_currentConfig;
+        ResolutionToolConfigurations m_currentConfig;
     };
 }

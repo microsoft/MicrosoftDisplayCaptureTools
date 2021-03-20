@@ -2,18 +2,14 @@
 
 namespace winrt::ConfigurationTools::implementation
 {
-    enum class PatternToolConfigurations
+    enum class WireFormatToolConfigurations
     {
-        Black,
-        White,
-        Red,
-        Green,
-        Blue
+        RGB8
     };
 
-    struct PatternTool : implements<PatternTool, IConfigurationTool>
+    struct WireFormatTool : implements<WireFormatTool, IConfigurationTool>
     {
-        PatternTool();
+        WireFormatTool();
 
         hstring Name();
         ConfigurationTools::ConfigurationToolCategory Category();
@@ -26,7 +22,6 @@ namespace winrt::ConfigurationTools::implementation
         void ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference);
 
     private:
-        void ApplyToSoftwareReferenceFallback(DisplayStateReference::IStaticReference const& reference);
-        PatternToolConfigurations m_currentConfig;
+        WireFormatToolConfigurations m_currentConfig;
     };
 }

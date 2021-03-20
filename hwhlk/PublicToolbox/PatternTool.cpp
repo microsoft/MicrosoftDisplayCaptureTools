@@ -1,12 +1,16 @@
 #include "pch.h"
 #include "PatternTool.h"
 
+using namespace WEX::Common;
+using namespace WEX::Logging;
+using namespace WEX::TestExecution;
+
 namespace winrt::ConfigurationTools::implementation
 {
     PatternTool::PatternTool()
     {
         // Define the default configuration
-        m_currentConfig = Configurations::Black;
+        m_currentConfig = PatternToolConfigurations::Black;
     }
 
     hstring PatternTool::Name()
@@ -28,13 +32,13 @@ namespace winrt::ConfigurationTools::implementation
         return reqs;
     }
 
-    std::map<std::wstring, Configurations> MapNameToConfiguration =
+    std::map<std::wstring, PatternToolConfigurations> MapNameToConfiguration =
     {
-        {L"Black", Configurations::Black},
-        {L"White", Configurations::White},
-        {L"Red",   Configurations::Red},
-        {L"Green", Configurations::Green},
-        {L"Blue",  Configurations::Blue}
+        {L"Black", PatternToolConfigurations::Black},
+        {L"White", PatternToolConfigurations::White},
+        {L"Red",   PatternToolConfigurations::Red},
+        {L"Green", PatternToolConfigurations::Green},
+        {L"Blue",  PatternToolConfigurations::Blue}
     };
 
     com_array<hstring> PatternTool::GetSupportedConfigurations()
@@ -60,6 +64,60 @@ namespace winrt::ConfigurationTools::implementation
 
     void PatternTool::ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference)
     {
-        throw hresult_not_implemented();
+        auto frameInfo = reference.FrameInfo();
+
+        if (frameInfo.pixelFormat != DisplayStateReference::FramePixelFormat::R8G8B8)
+        {
+            Log::Error(String().Format(L"The Pattern Tool, does not support the chosen output format: %d. Either support needs to be added \
+                       to this tool or a PICT constraint should be added to prevent this case", frameInfo.pixelFormat));
+        }
+
+        // TODO: replace with with an attempt at the GPU path when avilable
+        ApplyToSoftwareReferenceFallback(reference);
+    }
+
+    void PatternTool::ApplyToSoftwareReferenceFallback(DisplayStateReference::IStaticReference const& reference)
+    {
+        auto frameInfo = reference.FrameInfo();
+
+        // Get the IMemoryBufferReference interface for the underlying pixels.
+        auto pixelBuffer = reference.GetFrameFromCPU();
+        auto pixelBufferByteAccess = pixelBuffer.as<::Windows::Foundation::IMemoryBufferByteAccess>();
+
+        BYTE* pixels;
+        UINT32 pixelsSize = 0;
+        winrt::check_hresult(pixelBufferByteAccess->GetBuffer(&pixels, &pixelsSize));
+
+        struct R8G8B8
+        {
+            BYTE r, g, b;
+        };
+
+        R8G8B8 setPixelValues{};
+        switch (m_currentConfig)
+        {
+        case PatternToolConfigurations::Black:
+            break;
+        case PatternToolConfigurations::White:
+            setPixelValues = { 255,255,255 };
+            break;
+        case PatternToolConfigurations::Red:
+            setPixelValues = { 255,0,0 };
+            break;
+        case PatternToolConfigurations::Green:
+            setPixelValues = { 0,255,0 };
+            break;
+        case PatternToolConfigurations::Blue:
+            setPixelValues = { 0,0,255 };
+            break;
+        }
+
+        for (BYTE* pixel = pixels; pixel < (pixels + pixelsSize); pixel += frameInfo.pixelStride)
+        {
+            auto rgb = reinterpret_cast<R8G8B8*>(pixel);
+            rgb->r = setPixelValues.r;
+            rgb->g = setPixelValues.g;
+            rgb->b = setPixelValues.b;
+        }
     }
 }

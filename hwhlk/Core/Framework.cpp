@@ -49,6 +49,17 @@ namespace winrt::Core::implementation
         {
             Log::Comment(L"Capture device does not support any tools");
         }
+
+        m_runSoftwareOnly = false;
+        {
+            // Determine if we should run in software-only mode
+            String softwareOnly;
+            if (SUCCEEDED(RuntimeParameters::TryGetValue(L"TestSoftwareOnly", softwareOnly)) && softwareOnly == L"true")
+            {
+                m_runSoftwareOnly = true;
+                Log::Comment(L"Running in software-only mode, this is intended only for development and not full testing.");
+            }
+        }
     }
 
     void Framework::OpenToolbox(hstring const& toolboxPath)
@@ -68,17 +79,6 @@ namespace winrt::Core::implementation
 
     void Framework::RunPictTest()
     {
-        boolean runSoftwareOnly = false;
-        {
-            // Determine if we should run in software-only mode
-            String softwareOnly;
-            if (SUCCEEDED(RuntimeParameters::TryGetValue(L"TestSoftwareOnly", softwareOnly)) && softwareOnly == L"true")
-            {
-                runSoftwareOnly = true;
-                Log::Comment(L"Running in software-only mode, this is intended only for development and not full testing.");
-            }
-        }
-
         // Set up the PICT-specified tools for this test run
         auto testRun = TestRun();
         for (auto toolbox : m_toolboxes)
@@ -90,7 +90,9 @@ namespace winrt::Core::implementation
                 if (SUCCEEDED(TestData::TryGetValue(tool.c_str(), toolSetting)))
                 {
                     // There is a PICT setting selected for this tool, retrieve it.
-                    testRun.toolRunList.push_back(toolbox.GetTool(tool));
+                    auto toolToRun = toolbox.GetTool(tool);
+                    toolToRun.SetConfiguration(hstring(toolSetting));
+                    testRun.toolRunList.push_back(toolToRun);
                 }
             }
         }
@@ -100,9 +102,9 @@ namespace winrt::Core::implementation
         {
             testRun.toolOrderedRunList.push_back(tool);
         }
-        
+
         // Sort list by category
-        std::sort(testRun.toolOrderedRunList.begin(), testRun.toolOrderedRunList.end());
+        std::sort(testRun.toolOrderedRunList.begin(), testRun.toolOrderedRunList.end(), testRun);
 
         // Re-iterate through the tools and ensure that requirements are met
         for (auto tool : testRun.toolOrderedRunList)
@@ -118,7 +120,7 @@ namespace winrt::Core::implementation
         for (auto display : displayList)
         {
             auto capabilities = display.GetCapabilities();
-            if (runSoftwareOnly && capabilities.returnRawFramesToHost)
+            if (m_runSoftwareOnly && capabilities.returnRawFramesToHost)
             {
                 displayUnderTest = display;
                 break;
@@ -132,14 +134,14 @@ namespace winrt::Core::implementation
         }
 
         // Run through the tool list and generate the golden image
-        auto reference = winrt::make<winrt::DisplayStateReference::implementation::StaticReferenceData>();
+        auto reference = winrt::make<winrt::DisplayStateReference::implementation::StaticReferenceData>(L"Base Plane");
         for (auto tool : testRun.toolOrderedRunList)
         {
             tool.ApplyToSoftwareReference(reference);
         }
 
         // Run through the tool list and output to a display
-        if (!runSoftwareOnly)
+        if (!m_runSoftwareOnly)
         {
 
         }

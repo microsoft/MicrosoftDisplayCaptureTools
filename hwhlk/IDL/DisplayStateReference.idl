@@ -1,19 +1,102 @@
 namespace DisplayStateReference
 {
     //
+    // FramePixelFormat defines the the different supported pixel formats
+    //
+    enum FramePixelFormat
+    {
+        R8G8B8,
+    };
+
+    struct FrameBasicInfo
+    {
+        FramePixelFormat pixelFormat;
+        
+        // Dimensions of the frame
+        UInt32 width;
+        UInt32 height;
+
+        // Position of the frame (relative to top left if non-zero)
+        UInt32 positionX;
+        UInt32 positionY;
+
+        // The stride of the data if accessing via GetFrameFromCPU
+        UInt32 pixelStride;
+    };
+
+    //
     // This object represents all of the computed state for a particular display for a particular slice in time. Objects of
     // this type are created and passed between the various configuration tools and are finally sent to the capture card 
     // plugin, which uses this data to compare the calculated state against the actual state.
     //
     interface IStaticReference
     {
+        String Name{ get; };
+
         // GetSerializedData
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      This method returns a JSON object containing the state for this this object. This is intended to be used
-        //      for debugging purposes when 
+        //      This method returns a JSON object containing the state for this this object.
         //
         Windows.Data.Json.JsonObject GetSerializedData();
 
+        // GetNamedMetadata
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This method allows retrieving metadata sets for this reference object. This is to be used by various
+        //      configuration tools to set/store/update various non-image data. An example of this would be HDR10 Metadata
+        //      set via Windows DDI. An HDRMetadata tool might call the DDI with specific information, which it also stores
+        //      as a metadata object here. The capture card can be written to understand this metadata buffer and use it 
+        //      for comparison against the HDR10 Metadata infoframe data it receives from the GPU.
+        //
+        // Parameters:
+        //      name
+        //          This identifies a particular piece of metadata, and allows consistent access to this buffer from any
+        //          combination of tools and the capture card plugin itself.
+        //
+        Windows.Storage.Streams.IBuffer GetNamedMetadata(String name);
+
+        // AddNamedMetadata
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This method allows adding metadata sets for this reference object. This data can be retrieved and modified
+        //      by subsequently running tools and will eventually be included in final comparisons by the capture card 
+        //      plugin. The expected use pattern is to first call GetNamedMetadata for any use, and then use 
+        //      AddNamedMetadata if no previous data is returned.
+        //
+        //      If AddNamedMetadata is called with a name that already exists in this frame, it will override the existing
+        //      data.
+        //
+        // Parameters:
+        //      name
+        //          This identifies a particular piece of metadata, and allows consistent access to this buffer from any
+        //          combination of tools and the capture card plugin itself.
+        //
+        void AddNamedMetadata(String name, Windows.Storage.Streams.IBuffer buffer);
+
+        // FrameInfo
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This represents the pixel information for this reference frame. Note that this particular reference frame may
+        //      be composed with other as just part of the final reference image.
+        //
+        FrameBasicInfo FrameInfo;
+
+        // GetFrameFromGPU
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      If the frame pixel format is supported, this returns a representation of the frame on the GPU, which allows
+        //      for very performant lossless operations.
+        //
+        //ISurfaceImageSource GetFrameFromGPU();
+
+        // GetFrameFromCPU
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Intended as a fallback, this returns a raw CPU-accessible buffer for the frame, which allows for operations
+        //      in the case that the pixel format isn't supported by GetFrameFromGPU, or if the tool in question isn't
+        //      implemented to use hardware.
+        //
+        Windows.Foundation.IMemoryBufferReference GetFrameFromCPU();
     }
 }
