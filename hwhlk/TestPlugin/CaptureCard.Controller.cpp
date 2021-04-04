@@ -25,6 +25,6 @@ namespace winrt::CaptureCard::implementation
     }
     ConfigurationTools::ConfigurationToolbox Controller::GetToolbox()
     {
-        throw hresult_not_implemented();
+        return ConfigurationTools::ConfigurationToolbox();
     }
 }

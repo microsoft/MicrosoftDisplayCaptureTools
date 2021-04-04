@@ -18,12 +18,23 @@
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
 #include <winrt/Windows.Data.Json.h>
+#include <winrt/Windows.Graphics.Imaging.h>
+#include <winrt/Windows.Devices.Display.h>
+#include <winrt/Windows.Devices.Display.Core.h>
 
+// Headers for the GPU-Accelerated reference image rendering
+#include <windows.ui.xaml.media.dxinterop.h>
+#include <d3d11.h>
+#include <d2d1_3.h>
+#include <dxgi.h>
+
+// Headers for this project's various components
 #include "winrt/CaptureCard.h"
 #include "winrt/DisplayStateReference.h"
 #include "winrt/ConfigurationTools.h"
 #include "StaticReferenceData.h"
 
+// Headers for accessing TAEF parameters & logging with TAEF
 #include <WexTestClass.h>
 #include <Wex.Common.h>
 #include <Wex.Logger.h>

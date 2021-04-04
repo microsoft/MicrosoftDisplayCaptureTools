@@ -191,8 +191,6 @@
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
     <ClInclude Include="PatternTool.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="ResolutionTool.h" />
-    <ClInclude Include="WireFormatTool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
@@ -201,8 +199,6 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="ResolutionTool.cpp" />
-    <ClCompile Include="WireFormatTool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

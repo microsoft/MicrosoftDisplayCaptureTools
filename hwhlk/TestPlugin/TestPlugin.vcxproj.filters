@@ -16,6 +16,8 @@
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
     <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="SampleDisplayCapture.cpp" />
+    <ClCompile Include="ResolutionTool.cpp" />
+    <ClCompile Include="WireFormatTool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -23,6 +25,8 @@
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
     <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="SampleDisplayCapture.h" />
+    <ClInclude Include="ResolutionTool.h" />
+    <ClInclude Include="WireFormatTool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestPlugin.def" />

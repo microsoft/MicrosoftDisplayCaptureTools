@@ -1,13 +1,17 @@
 #include "pch.h"
 #include "StaticReferenceData.h"
 
+#include <MemoryBuffer.h>
+
+#include <windows.ui.composition.interop.h>
+
 using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
 namespace winrt::DisplayStateReference::implementation
 {
-    StaticReferenceData::StaticReferenceData(hstring name) : m_name(name), m_buffersCreated(false)
+    StaticReferenceData::StaticReferenceData(hstring name) : m_name(name)
     {
         m_frameInfo = {  };
     }
@@ -15,11 +19,12 @@ namespace winrt::DisplayStateReference::implementation
     {
         return m_name;
     }
-    Windows::Data::Json::JsonObject StaticReferenceData::GetSerializedData()
+    Windows::Data::Json::JsonObject StaticReferenceData::GetSerializedMetadata()
     {
-        throw winrt::hresult_not_implemented();
+        // TODO: serialize any set metadata into a JSON object
+        return Windows::Data::Json::JsonObject();
     }
-    Windows::Storage::Streams::IBuffer StaticReferenceData::GetNamedMetadata(hstring name)
+    Windows::Foundation::IMemoryBufferReference StaticReferenceData::GetNamedMetadata(hstring name)
     {
         auto entry = m_metadataMap.find(name);
 
@@ -28,10 +33,10 @@ namespace winrt::DisplayStateReference::implementation
             // there is no metadata stream by that name tracked here.
             return nullptr;
         }
-        
-        return entry->second;
+
+        return entry->second.CreateReference();
     }
-    void StaticReferenceData::AddNamedMetadata(hstring name, Windows::Storage::Streams::IBuffer buffer)
+    void StaticReferenceData::AddNamedMetadata(hstring name, Windows::Foundation::IMemoryBuffer buffer)
     {
         auto entry = m_metadataMap.find(name);
 
@@ -50,7 +55,7 @@ namespace winrt::DisplayStateReference::implementation
     }
     void StaticReferenceData::FrameInfo(FrameBasicInfo frameInfo)
     {
-        if (m_buffersCreated)
+        if (m_frame)
         {
             //
             // if the buffers have already been created, the only frame changes allowed are for position. Size and format
@@ -58,22 +63,30 @@ namespace winrt::DisplayStateReference::implementation
             //
             if (frameInfo.height != m_frameInfo.height ||
                 frameInfo.width != m_frameInfo.width ||
-                frameInfo.pixelStride != m_frameInfo.pixelStride ||
-                frameInfo.pixelFormat != m_frameInfo.pixelFormat)
+                frameInfo.format != m_frameInfo.format)
             {
                 Log::Error(L"Buffers have already been created, no tool should be attempting to change state. Is this tool incorrectly categorized?");
             }
         }
+
         m_frameInfo = frameInfo;
     }
-    Windows::Foundation::IMemoryBufferReference StaticReferenceData::GetFrameFromCPU()
+    Windows::Graphics::Imaging::SoftwareBitmap StaticReferenceData::GetFrame()
     {
-        if (!m_buffersCreated)
+        if (!m_frame)
         {
-            // The frame hasn't been used yet, so lazily construct it here.
-            m_frameBuffer = Windows::Foundation::MemoryBuffer(m_frameInfo.height * m_frameInfo.width * m_frameInfo.pixelStride);
+            CreateBitmap();
         }
 
-        return m_frameBuffer.CreateReference();
+        return *m_frame;
+    }
+    void StaticReferenceData::CreateBitmap()
+    {
+        m_frame = std::make_shared<winrt::Windows::Graphics::Imaging::SoftwareBitmap>(
+            m_frameInfo.format,
+            m_frameInfo.width,
+            m_frameInfo.height,
+            winrt::Windows::Graphics::Imaging::BitmapAlphaMode::Ignore
+            );
     }
 }

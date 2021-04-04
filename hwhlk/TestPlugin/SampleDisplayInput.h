@@ -13,5 +13,7 @@ namespace winrt::CaptureCard::implementation
         CaptureCapabilities GetCapabilities();
 
         IDisplayCapture CaptureFrame(CaptureTrigger trigger);
+
+        void FinalizeDisplayState();
     };
 }

@@ -81,6 +81,7 @@ namespace winrt::Core::implementation
     {
         // Set up the PICT-specified tools for this test run
         auto testRun = TestRun();
+        auto testName = hstring(L"");
         for (auto toolbox : m_toolboxes)
         {
             auto toolList = toolbox.GetSupportedTools();
@@ -93,6 +94,14 @@ namespace winrt::Core::implementation
                     auto toolToRun = toolbox.GetTool(tool);
                     toolToRun.SetConfiguration(hstring(toolSetting));
                     testRun.toolRunList.push_back(toolToRun);
+
+                    // Build the name string for this test run
+                    if (!testName.empty())
+                    {
+                        testName = testName + L", ";
+                    }
+
+                    testName = testName + tool + L": " + hstring(toolSetting);
                 }
             }
         }
@@ -115,35 +124,34 @@ namespace winrt::Core::implementation
         }
 
         // Retrieve a display matching the all test requirements, from tool metadata and TAEF parameters
-        winrt::CaptureCard::IDisplayInput displayUnderTest;
-        auto displayList = m_captureCard->EnumerateDisplayInputs();
-        for (auto display : displayList)
-        {
-            auto capabilities = display.GetCapabilities();
-            if (m_runSoftwareOnly && capabilities.returnRawFramesToHost)
-            {
-                displayUnderTest = display;
-                break;
-            }
-        }
-
-        // Verify that we have a display selected
-        if (!displayUnderTest)
-        {
-            Log::Error(L"No display matching requirements could be located, aborting.");
-        }
+        auto displayUnderTest = ChooseDisplay();
 
         // Run through the tool list and generate the golden image
         auto reference = winrt::make<winrt::DisplayStateReference::implementation::StaticReferenceData>(L"Base Plane");
+
         for (auto tool : testRun.toolOrderedRunList)
         {
-            tool.ApplyToSoftwareReference(reference);
+            tool.ApplyToReference(reference);
         }
 
         // Run through the tool list and output to a display
-        if (!m_runSoftwareOnly)
-        {
+        winrt::ConfigurationTools::ConfigurationToolCategory currentCategory = testRun.toolOrderedRunList.front().Category();
 
+        for (auto tool : testRun.toolOrderedRunList)
+        {
+            // We're switching over to a new category of tools, if we're finishing the setup tools, inform the plugin so that
+            // it can ensure all setup data is finalized (this may require lengthly operations like an HPD).
+            if (currentCategory == winrt::ConfigurationTools::ConfigurationToolCategory::DisplaySetup && tool.Category() != currentCategory)
+            {
+                displayUnderTest.FinalizeDisplayState();
+            }
+
+            // Apply to hardware
+            if (!m_runSoftwareOnly)
+            {
+                //auto target = displayUnderTest.MapCaptureInputToDisplayPath();
+                //tool.ApplyToHardware(target);
+            }
         }
 
         // Ask the capture card to compare the outputs
@@ -151,12 +159,31 @@ namespace winrt::Core::implementation
         captureTrigger.type = winrt::CaptureCard::CaptureTriggerType::Immediate;
         auto capture = displayUnderTest.CaptureFrame(captureTrigger);
 
-        capture.CompareCaptureToReference(reference);
+        capture.CompareCaptureToReference(testName, reference);
+    }
+
+    winrt::CaptureCard::IDisplayInput Framework::ChooseDisplay()
+    {
+        auto displayList = m_captureCard->EnumerateDisplayInputs();
+        for (auto display : displayList)
+        {
+            auto capabilities = display.GetCapabilities();
+            if (m_runSoftwareOnly && capabilities.returnRawFramesToHost)
+            {
+                return display;
+            }
+
+            // TODO: Right now this isn't implemented for a physical card, prioritizing the virtual card we can share with Intel
+        }
+
+        Log::Error(L"No display matching requirements could be located, aborting.");
+
+        throw winrt::hresult_error();
     }
 
     bool TestRun::operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const
     {
-        // TODO: this needs to become a much more complicated comparison as we continue to add more tools
+        // TODO: This will become significantly more complicated as we continue to add more and more tools
         return a.Category() < b.Category();
     }
 }

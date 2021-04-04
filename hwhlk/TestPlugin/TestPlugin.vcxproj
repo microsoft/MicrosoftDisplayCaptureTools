@@ -190,19 +190,23 @@
   <ItemGroup>
     <ClInclude Include="CaptureCard.Controller.h" />
     <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
+    <ClInclude Include="ResolutionTool.h" />
     <ClInclude Include="SampleDisplayCapture.h" />
     <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="WireFormatTool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CaptureCard.Controller.cpp" />
     <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
+    <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="SampleDisplayCapture.cpp" />
     <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="WireFormatTool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -43,4 +43,12 @@ namespace winrt::CaptureCard::implementation
 
         throw winrt::hresult_not_implemented();
     }
+
+    void SampleDisplayInput::FinalizeDisplayState()
+    {
+        // This where a real capture card would ensure that the current display characteristics match
+        // any characteristics set by tools so far. For example, if a resolution-setting tool were to 
+        // be exposed, this function should ensure that the display presented to the OS _does_ support
+        // that resolution.
+    }
 }

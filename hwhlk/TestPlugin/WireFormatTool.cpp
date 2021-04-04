@@ -55,18 +55,16 @@ namespace winrt::ConfigurationTools::implementation
 
     void WireFormatTool::ApplyToHardware(Windows::Devices::Display::Core::DisplayTarget const& target)
     {
-        throw hresult_not_implemented();
     }
 
-    void WireFormatTool::ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference)
+    void WireFormatTool::ApplyToReference(DisplayStateReference::IStaticReference const& reference)
     {
         auto frameInfo = reference.FrameInfo();
 
         switch (m_currentConfig)
         {
         case WireFormatToolConfigurations::RGB8:
-            frameInfo.pixelFormat = DisplayStateReference::FramePixelFormat::R8G8B8;
-            frameInfo.pixelStride = 3; // 24bpp
+            frameInfo.format = winrt::Windows::Graphics::Imaging::BitmapPixelFormat::Rgba8;
             break;
         default:
             Log::Error(L"An unsupported resolution has been chosen");

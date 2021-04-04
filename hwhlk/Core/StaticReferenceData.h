@@ -8,23 +8,27 @@ namespace winrt::DisplayStateReference::implementation
 
         hstring Name();
 
-        Windows::Data::Json::JsonObject GetSerializedData();
+        Windows::Data::Json::JsonObject GetSerializedMetadata();
 
-        Windows::Storage::Streams::IBuffer GetNamedMetadata(hstring name);
+        Windows::Foundation::IMemoryBufferReference GetNamedMetadata(hstring name);
 
-        void AddNamedMetadata(hstring name, Windows::Storage::Streams::IBuffer buffer);
+        void AddNamedMetadata(hstring name, Windows::Foundation::IMemoryBuffer buffer);
 
         FrameBasicInfo FrameInfo();
 
         void FrameInfo(FrameBasicInfo frameInfo);
 
-        Windows::Foundation::IMemoryBufferReference GetFrameFromCPU();
+        Windows::Graphics::Imaging::SoftwareBitmap StaticReferenceData::GetFrame();
 
     private:
+        void CreateBitmap();
+
+    private:
+        
         hstring m_name;
         FrameBasicInfo m_frameInfo;
-        boolean m_buffersCreated;
-        Windows::Foundation::IMemoryBuffer m_frameBuffer;
-        std::map<hstring, Windows::Storage::Streams::IBuffer> m_metadataMap;
+        std::map<hstring, Windows::Foundation::IMemoryBuffer> m_metadataMap;
+
+        std::shared_ptr<Windows::Graphics::Imaging::SoftwareBitmap> m_frame;
     };
 }

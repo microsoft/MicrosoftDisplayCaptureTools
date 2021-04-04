@@ -69,6 +69,12 @@ namespace ConfigurationTools
         // The maximum capture tolerance that we can accept for this tool's operation. If the combined 
         // ContributedComparisonTolerance's of all tools selected for this run exeeds this amount, the run will be disallowed
         Single MaxComparisonTolerance;
+
+        // This tool requires access to the raw pixel data when applying its changes to a reference image. A tool reporting
+        // 'true' for this *must* use IStaticReference.GetFrameFromCPU instead of the GPU analogue when implementing the
+        // ApplyToSoftwareReference function. This can allow more complicated changes, but will disable many performance 
+        // optimizations and cause significantly slower performance.
+        Boolean RequiresRawFrameAccess;
     };
 
     //
@@ -124,7 +130,7 @@ namespace ConfigurationTools
         //
         void ApplyToHardware(Windows.Devices.Display.Core.DisplayTarget target);
 
-        // ApplyToSoftwareReference
+        // ApplyToReference
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
         //      This applies this tool's operation to a software-generated output image. This output image will be fed into
@@ -132,14 +138,10 @@ namespace ConfigurationTools
         //      to compare against the captured image.
         //
         // Parameters:
-        //      referenceImage
-        //          Operations can change the pixels of this image to match the effect this tool's operation has on the 
-        //          actual display output.
+        //      reference
+        //          This object encapsulates both metadata and the output display frame, both of which a Configuration Tool
+        //          may modify.
         //
-        //          Note: 'Bitmap' is used here for illustrative purposes, the final version will include overrides for 
-        //                both raw CPU-accessible memory as well as D2DImages ready for easy manipulation. It will also 
-        //                include specific handling for sub-images which will represent MPO planes.
-        //
-        void ApplyToSoftwareReference(DisplayStateReference.IStaticReference reference);
+        void ApplyToReference(DisplayStateReference.IStaticReference reference);
     }
 }

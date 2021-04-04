@@ -12,6 +12,9 @@ namespace winrt::Core::implementation
         void RunPictTest();
 
     private:
+        winrt::CaptureCard::IDisplayInput ChooseDisplay();
+
+    private:
         std::vector<winrt::ConfigurationTools::ConfigurationToolbox> m_toolboxes;
         std::shared_ptr<winrt::CaptureCard::IController> m_captureCard;
         boolean m_runSoftwareOnly;

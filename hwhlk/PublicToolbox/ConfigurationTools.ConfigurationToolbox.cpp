@@ -6,16 +6,12 @@ namespace winrt::ConfigurationTools::implementation
 {
     enum class Tools
     {
-        Pattern,
-        WireFormat,
-        Resolution
+        Pattern
     };
 
     std::map<std::wstring, Tools> MapNameToTool =
     {
-        {L"Pattern", Tools::Pattern},
-        {L"WireFormat", Tools::WireFormat},
-        {L"Resolution", Tools::Resolution}
+        {L"Pattern", Tools::Pattern}
     };
 
     hstring ConfigurationToolbox::Name()
@@ -38,12 +34,6 @@ namespace winrt::ConfigurationTools::implementation
         {
         case Tools::Pattern:
             return winrt::make<PatternTool>();
-            break;
-        case Tools::WireFormat:
-            return winrt::make<WireFormatTool>();
-            break;
-        case Tools::Resolution:
-            return winrt::make<ResolutionTool>();
             break;
         }
 

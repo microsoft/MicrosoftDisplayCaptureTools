@@ -56,10 +56,9 @@ namespace winrt::ConfigurationTools::implementation
 
     void ResolutionTool::ApplyToHardware(Windows::Devices::Display::Core::DisplayTarget const& target)
     {
-        throw hresult_not_implemented();
     }
 
-    void ResolutionTool::ApplyToSoftwareReference(DisplayStateReference::IStaticReference const& reference)
+    void ResolutionTool::ApplyToReference(DisplayStateReference::IStaticReference const& reference)
     {
         auto frameInfo = reference.FrameInfo();
 

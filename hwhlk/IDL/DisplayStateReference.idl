@@ -1,16 +1,8 @@
 namespace DisplayStateReference
 {
-    //
-    // FramePixelFormat defines the the different supported pixel formats
-    //
-    enum FramePixelFormat
-    {
-        R8G8B8,
-    };
-
     struct FrameBasicInfo
     {
-        FramePixelFormat pixelFormat;
+        Windows.Graphics.Imaging.BitmapPixelFormat format;
         
         // Dimensions of the frame
         UInt32 width;
@@ -19,9 +11,6 @@ namespace DisplayStateReference
         // Position of the frame (relative to top left if non-zero)
         UInt32 positionX;
         UInt32 positionY;
-
-        // The stride of the data if accessing via GetFrameFromCPU
-        UInt32 pixelStride;
     };
 
     //
@@ -31,6 +20,7 @@ namespace DisplayStateReference
     //
     interface IStaticReference
     {
+        // Refers to the name calculated for this particular test run.
         String Name{ get; };
 
         // GetSerializedData
@@ -38,7 +28,7 @@ namespace DisplayStateReference
         // Notes:
         //      This method returns a JSON object containing the state for this this object.
         //
-        Windows.Data.Json.JsonObject GetSerializedData();
+        Windows.Data.Json.JsonObject GetSerializedMetadata();
 
         // GetNamedMetadata
         // ----------------------------------------------------------------------------------------------------------------
@@ -54,7 +44,7 @@ namespace DisplayStateReference
         //          This identifies a particular piece of metadata, and allows consistent access to this buffer from any
         //          combination of tools and the capture card plugin itself.
         //
-        Windows.Storage.Streams.IBuffer GetNamedMetadata(String name);
+        Windows.Foundation.IMemoryBufferReference GetNamedMetadata(String name);
 
         // AddNamedMetadata
         // ----------------------------------------------------------------------------------------------------------------
@@ -72,7 +62,7 @@ namespace DisplayStateReference
         //          This identifies a particular piece of metadata, and allows consistent access to this buffer from any
         //          combination of tools and the capture card plugin itself.
         //
-        void AddNamedMetadata(String name, Windows.Storage.Streams.IBuffer buffer);
+        void AddNamedMetadata(String name, Windows.Foundation.IMemoryBuffer buffer);
 
         // FrameInfo
         // ----------------------------------------------------------------------------------------------------------------
@@ -82,21 +72,13 @@ namespace DisplayStateReference
         //
         FrameBasicInfo FrameInfo;
 
-        // GetFrameFromGPU
-        // ----------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //      If the frame pixel format is supported, this returns a representation of the frame on the GPU, which allows
-        //      for very performant lossless operations.
-        //
-        //ISurfaceImageSource GetFrameFromGPU();
 
-        // GetFrameFromCPU
+        // GetFrame
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Intended as a fallback, this returns a raw CPU-accessible buffer for the frame, which allows for operations
-        //      in the case that the pixel format isn't supported by GetFrameFromGPU, or if the tool in question isn't
-        //      implemented to use hardware.
+        //      Returns an uncompressed bitmap representation of the current reference image, with which a configuration tool
+        //      may access both frame metadata (i.e. format, dimension) and the pixel data.
         //
-        Windows.Foundation.IMemoryBufferReference GetFrameFromCPU();
+        Windows.Graphics.Imaging.SoftwareBitmap GetFrame();
     }
 }
