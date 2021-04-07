@@ -1,0 +1,143 @@
+namespace MicrosoftHardwareVerification
+{
+    //
+    // This object simply holds a slate of ConfigurationTools.
+    //
+    runtimeclass ConfigurationToolbox
+    {
+        // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
+        String Name;
+
+        ConfigurationToolbox();
+
+        // GetSupportedTools
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns the full set of tools that are supported by this Toolbox
+        //
+        // Parameters:
+        //      tools
+        //          This output array contains the string identifier for every configuration tool that this toolbox can
+        //          supply. These strings must match the 'name' field of the individual tools, as well as the identifiers
+        //          specified in the PICT file.
+        //
+        void GetSupportedTools(ref String[] tools);
+
+        // GetTool
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This constructs and returns a specific tool
+        //
+        // Parameters:
+        //      toolName
+        //          The identifier for the desired tool
+        //
+        ConfigurationTool GetTool(String toolName);
+    }
+
+    //
+    // This enum defines what a particular tool is used for. The testing framework uses this information to determine in 
+    // which order to run the tools.
+    //
+    // This list as currently stands is used for illustrative purposes, we anticipate adding several more categories
+    //
+    enum ConfigurationToolCategory
+    {
+        // This tool assists in device setup, and should be run first. Examples might include setting a custom display EDID
+        DisplaySetup, 
+
+        // This tool prepares the OS to draw pixels to the screen. Examples include creation of MPO planes or changing mode
+        RenderSetup,
+
+        // This tool actively modifies the output pixels directly. Examples drawing a specific pattern or 
+        Render,
+    };
+
+    //
+    // The requirements that the system under test and the capture card must meet for this tool to be valid. This is also
+    // used to determine allowable tolerances on the output image.
+    //
+    struct ConfigurationToolRequirements
+    {
+        // The maximum capture tolerance that we expect this tool to contribute. If a capture card cannot support comparisons
+        // with a tolerance, a non-zero value here will disallow the test run - this tool should not be used for that capture
+        // card.
+        Single ContributedComparisonTolerance;
+
+        // The maximum capture tolerance that we can accept for this tool's operation. If the combined 
+        // ContributedComparisonTolerance's of all tools selected for this run exeeds this amount, the run will be disallowed
+        Single MaxComparisonTolerance;
+    };
+
+    //
+    // A ConfigurationTool represents a single operation that can be taken on a display according to the PICT parameters.
+    // Tools are intended to be used together to define many different possible states for the entire display pipeline.
+    // For example, a tool might modify the gamma lookup tables.
+    //
+    // ConfigurationTools must be able to apply whatever transform they are doing to a reference image as well, this 
+    // reference image 
+    //
+    runtimeclass ConfigurationTool
+    {
+        // The name of the configuration tool, this should exactly match the PICT parameter name that this supports.
+        String Name;
+
+        // The category for this configuration tool, this will determine when the framework interacts with this tool in 
+        // relation to other tools in the test run.
+        ConfigurationToolCategory Category;
+
+        // The system and capture card requirements for this tool to be used.
+        ConfigurationToolRequirements Requirements;
+
+        // GetSupportedConfigurations
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This returns an array of strings which represent the supported PICT configurations for this tool.
+        //
+        void GetSupportedConfigurations(ref String[] supportedConfigurations);
+
+        // SetConfiguration
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This sets the PICT configuration to use for this tool. This value should be used for any subsequent calls 
+        //      to apply this tool.
+        //
+        // Parameters:
+        //      configuration
+        //          This string specifies which PICT configuration for the Tool to use. This value must be in the list 
+        //          returned by GetSupportedConfigurations and must exactly match the PICT parameter values.
+        //
+        void SetConfiguration(String configuration);
+
+        // ApplyToHardware
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This applies this tool's operation to an actual display output. We explicitly do not define how this is
+        //      done. A valid tool might use Direct3D to draw an output image and another valid tool might directly
+        //      interface with the capture card itself.
+        //
+        // Parameters:
+        //      displayPath
+        //          This identifies the Windows display path for the target output.
+        //
+        void ApplyToHardware(DisplayPath displayPath);
+
+        // ApplyToSoftwareReference
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This applies this tool's operation to a software-generated output image. This output image will be fed into
+        //      other tools by the framework until all operations have been exercised. The final output image will be used
+        //      to compare against the captured image.
+        //
+        // Parameters:
+        //      referenceImage
+        //          Operations can change the pixels of this image to match the effect this tool's operation has on the 
+        //          actual display output.
+        //
+        //          Note: 'Bitmap' is used here for illustrative purposes, the final version will include overrides for 
+        //                both raw CPU-accessible memory as well as D2DImages ready for easy manipulation. It will also 
+        //                include specific handling for sub-images which will represent MPO planes.
+        //
+        void ApplyToSoftwareReference(ref Bitmap referenceImage);
+    }
+}

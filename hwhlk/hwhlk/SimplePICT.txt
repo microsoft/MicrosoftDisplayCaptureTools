@@ -1,0 +1,3 @@
+Pattern:    Black, White, Red, Green, Blue
+WireFormat: RGB8
+Resolution: 1080p, 2160p
