@@ -4,7 +4,7 @@ namespace winrt::CaptureCard::implementation
 {
     struct SampleDisplayInput : implements<SampleDisplayInput, IDisplayInput>
     {
-        SampleDisplayInput() = default;
+        SampleDisplayInput(FrankenboardDevice* parent);
 
         hstring Name();
 
@@ -15,5 +15,7 @@ namespace winrt::CaptureCard::implementation
         IDisplayCapture CaptureFrame(CaptureTrigger trigger);
 
         void FinalizeDisplayState();
+
+        FrankenboardDevice* m_parent;
     };
 }
