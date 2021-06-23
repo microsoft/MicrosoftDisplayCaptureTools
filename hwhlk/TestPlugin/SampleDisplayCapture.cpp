@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "SampleDisplayCapture.h"
+#include "MethodAccess.h"
 
 #include <winrt/Windows.Security.Cryptography.h>
 #include <winrt/Windows.Security.Cryptography.Core.h>
 
 #include <wincodec.h>
 #include <MemoryBuffer.h>
+
 
 using namespace WEX::Common;
 using namespace WEX::Logging;
@@ -97,6 +99,34 @@ namespace winrt::CaptureCard::implementation
         auto bitmap = decoder.GetSoftwareBitmapAsync().get();
 
         return bitmap;
+    }
+    
+    //winrt::Windows::Graphics::Imaging::SoftwareBitmap SampleDisplayCapture::SaveMemoryToBitmap(hstring name)
+    void SampleDisplayCapture:: SaveMemoryToBitmap (hstring name)
+    {
+        auto file = m_testDataFolder.GetFileAsync(name).get();
+        //if (!file) winrt::throw_hresult(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
+        // readBuffer = get buffer from FPGARead
+        auto read = readBuffer.get();
+        auto decoder = winrt::Windows::Graphics::Imaging::BitmapDecoder::CreateAsync(read).get();
+        auto bitmap = decoder.GetSoftwareBitmapAsync().get();
+        // width, height and pixel format info retrieved from FPGA
+        int bWidth= 644; 
+        int bHeight= 300;
+        winrt::com_ptr<IWICBitmap> m_pEmbeddedBitmap ; //COM pointer 
+        int bitsPerPixel =32;
+        hr = pIWICFactory -> CreateBitmapFromMemory (
+            bHeight,
+            bWidth,
+            GUID_WICPixelFormat32bppRGB, 
+            (bWidth*bitsPerPixel+7)/8, 
+            bHeight*bWidth,
+            readBuffer,
+            m_pEmbeddedBitmap );
+        if (!SUCCEEDED (hr)) {
+            char *buffer ="Error in Creating Bitmap \n"; }
+
+        return hr;
     }
 
     void SampleDisplayCapture::SaveMismatchedImage(hstring name, winrt::Windows::Graphics::Imaging::SoftwareBitmap bitmap)
