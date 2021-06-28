@@ -28,6 +28,10 @@ namespace winrt::CaptureCard::implementation
             m_frankenboardDevices.push_back(input);
             m_displayInputs.push_back(input->GetHdmiInput());
         }
+
+		//Instantiating pointer to self & singleton
+		std::weak_ptr<int>wp(Controller);
+		MethodAccess::getMethodInstance(wp);
     }
 
     hstring Controller::Name()

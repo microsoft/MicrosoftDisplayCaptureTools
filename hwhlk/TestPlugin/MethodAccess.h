@@ -56,7 +56,7 @@ public:
 
     winrt::Windows::Storage::Streams::Buffer FpgaRead()
     {
-        return captCardController.FpgaRead();
+        return CardController.FpgaRead();
     }
     /*void CaptureDisplay()
     {

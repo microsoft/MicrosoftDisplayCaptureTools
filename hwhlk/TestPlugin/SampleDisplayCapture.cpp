@@ -106,7 +106,10 @@ namespace winrt::CaptureCard::implementation
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
         //if (!file) winrt::throw_hresult(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
-        // readBuffer = get buffer from FPGARead
+        byte data = 0x0;
+        std::vector<byte> dataBuff;
+        dataBuff.push_back(data);
+        auto readBuffer= CaptureCard::FpgaRead (0x20,dataBuff);
         auto read = readBuffer.get();
         auto decoder = winrt::Windows::Graphics::Imaging::BitmapDecoder::CreateAsync(read).get();
         auto bitmap = decoder.GetSoftwareBitmapAsync().get();

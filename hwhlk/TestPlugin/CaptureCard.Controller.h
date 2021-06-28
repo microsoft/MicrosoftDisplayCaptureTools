@@ -1,6 +1,7 @@
 #pragma once
 #include "CaptureCard.Controller.g.h"
 #include "I2cDriver.h"
+#include "MethodAccess.h"
 
 namespace winrt::CaptureCard::implementation
 {
@@ -16,6 +17,7 @@ namespace winrt::CaptureCard::implementation
 
         void SetOutputDirection(char bank, unsigned char value, unsigned char mask);
         void SetOutput(char bank, unsigned char value, unsigned char mask);
+        
 
     private:
         unsigned char address;
@@ -30,8 +32,11 @@ namespace winrt::CaptureCard::implementation
         ~FrankenboardDevice();
         CaptureCard::IDisplayInput GetHdmiInput();
         void TriggerHdmiCapture();
+        Buffer FpgaRead(unsigned short address, std::vector<byte> data);
     private:
         void FpgaWrite(unsigned short address, std::vector<byte> data);
+        //Buffer FpgaRead(unsigned short address, std::vector<byte> data);
+        DWORD FpgaRead(winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
         void SetEdid(std::vector<byte> Edid);
         void SetHpd(bool isPluggedIn);
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
@@ -49,6 +54,9 @@ namespace winrt::CaptureCard::implementation
 
         std::vector<CaptureCard::IDisplayInput> m_displayInputs;
         std::vector<std::shared_ptr<FrankenboardDevice>> m_frankenboardDevices;
+        //Instantiating pointer to self & singleton
+        std::weak_ptr<int>wp(Controller);
+        std::shared_ptr<MethodAccess>winrt::CaptureCard::implementation::Controller::getMethodInstance(int wp);
     };
 }
 
