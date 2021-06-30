@@ -12,7 +12,7 @@ namespace winrt::CaptureCard::implementation
     private:
         hstring ComputeHashedFileName(hstring testName);
         winrt::Windows::Graphics::Imaging::SoftwareBitmap LoadComparisonImage(hstring name);
-        void SaveMemoryToBitmap(hstring name);
+        HRESULT SaveMemoryToBitmap(hstring name);
         void SaveMismatchedImage(hstring name, winrt::Windows::Graphics::Imaging::SoftwareBitmap bitmap);
         static winrt::Windows::Storage::StorageFolder LoadFolder(hstring subFolder);
 

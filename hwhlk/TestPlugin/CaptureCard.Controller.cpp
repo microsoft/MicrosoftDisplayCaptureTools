@@ -30,8 +30,10 @@ namespace winrt::CaptureCard::implementation
         }
 
 		//Instantiating pointer to self & singleton
-		std::weak_ptr<int>wp(Controller);
-		MethodAccess::getMethodInstance(wp);
+		std::weak_ptr<int>Ctrl_ptr(Controller);
+		MethodAccess fn_access;
+		fn_access.getMethodInstance(Ctrl_ptr);
+		
     }
 
     hstring Controller::Name()
