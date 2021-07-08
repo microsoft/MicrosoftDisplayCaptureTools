@@ -2,7 +2,8 @@
 #include "CaptureCard.Controller.g.cpp"
 #include "IteIt6803.h"
 #include <initguid.h>
-#include "MethodAccess.h"
+#include "Singleton.h"
+
 //
 // Device Interface GUID.
 // Used by all WinUsb devices that this application talks to.
@@ -30,9 +31,7 @@ namespace winrt::CaptureCard::implementation
         }
 
 		//Instantiating pointer to self & singleton
-		std::weak_ptr<int>Ctrl_ptr(Controller);
-		MethodAccess fn_access;
-		fn_access.getMethodInstance(Ctrl_ptr);
+		
 		
     }
 

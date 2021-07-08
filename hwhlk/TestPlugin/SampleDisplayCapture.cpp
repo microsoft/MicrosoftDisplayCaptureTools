@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "SampleDisplayCapture.h"
-#include "MethodAccess.h"
+#include "Singleton.h"
 #include "CaptureCard.Controller.g.h"
 
 #include <winrt/Windows.Security.Cryptography.h>
@@ -110,26 +110,22 @@ namespace winrt::CaptureCard::implementation
         byte data = 0x0;
         std::vector<byte> dataBuff;
         dataBuff.push_back(data);
-        auto fn = MethodAccess ma;
-        //auto readBuffer = winrt::Windows::Storage::Streams::Buffer MethodAccess::FpgaRead(0x20, dataBuff);
-        auto readBuffer=fn.FpgaRead (0x20,dataBuff);
-        auto read = readBuffer.get();
-        auto decoder = winrt::Windows::Graphics::Imaging::BitmapDecoder::CreateAsync(read).get();
-        auto bitmap = decoder.GetSoftwareBitmapAsync().get();
+        MethodAccess fn;
+        auto readBuffer = fn.FpgaRead();
+        auto read = readBuffer.data(); //byte pointer
         // width, height and pixel format info retrieved from FPGA
         int bWidth= 644; 
         int bHeight= 300;
         int bitsPerPixel =32;
         IWICImagingFactory *pIWICFactory;
-        //IWICBitmap  *m_pEmbeddedBitmap;
-        winrt::com_ptr<IWICBitmap> m_pEmbeddedBitmap ; 
+        IWICBitmap  **m_pEmbeddedBitmap;
         HRESULT hr = pIWICFactory -> CreateBitmapFromMemory (
             bHeight,
             bWidth,
             GUID_WICPixelFormat32bppRGB, 
             (bWidth*bitsPerPixel+7)/8, 
             bHeight*bWidth,
-            readBuffer,
+            read,
             m_pEmbeddedBitmap );
         if (!SUCCEEDED (hr)) {
             char *buffer ="Error in Creating Bitmap \n"; }
