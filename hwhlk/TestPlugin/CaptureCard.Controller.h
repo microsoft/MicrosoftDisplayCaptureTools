@@ -33,10 +33,11 @@ namespace winrt::CaptureCard::implementation
         CaptureCard::IDisplayInput GetHdmiInput();
         void TriggerHdmiCapture();
         //Buffer FpgaRead(unsigned short address, std::vector<byte> data);
-    private:
+    //private:
         void FpgaWrite(unsigned short address, std::vector<byte> data);
         Buffer FpgaRead(unsigned short address, std::vector<byte> data);
         DWORD FpgaRead(winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
+    private:
         void SetEdid(std::vector<byte> Edid);
         void SetHpd(bool isPluggedIn);
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
