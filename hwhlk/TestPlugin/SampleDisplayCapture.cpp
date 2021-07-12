@@ -103,34 +103,38 @@ namespace winrt::CaptureCard::implementation
     }
     
     //winrt::Windows::Graphics::Imaging::SoftwareBitmap SampleDisplayCapture::SaveMemoryToBitmap(hstring name)
-    void SampleDisplayCapture:: SaveMemoryToBitmap (hstring name)
+    void SampleDisplayCapture::SaveMemoryToBitmap (hstring name)
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
         //if (!file) winrt::throw_hresult(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
-        byte data = 0x0;
-        std::vector<byte> dataBuff;
-        dataBuff.push_back(data);
-        MethodAccess fn;
+
         auto readBuffer = fn.FpgaRead();
         auto read = readBuffer.data(); //byte pointer
         // width, height and pixel format info retrieved from FPGA
         int bWidth= 644; 
         int bHeight= 300;
         int bitsPerPixel =32;
-        IWICImagingFactory *pIWICFactory;
-        IWICBitmap  **m_pEmbeddedBitmap;
-        HRESULT hr = pIWICFactory -> CreateBitmapFromMemory (
-            bHeight,
+
+        winrt::com_ptr<IWICImagingFactory> wicFactory;
+
+        // Create the COM imaging factory
+        winrt::check_hresult(CoCreateInstance(
+            CLSID_WICImagingFactory,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            IID_PPV_ARGS(wicFactory.put())
+        ));
+
+        winrt::com_ptr<IWICBitmap> embeddedBitmap;
+        winrt::check_hresult(wicFactory->CreateBitmapFromMemory(  
             bWidth,
+            bHeight,
             GUID_WICPixelFormat32bppRGB, 
             (bWidth*bitsPerPixel+7)/8, 
             bHeight*bWidth,
             read,
-            m_pEmbeddedBitmap );
-        if (!SUCCEEDED (hr)) {
-            char *buffer ="Error in Creating Bitmap \n"; }
+            embeddedBitmap.put()));
 
-        //return hr;
     }
 
     void SampleDisplayCapture::SaveMismatchedImage(hstring name, winrt::Windows::Graphics::Imaging::SoftwareBitmap bitmap)

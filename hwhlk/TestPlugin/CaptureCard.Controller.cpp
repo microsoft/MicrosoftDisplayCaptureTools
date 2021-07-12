@@ -21,18 +21,8 @@ using namespace winrt::Windows::Storage::Streams;
 namespace winrt::CaptureCard::implementation
 {
     Controller::Controller()
-    {
-        // Enumerate and initialize all Frankenboard USB devices
-        for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Frankenboard)).get())
-        {
-            auto input = std::make_shared<FrankenboardDevice>(device.Id());
-            m_frankenboardDevices.push_back(input);
-            m_displayInputs.push_back(input->GetHdmiInput());
-        }
-
-		//Instantiating pointer to self & singleton
-		
-		
+    {		
+		DiscoverCaptureBoards();
     }
 
     hstring Controller::Name()
@@ -48,6 +38,17 @@ namespace winrt::CaptureCard::implementation
     {
         return ConfigurationTools::ConfigurationToolbox();
     }
+
+	void Controller::DiscoverCaptureBoards()
+	{
+		// Enumerate and initialize all Frankenboard USB devices
+        for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Frankenboard)).get())
+        {
+            auto input = std::make_shared<FrankenboardDevice>(device.Id());
+            m_captureBoards.push_back(input);
+            m_displayInputs.push_back(input->GetHdmiInput());
+        }
+	}
 
 	FrankenboardDevice::FrankenboardDevice(winrt::param::hstring deviceId)
         : m_usbDevice(nullptr)

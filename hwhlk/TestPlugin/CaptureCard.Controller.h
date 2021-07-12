@@ -5,10 +5,17 @@
 
 namespace winrt::CaptureCard::implementation
 {
+    // Provides an abstraction for different boards to provide display inputs
+    class IMicrosoftCaptureBoard abstract
+    {
+    public:
+        virtual std::vector<CaptureCard::IDisplayInput> EnumerateDisplayInputs() = 0;
+    };
 
 #define TCA6416A_BANK_0 0
 #define TCA6416A_BANK_1 1
 
+    // I2C bus device
     class TiTca6416a
     {
     public:
@@ -25,13 +32,15 @@ namespace winrt::CaptureCard::implementation
     };
 
     // Represents a single Frankenboard USB device. Initializes and keeps device state.
-    class FrankenboardDevice
+    class FrankenboardDevice : public IMicrosoftCaptureBoard
     {
     public:
         FrankenboardDevice(winrt::param::hstring deviceId);
         ~FrankenboardDevice();
+
         CaptureCard::IDisplayInput GetHdmiInput();
         void TriggerHdmiCapture();
+
         //Buffer FpgaRead(unsigned short address, std::vector<byte> data);
     //private:
         void FpgaWrite(unsigned short address, std::vector<byte> data);
@@ -45,11 +54,16 @@ namespace winrt::CaptureCard::implementation
         std::shared_ptr<I2cDriver> pDriver;
     };
 
+    // Represents a single real Microsoft capture device. Initializes and keeps device state.
+    class MicrosoftRealDevice : IMicrosoftCaptureBoard
+    {
+
+    };
+
     struct Controller : ControllerT<Controller>,
         public std::enable_shared_from_this<Controller>,
         public Singleton<Controller>
     {
-    
         Controller();
 
         hstring Name();
@@ -57,14 +71,10 @@ namespace winrt::CaptureCard::implementation
         ConfigurationTools::ConfigurationToolbox GetToolbox();
 
         std::vector<CaptureCard::IDisplayInput> m_displayInputs;
-        std::vector<std::shared_ptr<FrankenboardDevice>> m_frankenboardDevices;
-        
-        //Instantiating pointer to self & singleton
-        std::weak_ptr<winrt::CaptureCard::implementation::Controller> Ctrl_ptr;
-        winrt::Windows::Storage::Streams::Buffer FpgaRead()
-        {
-            return Ctrl_ptr.FpgaRead();
-        }
+        std::vector<std::shared_ptr<IMicrosoftCaptureBoard>> m_captureBoards;
+
+    private:
+        void DiscoverCaptureBoards();
     };
 }
 
@@ -74,5 +84,9 @@ namespace winrt::CaptureCard::factory_implementation
 {
     struct Controller : ControllerT<Controller, implementation::Controller>
     {
+        auto ActivateInstance() const override
+        {
+            return make<T>();
+        }
     };
 }

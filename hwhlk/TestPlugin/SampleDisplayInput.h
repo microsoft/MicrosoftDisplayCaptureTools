@@ -4,7 +4,7 @@ namespace winrt::CaptureCard::implementation
 {
     struct SampleDisplayInput : implements<SampleDisplayInput, IDisplayInput>
     {
-        SampleDisplayInput(FrankenboardDevice* parent);
+        SampleDisplayInput(std::weak_ptr<FrankenboardDevice> parent);
 
         hstring Name();
 
@@ -16,6 +16,6 @@ namespace winrt::CaptureCard::implementation
 
         void FinalizeDisplayState();
 
-        FrankenboardDevice* m_parent;
+        std::weak_ptr<FrankenboardDevice> m_parent;
     };
 }
