@@ -4,7 +4,7 @@ namespace winrt::CaptureCard::implementation
 {
     struct SampleDisplayCapture : implements<SampleDisplayCapture, IDisplayCapture>
     {
-        SampleDisplayCapture();
+        SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
 
         void CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference);
         void SaveCaptureToDisk(hstring path);
@@ -19,5 +19,6 @@ namespace winrt::CaptureCard::implementation
     private:
         // The folder in which to look for test data
         winrt::Windows::Storage::StorageFolder m_testDataFolder, m_mismatchFolder;
+        std::shared_ptr<IMicrosoftCaptureBoard> m_captureBoard;
     };
 }

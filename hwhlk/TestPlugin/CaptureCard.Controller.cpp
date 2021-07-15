@@ -3,6 +3,7 @@
 #include "IteIt6803.h"
 #include <initguid.h>
 #include "Singleton.h"
+#include "SampleDisplayCapture.h"
 
 //
 // Device Interface GUID.
@@ -20,6 +21,7 @@ using namespace winrt::Windows::Storage::Streams;
 
 namespace winrt::CaptureCard::implementation
 {
+	
     Controller::Controller()
     {		
 		DiscoverCaptureBoards();
@@ -38,6 +40,11 @@ namespace winrt::CaptureCard::implementation
     {
         return ConfigurationTools::ConfigurationToolbox();
     }
+	void Controller::InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture)
+	{
+		//m_captureBoards.push_back(self);
+		SampleDisplayCapture capture(singleCapture);
+	}
 
 	void Controller::DiscoverCaptureBoards()
 	{

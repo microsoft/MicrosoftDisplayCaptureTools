@@ -1,4 +1,5 @@
 #include "pch.h"
+// add the include for IMicrosoftCaptureBoard
 #include "SampleDisplayCapture.h"
 #include "Singleton.h"
 #include "CaptureCard.Controller.g.h"
@@ -16,9 +17,10 @@ using namespace WEX::TestExecution;
 
 namespace winrt::CaptureCard::implementation
 {
-    SampleDisplayCapture::SampleDisplayCapture() : 
+    SampleDisplayCapture::SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> captureBoard) :
         m_testDataFolder(LoadFolder(L"TestData")),
-        m_mismatchFolder(LoadFolder(L"Mismatches"))
+        m_mismatchFolder(LoadFolder(L"Mismatches")),
+        m_captureBoard(captureBoard)
     {
         
     }
@@ -108,7 +110,7 @@ namespace winrt::CaptureCard::implementation
         auto file = m_testDataFolder.GetFileAsync(name).get();
         //if (!file) winrt::throw_hresult(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
 
-        auto readBuffer = fn.FpgaRead();
+        auto readBuffer = m_captureBoard->FpgaRead();
         auto read = readBuffer.data(); //byte pointer
         // width, height and pixel format info retrieved from FPGA
         int bWidth= 644; 

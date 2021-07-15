@@ -2,6 +2,7 @@
 #include "CaptureCard.Controller.g.h"
 #include "I2cDriver.h"
 #include "Singleton.h"
+#include "SampleDisplayCapture.h"
 
 namespace winrt::CaptureCard::implementation
 {
@@ -40,12 +41,10 @@ namespace winrt::CaptureCard::implementation
 
         CaptureCard::IDisplayInput GetHdmiInput();
         void TriggerHdmiCapture();
-
-        //Buffer FpgaRead(unsigned short address, std::vector<byte> data);
-    //private:
         void FpgaWrite(unsigned short address, std::vector<byte> data);
         Buffer FpgaRead(unsigned short address, std::vector<byte> data);
         DWORD FpgaRead(winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
+
     private:
         void SetEdid(std::vector<byte> Edid);
         void SetHpd(bool isPluggedIn);
@@ -60,9 +59,7 @@ namespace winrt::CaptureCard::implementation
 
     };
 
-    struct Controller : ControllerT<Controller>,
-        public std::enable_shared_from_this<Controller>,
-        public Singleton<Controller>
+    struct Controller : ControllerT<Controller>
     {
         Controller();
 
@@ -72,9 +69,11 @@ namespace winrt::CaptureCard::implementation
 
         std::vector<CaptureCard::IDisplayInput> m_displayInputs;
         std::vector<std::shared_ptr<IMicrosoftCaptureBoard>> m_captureBoards;
+       
 
     private:
         void DiscoverCaptureBoards();
+        void InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
     };
 }
 
@@ -84,9 +83,5 @@ namespace winrt::CaptureCard::factory_implementation
 {
     struct Controller : ControllerT<Controller, implementation::Controller>
     {
-        auto ActivateInstance() const override
-        {
-            return make<T>();
-        }
     };
 }
