@@ -104,15 +104,17 @@ namespace winrt::CaptureCard::implementation
         return bitmap;
     }
     
-    //winrt::Windows::Graphics::Imaging::SoftwareBitmap SampleDisplayCapture::SaveMemoryToBitmap(hstring name)
+
     void SampleDisplayCapture::SaveMemoryToBitmap (hstring name)
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
-        //if (!file) winrt::throw_hresult(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
-
-        auto readBuffer = m_captureBoard->FpgaRead();
-        auto read = readBuffer.data(); //byte pointer
-        // width, height and pixel format info retrieved from FPGA
+        byte data = 0x0;
+        std::vector<byte> dataBuff;
+        dataBuff.push_back(data);	
+        m_captureBoard->FpgaRead(0x20, dataBuff);
+        dataBuff[0] = 0x1; 
+        auto readBuffer = m_captureBoard->FpgaRead(0x20, dataBuff);
+        auto read = readBuffer.data(); 
         int bWidth= 644; 
         int bHeight= 300;
         int bitsPerPixel =32;

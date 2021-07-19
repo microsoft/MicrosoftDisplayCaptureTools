@@ -145,7 +145,7 @@ m_hdmiInput = winrt::make<CaptureCard::implementation::SampleDisplayInput>(this)
 	}
 	
 
-	Buffer FrankenboardDevice::FpgaRead(unsigned short address, std::vector<byte> data)
+	Buffer FrankenboardDevice::FpgaRead (unsigned short address, std::vector<byte> data)
 	{
 		DWORD retVal = MAXDWORD;
 		const size_t readBlockSize = 0x50;
@@ -153,22 +153,15 @@ m_hdmiInput = winrt::make<CaptureCard::implementation::SampleDisplayInput>(this)
 		ULONG amountToRead = min(readBlockSize, remaining);
 		Buffer readBuffer(amountToRead);
 		readBuffer.Length(amountToRead);
-		retVal = FpgaRead(readBuffer, address, remaining, &amountToRead);
+		retVal = fpgaReadSetupPacket (readBuffer, address, remaining, &amountToRead);
 		memcpy_s(data.data(), remaining, readBuffer.data(), readBuffer.Length());
-		/*if (retVal == 0)
-		{
-			printf("Bytes read: %d \n", amountToRead);
-			for (ULONG i = 0; i < amountToRead && i < sizeof(readBuffer); i++)
-				printf("%02X", readBuffer[i]);
-		}*/
 		Buffer readValue(retVal);
 	Exit:
-		//return retVal;
 		return readValue;
 
 	}
 
-	DWORD FrankenboardDevice::FpgaRead(Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead)
+	DWORD FrankenboardDevice::fpgaReadSetupPacket (Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead)
 	{
 		DWORD retVal = MAXDWORD;
 		const size_t readBlockSize = 0x50;

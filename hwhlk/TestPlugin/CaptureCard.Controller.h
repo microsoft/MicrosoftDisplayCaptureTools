@@ -42,8 +42,8 @@ namespace winrt::CaptureCard::implementation
         CaptureCard::IDisplayInput GetHdmiInput();
         void TriggerHdmiCapture();
         void FpgaWrite(unsigned short address, std::vector<byte> data);
-        Buffer FpgaRead(unsigned short address, std::vector<byte> data);
-        DWORD FpgaRead(winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
+        Buffer FpgaRead (unsigned short address, std::vector<byte> data);
+        DWORD fpgaReadSetupPacket (winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
 
     private:
         void SetEdid(std::vector<byte> Edid);
