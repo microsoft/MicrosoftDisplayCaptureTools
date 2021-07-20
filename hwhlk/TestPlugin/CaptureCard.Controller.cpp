@@ -42,7 +42,6 @@ namespace winrt::CaptureCard::implementation
     }
 	void Controller::InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture)
 	{
-		//m_captureBoards.push_back(self);
 		SampleDisplayCapture capture(singleCapture);
 	}
 
@@ -116,7 +115,6 @@ m_hdmiInput = winrt::make<CaptureCard::implementation::SampleDisplayInput>(this)
 
 		dataBuff[0] = 0x1;
 		FpgaWrite(0x20, dataBuff);	// Clear reset, triggers capture logic
-		FpgaRead(0x20, dataBuff);
 	}
 
 	void FrankenboardDevice::FpgaWrite(unsigned short address, std::vector<byte> data)
@@ -145,19 +143,19 @@ m_hdmiInput = winrt::make<CaptureCard::implementation::SampleDisplayInput>(this)
 	}
 	
 
-	Buffer FrankenboardDevice::FpgaRead (unsigned short address, std::vector<byte> data)
+	std::vector<byte> FrankenboardDevice::FpgaRead (unsigned short address, UINT16 dataSize)
 	{
 		DWORD retVal = MAXDWORD;
+		std::vector <byte> dataVector;
 		const size_t readBlockSize = 0x50;
-		UINT16 remaining = data.size();
+		UINT16 remaining = dataSize;
 		ULONG amountToRead = min(readBlockSize, remaining);
 		Buffer readBuffer(amountToRead);
 		readBuffer.Length(amountToRead);
 		retVal = fpgaReadSetupPacket (readBuffer, address, remaining, &amountToRead);
-		memcpy_s(data.data(), remaining, readBuffer.data(), readBuffer.Length());
-		Buffer readValue(retVal);
+		dataVector.push_back(retVal);
 	Exit:
-		return readValue;
+		return dataVector;
 
 	}
 

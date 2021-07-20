@@ -2,20 +2,15 @@
 #include <mutex>
 #include <memory>
 #include <string>
-#include "winrt/CaptureCard.h"
-#include "SampleDisplayCapture.h"
-#include "CaptureCard.Controller.h"
-#include "CaptureCard.Controller.g.h"
 
 template<typename TSingleton>
 class Singleton abstract
 {
 public:
-    static std::shared_ptr<TSingleton> Instance(std::weak_ptr<winrt::CaptureCard::implementation::Controller> Ctrl_ptr)
+    static std::shared_ptr<TSingleton> Instance()
     {
         std::unique_lock<std::mutex> lock(s_lock);
-        //auto instance = s_instance.lock();
-        auto instance = Ctrl_ptr.lock();
+        auto instance = s_instance.lock();
         if (nullptr == instance)
         {
             instance = std::make_shared<TSingleton>();

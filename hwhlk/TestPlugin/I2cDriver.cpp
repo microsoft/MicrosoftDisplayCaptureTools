@@ -32,7 +32,7 @@ void I2cDriver::writeRegister(uint16_t address, uint8_t reg, size_t count, const
 	}
 	catch (...)
 	{
-		printf("Error %d\n", GetLastError());
+		printf("Error %d\n", LOG_CAUGHT_EXCEPTION());
 	}
 }
 

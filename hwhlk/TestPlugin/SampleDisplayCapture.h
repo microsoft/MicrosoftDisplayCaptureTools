@@ -1,4 +1,7 @@
 #pragma once
+#include "CaptureCard.Controller.g.h"
+#include "CaptureCard.Controller.h"
+
 
 namespace winrt::CaptureCard::implementation
 {

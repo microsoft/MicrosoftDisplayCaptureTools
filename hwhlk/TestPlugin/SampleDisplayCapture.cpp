@@ -108,12 +108,8 @@ namespace winrt::CaptureCard::implementation
     void SampleDisplayCapture::SaveMemoryToBitmap (hstring name)
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
-        byte data = 0x0;
-        std::vector<byte> dataBuff;
-        dataBuff.push_back(data);	
-        m_captureBoard->FpgaRead(0x20, dataBuff);
-        dataBuff[0] = 0x1; 
-        auto readBuffer = m_captureBoard->FpgaRead(0x20, dataBuff);
+        UINT16 dataSize = 32;	
+        auto readBuffer = m_captureBoard->FpgaRead(0x20, dataSize); //reading 1080 words
         auto read = readBuffer.data(); 
         int bWidth= 644; 
         int bHeight= 300;

@@ -1,7 +1,6 @@
 #pragma once
 #include "CaptureCard.Controller.g.h"
 #include "I2cDriver.h"
-#include "Singleton.h"
 #include "SampleDisplayCapture.h"
 
 namespace winrt::CaptureCard::implementation
@@ -42,7 +41,7 @@ namespace winrt::CaptureCard::implementation
         CaptureCard::IDisplayInput GetHdmiInput();
         void TriggerHdmiCapture();
         void FpgaWrite(unsigned short address, std::vector<byte> data);
-        Buffer FpgaRead (unsigned short address, std::vector<byte> data);
+        std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize);
         DWORD fpgaReadSetupPacket (winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
 
     private:
