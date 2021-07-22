@@ -141,7 +141,17 @@ m_hdmiInput = winrt::make<CaptureCard::implementation::SampleDisplayInput>(this)
 		}
 		
 	}
-	
+	std::vector<byte> FrankenboardDevice::ReadEndPointData(UINT32 dataSize, std::shared_ptr<IMicrosoftCaptureBoard> singleCapture)
+	{
+		std::vector <byte> endPointVector;
+		UsbDevice device();
+		UsbBulkInPipe bulkIn = device.DefaultInterface.BulkInPipes[0];
+		DataReader reader = DataReader(bulkIn.InputStream);
+		await reader.LoadAsync(dataSize);
+		UINT64 data = reader.ReadUInt64();
+		endPointVector.push_back(data);
+		return endPointVector;
+	}
 
 	std::vector<byte> FrankenboardDevice::FpgaRead (unsigned short address, UINT16 dataSize)
 	{
