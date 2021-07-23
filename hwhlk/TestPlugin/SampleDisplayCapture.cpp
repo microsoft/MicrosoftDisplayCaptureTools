@@ -22,7 +22,9 @@ namespace winrt::CaptureCard::implementation
         m_mismatchFolder(LoadFolder(L"Mismatches")),
         m_captureBoard(captureBoard)
     {
-        
+        //call the trigger capture
+        // add small wait till capture completes
+        //call readFromoneEndpoint
     }
 
     void SampleDisplayCapture::CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference)
