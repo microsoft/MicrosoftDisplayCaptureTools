@@ -22,9 +22,11 @@ namespace winrt::CaptureCard::implementation
         m_mismatchFolder(LoadFolder(L"Mismatches")),
         m_captureBoard(captureBoard)
     {
-        //call the trigger capture
-        // add small wait till capture completes
-        //call readFromoneEndpoint
+        auto m_captureBoard(std::static_pointer_cast<FrankenboardDevice>(m_captureBoard));
+        m_captureBoard->TriggerHdmiCapture();
+        Sleep(5000);
+        UINT32 dataSize = 32;
+        m_captureBoard->ReadEndPointData(dataSize);
     }
 
     void SampleDisplayCapture::CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference)
@@ -110,8 +112,9 @@ namespace winrt::CaptureCard::implementation
     void SampleDisplayCapture::SaveMemoryToBitmap (hstring name)
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
-        UINT16 dataSize = 32;	
-        auto readBuffer = m_captureBoard->FpgaRead(0x20, dataSize); //reading 1080 words
+        UINT16 dataSize = 32;
+        auto m_captureBoard(std::static_pointer_cast<FrankenboardDevice>(m_captureBoard));
+        auto readBuffer = m_captureBoard->FpgaRead(0x20, dataSize); 
         auto read = readBuffer.data(); 
         int bWidth= 644; 
         int bHeight= 300;

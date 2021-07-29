@@ -10,8 +10,6 @@
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.Streams.h>
 
-#include <wil\result.h>
-
 #include <initializer_list>
 
 #include "CaptureCard.Controller.h"

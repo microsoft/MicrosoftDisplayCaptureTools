@@ -40,10 +40,10 @@ namespace winrt::CaptureCard::implementation
     {
         return ConfigurationTools::ConfigurationToolbox();
     }
-	void Controller::InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture)
+	/*void Controller::InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture)
 	{
 		SampleDisplayCapture capture(singleCapture);
-	}
+	}*/
 
 	void Controller::DiscoverCaptureBoards()
 	{
@@ -141,6 +141,7 @@ m_hdmiInput = winrt::make<CaptureCard::implementation::SampleDisplayInput>(this)
 		}
 		
 	}
+	
 	std::vector<byte> FrankenboardDevice::ReadEndPointData(UINT32 dataSize)
 	{
 		std::vector <byte> endPointVector;

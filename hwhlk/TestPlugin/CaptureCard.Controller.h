@@ -65,6 +65,7 @@ namespace winrt::CaptureCard::implementation
 
         hstring Name();
         com_array<CaptureCard::IDisplayInput> EnumerateDisplayInputs();
+
         ConfigurationTools::ConfigurationToolbox GetToolbox();
 
         std::vector<CaptureCard::IDisplayInput> m_displayInputs;
@@ -73,7 +74,7 @@ namespace winrt::CaptureCard::implementation
 
     private:
         void DiscoverCaptureBoards();
-        void InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
+        //void InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
     };
 }
 
