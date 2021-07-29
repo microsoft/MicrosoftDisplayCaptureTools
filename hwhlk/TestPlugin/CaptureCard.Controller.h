@@ -1,7 +1,6 @@
 #pragma once
 #include "CaptureCard.Controller.g.h"
 #include "I2cDriver.h"
-#include "SampleDisplayCapture.h"
 
 namespace winrt::CaptureCard::implementation
 {

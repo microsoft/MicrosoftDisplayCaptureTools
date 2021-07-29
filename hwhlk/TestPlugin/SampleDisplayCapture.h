@@ -2,9 +2,10 @@
 #include "CaptureCard.Controller.g.h"
 #include "CaptureCard.Controller.h"
 
-
 namespace winrt::CaptureCard::implementation
 {
+    class IMicrosoftCaptureBoard;
+
     struct SampleDisplayCapture : implements<SampleDisplayCapture, IDisplayCapture>
     {
         SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
