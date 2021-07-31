@@ -1,7 +1,7 @@
 #pragma once
-#include "ConfigurationTools.ConfigurationToolbox.g.h"
+#include "ConfigurationToolbox.g.h"
 
-namespace winrt::ConfigurationTools::implementation
+namespace winrt::Toolbox::implementation
 {
     struct ConfigurationToolbox : ConfigurationToolboxT<ConfigurationToolbox>
     {
@@ -9,10 +9,10 @@ namespace winrt::ConfigurationTools::implementation
 
         hstring Name();
         com_array<hstring> GetSupportedTools();
-        ConfigurationTools::IConfigurationTool GetTool(hstring const& toolName);
+        MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool GetTool(hstring const& toolName);
     };
 }
-namespace winrt::ConfigurationTools::factory_implementation
+namespace winrt::Toolbox::factory_implementation
 {
     struct ConfigurationToolbox : ConfigurationToolboxT<ConfigurationToolbox, implementation::ConfigurationToolbox>
     {

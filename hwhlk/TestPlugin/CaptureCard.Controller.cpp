@@ -1,5 +1,8 @@
 #include "pch.h"
-#include "CaptureCard.Controller.g.cpp"
+#include "Controller.g.cpp"
+
+using namespace winrt::MicrosoftDisplayCaptureTools;
+using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
 
 namespace winrt::CaptureCard::implementation
 {
@@ -9,7 +12,7 @@ namespace winrt::CaptureCard::implementation
         // Normally this is where a capture card would initialize and determine its own capabilities and 
         // inputs. For this sample, we are reporting a single input to this 'fake' capture card.
         //
-        auto input = winrt::make<CaptureCard::implementation::SampleDisplayInput>();
+        auto input = winrt::make<SampleDisplayInput>();
 
         m_displayInputs.push_back(input);
     }
@@ -18,13 +21,15 @@ namespace winrt::CaptureCard::implementation
     {
         return L"Software Test Plugin";
     }
-    com_array<CaptureCard::IDisplayInput> Controller::EnumerateDisplayInputs()
+
+    com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
     {
-        auto ret = winrt::com_array<CaptureCard::IDisplayInput>(m_displayInputs);
+        auto ret = winrt::com_array<IDisplayInput>(m_displayInputs);
         return ret;
     }
-    ConfigurationTools::ConfigurationToolbox Controller::GetToolbox()
+
+    ConfigurationTools::IConfigurationToolbox Controller::GetToolbox()
     {
-        return ConfigurationTools::ConfigurationToolbox();
+        return nullptr;
     }
 }

@@ -12,14 +12,10 @@
 #include "SampleDisplayCapture.h"
 #include "SampleDisplayInput.h"
 
-#include "ConfigurationTools.ConfigurationToolbox.h"
-#include "winrt/DisplayStateReference.h"
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
 
 #include <WexTestClass.h>
 #include <Wex.Common.h>
 #include <Wex.Logger.h>
 #include <WexString.h>
-
-
-#include "WireFormatTool.h"
-#include "ResolutionTool.h"

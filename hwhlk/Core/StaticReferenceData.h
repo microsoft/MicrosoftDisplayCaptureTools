@@ -1,6 +1,6 @@
 #pragma once
 
-namespace winrt::DisplayStateReference::implementation
+namespace winrt::MicrosoftDisplayCaptureTools::DisplayStateReference::implementation
 {
     struct StaticReferenceData : implements<StaticReferenceData, IStaticReference>
     {

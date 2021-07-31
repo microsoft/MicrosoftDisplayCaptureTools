@@ -9,17 +9,17 @@
 #include <algorithm>
 
 #include "winrt/Windows.Foundation.h"
-#include "winrt/Core.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Core.h"
 
 using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
-using namespace winrt::Core;
+using namespace winrt::MicrosoftDisplayCaptureTools::Core;
 
 namespace TestFramework
 {
-    std::shared_ptr<IFramework> framework;
+    IFramework framework;
 }
 
 bool BaseTest::BaseTestSetup()
@@ -37,7 +37,7 @@ bool BaseTest::BaseTestSetup()
 
     auto frameworkImpl = Framework(winrt::hstring(pluginPath));
     auto framework_test = frameworkImpl.as<IFramework>();
-    TestFramework::framework = std::make_shared<IFramework>(framework_test);
+    TestFramework::framework = framework_test;
 
     String additionalToolboxPaths;
     if (FAILED(RuntimeParameters::TryGetValue(L"AdditionalToolboxPaths", additionalToolboxPaths)))
@@ -54,14 +54,14 @@ bool BaseTest::BaseTestSetup()
         while (currentIndex != std::string::npos)
         {
             std::wstring currentPath = paths.substr(previousIndex, currentIndex - previousIndex);
-            if (!currentPath.empty()) TestFramework::framework->OpenToolbox(currentPath);
+            if (!currentPath.empty()) TestFramework::framework.OpenToolbox(currentPath);
 
             previousIndex = 1 + currentIndex;
             currentIndex = paths.find_first_of(L",", previousIndex);
         }
 
         std::wstring finalPath = paths.substr(previousIndex, currentIndex - previousIndex);
-        if (!finalPath.empty()) TestFramework::framework->OpenToolbox(finalPath);
+        if (!finalPath.empty()) TestFramework::framework.OpenToolbox(finalPath);
     }
 
     Log::Comment(L"Initialization Complete");
@@ -71,5 +71,5 @@ bool BaseTest::BaseTestSetup()
 
 void BaseTest::Test()
 {
-    TestFramework::framework->RunPictTest();
+    TestFramework::framework.RunPictTest();
 }

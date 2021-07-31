@@ -1,9 +1,10 @@
 #pragma once
 
 #include <WexTestClass.h>
-#include "winrt/Core.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Core.h"
 
-class BaseTest {
+class BaseTest
+{
     TEST_CLASS(BaseTest);
 
     TEST_CLASS_SETUP(BaseTestSetup)

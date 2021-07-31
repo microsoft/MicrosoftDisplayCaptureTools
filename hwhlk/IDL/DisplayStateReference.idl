@@ -1,4 +1,4 @@
-namespace DisplayStateReference
+namespace MicrosoftDisplayCaptureTools.DisplayStateReference
 {
     struct FrameBasicInfo
     {

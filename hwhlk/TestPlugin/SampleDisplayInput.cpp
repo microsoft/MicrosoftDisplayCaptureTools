@@ -1,5 +1,9 @@
 #include "pch.h"
 #include "SampleDisplayInput.h"
+#include "SampleDisplayCapture.h"
+
+using namespace winrt::MicrosoftDisplayCaptureTools;
+using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
 
 namespace winrt::CaptureCard::implementation
 {

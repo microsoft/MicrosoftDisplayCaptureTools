@@ -13,6 +13,8 @@ extern "C"
 #pragma comment(linker, "/alternatename:OS_RoGetActivationFactory=RoGetActivationFactory")
 #endif
 
+thread_local BinaryLoader BinaryLoader::s_Loader;
+
 bool starts_with(std::wstring_view value, std::wstring_view match) noexcept
 {
     return 0 == value.compare(0, match.size(), match);
@@ -44,13 +46,16 @@ HRESULT __stdcall WINRT_RoGetActivationFactory(HSTRING classId_hstring, GUID con
     // For razzle build, always look for the system dll for testing
     return OS_RoGetActivationFactory(classId_hstring, iid, factory);
 #else
-    std::wstring_view name{ WindowsGetStringRawBuffer(classId_hstring, nullptr), WindowsGetStringLen(classId_hstring) };
+
+    winrt::hstring classId;
+    winrt::attach_abi(classId, classId_hstring);
+
     HMODULE library{ nullptr };
 
-    auto loaderPath = BinaryLoader::GetOrCreate();
-    auto nextBinaryPath = loaderPath->GetPath();
+    auto& loaderPath = BinaryLoader::GetOrCreate();
+    auto nextBinaryPath = loaderPath.GetPath();
 
-    std::wstring dllPath = GetModulePath() + nextBinaryPath;
+    std::wstring dllPath = GetModulePath() + std::wstring(nextBinaryPath);
 
     if (!nextBinaryPath.empty())
     {

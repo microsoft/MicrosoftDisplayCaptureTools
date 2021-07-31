@@ -2,11 +2,11 @@
 
 namespace winrt::CaptureCard::implementation
 {
-    struct SampleDisplayCapture : implements<SampleDisplayCapture, IDisplayCapture>
+    struct SampleDisplayCapture : implements<SampleDisplayCapture, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
         SampleDisplayCapture();
 
-        void CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference);
+        void CompareCaptureToReference(hstring name, MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference reference);
         void SaveCaptureToDisk(hstring path);
 
     private:

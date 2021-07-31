@@ -1,5 +1,5 @@
 #pragma once
-#include "CaptureCard.Controller.g.h"
+#include "Controller.g.h"
 
 namespace winrt::CaptureCard::implementation
 {
@@ -8,10 +8,10 @@ namespace winrt::CaptureCard::implementation
         Controller();
 
         hstring Name();
-        com_array<CaptureCard::IDisplayInput> EnumerateDisplayInputs();
-        ConfigurationTools::ConfigurationToolbox GetToolbox();
+        com_array<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
+        MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox GetToolbox();
 
-        std::vector<CaptureCard::IDisplayInput> m_displayInputs;
+        std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
     };
 }
 namespace winrt::CaptureCard::factory_implementation

@@ -1,4 +1,4 @@
-namespace Core
+namespace MicrosoftDisplayCaptureTools.Core
 {
     //
     // The core of the Hardware HLK project, this object manages a running test, from parsing PICT parameters via TAEF to 
