@@ -40,7 +40,7 @@ namespace winrt::CaptureCard::implementation
         case CaptureTriggerType::FirstNonEmpty:
         case CaptureTriggerType::Immediate:
             m_parent->TriggerHdmiCapture();
-            return winrt::make<SampleDisplayCapture>(); 
+            return winrt::make<SampleDisplayCapture>();
 
         case CaptureTriggerType::Timer:
             SleepEx(trigger.timeToCapture, FALSE);

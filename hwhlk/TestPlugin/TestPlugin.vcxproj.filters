@@ -18,8 +18,6 @@
     <ClCompile Include="SampleDisplayCapture.cpp" />
     <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="WireFormatTool.cpp" />
-    <ClCompile Include="IteIt6803.cpp" />
-    <ClCompile Include="I2cDriver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -29,9 +27,6 @@
     <ClInclude Include="SampleDisplayCapture.h" />
     <ClInclude Include="ResolutionTool.h" />
     <ClInclude Include="WireFormatTool.h" />
-    <ClInclude Include="IteIt6803.h" />
-    <ClInclude Include="IteIt6803Registers.h" />
-    <ClInclude Include="I2cDriver.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestPlugin.def" />

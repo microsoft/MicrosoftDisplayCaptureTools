@@ -5,12 +5,8 @@
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Devices.Display.h>
 #include <winrt/Windows.Devices.Display.Core.h>
-#include <winrt/Windows.Devices.Enumeration.h>
-#include <winrt/Windows.Devices.Usb.h>
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.Streams.h>
-
-#include <initializer_list>
 
 #include "CaptureCard.Controller.h"
 #include "SampleDisplayCapture.h"

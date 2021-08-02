@@ -107,7 +107,7 @@ namespace winrt::CaptureCard::implementation
 
         return bitmap;
     }
-    
+
 
     void SampleDisplayCapture::SaveMemoryToBitmap (hstring name)
     {
