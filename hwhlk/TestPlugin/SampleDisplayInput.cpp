@@ -3,7 +3,7 @@
 
 namespace winrt::CaptureCard::implementation
 {
-    SampleDisplayInput::SampleDisplayInput(FrankenboardDevice* parent)
+    SampleDisplayInput::SampleDisplayInput(std::weak_ptr<FrankenboardDevice> parent)
         : m_parent(parent)
     {
     }

@@ -1,5 +1,5 @@
 #pragma once
-
+#include "pch.h"
 //
 // FX3 vendor commands
 //
