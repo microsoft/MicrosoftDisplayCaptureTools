@@ -10,7 +10,11 @@ namespace winrt::CaptureCard::implementation
     class IMicrosoftCaptureBoard abstract
     {
     public:
-        virtual std::vector<CaptureCard::IDisplayInput> EnumerateDisplayInputs() = 0;
+        virtual std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() = 0;
+
+        virtual void TriggerHdmiCapture() = 0;
+        virtual std::vector<byte> ReadEndPointData(UINT32 dataSize) = 0;
+        virtual std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize) = 0;
     };
 
 #define TCA6416A_BANK_0 0
@@ -39,18 +43,18 @@ namespace winrt::CaptureCard::implementation
         FrankenboardDevice(winrt::param::hstring deviceId);
         ~FrankenboardDevice();
 
-        CaptureCard::IDisplayInput GetHdmiInput();
-        void TriggerHdmiCapture();
+        MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput GetHdmiInput();
+        void TriggerHdmiCapture() override;
         void FpgaWrite(unsigned short address, std::vector<byte> data);
-        std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize);
-        std::vector<byte> ReadEndPointData(UINT32 dataSize);
+        std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize) override;
+        std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
         DWORD fpgaReadSetupPacket (winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
 
     private:
         void SetEdid(std::vector<byte> Edid);
         void SetHpd(bool isPluggedIn);
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
-        CaptureCard::IDisplayInput m_hdmiInput;
+        MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput m_hdmiInput;
         std::shared_ptr<I2cDriver> pDriver;
     };
 
@@ -65,11 +69,11 @@ namespace winrt::CaptureCard::implementation
         Controller();
 
         hstring Name();
-        com_array<CaptureCard::IDisplayInput> EnumerateDisplayInputs();
+        com_array<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
 
-        ConfigurationTools::ConfigurationToolbox GetToolbox();
+        MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox GetToolbox();
 
-        std::vector<CaptureCard::IDisplayInput> m_displayInputs;
+        std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
         std::vector<std::shared_ptr<IMicrosoftCaptureBoard>> m_captureBoards;
        
 

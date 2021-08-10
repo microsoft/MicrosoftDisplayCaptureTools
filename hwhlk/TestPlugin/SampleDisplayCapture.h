@@ -6,11 +6,11 @@ namespace winrt::CaptureCard::implementation
 {
     class IMicrosoftCaptureBoard;
 
-    struct SampleDisplayCapture : implements<SampleDisplayCapture, IDisplayCapture>
+    struct SampleDisplayCapture : implements<SampleDisplayCapture, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
         SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
 
-        void CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference);
+        void CompareCaptureToReference(hstring name, MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference reference);
         void SaveCaptureToDisk(hstring path);
 
     private:

@@ -3,6 +3,7 @@
 #include "SampleDisplayCapture.h"
 #include "Singleton.h"
 #include "CaptureCard.Controller.g.h"
+#include "CaptureCard.Controller.h"
 
 #include <winrt/Windows.Security.Cryptography.h>
 #include <winrt/Windows.Security.Cryptography.Core.h>
@@ -24,11 +25,10 @@ namespace winrt::CaptureCard::implementation
         m_mismatchFolder(LoadFolder(L"Mismatches")),
         m_captureBoard(captureBoard)
     {
-        auto m_captureBoard(std::static_pointer_cast<FrankenboardDevice>(m_captureBoard));
-        m_captureBoard->TriggerHdmiCapture();
+        captureBoard->TriggerHdmiCapture();
         Sleep(5000);
         UINT32 dataSize = 32;
-        m_captureBoard->ReadEndPointData(dataSize);
+        captureBoard->ReadEndPointData(dataSize);
     }
 
     void SampleDisplayCapture::CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference)
@@ -115,7 +115,6 @@ namespace winrt::CaptureCard::implementation
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
         UINT16 dataSize = 32;
-        auto m_captureBoard(std::static_pointer_cast<FrankenboardDevice>(m_captureBoard));
         auto readBuffer = m_captureBoard->FpgaRead(0x20, dataSize); 
         auto read = readBuffer.data(); 
         int bWidth= 644; 

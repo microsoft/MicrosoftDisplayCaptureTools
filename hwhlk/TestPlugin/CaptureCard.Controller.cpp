@@ -12,7 +12,7 @@ namespace winrt::CaptureCard::implementation
         // Normally this is where a capture card would initialize and determine its own capabilities and 
         // inputs. For this sample, we are reporting a single input to this 'fake' capture card.
         //
-        auto input = winrt::make<SampleDisplayInput>();
+        auto input = winrt::make<SampleDisplayInput>(pass_the_parent_here);
 
         m_displayInputs.push_back(input);
     }
