@@ -1,7 +1,7 @@
 #pragma once
-#include "Framework.g.h"
+#include "Core.Framework.g.h"
 
-namespace winrt::Core::implementation
+namespace winrt::MicrosoftDisplayCaptureTools::Core::implementation
 {
     struct Framework : FrameworkT<Framework>
     {
@@ -12,23 +12,23 @@ namespace winrt::Core::implementation
         void RunPictTest();
 
     private:
-        winrt::CaptureCard::IDisplayInput ChooseDisplay();
+        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput ChooseDisplay();
 
     private:
-        std::vector<winrt::ConfigurationTools::ConfigurationToolbox> m_toolboxes;
-        std::shared_ptr<winrt::CaptureCard::IController> m_captureCard;
+        std::vector<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox> m_toolboxes;
+        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController m_captureCard;
         boolean m_runSoftwareOnly;
     };
     
     struct TestRun
     {
-        std::vector<winrt::ConfigurationTools::IConfigurationTool> toolRunList;
-        std::vector<winrt::ConfigurationTools::IConfigurationTool> toolOrderedRunList;
+        std::vector<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> toolRunList;
+        std::vector<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> toolOrderedRunList;
 
-        bool operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const;
+        bool operator()(winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool a, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool b) const;
     };
 }
-namespace winrt::Core::factory_implementation
+namespace winrt::MicrosoftDisplayCaptureTools::Core::factory_implementation
 {
     struct Framework : FrameworkT<Framework, implementation::Framework>
     {

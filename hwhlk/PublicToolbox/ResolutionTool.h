@@ -1,19 +1,18 @@
 #pragma once
 
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+
 namespace winrt::Toolbox::implementation
 {
-    enum class PatternToolConfigurations
+    enum class ResolutionToolConfigurations
     {
-        Black,
-        White,
-        Red,
-        Green,
-        Blue
+        _1080p,
+        _2160p
     };
 
-    struct PatternTool : implements<PatternTool, MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+    struct ResolutionTool : implements<ResolutionTool, MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
     {
-        PatternTool();
+        ResolutionTool();
 
         hstring Name();
         MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
@@ -24,7 +23,6 @@ namespace winrt::Toolbox::implementation
         void ApplyToReference(MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference const& reference);
 
     private:
-        void ApplyToSoftwareReferenceFallback(MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference const& reference);
-        PatternToolConfigurations m_currentConfig;
+        ResolutionToolConfigurations m_currentConfig;
     };
 }

@@ -2,7 +2,7 @@
 
 namespace winrt::CaptureCard::implementation
 {
-    struct SampleDisplayInput : implements<SampleDisplayInput, IDisplayInput>
+    struct SampleDisplayInput : implements<SampleDisplayInput, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
     {
         SampleDisplayInput(std::weak_ptr<FrankenboardDevice> parent);
 
@@ -10,9 +10,9 @@ namespace winrt::CaptureCard::implementation
 
         Windows::Devices::Display::Core::DisplayTarget MapCaptureInputToDisplayPath();
 
-        CaptureCapabilities GetCapabilities();
+        MicrosoftDisplayCaptureTools::CaptureCard::CaptureCapabilities GetCapabilities();
 
-        IDisplayCapture CaptureFrame(CaptureTrigger trigger);
+        MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame(MicrosoftDisplayCaptureTools::CaptureCard::CaptureTrigger trigger);
 
         void FinalizeDisplayState();
 

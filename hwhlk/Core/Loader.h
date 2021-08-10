@@ -3,49 +3,70 @@
 #include <memory>
 #include <string>
 
-template<typename TSingleton>
-class Singleton abstract
+template <typename TInterface>
+auto CreateImplementationFromPlugin(const std::wstring_view& dllName, const std::wstring_view& className)
 {
-public:
-    static std::shared_ptr<TSingleton> Instance()
-    {
-        std::unique_lock<std::mutex> lock(s_lock);
-        auto instance = s_instance.lock();
-        if (nullptr == instance)
-        {
-            instance = std::make_shared<TSingleton>();
-            s_instance = instance;
-        }
-        return instance;
-    }
+    auto binaryLoader = BinaryLoader::SetPathInScope(dllName);
 
-    Singleton(const Singleton&) = delete;
-    const Singleton& operator=(const Singleton&) = delete;
+    winrt::Windows::Foundation::IActivationFactory factory;
+    winrt::check_hresult(WINRT_RoGetActivationFactory(winrt::get_abi(winrt::hstring(className)), winrt::guid_of<decltype(factory)>(), winrt::put_abi(factory)));
 
-protected:
-    Singleton() = default;
-    virtual ~Singleton() {};
+    return factory.ActivateInstance<TInterface>();
+}
 
-private:
-    static std::mutex s_lock;
-    static std::weak_ptr<TSingleton> s_instance;
-};
-
-template<typename TSingleton>
-std::mutex Singleton<TSingleton>::s_lock;
-
-template<typename TSingleton>
-std::weak_ptr<TSingleton> Singleton<TSingleton>::s_instance;
-
-class BinaryLoader : Singleton<BinaryLoader>
+class BinaryLoader
 {
 private:
     std::wstring m_path;
 
+    // Store a thread-local singleton to prevent interference between threads
+    thread_local static BinaryLoader s_Loader;
+
 public:
     BinaryLoader() : m_path(L"") {}
-    static std::shared_ptr<BinaryLoader> GetOrCreate() { return BinaryLoader::Instance();  }
+    BinaryLoader(const BinaryLoader&) = delete;
 
-    void SetPath(std::wstring path) { m_path = path; }
-    std::wstring GetPath() { return m_path; }
+    static BinaryLoader& GetOrCreate()
+    {
+        return s_Loader;
+    }
+
+    class BinaryLoaderCleanup
+    {
+    public:
+        BinaryLoaderCleanup(const std::wstring_view& path) : m_path(path)
+        {
+        }
+
+        BinaryLoaderCleanup(BinaryLoaderCleanup&& move) noexcept : m_path(std::move(move.m_path))
+        {
+        }
+
+        ~BinaryLoaderCleanup()
+        {
+            BinaryLoader::s_Loader.SetPath(m_path);
+        }
+
+    private:
+        std::wstring m_path;
+    };
+
+    static BinaryLoaderCleanup SetPathInScope(const std::wstring_view& path)
+    {
+        auto& loader = s_Loader;
+        auto origPath = loader.GetPath();
+        loader.SetPath(path);
+
+        return BinaryLoaderCleanup(origPath);
+    }
+
+    void SetPath(const std::wstring_view& path)
+    {
+        m_path = path;
+    }
+
+    const std::wstring_view GetPath()
+    {
+        return m_path;
+    }
 };

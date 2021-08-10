@@ -9,7 +9,7 @@ using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
-namespace winrt::DisplayStateReference::implementation
+namespace winrt::MicrosoftDisplayCaptureTools::DisplayStateReference::implementation
 {
     StaticReferenceData::StaticReferenceData(hstring name) : m_name(name)
     {

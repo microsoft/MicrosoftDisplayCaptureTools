@@ -5,7 +5,9 @@ using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
-namespace winrt::ConfigurationTools::implementation
+using namespace winrt::MicrosoftDisplayCaptureTools;
+
+namespace winrt::Toolbox::implementation
 {
     ResolutionTool::ResolutionTool()
     {

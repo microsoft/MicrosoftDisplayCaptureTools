@@ -1,19 +1,17 @@
 #pragma once
 
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+
 namespace winrt::Toolbox::implementation
 {
-    enum class PatternToolConfigurations
+    enum class WireFormatToolConfigurations
     {
-        Black,
-        White,
-        Red,
-        Green,
-        Blue
+        RGB8
     };
 
-    struct PatternTool : implements<PatternTool, MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+    struct WireFormatTool : implements<WireFormatTool, MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
     {
-        PatternTool();
+        WireFormatTool();
 
         hstring Name();
         MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
@@ -24,7 +22,6 @@ namespace winrt::Toolbox::implementation
         void ApplyToReference(MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference const& reference);
 
     private:
-        void ApplyToSoftwareReferenceFallback(MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference const& reference);
-        PatternToolConfigurations m_currentConfig;
+        WireFormatToolConfigurations m_currentConfig;
     };
 }

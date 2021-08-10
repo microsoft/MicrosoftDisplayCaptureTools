@@ -1,16 +1,19 @@
 import "DisplayStateReference.idl";
 
-namespace ConfigurationTools
+namespace MicrosoftDisplayCaptureTools.ConfigurationTools
 {
+    interface IConfigurationTool;
+
     //
     // This object simply holds a slate of ConfigurationTools.
     //
-    runtimeclass ConfigurationToolbox
+    interface IConfigurationToolbox
     {
         // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
         String Name { get; };
 
-        ConfigurationToolbox();
+        // Implementations should declare a public construction for the class named "ConfigurationToolbox"
+        //ConfigurationToolbox();
 
         // GetSupportedTools
         // ----------------------------------------------------------------------------------------------------------------
@@ -142,6 +145,6 @@ namespace ConfigurationTools
         //          This object encapsulates both metadata and the output display frame, both of which a Configuration Tool
         //          may modify.
         //
-        void ApplyToReference(DisplayStateReference.IStaticReference reference);
+        void ApplyToReference(MicrosoftDisplayCaptureTools.DisplayStateReference.IStaticReference reference);
     }
 }

@@ -12,13 +12,17 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
+    <ClCompile Include="ConfigurationToolbox.cpp" />
     <ClCompile Include="PatternTool.cpp" />
+    <ClCompile Include="WireFormatTool.cpp" />
+    <ClCompile Include="ResolutionTool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
+    <ClInclude Include="ConfigurationToolbox.h" />
     <ClInclude Include="PatternTool.h" />
+    <ClInclude Include="WireFormatTool.h" />
+    <ClInclude Include="ResolutionTool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PublicToolbox.def" />
@@ -31,7 +35,6 @@
     <Text Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="..\IDL\ConfigurationTools.idl" />
-    <Midl Include="..\IDL\DisplayStateReference.idl" />
+    <Midl Include="PublicToolbox.idl" />
   </ItemGroup>
 </Project>

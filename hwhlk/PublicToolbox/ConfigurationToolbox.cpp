@@ -1,25 +1,26 @@
 #include "pch.h"
-#include "ConfigurationTools.ConfigurationToolbox.h"
-#include "ConfigurationTools.ConfigurationToolbox.g.cpp"
+#include "ConfigurationToolbox.h"
+#include "ConfigurationToolbox.g.cpp"
 
-namespace winrt::ConfigurationTools::implementation
+using namespace winrt::MicrosoftDisplayCaptureTools;
+
+namespace winrt::Toolbox::implementation
 {
     enum class Tools
     {
-        WireFormat,
-        Resolution
+        Pattern
     };
 
     std::map<std::wstring, Tools> MapNameToTool =
     {
-        {L"WireFormat", Tools::WireFormat},
-        {L"Resolution", Tools::Resolution}
+        {L"Pattern", Tools::Pattern}
     };
 
     hstring ConfigurationToolbox::Name()
     {
         return L"Public Toolbox";
     }
+
     com_array<hstring> ConfigurationToolbox::GetSupportedTools()
     {
         auto toolNames = std::vector<hstring>();
@@ -30,15 +31,13 @@ namespace winrt::ConfigurationTools::implementation
 
         return com_array<hstring>(toolNames);
     }
+
     ConfigurationTools::IConfigurationTool ConfigurationToolbox::GetTool(hstring const& toolName)
     {
         switch (MapNameToTool[std::wstring(toolName)])
         {
-        case Tools::WireFormat:
-            return winrt::make<WireFormatTool>();
-            break;
-        case Tools::Resolution:
-            return winrt::make<ResolutionTool>();
+        case Tools::Pattern:
+            return winrt::make<PatternTool>();
             break;
         }
 

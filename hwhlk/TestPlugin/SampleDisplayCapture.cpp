@@ -15,6 +15,8 @@ using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
+using namespace winrt::MicrosoftDisplayCaptureTools;
+
 namespace winrt::CaptureCard::implementation
 {
     SampleDisplayCapture::SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> captureBoard) :
