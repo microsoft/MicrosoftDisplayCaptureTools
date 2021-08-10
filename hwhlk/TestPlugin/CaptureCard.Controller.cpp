@@ -1,5 +1,6 @@
+
 #include "pch.h"
-#include "CaptureCard.Controller.g.cpp"
+#include "CaptureCard.Controller.h"
 #include "IteIt6803.h"
 #include <initguid.h>
 #include "Singleton.h"

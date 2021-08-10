@@ -61,7 +61,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -217,20 +217,6 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="..\IDL\Core.idl" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="CaptureCardPlugin">
-      <HintPath>..\TestPlugin\x64\Debug\Unmerged\CaptureCardPlugin.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="ConfigurationTools">
-      <HintPath>..\TestPlugin\x64\Debug\Unmerged\ConfigurationTools.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="DisplayStateReference">
-      <HintPath>..\TestPlugin\x64\Debug\Unmerged\DisplayStateReference.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

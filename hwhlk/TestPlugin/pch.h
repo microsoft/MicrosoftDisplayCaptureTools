@@ -17,6 +17,9 @@
 #include "SampleDisplayCapture.h"
 #include "SampleDisplayInput.h"
 
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
+
 #include <WexTestClass.h>
 #include <Wex.Common.h>
 #include <Wex.Logger.h>
