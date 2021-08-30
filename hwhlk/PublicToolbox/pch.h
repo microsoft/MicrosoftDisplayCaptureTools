@@ -9,8 +9,9 @@
 #include <winrt/Windows.Devices.Display.h>
 #include <winrt/Windows.Devices.Display.Core.h>
 
-#include "ConfigurationTools.ConfigurationToolbox.h"
-#include "winrt/DisplayStateReference.h"
+#include "ConfigurationToolbox.h"
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
 
 #include <WexTestClass.h>
 #include <Wex.Common.h>
@@ -19,3 +20,5 @@
 
 // Include the various tools
 #include "PatternTool.h"
+#include "WireFormatTool.h"
+#include "ResolutionTool.h"

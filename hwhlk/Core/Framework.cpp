@@ -1,12 +1,14 @@
 #include "pch.h"
 #include "Framework.h"
-#include "Framework.g.cpp"
+#include "Core.Framework.g.cpp"
 
 #include "Loader.h"
 
 using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
+
+using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
 
 HRESULT __stdcall WINRT_RoGetActivationFactory(HSTRING classId_hstring, GUID const& iid, void** factory) noexcept;
 
@@ -15,22 +17,17 @@ int32_t __stdcall WINRT_RoGetActivationFactory(void* classId, winrt::guid const&
     return WINRT_RoGetActivationFactory((HSTRING)classId, (GUID)iid, factory);
 }
 
-namespace winrt::Core::implementation
+namespace winrt::MicrosoftDisplayCaptureTools::Core::implementation
 {
     Framework::Framework(hstring const& pluginPath)
     {
         winrt_activation_handler = WINRT_RoGetActivationFactory;
 
-        auto binaryLoadPath = BinaryLoader::GetOrCreate();
-        binaryLoadPath->SetPath(pluginPath.c_str());
+        m_captureCard = CreateImplementationFromPlugin<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController>(pluginPath, L"CaptureCard.Controller");
 
-        auto factory = winrt::get_activation_factory<winrt::CaptureCard::Controller>();
-        auto controller = factory.ActivateInstance<winrt::CaptureCard::Controller>();
-        m_captureCard = std::make_shared<winrt::CaptureCard::IController>(controller);
+        Log::Comment(String().Format(L"Using Capture Device: %s", m_captureCard.Name().c_str()));
 
-        Log::Comment(String().Format(L"Using Capture Device: %s", m_captureCard->Name().c_str()));
-
-        auto displayInputs = m_captureCard->EnumerateDisplayInputs();
+        auto displayInputs = m_captureCard.EnumerateDisplayInputs();
 
         for (auto input : displayInputs)
         {
@@ -39,13 +36,13 @@ namespace winrt::Core::implementation
 
         try
         {
-            auto pluginToolbox = m_captureCard->GetToolbox();
+            auto pluginToolbox = m_captureCard.GetToolbox();
             m_toolboxes.push_back(pluginToolbox);
 
             auto test = m_toolboxes.front().Name();
             Log::Comment(String().Format(L"Toolbox added: %s", pluginToolbox.Name().c_str()));
         }
-        catch (winrt::hresult_not_implemented const& ex)
+        catch (winrt::hresult_not_implemented const&)
         {
             Log::Comment(L"Capture device does not support any tools");
         }
@@ -66,11 +63,8 @@ namespace winrt::Core::implementation
     {
         winrt_activation_handler = WINRT_RoGetActivationFactory;
 
-        auto binaryLoadPath = BinaryLoader::GetOrCreate();
-        binaryLoadPath->SetPath(toolboxPath.c_str());
-
-        auto factory = winrt::get_activation_factory<winrt::ConfigurationTools::ConfigurationToolbox>();
-        auto toolbox = factory.ActivateInstance<winrt::ConfigurationTools::ConfigurationToolbox>();
+        auto binaryLoadPath = BinaryLoader::SetPathInScope(toolboxPath);
+        auto toolbox = CreateImplementationFromPlugin<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox>(toolboxPath, L"ConfigurationToolbox");
 
         m_toolboxes.push_back(toolbox);
 
@@ -127,7 +121,7 @@ namespace winrt::Core::implementation
         auto displayUnderTest = ChooseDisplay();
 
         // Run through the tool list and generate the golden image
-        auto reference = winrt::make<winrt::DisplayStateReference::implementation::StaticReferenceData>(L"Base Plane");
+        auto reference = winrt::make<winrt::MicrosoftDisplayCaptureTools::DisplayStateReference::implementation::StaticReferenceData>(L"Base Plane");
 
         for (auto tool : testRun.toolOrderedRunList)
         {
@@ -135,13 +129,13 @@ namespace winrt::Core::implementation
         }
 
         // Run through the tool list and output to a display
-        winrt::ConfigurationTools::ConfigurationToolCategory currentCategory = testRun.toolOrderedRunList.front().Category();
+        winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory currentCategory = testRun.toolOrderedRunList.front().Category();
 
         for (auto tool : testRun.toolOrderedRunList)
         {
             // We're switching over to a new category of tools, if we're finishing the setup tools, inform the plugin so that
             // it can ensure all setup data is finalized (this may require lengthly operations like an HPD).
-            if (currentCategory == winrt::ConfigurationTools::ConfigurationToolCategory::DisplaySetup && tool.Category() != currentCategory)
+            if (currentCategory == winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory::DisplaySetup && tool.Category() != currentCategory)
             {
                 displayUnderTest.FinalizeDisplayState();
             }
@@ -155,16 +149,16 @@ namespace winrt::Core::implementation
         }
 
         // Ask the capture card to compare the outputs
-        winrt::CaptureCard::CaptureTrigger captureTrigger{};
-        captureTrigger.type = winrt::CaptureCard::CaptureTriggerType::Immediate;
+        winrt::MicrosoftDisplayCaptureTools::CaptureCard::CaptureTrigger captureTrigger{};
+        captureTrigger.type = winrt::MicrosoftDisplayCaptureTools::CaptureCard::CaptureTriggerType::Immediate;
         auto capture = displayUnderTest.CaptureFrame(captureTrigger);
 
         capture.CompareCaptureToReference(testName, reference);
     }
 
-    winrt::CaptureCard::IDisplayInput Framework::ChooseDisplay()
+    winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput Framework::ChooseDisplay()
     {
-        auto displayList = m_captureCard->EnumerateDisplayInputs();
+        auto displayList = m_captureCard.EnumerateDisplayInputs();
         for (auto display : displayList)
         {
             auto capabilities = display.GetCapabilities();
@@ -181,7 +175,7 @@ namespace winrt::Core::implementation
         throw winrt::hresult_error();
     }
 
-    bool TestRun::operator()(winrt::ConfigurationTools::IConfigurationTool a, winrt::ConfigurationTools::IConfigurationTool b) const
+    bool TestRun::operator()(winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool a, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool b) const
     {
         // TODO: This will become significantly more complicated as we continue to add more and more tools
         return a.Category() < b.Category();

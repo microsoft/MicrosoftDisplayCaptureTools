@@ -4,8 +4,9 @@
 using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
+using namespace winrt::MicrosoftDisplayCaptureTools;
 
-namespace winrt::ConfigurationTools::implementation
+namespace winrt::Toolbox::implementation
 {
     PatternTool::PatternTool()
     {

@@ -8,12 +8,15 @@
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.Streams.h>
 
-#include "ConfigurationTools.ConfigurationToolbox.h"
-#include "winrt/DisplayStateReference.h"
-#include "winrt/Windows.Devices.Enumeration.h"
-#include "winrt/Windows.Devices.Usb.h"
+#include <winrt/Windows.Devices.Enumeration.h>
+#include <winrt/Windows.Devices.Usb.h>
 
-#include "CaptureCard.Controller.h"
+#include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Core.h"
+#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
+
+#include "Controller.h"
 #include "SampleDisplayCapture.h"
 #include "SampleDisplayInput.h"
 
@@ -24,7 +27,3 @@
 #include <Wex.Common.h>
 #include <Wex.Logger.h>
 #include <WexString.h>
-
-
-#include "WireFormatTool.h"
-#include "ResolutionTool.h"

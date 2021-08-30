@@ -1,7 +1,11 @@
 #include "pch.h"
 #include "SampleDisplayInput.h"
+#include "SampleDisplayCapture.h"
 
-namespace winrt::CaptureCard::implementation
+using namespace winrt::MicrosoftDisplayCaptureTools;
+using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
+
+namespace winrt::TestPlugin::implementation
 {
     SampleDisplayInput::SampleDisplayInput(std::weak_ptr<FrankenboardDevice> parent)
         : m_parent(parent)
@@ -39,13 +43,13 @@ namespace winrt::CaptureCard::implementation
         {
         case CaptureTriggerType::FirstNonEmpty:
         case CaptureTriggerType::Immediate:
-            m_parent->TriggerHdmiCapture();
-            return winrt::make<SampleDisplayCapture>();
+            m_parent.lock()->TriggerHdmiCapture();
+            return winrt::make<SampleDisplayCapture>(m_parent.lock());
 
         case CaptureTriggerType::Timer:
             SleepEx(trigger.timeToCapture, FALSE);
-            m_parent->TriggerHdmiCapture();
-            return winrt::make<SampleDisplayCapture>();
+            m_parent.lock()->TriggerHdmiCapture();
+            return winrt::make<SampleDisplayCapture>(m_parent.lock());
         }
 
         throw winrt::hresult_not_implemented();

@@ -29,9 +29,9 @@
 #include <dxgi.h>
 
 // Headers for this project's various components
-#include "winrt/CaptureCard.h"
-#include "winrt/DisplayStateReference.h"
-#include "winrt/ConfigurationTools.h"
+#include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
+#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 #include "StaticReferenceData.h"
 
 // Headers for accessing TAEF parameters & logging with TAEF

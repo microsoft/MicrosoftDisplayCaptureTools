@@ -2,7 +2,8 @@
 // add the include for IMicrosoftCaptureBoard
 #include "SampleDisplayCapture.h"
 #include "Singleton.h"
-#include "CaptureCard.Controller.g.h"
+#include "Controller.g.h"
+#include "Controller.h"
 
 #include <winrt/Windows.Security.Cryptography.h>
 #include <winrt/Windows.Security.Cryptography.Core.h>
@@ -15,14 +16,15 @@ using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
-namespace winrt::CaptureCard::implementation
+using namespace winrt::MicrosoftDisplayCaptureTools;
+
+namespace winrt::TestPlugin::implementation
 {
     SampleDisplayCapture::SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> captureBoard) :
         m_testDataFolder(LoadFolder(L"TestData")),
         m_mismatchFolder(LoadFolder(L"Mismatches")),
         m_captureBoard(captureBoard)
     {
-        auto m_captureBoard(std::static_pointer_cast<FrankenboardDevice>(m_captureBoard));
         m_captureBoard->TriggerHdmiCapture();
         Sleep(5000);
         UINT32 dataSize = 32;
@@ -113,7 +115,6 @@ namespace winrt::CaptureCard::implementation
     {
         auto file = m_testDataFolder.GetFileAsync(name).get();
         UINT16 dataSize = 32;
-        auto m_captureBoard(std::static_pointer_cast<FrankenboardDevice>(m_captureBoard));
         auto readBuffer = m_captureBoard->FpgaRead(0x20, dataSize); 
         auto read = readBuffer.data(); 
         int bWidth= 644; 

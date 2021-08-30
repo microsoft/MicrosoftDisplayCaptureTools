@@ -1,31 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="CaptureCard.Controller.cpp" />
-    <ClCompile Include="ConfigurationTools.ConfigurationToolbox.cpp" />
-    <ClCompile Include="ResolutionTool.cpp" />
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="SampleDisplayCapture.cpp" />
     <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="WireFormatTool.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CaptureCard.Controller.h" />
-    <ClInclude Include="ConfigurationTools.ConfigurationToolbox.h" />
-    <ClInclude Include="I2cDriver.h" />
-    <ClInclude Include="IteIt6803.h" />
-    <ClInclude Include="IteIt6803Registers.h" />
-    <ClInclude Include="ResolutionTool.h" />
+    <ClInclude Include="Controller.h" />
     <ClInclude Include="SampleDisplayCapture.h" />
     <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="WireFormatTool.h" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="..\IDL\CaptureCardPlugin.idl" />
-    <Midl Include="..\IDL\ConfigurationTools.idl" />
-    <Midl Include="..\IDL\DisplayStateReference.idl" />
+    <Midl Include="TestPlugin.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
