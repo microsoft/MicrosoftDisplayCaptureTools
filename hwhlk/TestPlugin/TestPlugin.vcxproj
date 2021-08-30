@@ -190,12 +190,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Controller.h" />
+    <ClInclude Include="I2cDriver.h" />
+    <ClInclude Include="IteIt6803.h" />
+    <ClInclude Include="IteIt6803Registers.h" />
     <ClInclude Include="SampleDisplayCapture.h" />
     <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="I2cDriver.cpp" />
+    <ClCompile Include="IteIt6803.cpp" />
     <ClCompile Include="SampleDisplayCapture.cpp" />
     <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="pch.cpp">

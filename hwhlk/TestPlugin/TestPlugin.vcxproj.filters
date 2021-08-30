@@ -6,12 +6,17 @@
     <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="I2cDriver.cpp" />
+    <ClCompile Include="IteIt6803.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.h" />
     <ClInclude Include="SampleDisplayCapture.h" />
     <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="I2cDriver.h" />
+    <ClInclude Include="IteIt6803.h" />
+    <ClInclude Include="IteIt6803Registers.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="TestPlugin.idl" />
