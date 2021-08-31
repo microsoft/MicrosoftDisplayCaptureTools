@@ -32,8 +32,11 @@ void I2cDriver::writeRegister(uint16_t address, uint8_t reg, size_t count, const
 	}
 	catch (...)
 	{
-		//printf("Error %d\n", LOG_CAUGHT_EXCEPTION());
-		printf("Error %d\n");
+		
+		printf("Error with writing to register");
+		[[noreturn]] inline void winrt::throw_last_error();
+		//winrt::throw_last_error();
+		
 	}
 }
 
