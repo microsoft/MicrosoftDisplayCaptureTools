@@ -15,6 +15,15 @@ using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::MicrosoftDisplayCaptureTools;
 using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
 
+//
+// Device Interface GUID.
+// Used by all WinUsb devices that this application talks to.
+// Must match "DeviceInterfaceGUIDs" registry value specified in the INF file.
+//
+// {AF594BBC-240A-42D5-A805-7A1960EAEAD8}
+DEFINE_GUID(GUID_DEVINTERFACE_Frankenboard,
+	0xaf594bbc, 0x240a, 0x42d5, 0xa8, 0x5, 0x7a, 0x19, 0x60, 0xea, 0xea, 0xd8);
+
 namespace winrt::TestPlugin::implementation
 {
     Controller::Controller()
@@ -51,6 +60,11 @@ namespace winrt::TestPlugin::implementation
     void Controller::DiscoverCaptureBoards()
     {
         // TODO: Discover capture boards connected via USB and place them in m_captureBoards
+		for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Frankenboard)).get())
+		{
+			auto input = std::make_shared<FrankenboardDevice>(device.Id());
+			m_captureBoards.push_back(input);
+		}
     }
 
     std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> FrankenboardDevice::EnumerateDisplayInputs()
@@ -59,6 +73,7 @@ namespace winrt::TestPlugin::implementation
         // Normally this is where a capture card would initialize and determine its own capabilities and 
         // inputs. For this sample, we are reporting a single input to this 'fake' capture card.
         //
+
         auto input = winrt::make<SampleDisplayInput>(this->weak_from_this());
         
         return std::vector<IDisplayInput>{ input };
@@ -161,20 +176,19 @@ namespace winrt::TestPlugin::implementation
 	}
 
 
-	DWORD FrankenboardDevice::FpgaRead (unsigned short address, std::vector<byte> data)
+	std::vector<byte> FrankenboardDevice::FpgaRead (unsigned short address, UINT16 data)
 	{
 		DWORD retVal = MAXDWORD;
+		std::vector<byte> dataVector;
 		const size_t readBlockSize = 0x50;
-		UINT16 remaining = data.size();
+		UINT16 remaining = data;
 		ULONG amountToRead = min(readBlockSize, remaining);
+		dataVector.resize(amountToRead);
 		Buffer readBuffer(amountToRead);
 		readBuffer.Length(amountToRead);
 		retVal = fpgaReadSetupPacket(readBuffer, address, remaining, &amountToRead);
-		memcpy_s(data.data(), remaining, readBuffer.data(), readBuffer.Length());
-		Buffer readValue(retVal);
-	Exit:
-		return retVal;
-		//return readValue;
+		memcpy_s(dataVector.data(), dataVector.size(), readBuffer.data(), amountToRead);
+		return dataVector;
 
 	}
 

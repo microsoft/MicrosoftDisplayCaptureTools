@@ -46,7 +46,7 @@ namespace winrt::TestPlugin::implementation
         std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() override;
         void TriggerHdmiCapture() override;
         void FpgaWrite(unsigned short address, std::vector<byte> data);
-        DWORD FpgaRead (unsigned short address, std::vector<byte> data);
+        std::vector<byte> FpgaRead (unsigned short address, UINT16 data);
         std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
         DWORD fpgaReadSetupPacket (winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
 
