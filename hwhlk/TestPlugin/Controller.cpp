@@ -59,7 +59,7 @@ namespace winrt::TestPlugin::implementation
 
     void Controller::DiscoverCaptureBoards()
     {
-        // TODO: Discover capture boards connected via USB and place them in m_captureBoards
+        
 		for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Frankenboard)).get())
 		{
 			auto input = std::make_shared<FrankenboardDevice>(device.Id());
