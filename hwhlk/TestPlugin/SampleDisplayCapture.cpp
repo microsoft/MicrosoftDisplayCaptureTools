@@ -1,5 +1,9 @@
 #include "pch.h"
+// add the include for IMicrosoftCaptureBoard
 #include "SampleDisplayCapture.h"
+#include "Singleton.h"
+#include "Controller.g.h"
+#include "Controller.h"
 
 #include <winrt/Windows.Security.Cryptography.h>
 #include <winrt/Windows.Security.Cryptography.Core.h>
@@ -7,19 +11,24 @@
 #include <wincodec.h>
 #include <MemoryBuffer.h>
 
+
 using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
 using namespace winrt::MicrosoftDisplayCaptureTools;
 
-namespace winrt::CaptureCard::implementation
+namespace winrt::TestPlugin::implementation
 {
-    SampleDisplayCapture::SampleDisplayCapture() : 
+    SampleDisplayCapture::SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> captureBoard) :
         m_testDataFolder(LoadFolder(L"TestData")),
-        m_mismatchFolder(LoadFolder(L"Mismatches"))
+        m_mismatchFolder(LoadFolder(L"Mismatches")),
+        m_captureBoard(captureBoard)
     {
-        
+        m_captureBoard->TriggerHdmiCapture();
+        Sleep(5000);
+        UINT32 dataSize = 32;
+        m_captureBoard->ReadEndPointData(dataSize);
     }
 
     void SampleDisplayCapture::CompareCaptureToReference(hstring name, DisplayStateReference::IStaticReference reference)
@@ -99,6 +108,39 @@ namespace winrt::CaptureCard::implementation
         auto bitmap = decoder.GetSoftwareBitmapAsync().get();
 
         return bitmap;
+    }
+
+
+    void SampleDisplayCapture::SaveMemoryToBitmap (hstring name)
+    {
+        auto file = m_testDataFolder.GetFileAsync(name).get();
+        UINT16 dataSize = 32;
+        auto readBuffer = m_captureBoard->FpgaRead(0x20, dataSize); 
+        auto read = readBuffer.data(); 
+        int bWidth= 644; 
+        int bHeight= 300;
+        int bitsPerPixel =32;
+
+        winrt::com_ptr<IWICImagingFactory> wicFactory;
+
+        // Create the COM imaging factory
+        winrt::check_hresult(CoCreateInstance(
+            CLSID_WICImagingFactory,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            IID_PPV_ARGS(wicFactory.put())
+        ));
+
+        winrt::com_ptr<IWICBitmap> embeddedBitmap;
+        winrt::check_hresult(wicFactory->CreateBitmapFromMemory(  
+            bWidth,
+            bHeight,
+            GUID_WICPixelFormat32bppRGB, 
+            (bWidth*bitsPerPixel+7)/8, 
+            bHeight*bWidth,
+            read,
+            embeddedBitmap.put()));
+
     }
 
     void SampleDisplayCapture::SaveMismatchedImage(hstring name, winrt::Windows::Graphics::Imaging::SoftwareBitmap bitmap)

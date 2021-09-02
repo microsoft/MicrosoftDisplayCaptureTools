@@ -5,11 +5,16 @@
 using namespace winrt::MicrosoftDisplayCaptureTools;
 using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
 
-namespace winrt::CaptureCard::implementation
+namespace winrt::TestPlugin::implementation
 {
+    SampleDisplayInput::SampleDisplayInput(std::weak_ptr<FrankenboardDevice> parent)
+        : m_parent(parent)
+    {
+    }
+
     hstring SampleDisplayInput::Name()
     {
-        return L"Sample Input";
+        return L"HDMI";
     }
 
     Windows::Devices::Display::Core::DisplayTarget SampleDisplayInput::MapCaptureInputToDisplayPath()
@@ -38,11 +43,13 @@ namespace winrt::CaptureCard::implementation
         {
         case CaptureTriggerType::FirstNonEmpty:
         case CaptureTriggerType::Immediate:
-            return winrt::make<SampleDisplayCapture>();
+            m_parent.lock()->TriggerHdmiCapture();
+            return winrt::make<SampleDisplayCapture>(m_parent.lock());
 
         case CaptureTriggerType::Timer:
             SleepEx(trigger.timeToCapture, FALSE);
-            return winrt::make<SampleDisplayCapture>();
+            m_parent.lock()->TriggerHdmiCapture();
+            return winrt::make<SampleDisplayCapture>(m_parent.lock());
         }
 
         throw winrt::hresult_not_implemented();

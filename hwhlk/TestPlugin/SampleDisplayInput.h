@@ -1,10 +1,10 @@
 #pragma once
 
-namespace winrt::CaptureCard::implementation
+namespace winrt::TestPlugin::implementation
 {
     struct SampleDisplayInput : implements<SampleDisplayInput, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
     {
-        SampleDisplayInput() = default;
+        SampleDisplayInput(std::weak_ptr<FrankenboardDevice> parent);
 
         hstring Name();
 
@@ -15,5 +15,7 @@ namespace winrt::CaptureCard::implementation
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame(MicrosoftDisplayCaptureTools::CaptureCard::CaptureTrigger trigger);
 
         void FinalizeDisplayState();
+
+        std::weak_ptr<FrankenboardDevice> m_parent;
     };
 }

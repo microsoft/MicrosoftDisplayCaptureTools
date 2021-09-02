@@ -1,4 +1,4 @@
-namespace CaptureCard
+namespace TestPlugin
 {
     [default_interface]
     runtimeclass Controller : MicrosoftDisplayCaptureTools.CaptureCard.IController
