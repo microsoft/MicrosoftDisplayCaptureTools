@@ -18,10 +18,10 @@ class I2cDriver
 public:
     I2cDriver(winrt::Windows::Devices::Usb::UsbDevice usbDevice);
 
-    uint16_t readRegister(uint16_t address, uint8_t reg, size_t count, uint8_t* buffer);
+    uint16_t readRegister(uint16_t address, uint8_t reg, uint16_t count, uint8_t* buffer);
     char readRegisterByte(uint16_t address, uint8_t reg);
 
-    void writeRegister(uint16_t address, uint8_t reg, size_t count, const uint8_t* buffer);
+    void writeRegister(uint16_t address, uint8_t reg, uint32_t count, const uint8_t* buffer);
     void writeRegisterByte(uint16_t address, uint8_t reg, uint8_t value);
     void writeRegisterByteMasked(uint16_t address, uint8_t reg, uint8_t value, uint8_t mask);
 

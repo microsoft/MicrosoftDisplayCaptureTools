@@ -11,7 +11,7 @@ I2cDriver::I2cDriver(winrt::Windows::Devices::Usb::UsbDevice usbDevice) :
 {
 }
 
-void I2cDriver::writeRegister(uint16_t address, uint8_t reg, size_t count, const uint8_t* buffer)
+void I2cDriver::writeRegister(uint16_t address, uint8_t reg, uint32_t count, const uint8_t* buffer)
 {
 	UsbSetupPacket setupPacket;
 	UsbControlRequestType requestType;
@@ -32,11 +32,8 @@ void I2cDriver::writeRegister(uint16_t address, uint8_t reg, size_t count, const
 	}
 	catch (...)
 	{
-		
 		printf("Error with writing to register");
-		[[noreturn]] inline void winrt::throw_last_error();
-		//winrt::throw_last_error();
-		
+		winrt::throw_last_error();	
 	}
 }
 
@@ -58,7 +55,7 @@ void I2cDriver::writeRegisterByteMasked(uint16_t address, uint8_t reg, uint8_t v
 	}
 }
 
-uint16_t I2cDriver::readRegister(uint16_t address, uint8_t reg, size_t count, uint8_t* buffer)
+uint16_t I2cDriver::readRegister(uint16_t address, uint8_t reg, uint16_t count, uint8_t* buffer)
 {
 	UsbSetupPacket setupPacket;
 	UsbControlRequestType requestType;
@@ -80,7 +77,7 @@ uint16_t I2cDriver::readRegister(uint16_t address, uint8_t reg, size_t count, ui
 
 		memcpy_s(buffer, count, readBuffer.data(), readBuffer.Length());
 
-		return readBuffer.Length();
+		return (uint16_t)readBuffer.Length();
 	}
 	catch (...)
 	{

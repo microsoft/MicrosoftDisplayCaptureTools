@@ -8,6 +8,9 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="I2cDriver.cpp" />
     <ClCompile Include="IteIt6803.cpp" />
+    <ClCompile Include="TanagerDevice.cpp" />
+    <ClCompile Include="IteIt68051.cpp" />
+    <ClCompile Include="Fx3FpgaInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.h" />
@@ -17,6 +20,9 @@
     <ClInclude Include="I2cDriver.h" />
     <ClInclude Include="IteIt6803.h" />
     <ClInclude Include="IteIt6803Registers.h" />
+    <ClInclude Include="TanagerDevice.h" />
+    <ClInclude Include="IteIt68051.h" />
+    <ClInclude Include="Fx3FpgaInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="TestPlugin.idl" />

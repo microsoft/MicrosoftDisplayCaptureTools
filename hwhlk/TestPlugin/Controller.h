@@ -2,7 +2,7 @@
 #include "Controller.g.h"
 #include "pch.h"
 #include "I2cDriver.h"
-
+#include "Fx3FpgaInterface.h"
 
 namespace winrt::TestPlugin::implementation
 {
@@ -15,6 +15,7 @@ namespace winrt::TestPlugin::implementation
         virtual void TriggerHdmiCapture() = 0;
         virtual std::vector<byte> ReadEndPointData(UINT32 dataSize) = 0;
         virtual std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize) = 0;
+        virtual void FpgaWrite(unsigned short address, std::vector<byte> data) = 0;
     };
 
 #define TCA6416A_BANK_0 0
@@ -45,10 +46,9 @@ namespace winrt::TestPlugin::implementation
 
         std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() override;
         void TriggerHdmiCapture() override;
-        void FpgaWrite(unsigned short address, std::vector<byte> data);
-        std::vector<byte> FpgaRead (unsigned short address, UINT16 data);
+        void FpgaWrite(unsigned short address, std::vector<byte> data) override;
+        std::vector<byte> FpgaRead (unsigned short address, UINT16 size) override;
         std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
-        DWORD fpgaReadSetupPacket (winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
 
     private:
         void SetEdid(std::vector<byte> Edid);
@@ -56,6 +56,7 @@ namespace winrt::TestPlugin::implementation
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput m_hdmiInput;
         std::shared_ptr<I2cDriver> pDriver;
+        Fx3FpgaInterface m_fpga;
     };
 
     // Represents a single real Microsoft capture device. Initializes and keeps device state.

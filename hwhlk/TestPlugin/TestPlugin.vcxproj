@@ -190,23 +190,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Controller.h" />
+    <ClInclude Include="Fx3FpgaInterface.h" />
     <ClInclude Include="I2cDriver.h" />
     <ClInclude Include="IteIt6803.h" />
     <ClInclude Include="IteIt6803Registers.h" />
+    <ClInclude Include="IteIt68051.h" />
     <ClInclude Include="SampleDisplayCapture.h" />
     <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="TanagerDevice.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="Fx3FpgaInterface.cpp" />
     <ClCompile Include="I2cDriver.cpp" />
     <ClCompile Include="IteIt6803.cpp" />
+    <ClCompile Include="IteIt68051.cpp" />
     <ClCompile Include="SampleDisplayCapture.cpp" />
     <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="TanagerDevice.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

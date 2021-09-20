@@ -1,7 +1,6 @@
 #include "pch.h"
 // add the include for IMicrosoftCaptureBoard
 #include "SampleDisplayCapture.h"
-#include "Singleton.h"
 #include "Controller.g.h"
 #include "Controller.h"
 

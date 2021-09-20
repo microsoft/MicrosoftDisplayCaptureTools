@@ -4,9 +4,9 @@
 #include "Controller.h"
 #include "IteIt6803.h"
 #include <initguid.h>
-#include "Singleton.h"
 #include "SampleDisplayCapture.h"
 #include "Controller.g.cpp"
+#include "TanagerDevice.h"
 
 using namespace winrt;
 using namespace winrt::Windows::Devices::Enumeration;
@@ -23,6 +23,8 @@ using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
 // {AF594BBC-240A-42D5-A805-7A1960EAEAD8}
 DEFINE_GUID(GUID_DEVINTERFACE_Frankenboard,
 	0xaf594bbc, 0x240a, 0x42d5, 0xa8, 0x5, 0x7a, 0x19, 0x60, 0xea, 0xea, 0xd8);
+DEFINE_GUID(GUID_DEVINTERFACE_Tanager,
+	0x237e1ed8, 0x4c6b, 0x421e, 0xbe, 0x8f, 0x48, 0x52, 0x84, 0x42, 0x88, 0xed);
 
 namespace winrt::TestPlugin::implementation
 {
@@ -59,10 +61,15 @@ namespace winrt::TestPlugin::implementation
 
     void Controller::DiscoverCaptureBoards()
     {
-        
 		for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Frankenboard)).get())
 		{
 			auto input = std::make_shared<FrankenboardDevice>(device.Id());
+			m_captureBoards.push_back(input);
+		}
+
+		for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Tanager)).get())
+		{
+			auto input = std::make_shared<TanagerDevice>(device.Id());
 			m_captureBoards.push_back(input);
 		}
     }
@@ -87,6 +94,7 @@ namespace winrt::TestPlugin::implementation
 		{
 			throw_hresult(E_FAIL);
 		}
+		m_fpga.SetUsbDevice(m_usbDevice);
 
 		pDriver = std::make_shared<I2cDriver>(m_usbDevice);
 		TiTca6416a ioExp1(0x20, pDriver);
@@ -142,82 +150,17 @@ namespace winrt::TestPlugin::implementation
 
 	std::vector<byte> FrankenboardDevice::ReadEndPointData(UINT32 dataSize)
 	{
-		std::vector<byte> frameVector;
-		UsbBulkInPipe bulkIn = m_usbDevice.DefaultInterface().BulkInPipes().GetAt(0);
-		DataReader reader = DataReader(bulkIn.InputStream());
-		reader.LoadAsync(dataSize).GetResults();
-		UINT64 data = reader.ReadUInt64();
-		return frameVector;
+		return m_fpga.ReadEndPointData(dataSize);
 	}
 
 	void FrankenboardDevice::FpgaWrite(unsigned short address, std::vector<byte> data)
 	{
-		// Since I'm testing on USB2 break this up into chunks
-		const size_t writeBlockSize = 0x50;
-		for (int i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= writeBlockSize)
-		{
-			size_t amountToWrite = min(writeBlockSize, remaining);
-			UsbSetupPacket setupPacket;
-			UsbControlRequestType requestType;
-			requestType.AsByte(0x40); // 0_10_00000
-			setupPacket.RequestType(requestType);
-			setupPacket.Request(VR_UART_DATA_TRANSFER);
-			setupPacket.Value(0);
-			setupPacket.Index(address + i);	// EDID memory
-			setupPacket.Length(amountToWrite);
-
-			Buffer writeBuffer(amountToWrite);
-			writeBuffer.Length(amountToWrite);
-			memcpy_s(writeBuffer.data() + i, writeBuffer.Length(), data.data(), amountToWrite);
-			m_usbDevice.SendControlOutTransferAsync(setupPacket, writeBuffer).get();
-			Sleep(100);
-		}
-
+		m_fpga.Write(address, data);
 	}
 
-
-	std::vector<byte> FrankenboardDevice::FpgaRead (unsigned short address, UINT16 data)
+	std::vector<byte> FrankenboardDevice::FpgaRead (unsigned short address, UINT16 size)
 	{
-		DWORD retVal = MAXDWORD;
-		std::vector<byte> dataVector;
-		const size_t readBlockSize = 0x50;
-		UINT16 remaining = data;
-		ULONG amountToRead = min(readBlockSize, remaining);
-		dataVector.resize(amountToRead);
-		Buffer readBuffer(amountToRead);
-		readBuffer.Length(amountToRead);
-		retVal = fpgaReadSetupPacket(readBuffer, address, remaining, &amountToRead);
-		memcpy_s(dataVector.data(), dataVector.size(), readBuffer.data(), amountToRead);
-		return dataVector;
-
-	}
-
-	DWORD FrankenboardDevice::fpgaReadSetupPacket(Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead)
-	{
-		DWORD retVal = MAXDWORD;
-		const size_t readBlockSize = 0x50;
-		for (int i = 0; len > 0; i += readBlockSize, len -= readBlockSize)
-		{
-			UsbSetupPacket setupPacket;
-			UsbControlRequestType requestType;
-			requestType.AsByte(0xC0);
-			setupPacket.RequestType(requestType);
-			setupPacket.Request(VR_UART_DATA_TRANSFER);
-			setupPacket.Value(0);
-			setupPacket.Index(address);
-			setupPacket.Length(len);
-			if (m_usbDevice.SendControlInTransferAsync(setupPacket, readBuffer).get() == NULL)
-			{
-				retVal = GetLastError();
-				printf("Error with Control transfer: %X\n", GetLastError());
-				goto Exit;
-			}
-			retVal = 0;
-		}
-
-	Exit:
-		return retVal;
-
+		return m_fpga.Read(address, size);
 	}
 
 	void FrankenboardDevice::SetEdid(std::vector<byte> Edid)
