@@ -18,6 +18,9 @@ namespace winrt::TestPlugin::implementation
         void FpgaWrite(unsigned short address, std::vector<byte> data) override;
         std::vector<byte> FpgaRead(unsigned short address, UINT16 data) override;
         std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
+        void FlashFpgaFirmware(Windows::Foundation::Uri uri) override;
+        void FlashFx3Firmware(Windows::Foundation::Uri uri) override;
+        FirmwareVersionInfo GetFirmwareVersionInfo() override;
 
     private:
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;

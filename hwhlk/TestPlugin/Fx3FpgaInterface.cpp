@@ -42,16 +42,30 @@ namespace winrt::TestPlugin::implementation
 
 	std::vector<byte> Fx3FpgaInterface::Read(unsigned short address, UINT16 size)
 	{
-		DWORD retVal = MAXDWORD;
 		std::vector<byte> dataVector;
 		const size_t readBlockSize = 0x50;
 		UINT16 remaining = size;
-		ULONG amountToRead = min(readBlockSize, remaining);
-		dataVector.resize(amountToRead);
-		Buffer readBuffer(amountToRead);
-		readBuffer.Length(amountToRead);
-		retVal = ReadSetupPacket(readBuffer, address, remaining, &amountToRead);
-		memcpy_s(dataVector.data(), dataVector.size(), readBuffer.data(), amountToRead);
+		while (remaining)
+		{
+			UINT16 amountToRead = min(readBlockSize, remaining);
+			
+			UsbSetupPacket setupPacket;
+			UsbControlRequestType requestType;
+			requestType.AsByte(0xC0);
+			setupPacket.RequestType(requestType);
+			setupPacket.Request(VR_UART_DATA_TRANSFER);
+			setupPacket.Value(0);
+			setupPacket.Index(address);
+			setupPacket.Length(amountToRead);
+			auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket).get();
+			if (buffer == nullptr)
+			{
+				throw_last_error();
+			}
+
+			dataVector.insert(dataVector.end(), buffer.data(), buffer.data() + buffer.Length());
+			remaining -= (UINT16)buffer.Length();
+		}
 		return dataVector;
 	}
 
@@ -65,30 +79,38 @@ namespace winrt::TestPlugin::implementation
 		return frameVector;
 	}
 
-	DWORD Fx3FpgaInterface::ReadSetupPacket(winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead)
+	void Fx3FpgaInterface::FlashFpgaFirmware(Windows::Foundation::Uri uri)
 	{
-		DWORD retVal = MAXDWORD;
-		const size_t readBlockSize = 0x50;
-		for (int i = 0; len > 0; i += readBlockSize, len -= readBlockSize)
+		throw winrt::hresult_not_implemented();
+	}
+
+	void Fx3FpgaInterface::FlashFx3Firmware(Windows::Foundation::Uri uri)
+	{
+		throw winrt::hresult_not_implemented();
+	}
+
+	FirmwareVersionInfo Fx3FpgaInterface::GetFirmwareVersionInfo()
+	{
+		UsbSetupPacket setupPacket;
+		UsbControlRequestType requestType;
+		requestType.AsByte(0xC0);
+		setupPacket.RequestType(requestType);
+		setupPacket.Request(VR_VERSION);
+		setupPacket.Value(0);
+		setupPacket.Index(0);
+		setupPacket.Length(sizeof(FirmwareVersionInfo));
+		auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket).get();
+		if (buffer == nullptr)
 		{
-			UsbSetupPacket setupPacket;
-			UsbControlRequestType requestType;
-			requestType.AsByte(0xC0);
-			setupPacket.RequestType(requestType);
-			setupPacket.Request(VR_UART_DATA_TRANSFER);
-			setupPacket.Value(0);
-			setupPacket.Index(address);
-			setupPacket.Length(len);
-			if (m_usbDevice.SendControlInTransferAsync(setupPacket, readBuffer).get() == NULL)
-			{
-				retVal = GetLastError();
-				printf("Error with Control transfer: %X\n", GetLastError());
-				goto Exit;
-			}
-			retVal = readBuffer.Length();
+			throw_last_error();
+		}
+		if (buffer.Length() != sizeof(FirmwareVersionInfo))
+		{
+			throw winrt::hresult_error();
 		}
 
-	Exit:
-		return retVal;
+		FirmwareVersionInfo versionInfo = { 0 };
+		memcpy(&versionInfo, buffer.data(), sizeof(versionInfo));
+		return versionInfo;
 	}
 }

@@ -153,6 +153,21 @@ namespace winrt::TestPlugin::implementation
 		return m_fpga.ReadEndPointData(dataSize);
 	}
 
+	void FrankenboardDevice::FlashFpgaFirmware(Windows::Foundation::Uri uri)
+	{
+		m_fpga.FlashFpgaFirmware(uri);
+	}
+
+	void FrankenboardDevice::FlashFx3Firmware(Windows::Foundation::Uri uri)
+	{
+		m_fpga.FlashFx3Firmware(uri);
+	}
+
+	FirmwareVersionInfo FrankenboardDevice::GetFirmwareVersionInfo()
+	{
+		return m_fpga.GetFirmwareVersionInfo();
+	}
+
 	void FrankenboardDevice::FpgaWrite(unsigned short address, std::vector<byte> data)
 	{
 		m_fpga.Write(address, data);

@@ -10,6 +10,10 @@
 #define VR_XFER_RESET           0x20
 #define VR_XFER_RNW             0x21
 #define VR_RECONFIGURE          0x22
+#define VR_SYS_RESET            0x23
+#define VR_HDMI_EDID_SELECT     0x24
+#define VR_DP_EDID_SELECT       0x25
+#define VR_DP2_EDID_SELECT      0x26
 #define VR_FLASH_TRANSFER       0xC2
 #define VR_DEVICE_RESET         0xC6
 

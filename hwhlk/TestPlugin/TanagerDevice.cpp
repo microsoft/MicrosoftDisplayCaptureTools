@@ -19,7 +19,8 @@ namespace winrt::TestPlugin::implementation
 
 		m_pDriver = std::make_shared<I2cDriver>(m_usbDevice);
 
-		m_pHdmiChip = std::make_shared<IteIt68051>(0x48, m_pDriver);
+		const unsigned char it68051i2cAddress = 0x48;
+		m_pHdmiChip = std::make_shared<IteIt68051>(it68051i2cAddress, m_pDriver);
 
 		m_pHdmiChip->Initialize();
 	}
@@ -55,6 +56,21 @@ namespace winrt::TestPlugin::implementation
 	std::vector<byte> TanagerDevice::ReadEndPointData(UINT32 dataSize)
 	{
 		return m_fpga.ReadEndPointData(dataSize);
+	}
+
+	void TanagerDevice::FlashFpgaFirmware(Windows::Foundation::Uri uri)
+	{
+		m_fpga.FlashFpgaFirmware(uri);
+	}
+
+	void TanagerDevice::FlashFx3Firmware(Windows::Foundation::Uri uri)
+	{
+		m_fpga.FlashFx3Firmware(uri);
+	}
+
+	FirmwareVersionInfo TanagerDevice::GetFirmwareVersionInfo()
+	{
+		return m_fpga.GetFirmwareVersionInfo();
 	}
 
 	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port)

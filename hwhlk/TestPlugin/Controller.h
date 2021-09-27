@@ -6,6 +6,17 @@
 
 namespace winrt::TestPlugin::implementation
 {
+    struct FirmwareVersionInfo
+    {
+        byte fx3FirmwareVersionMajor;
+        byte fx3FirmwareVersionMinor;
+        byte fx3FirmwareVersionPatch;
+        byte fpgaFirmwareVersionMajor;
+        byte fpgaFirmwareVersionMinor;
+        byte fpgaFirmwareVersionPatch;
+        byte hardwareRevision;
+    };
+
     // Provides an abstraction for different boards to provide display inputs
     class IMicrosoftCaptureBoard abstract
     {
@@ -16,6 +27,9 @@ namespace winrt::TestPlugin::implementation
         virtual std::vector<byte> ReadEndPointData(UINT32 dataSize) = 0;
         virtual std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize) = 0;
         virtual void FpgaWrite(unsigned short address, std::vector<byte> data) = 0;
+        virtual void FlashFpgaFirmware(Windows::Foundation::Uri uri) = 0;
+        virtual void FlashFx3Firmware(Windows::Foundation::Uri uri) = 0;
+        virtual FirmwareVersionInfo GetFirmwareVersionInfo() = 0;
     };
 
 #define TCA6416A_BANK_0 0
@@ -49,6 +63,9 @@ namespace winrt::TestPlugin::implementation
         void FpgaWrite(unsigned short address, std::vector<byte> data) override;
         std::vector<byte> FpgaRead (unsigned short address, UINT16 size) override;
         std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
+        void FlashFpgaFirmware(Windows::Foundation::Uri uri) override;
+        void FlashFx3Firmware(Windows::Foundation::Uri uri) override;
+        FirmwareVersionInfo GetFirmwareVersionInfo() override;
 
     private:
         void SetEdid(std::vector<byte> Edid);
@@ -57,12 +74,6 @@ namespace winrt::TestPlugin::implementation
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput m_hdmiInput;
         std::shared_ptr<I2cDriver> pDriver;
         Fx3FpgaInterface m_fpga;
-    };
-
-    // Represents a single real Microsoft capture device. Initializes and keeps device state.
-    class MicrosoftRealDevice : IMicrosoftCaptureBoard
-    {
-
     };
 
     struct Controller : ControllerT<Controller>

@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include "Controller.h"
 #include <vector>
 
 namespace winrt::TestPlugin::implementation
@@ -12,9 +13,11 @@ namespace winrt::TestPlugin::implementation
         void Write(unsigned short address, std::vector<byte> data);
         std::vector<byte> Read(unsigned short address, UINT16 size);
         std::vector<byte> ReadEndPointData(UINT32 dataSize);
+        void FlashFpgaFirmware(Windows::Foundation::Uri uri);
+        void FlashFx3Firmware(Windows::Foundation::Uri uri);
+        struct FirmwareVersionInfo GetFirmwareVersionInfo();
 
     private:
-        DWORD ReadSetupPacket(winrt::Windows::Storage::Streams::Buffer readBuffer, UINT16 address, UINT16 len, ULONG* bytesRead);
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
     };
 }
