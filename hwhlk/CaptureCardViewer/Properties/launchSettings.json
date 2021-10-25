@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CaptureCardViewer": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
