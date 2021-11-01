@@ -21,6 +21,6 @@
             <ToggleButton>Connect Monitor</ToggleButton>
             <ToggleButton>Capture Frames</ToggleButton>
         </StackPanel>
-        
+
     </Grid>
 </Window>
