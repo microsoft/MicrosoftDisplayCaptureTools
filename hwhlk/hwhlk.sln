@@ -13,6 +13,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureCardViewer", "CaptureCardViewer\CaptureCardViewer.csproj", "{D0FE9E29-E8E9-436C-BF9E-243E836BCD5E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{06F8380A-E9DD-4446-8828-3B7D5243FC06}"
+	ProjectSection(SolutionItems) = preProject
+		..\.clang-format = ..\.clang-format
+		..\.editorconfig = ..\.editorconfig
+		..\.gitignore = ..\.gitignore
+		..\.vsconfig = ..\.vsconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
