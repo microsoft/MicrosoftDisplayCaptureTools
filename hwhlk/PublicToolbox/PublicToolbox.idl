@@ -1,8 +1,0 @@
-namespace Toolbox
-{
-    [default_interface]
-    runtimeclass ConfigurationToolbox : MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox
-    {
-        ConfigurationToolbox();
-    }
-}

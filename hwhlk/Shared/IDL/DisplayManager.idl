@@ -1,0 +1,173 @@
+namespace MicrosoftDisplayCaptureTools.Display
+{
+    //
+    // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the 
+    // descriptor from the framework - plugins are largely expected to only need the memory block.
+    //
+    enum MonitorDescriptorType
+    {
+        EDID,
+        DisplayID,
+        EmbeddedDisplayID
+    };
+
+	//
+	// Represents a monitor descriptor (i.e. EDID, DisplayID).
+	//
+	interface IMonitorDescriptor
+	{
+		MonitorDescriptorType GetType();
+		Windows.Foundation.IMemoryBufferReference GetData();
+	};
+
+    //
+    // Struct representing a 3-channel color
+    // 
+    // TODO: this is intended as a demonstrative for the time being, a more expressive version will replace this to
+    //       allow expressing other acceptable pixel formats.
+    //
+    struct PixelColor
+    {
+        Single ChannelA;
+        Single ChannelB;
+        Single ChannelC;
+    };
+
+    // Used to set parameters for this particular MPO plane.
+    interface IDisplayEnginePlanePropertySet
+    {
+        // Should this plane be rendered
+        Boolean Active{ get; set; };
+
+        // The location of this plane, relative to the top left corner of the base plane.
+        Windows.Graphics.Imaging.BitmapBounds Rect{ get; set; };
+
+        // The format of this plane
+        Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
+
+        // The bitmap to be rendered (optional)
+        Windows.Graphics.Imaging.SoftwareBitmap SourceBitmap{ get; set; };
+
+        // The color to initialize this plane with
+        MicrosoftDisplayCaptureTools.Display.PixelColor ClearColor{ get; set; };
+    };
+
+    // Represents the capabilities of this MPO plane
+    interface IDisplayEnginePlaneCapabilities
+    {
+        // TODO: placeholder for now.
+        String Name{ get; };
+    };
+
+    // Used to set parameters to the current display engine
+    interface IDisplayEnginePropertySet
+    {
+        Windows.Devices.Display.Core.DisplayModeInfo ActiveMode{ get; set; };
+
+        Double RefreshRate{ get; set; };
+
+        Windows.Graphics.SizeInt32 Resolution{ get; set; };
+
+        // Get the per-plane property set for this display
+        // The first entry of the returned array will always represent the base plane
+        IDisplayEnginePlanePropertySet[] GetPlaneProperties();
+    };
+
+    // Represents the capabilities of the display currently set to the display engine
+    interface IDisplayEngineCapabilities
+    {
+        // Get all supported modes for this display
+        Windows.Devices.Display.Core.DisplayModeInfo[] GetSupportedModes();
+
+        // Get the per-plane capabilties for this display
+        // The first entry of the returned array will always represent the base plane
+        IDisplayEnginePlaneCapabilities[] GetPlaneCapabilities();
+    };
+
+    // Represents the predicted output for the current settings of the display engine that creates it
+    interface IDisplayEnginePrediction
+    {
+        // GetBitmap 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Gets a bitmap representing the predicted output for the current settings on the parent IDisplayEngine
+        //     implementation.
+        //
+        Windows.Graphics.Imaging.SoftwareBitmap GetBitmap();
+    };
+
+    // The engine managing both physical and predicted output to the display
+    interface IDisplayEngine
+    {
+        // Get the name of this IDisplayEngine implementation
+        String Name{ get; };
+
+        // InitializeForDisplayTarget 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Initializes this IDisplayEngine implementation for a given display target. If this is reset then all
+        //     objects previously obtained from this class should be disposed.
+        //
+        void InitializeForDisplayTarget(Windows.Devices.Display.Core.DisplayTarget target);
+
+        // InitializeForStableMonitorId 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Initializes this IDisplayEngine implementation for a given display target, using the StableMonitorId 
+        //     string to identify the display. This is expected to be sourced from a pre-generated config file.
+        //
+        void InitializeForStableMonitorId(String target);
+
+        // GetDisplayTarget 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Gets the current DisplayTarget set for this IDisplayEngine implementation.
+        //
+        Windows.Devices.Display.Core.DisplayTarget GetTarget();
+
+        // GetCapabilities 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Gets the capabilities object for this IDisplayEngine implementation. This is expected to contain 
+        //     capabilities for the current DisplayTarget as a whole display, not capabilities that are specific to MPO
+        //     planes. A good example would be modes supported by the targeted display and GPU.
+        //
+        IDisplayEngineCapabilities GetCapabilities();
+
+        // GetProperties 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Get the properties object for this IDisplayEngine implementation. ConfigurationTools will manipulate the
+        //     various members of this object to change how and what is rendered to both the phyiscal display and the 
+        //     associated prediction.
+        //
+        IDisplayEnginePropertySet GetProperties();
+
+        // GetPrediction 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Gets the prediction object for this IDisplayEngine implementation. This object will use the same 
+        //     information used for physical rendering to create a software approximation.
+        //
+        IDisplayEnginePrediction GetPrediction();
+
+        // StartRender 
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Using all set properties on this object and all child planes, actually begins physically rendering to 
+        //     the target display. The rendering will stop when Close() is called on the returned object.
+        //
+        Windows.Foundation.IClosable StartRender();
+
+        // SetConfigData
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Initialize tools with settings from a configuration file loaded by the framework
+        //
+        // Parameters:
+        //      data
+        //          The subsection of the json file for this toolbox
+        //
+        void SetConfigData(Windows.Data.Json.IJsonValue data);
+    };
+}

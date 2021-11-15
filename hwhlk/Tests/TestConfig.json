@@ -1,0 +1,32 @@
+{
+  "Version": "0.1",
+  "Components": {
+    "CapturePlugin": {
+      "Path": "GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll",
+      "Class": "GenericCaptureCardPlugin.Plugin",
+      "Settings": {
+        "UsbId": "VID_1BCF"
+      }
+    },
+    "DisplayEngine": {
+      "Path": "BasicDisplayControl\\BasicDisplayControl.dll",
+      "Class": "DisplayControl.DisplayEngine",
+      "Settings": null
+    },
+    "ConfigurationToolboxes": [
+      {
+        "Path": "CommonToolbox\\CommonToolbox.dll",
+        "Class": "DisplayConfiguration.Toolbox",
+        "Settings": null
+      }
+    ]
+  },
+  "TestSystem": {
+    "DisplayInputMapping": [
+      {
+        "DisplayId": "MXX00011_04_07DF_5B",
+        "PluginInputName": "Input 1"
+      }
+    ]
+  }
+}

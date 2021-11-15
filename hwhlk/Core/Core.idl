@@ -1,0 +1,18 @@
+//
+// Import all IDLs in this particular project to force their inclusion in the framework winmd file.
+// This main framework winmd file (MicrosoftDisplayCaptureTools.winmd) will then be referenced from 
+// all other component projects.
+//
+import "Framework.idl";
+import "DisplayManager.idl";
+import "ConfigurationTools.idl";
+import "CaptureCardPlugin.idl";
+
+namespace MicrosoftDisplayCaptureTools.Framework
+{
+    [default_interface]
+    runtimeclass Core : MicrosoftDisplayCaptureTools.Framework.ICore
+    {
+        Core();
+    }
+}

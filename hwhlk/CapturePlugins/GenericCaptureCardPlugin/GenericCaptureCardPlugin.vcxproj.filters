@@ -8,9 +8,6 @@
     <Filter Include="Generated Files">
       <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SharedIDLs">
-      <UniqueIdentifier>{ffcafd31-db8e-420b-8cfe-a50aede31df8}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -20,25 +17,16 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="Core.idl" />
-    <Midl Include="..\Shared\IDL\Framework.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
-    <Midl Include="..\Shared\IDL\CaptureCardPlugin.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
-    <Midl Include="..\Shared\IDL\ConfigurationTools.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
-    <Midl Include="..\Shared\IDL\DisplayManager.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
+    <Midl Include="Plugin.idl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Core.def" />
+    <None Include="GenericCaptureCardPlugin.def" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
   </ItemGroup>
 </Project>

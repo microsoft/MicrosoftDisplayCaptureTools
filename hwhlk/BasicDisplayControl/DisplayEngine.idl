@@ -1,0 +1,8 @@
+namespace DisplayControl
+{
+    [default_interface]
+    runtimeclass DisplayEngine : MicrosoftDisplayCaptureTools.Display.IDisplayEngine
+    {
+        DisplayEngine();
+    }
+}
