@@ -13,15 +13,12 @@
 
 #include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
-#include "winrt/MicrosoftDisplayCaptureTools.Core.h"
-#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Display.h"
 
 #include "Controller.h"
 #include "SampleDisplayCapture.h"
 #include "SampleDisplayInput.h"
-
-#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
-#include "winrt/MicrosoftDisplayCaptureTools.DisplayStateReference.h"
 
 #include <WexTestClass.h>
 #include <Wex.Common.h>

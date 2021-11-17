@@ -10,8 +10,8 @@ namespace winrt::TestPlugin::implementation
     {
         SampleDisplayCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
 
-        void CompareCaptureToReference(hstring name, MicrosoftDisplayCaptureTools::DisplayStateReference::IStaticReference reference);
-        void SaveCaptureToDisk(hstring path);
+        void CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
+        Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:
         hstring ComputeHashedFileName(hstring testName);

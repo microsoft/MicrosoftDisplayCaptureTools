@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "Core.h"
-#include "MicrosoftDisplayCaptureTools.Framework.Core.g.cpp"
+#include "Framework.Core.g.cpp"
 
 namespace winrt
 {
