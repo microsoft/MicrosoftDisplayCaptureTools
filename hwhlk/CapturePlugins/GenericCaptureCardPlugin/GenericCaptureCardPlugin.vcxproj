@@ -143,10 +143,9 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MicrosoftDisplayCaptureTools">
-      <HintPath>..\..\x64\Debug\Core\MicrosoftDisplayCaptureTools.winmd</HintPath>
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
+    <ProjectReference Include="..\..\Core\Core.vcxproj">
+      <Project>{d007aa97-b58a-47d6-9fd3-f1b24757f53b}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

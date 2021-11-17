@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "MicrosoftDisplayCaptureTools.Framework.Core.g.h"
+#include "Framework.Core.g.h"
 
 #include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
