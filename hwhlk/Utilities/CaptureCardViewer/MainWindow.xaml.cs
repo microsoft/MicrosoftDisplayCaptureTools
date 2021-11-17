@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using MicrosoftDisplayCaptureTools.Core;
+using MicrosoftDisplayCaptureTools.Framework;
 
 namespace CaptureCardViewer
 {
@@ -22,7 +22,7 @@ namespace CaptureCardViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        Framework? testFramework;
+        Core? testFramework;
 
         public MainWindow()
         {
@@ -39,7 +39,9 @@ namespace CaptureCardViewer
             {
                 try
                 {
-                    testFramework = new Framework(dialog.FileName);
+					// TODO: How do we determine the controller class name?
+                    testFramework = new Core();
+					testFramework.LoadPlugin(dialog.FileName, "TestPlugin.Controller");
                 }
                 catch (Exception)
                 {
