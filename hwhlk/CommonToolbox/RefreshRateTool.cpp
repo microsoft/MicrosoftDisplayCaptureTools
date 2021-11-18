@@ -31,7 +31,7 @@ namespace winrt::DisplayConfiguration::implementation
 		return ConfigurationToolCategory::DisplaySetup;
 	}
 
-	ConfigurationToolRequirements RefreshRateTool::Requirements()
+	IConfigurationToolRequirements RefreshRateTool::Requirements()
 	{
 		return nullptr;
 	}

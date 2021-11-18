@@ -34,7 +34,7 @@ namespace winrt::DisplayConfiguration::implementation
 		return ConfigurationToolCategory::Render;
 	}
 
-	ConfigurationToolRequirements PatternTool::Requirements()
+	IConfigurationToolRequirements PatternTool::Requirements()
 	{
 		return nullptr;
 	}

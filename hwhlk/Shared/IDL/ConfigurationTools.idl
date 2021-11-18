@@ -24,7 +24,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     // The requirements that the system under test and the capture card must meet for this tool to be valid. This is also
     // used to determine allowable tolerances on the output image.
     //
-    interface ConfigurationToolRequirements
+    interface IConfigurationToolRequirements
     {
         // The maximum capture tolerance that we expect this tool to contribute. If a capture card cannot support comparisons
         // with a tolerance, a non-zero value here will disallow the test run - this tool should not be used for that capture
@@ -60,7 +60,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         ConfigurationToolCategory Category{ get; };
 
         // The system and capture card requirements for this tool to be used.
-        ConfigurationToolRequirements Requirements{ get; };
+        IConfigurationToolRequirements Requirements{ get; };
 
         // GetSupportedConfigurations
         // ----------------------------------------------------------------------------------------------------------------

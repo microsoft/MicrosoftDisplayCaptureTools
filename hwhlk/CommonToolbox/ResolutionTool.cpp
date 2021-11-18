@@ -32,7 +32,7 @@ namespace winrt::DisplayConfiguration::implementation
 		return ConfigurationToolCategory::DisplaySetup;
 	}
 
-	ConfigurationToolRequirements ResolutionTool::Requirements()
+	IConfigurationToolRequirements ResolutionTool::Requirements()
 	{
 		return nullptr;
 	}

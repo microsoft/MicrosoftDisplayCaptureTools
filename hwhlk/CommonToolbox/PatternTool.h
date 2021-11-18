@@ -15,7 +15,7 @@ namespace winrt::DisplayConfiguration::implementation
 		PatternTool();
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
-		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolRequirements Requirements();
+		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
 		winrt::com_array<winrt::hstring> GetSupportedConfigurations();
 		winrt::hstring GetDefaultConfiguration();
 		void SetConfiguration(winrt::hstring configuration);
