@@ -4,7 +4,7 @@
 using namespace winrt::Windows::Devices::Usb;
 using namespace winrt::Windows::Storage::Streams;
 
-namespace winrt::TestPlugin::implementation
+namespace winrt::TanagerPlugin::implementation
 {
 	Fx3FpgaInterface::Fx3FpgaInterface()
 		: m_usbDevice(nullptr)

@@ -1,5 +1,5 @@
 ========================================================================
-    C++/WinRT TestPlugin Project Overview
+    C++/WinRT TanagerPlugin Project Overview
 ========================================================================
 
 This project demonstrates how to get started authoring Windows Runtime 

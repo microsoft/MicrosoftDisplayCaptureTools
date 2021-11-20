@@ -1,11 +1,10 @@
 #include "pch.h"
-#include "TanagerDevice.h"
 
 using namespace winrt;
 using namespace winrt::Windows::Devices::Enumeration;
 using namespace winrt::Windows::Devices::Usb;
 
-namespace winrt::TestPlugin::implementation
+namespace winrt::TanagerPlugin::implementation
 {
 	TanagerDevice::TanagerDevice(winrt::param::hstring deviceId)
 		: m_usbDevice(nullptr)
@@ -84,36 +83,72 @@ namespace winrt::TestPlugin::implementation
 		switch (m_port)
 		{
 		case TanagerDisplayInputPort::hdmi:
-		{
 			return L"HDMI";
-		}
 		case TanagerDisplayInputPort::displayPort:
-		{
 			return L"DisplayPort";
 		}
-		}
-		
-		winrt::throw_hresult(E_UNEXPECTED);
-	}
 
-	Windows::Devices::Display::Core::DisplayTarget TanagerDisplayInput::MapCaptureInputToDisplayPath()
-	{
-		throw winrt::hresult_not_implemented();
-	}
+        throw winrt::hresult_illegal_method_call();
+    }
 
-	MicrosoftDisplayCaptureTools::CaptureCard::CaptureCapabilities TanagerDisplayInput::GetCapabilities()
-	{
-		throw winrt::hresult_not_implemented();
-	}
+    void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor)
+    {
+        throw winrt::hresult_illegal_method_call();
+    }
 
-	MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInput::CaptureFrame(MicrosoftDisplayCaptureTools::CaptureCard::CaptureTrigger)
+    MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger TanagerDisplayInput::GetCaptureTrigger()
+    {
+        return MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger();
+    }
+
+	MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities TanagerDisplayInput::GetCapabilities()
 	{
-		throw winrt::hresult_not_implemented();
-	}
+        auto caps = winrt::make<TanagerCaptureCapabilities>();
+        return caps;
+    }
+
+    MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInput::CaptureFrame()
+    {
+        return MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture();
+    }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
 	{
 	}
 
 
+	bool TanagerCaptureCapabilities::CanReturnRawFramesToHost()
+    {
+        return true;
+    }
+
+    bool TanagerCaptureCapabilities::CanReturnFramesToHost()
+    {
+        return true;
+    }
+
+    bool TanagerCaptureCapabilities::CanCaptureFrameSeries()
+    {
+        return false;
+    }
+
+    bool TanagerCaptureCapabilities::CanHotPlug()
+    {
+        return false;
+    }
+
+    bool TanagerCaptureCapabilities::CanConfigureEDID()
+    {
+        return false;
+    }
+
+    bool TanagerCaptureCapabilities::CanConfigureDisplayID()
+    {
+        return false;
+    }
+
+    uint32_t TanagerCaptureCapabilities::GetMaxDescriptorSize()
+    {
+        throw hresult_not_implemented();
+    }
 }

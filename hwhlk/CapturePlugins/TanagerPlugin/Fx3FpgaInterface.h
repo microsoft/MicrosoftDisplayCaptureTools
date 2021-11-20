@@ -3,7 +3,7 @@
 #include "Controller.h"
 #include <vector>
 
-namespace winrt::TestPlugin::implementation
+namespace winrt::TanagerPlugin::implementation
 {
     class Fx3FpgaInterface
     {
