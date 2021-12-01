@@ -1,4 +1,4 @@
-namespace TestPlugin
+namespace TanagerPlugin
 {
     [default_interface]
     runtimeclass Controller : MicrosoftDisplayCaptureTools.CaptureCard.IController

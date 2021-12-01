@@ -4,7 +4,7 @@
 #include "I2cDriver.h"
 #include "Fx3FpgaInterface.h"
 
-namespace winrt::TestPlugin::implementation
+namespace winrt::TanagerPlugin::implementation
 {
     struct FirmwareVersionInfo
     {
@@ -32,9 +32,6 @@ namespace winrt::TestPlugin::implementation
         virtual FirmwareVersionInfo GetFirmwareVersionInfo() = 0;
     };
 
-#define TCA6416A_BANK_0 0
-#define TCA6416A_BANK_1 1
-
     // I2C bus device
     class TiTca6416a
     {
@@ -51,53 +48,23 @@ namespace winrt::TestPlugin::implementation
         std::shared_ptr<I2cDriver> pDriver;
     };
 
-    // Represents a single Frankenboard USB device. Initializes and keeps device state.
-    class FrankenboardDevice : public IMicrosoftCaptureBoard, std::enable_shared_from_this<FrankenboardDevice>
-    {
-    public:
-        FrankenboardDevice(winrt::param::hstring deviceId);
-        ~FrankenboardDevice();
-
-        std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() override;
-        void TriggerHdmiCapture() override;
-        void FpgaWrite(unsigned short address, std::vector<byte> data) override;
-        std::vector<byte> FpgaRead (unsigned short address, UINT16 size) override;
-        std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
-        void FlashFpgaFirmware(Windows::Foundation::Uri uri) override;
-        void FlashFx3Firmware(Windows::Foundation::Uri uri) override;
-        FirmwareVersionInfo GetFirmwareVersionInfo() override;
-
-    private:
-        void SetEdid(std::vector<byte> Edid);
-        void SetHpd(bool isPluggedIn);
-        winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
-        MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput m_hdmiInput;
-        std::shared_ptr<I2cDriver> pDriver;
-        Fx3FpgaInterface m_fpga;
-    };
-
     struct Controller : ControllerT<Controller>
     {
         Controller();
 
         hstring Name();
         com_array<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
+        void SetConfigData(Windows::Data::Json::IJsonValue data);
 
-        MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox GetToolbox();
-
-        std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
-        std::vector<std::shared_ptr<IMicrosoftCaptureBoard>> m_captureBoards;
        
-
     private:
         void DiscoverCaptureBoards();
-        //void InitiateCapture(std::shared_ptr<IMicrosoftCaptureBoard> singleCapture);
+        std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
+        std::vector<std::shared_ptr<IMicrosoftCaptureBoard>> m_captureBoards;
     };
 }
 
-
-
-namespace winrt::TestPlugin::factory_implementation
+namespace winrt::TanagerPlugin::factory_implementation
 {
     struct Controller : ControllerT<Controller, implementation::Controller>
     {

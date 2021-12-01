@@ -25,11 +25,11 @@
     <ClInclude Include="Fx3FpgaInterface.h" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="TestPlugin.idl" />
+    <Midl Include="TanagerPlugin.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="TestPlugin.def" />
+    <None Include="TanagerPlugin.def" />
     <None Include="PropertySheet.props" />
   </ItemGroup>
   <ItemGroup>

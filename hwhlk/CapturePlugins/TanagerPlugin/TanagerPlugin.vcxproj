@@ -6,8 +6,8 @@
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
     <MinimalCoreWin>true</MinimalCoreWin>
     <ProjectGuid>{c2ea574e-b9ce-47ef-909b-40425a7e31bc}</ProjectGuid>
-    <ProjectName>TestPlugin</ProjectName>
-    <RootNamespace>TestPlugin</RootNamespace>
+    <ProjectName>TanagerPlugin</ProjectName>
+    <RootNamespace>TanagerPlugin</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Windows Store</ApplicationType>
@@ -123,7 +123,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
-      <ModuleDefinitionFile>TestPlugin.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>TanagerPlugin.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -190,24 +190,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Controller.h" />
+    <ClInclude Include="FrankenboardDevice.h" />
     <ClInclude Include="Fx3FpgaInterface.h" />
     <ClInclude Include="I2cDriver.h" />
     <ClInclude Include="IteIt6803.h" />
     <ClInclude Include="IteIt6803Registers.h" />
     <ClInclude Include="IteIt68051.h" />
-    <ClInclude Include="SampleDisplayCapture.h" />
-    <ClInclude Include="SampleDisplayInput.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="TanagerDevice.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="FrankenboardDevice.cpp" />
     <ClCompile Include="Fx3FpgaInterface.cpp" />
     <ClCompile Include="I2cDriver.cpp" />
     <ClCompile Include="IteIt6803.cpp" />
     <ClCompile Include="IteIt68051.cpp" />
-    <ClCompile Include="SampleDisplayCapture.cpp" />
-    <ClCompile Include="SampleDisplayInput.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -216,7 +214,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="TestPlugin.def" />
+    <None Include="TanagerPlugin.def" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PropertySheet.props" />
@@ -225,7 +223,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="TestPlugin.idl" />
+    <Midl Include="TanagerPlugin.idl" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Core.vcxproj">
