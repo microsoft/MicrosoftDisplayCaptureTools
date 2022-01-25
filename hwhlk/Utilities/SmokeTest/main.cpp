@@ -68,7 +68,7 @@ int main()
     case Scenario::LoadFromDisk: // Load the config file from disk
         {
             auto cwd = std::filesystem::current_path();
-            winrt::hstring fullPath = winrt::hstring(cwd.c_str()) + L".\\BasicConfig.json";
+            winrt::hstring fullPath = winrt::hstring(cwd.c_str()) + L"\\SmokeTest\\BasicConfig.json";
             core.LoadConfigFile(fullPath.c_str());
         }
         break;
@@ -82,6 +82,16 @@ int main()
         }
         break;
     }
+
+    // Set up the capture card and get the first input from it.
+    auto genericCapture = core.GetCaptureCard();
+
+    // In this 'smoketest' project, we expect the first enumerated input to match the one indicated by the config file.
+    auto captureInput = genericCapture.EnumerateDisplayInputs()[0];
+
+    // Tell the capture card to finalize any state on this input. After this call returns the display should be
+    // visible to windows and ready for output.
+    captureInput.FinalizeDisplayState();
 
     // If the engine does not already have a display target (loaded from the config file), ask
     // the user to specify one
@@ -157,8 +167,7 @@ int main()
 
     auto render = displayEngine.StartRender();
 
-    auto genericCapture = core.GetCaptureCard();
-    auto captureInput = genericCapture.EnumerateDisplayInputs()[0];
+    // Actually capture a frame
     auto capturedFrame = captureInput.CaptureFrame();
     
     auto prediction = displayEngine.GetPrediction();

@@ -4,7 +4,7 @@ namespace winrt::TanagerPlugin::implementation
 {
     class TanagerDevice :
         public IMicrosoftCaptureBoard,
-        std::enable_shared_from_this<TanagerDevice>
+        public std::enable_shared_from_this<TanagerDevice>
     {
     public:
         TanagerDevice(winrt::param::hstring deviceId);
@@ -19,10 +19,12 @@ namespace winrt::TanagerPlugin::implementation
         void FlashFx3Firmware(Windows::Foundation::Uri uri) override;
         FirmwareVersionInfo GetFirmwareVersionInfo() override;
 
+        IteIt68051Plugin::VideoTiming getVideoTiming();
+
     private:
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
         std::shared_ptr<I2cDriver> m_pDriver;
-        std::shared_ptr<IteIt68051> m_pHdmiChip;
+        IteIt68051Plugin::IteIt68051 hdmiChip;
         Fx3FpgaInterface m_fpga;
     };
 
@@ -42,6 +44,7 @@ namespace winrt::TanagerPlugin::implementation
         MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities GetCapabilities();
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame();
         void FinalizeDisplayState();
+        void SetEdid(std::vector<byte> edid);
 
     private:
         std::weak_ptr<TanagerDevice> m_parent;

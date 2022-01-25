@@ -16,6 +16,8 @@ namespace winrt::TanagerPlugin::implementation
         void FlashFpgaFirmware(Windows::Foundation::Uri uri);
         void FlashFx3Firmware(Windows::Foundation::Uri uri);
         struct FirmwareVersionInfo GetFirmwareVersionInfo();
+        void SysReset();
+        bool IsFpgaReady();
 
     private:
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;

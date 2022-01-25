@@ -19,8 +19,8 @@ namespace winrt::TanagerPlugin::implementation
 	void Fx3FpgaInterface::Write(unsigned short address, std::vector<byte> data)
 	{
 		// Since I'm testing on USB2 break this up into chunks
-		const size_t writeBlockSize = 0x50;
-		for (size_t i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= writeBlockSize)
+		const size_t writeBlockSize = 0x40;
+        for (size_t i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
 		{
 			size_t amountToWrite = min(writeBlockSize, remaining);
 			UsbSetupPacket setupPacket;
@@ -34,7 +34,7 @@ namespace winrt::TanagerPlugin::implementation
 
 			Buffer writeBuffer((uint32_t)amountToWrite);
 			writeBuffer.Length((uint32_t)amountToWrite);
-			memcpy_s(writeBuffer.data() + i, writeBuffer.Length(), data.data(), amountToWrite);
+			memcpy_s(writeBuffer.data(), writeBuffer.Length(), data.data() + i, amountToWrite);
 			m_usbDevice.SendControlOutTransferAsync(setupPacket, writeBuffer).get();
 			Sleep(100);
 		}
@@ -71,12 +71,22 @@ namespace winrt::TanagerPlugin::implementation
 
 	std::vector<byte> Fx3FpgaInterface::ReadEndPointData(UINT32 dataSize)
 	{
-		std::vector<byte> frameVector;
-		UsbBulkInPipe bulkIn = m_usbDevice.DefaultInterface().BulkInPipes().GetAt(0);
-		DataReader reader = DataReader(bulkIn.InputStream());
-		reader.LoadAsync(dataSize).GetResults();
-		reader.ReadBytes(frameVector);
-		return frameVector;
+		std::vector<byte> frameBuffer;
+        auto bulkInPipe = m_usbDevice.DefaultInterface().BulkInPipes().GetAt(0);
+
+        DataReader reader = DataReader(bulkInPipe.InputStream());
+        auto readSize = dataSize;
+        auto bytesRemaining = dataSize;
+        while (bytesRemaining)
+        {
+            std::vector<byte> buffer(dataSize);
+            auto bytesToRead = min(bytesRemaining, readSize);
+            reader.LoadAsync(bytesToRead).GetResults();
+            reader.ReadBytes(buffer);
+            frameBuffer.insert(frameBuffer.end(), buffer.begin(), buffer.end());
+            bytesRemaining -= bytesToRead;
+        }
+        return frameBuffer;
 	}
 
 	void Fx3FpgaInterface::FlashFpgaFirmware(Windows::Foundation::Uri uri)
@@ -113,4 +123,41 @@ namespace winrt::TanagerPlugin::implementation
 		memcpy(&versionInfo, buffer.data(), sizeof(versionInfo));
 		return versionInfo;
 	}
-}
+
+	void Fx3FpgaInterface::SysReset()
+    {
+        UsbSetupPacket setupPacket;
+        UsbControlRequestType requestType;
+        requestType.AsByte(0x40);
+        setupPacket.RequestType(requestType);
+        setupPacket.Request(VR_SYS_RESET);
+        setupPacket.Value(1);
+        setupPacket.Index(0);
+        setupPacket.Length(0);
+        m_usbDevice.SendControlOutTransferAsync(setupPacket).get();
+
+        while (!IsFpgaReady())
+            Sleep(250);
+    }
+
+    bool Fx3FpgaInterface::IsFpgaReady()
+    {
+        UsbSetupPacket setupPacket;
+        UsbControlRequestType requestType;
+        requestType.AsByte(0xc0);
+        setupPacket.RequestType(requestType);
+        setupPacket.Request(VR_FPGA_READY);
+        setupPacket.Value(0);
+        setupPacket.Index(0);
+        setupPacket.Length(1);
+        Buffer inReadBuffer(1);
+        inReadBuffer.Length(1);
+        auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket, inReadBuffer).get();
+        if (buffer == NULL || buffer.Length() != 1)
+        {
+            throw winrt::hresult_error();
+        }
+
+        return buffer.data()[0] != 0;
+    }
+    }
