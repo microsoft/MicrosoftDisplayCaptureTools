@@ -146,7 +146,8 @@ int main()
     {
         if (mode.SourcePixelFormat() == winrt::Windows::Graphics::DirectX::DirectXPixelFormat::R8G8B8A8UIntNormalized &&
             mode.IsInterlaced() == false &&
-            mode.TargetResolution().Height == 1080)
+            mode.TargetResolution().Height == 1080 &&
+            mode.SourceResolution().Height == 1080)
         {
             auto vSync = mode.PresentationRate().VerticalSyncRate;
             double vSyncDouble = (double)vSync.Numerator / vSync.Denominator;
@@ -169,8 +170,10 @@ int main()
 
     // Actually capture a frame
     auto capturedFrame = captureInput.CaptureFrame();
-    
+
     auto prediction = displayEngine.GetPrediction();
+
+    /*
     auto predictionBuffer = prediction.GetBitmap().LockBuffer(winrt::BitmapBufferAccessMode::Read);
     auto predictionBufferReference = predictionBuffer.CreateReference();
     std::wcout << L"Predicted RGB: " << 
@@ -183,8 +186,9 @@ int main()
         pixels.data()[0] << ", " <<
         pixels.data()[1] << ", " <<
         pixels.data()[2] << std::endl;
+    */
 
-    //capturedFrame.CompareCaptureToPrediction(L"BasicTest", prediction);
+    capturedFrame.CompareCaptureToPrediction(L"BasicTest", prediction);
 
     // Wait for user to kill the process
     std::wcout << "\nPress enter to exit\n";

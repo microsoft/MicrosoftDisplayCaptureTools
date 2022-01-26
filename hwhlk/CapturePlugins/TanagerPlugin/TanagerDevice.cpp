@@ -1,8 +1,13 @@
 #include "pch.h"
 
-using namespace winrt;
-using namespace winrt::Windows::Devices::Enumeration;
-using namespace winrt::Windows::Devices::Usb;
+namespace winrt 
+{
+    using namespace winrt::Windows::Devices::Enumeration;
+    using namespace winrt::Windows::Devices::Usb;
+    using namespace winrt::Windows::Graphics::Imaging;
+    using namespace winrt::Windows::Devices::Display;
+    using namespace winrt::Windows::Devices::Display::Core;
+}
 using namespace IteIt68051Plugin;
 
 namespace winrt::TanagerPlugin::implementation
@@ -170,12 +175,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         // turn off read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
-        // TODO: create and return IDisplayCapture
-        return MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture();
+        return winrt::make<TanagerDisplayCapture>(frameData);
     }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
-	{
+    {
         SetEdid({0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x10, 0xac, 0x84, 0x41, 0x4c, 0x34, 0x45, 0x42, 0x1e, 0x1e, 0x01,
                  0x04, 0xa5, 0x3c, 0x22, 0x78, 0x3a, 0x48, 0x15, 0xa7, 0x56, 0x52, 0x9c, 0x27, 0x0f, 0x50, 0x54, 0xa5, 0x4b, 0x00,
                  0x71, 0x4f, 0x81, 0x80, 0xa9, 0xc0, 0xd1, 0xc0, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x3a, 0x80,
@@ -183,6 +187,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
                  0x00, 0x36, 0x56, 0x54, 0x48, 0x5a, 0x31, 0x33, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc, 0x00,
                  0x44, 0x45, 0x4c, 0x4c, 0x20, 0x50, 0x32, 0x37, 0x31, 0x39, 0x48, 0x0a, 0x20, 0x00, 0x00, 0x00, 0xfd, 0x00, 0x38,
                  0x4c, 0x1e, 0x53, 0x11, 0x01, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0xec});
+
         if (auto parent = m_parent.lock())
         {
             parent->FpgaWrite(0x4, std::vector<byte>({0x34})); // HPD high
@@ -191,7 +196,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         {
             throw winrt::hresult_error();
         }
-	}
+
+        Sleep(10000);
+    }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
     {
@@ -242,4 +249,67 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
     {
         throw hresult_not_implemented();
     }
-}
+
+    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> pixels)
+    {
+        if (pixels.size() == 0) 
+        {
+            throw hresult_invalid_argument();
+        }
+
+        // Yes this is doing a double copy at the moment - because the interfaces are dumb
+        // I want to pull the comparisons entirely away from using SoftwareBitmap as the solution here
+
+        m_bitmap = winrt::SoftwareBitmap(
+            winrt::BitmapPixelFormat::Rgba8, 1920, 1080, winrt::BitmapAlphaMode::Ignore);
+
+        auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
+        auto ref = buff.CreateReference();
+
+        if (ref.Capacity() < pixels.size())
+        {
+            throw hresult_invalid_argument();
+        }
+
+        RtlCopyMemory(ref.data(), pixels.data(), pixels.size());
+    }
+
+    void TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    {
+        auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+        auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+
+        //
+        // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
+        // plugin only RGB8 is supported.
+        //
+        // TODO: this needs to handle multiple formats
+        // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
+        // TODO: allow saving the diff
+        //
+        constexpr uint8_t ColorChannelTolerance = 0;
+        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[0] - (float)predictBuffer.data()[0])) ||
+            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
+            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
+        {
+            // TODO: replace with actual logging
+            printf(
+                "Captured  - %d, %d, %d\nPredicted - %d, %d, %d\n\n",
+                captureBuffer.data()[0],
+                captureBuffer.data()[1],
+                captureBuffer.data()[2],
+                predictBuffer.data()[0],
+                predictBuffer.data()[1],
+                predictBuffer.data()[2]);
+
+            //throw winrt::hresult_error();
+        }
+    }
+
+    winrt::Windows::Foundation::IMemoryBufferReference TanagerDisplayCapture::GetRawPixelData()
+    {
+        auto buffer = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Read);
+        return buffer.CreateReference();
+    }
+
+} // namespace winrt::TanagerPlugin::implementation
