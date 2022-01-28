@@ -23,10 +23,10 @@
   },
   "TestSystem": {
     "DisplayInputMapping": [
-      {
-        "DisplayId": "MXX00011_04_07DF_5B",
-        "PluginInputName": "Input 1"
-      }
+		{
+			"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+			"PluginInputName": "HDMI"
+		}
     ]
   }
 }

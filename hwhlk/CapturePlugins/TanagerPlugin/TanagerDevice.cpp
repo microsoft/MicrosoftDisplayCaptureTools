@@ -7,6 +7,8 @@ namespace winrt
     using namespace winrt::Windows::Graphics::Imaging;
     using namespace winrt::Windows::Devices::Display;
     using namespace winrt::Windows::Devices::Display::Core;
+    using namespace winrt::Windows::Storage;
+    using namespace winrt::Windows::Storage::Streams;
 }
 using namespace IteIt68051Plugin;
 
@@ -143,6 +145,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 
         // Capture frame in DRAM
         parent->FpgaWrite(0x20, std::vector<byte>({0}));
+
+        // Give the Tanager time to capture a frame.
+        Sleep(17);
+
         // put video capture logic back in reset
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
         // query resolution
@@ -166,6 +172,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
                  (uint8_t)((bufferSizeInDWords >> 16) & 0xff),
                  (uint8_t)((bufferSizeInDWords >> 8) & 0xff),
                  (uint8_t)(bufferSizeInDWords & 0xff)}));
+
         // prepare for reading
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
         // initiate read sequencer
@@ -197,7 +204,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
             throw winrt::hresult_error();
         }
 
-        Sleep(10000);
+        Sleep(5000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
@@ -261,7 +268,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         // I want to pull the comparisons entirely away from using SoftwareBitmap as the solution here
 
         m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Rgba8, 1920, 1080, winrt::BitmapAlphaMode::Ignore);
+            winrt::BitmapPixelFormat::Bgra8, 1920, 1080, winrt::BitmapAlphaMode::Ignore);
 
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
@@ -303,6 +310,24 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
                 predictBuffer.data()[2]);
 
             //throw winrt::hresult_error();
+            {
+                auto folder = winrt::KnownFolders::PicturesLibrary();
+                auto file = folder.CreateFileAsync(L"Captured.bmp", winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
+                encoder.SetSoftwareBitmap(m_bitmap);
+
+                encoder.FlushAsync().get();
+            }
+            {
+                auto folder = winrt::KnownFolders::PicturesLibrary();
+                auto file = folder.CreateFileAsync(L"Predicted.bmp", winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
+                encoder.SetSoftwareBitmap(prediction.GetBitmap());
+
+                encoder.FlushAsync().get();
+            }
         }
     }
 

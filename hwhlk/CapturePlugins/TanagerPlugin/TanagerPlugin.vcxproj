@@ -230,7 +230,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="IteIt68051.lib" />
+    <Library Include="debug.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -575,9 +575,9 @@ namespace winrt::DisplayControl::implementation
 
                         for (UINT i = index; i < (index + sectionSize) && i < buffer.Capacity(); i += sizeof(PixelStruct))
                         {
-                            pixelStruct->r = static_cast<byte>(clearColor.ChannelA * 255.f + 0.5f);
-                            pixelStruct->g = static_cast<byte>(clearColor.ChannelB * 255.f + 0.5f);
-                            pixelStruct->b = static_cast<byte>(clearColor.ChannelC * 255.f + 0.5f);
+                            pixelStruct->r = static_cast<byte>(floorf(clearColor.ChannelA * 255.f + 0.5f));
+                            pixelStruct->g = static_cast<byte>(floorf(clearColor.ChannelB * 255.f + 0.5f));
+                            pixelStruct->b = static_cast<byte>(floorf(clearColor.ChannelC * 255.f + 0.5f));
                             pixelStruct->a = 255;
 
                             pixelStruct++;

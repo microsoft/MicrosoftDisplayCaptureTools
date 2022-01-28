@@ -81,7 +81,7 @@ namespace winrt::TanagerPlugin::implementation
         {
             std::vector<byte> buffer(dataSize);
             auto bytesToRead = min(bytesRemaining, readSize);
-            reader.LoadAsync(bytesToRead).GetResults();
+            reader.LoadAsync(bytesToRead).get();
             reader.ReadBytes(buffer);
             frameBuffer.insert(frameBuffer.end(), buffer.begin(), buffer.end());
             bytesRemaining -= bytesToRead;

@@ -164,7 +164,7 @@ int main()
     if (!bestMode) throw winrt::hresult_error();
 
     displayEngine.GetProperties().ActiveMode(bestMode);
-    displayEngine.GetProperties().GetPlaneProperties()[0].ClearColor({ 1.0f,1.0f,1.0f });
+    displayEngine.GetProperties().GetPlaneProperties()[0].ClearColor({ 0.0f,0.0f,1.0f });
 
     auto render = displayEngine.StartRender();
 
@@ -172,21 +172,6 @@ int main()
     auto capturedFrame = captureInput.CaptureFrame();
 
     auto prediction = displayEngine.GetPrediction();
-
-    /*
-    auto predictionBuffer = prediction.GetBitmap().LockBuffer(winrt::BitmapBufferAccessMode::Read);
-    auto predictionBufferReference = predictionBuffer.CreateReference();
-    std::wcout << L"Predicted RGB: " << 
-        predictionBufferReference.data()[0] << ", " <<
-        predictionBufferReference.data()[1] << ", " <<
-        predictionBufferReference.data()[2] << std::endl;
-
-    auto pixels = capturedFrame.GetRawPixelData();
-    std::wcout << L"Captured  RGB: " <<
-        pixels.data()[0] << ", " <<
-        pixels.data()[1] << ", " <<
-        pixels.data()[2] << std::endl;
-    */
 
     capturedFrame.CompareCaptureToPrediction(L"BasicTest", prediction);
 
