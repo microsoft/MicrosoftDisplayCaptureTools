@@ -362,7 +362,7 @@ namespace winrt::DisplayControl::implementation
     }
     winrt::DirectXPixelFormat DisplayEnginePlanePropertySet::Format()
     {
-        return winrt::DirectXPixelFormat::R8G8B8A8UInt;
+        return winrt::DirectXPixelFormat::R8G8B8A8UIntNormalized;
     }
     void DisplayEnginePlanePropertySet::Format(winrt::DirectXPixelFormat format) 
     {
@@ -556,7 +556,8 @@ namespace winrt::DisplayControl::implementation
 
         std::vector<std::thread> threads;
         uint32_t startingIndex = 0;
-        uint32_t threadSectionSize = (buffer.Capacity() + pixelSize) / threadCount;
+        uint32_t threadSectionSize = buffer.Capacity() / threadCount;
+
         for (uint32_t i = 0; i < threadCount; i++)
         {
             startingIndex = i * threadSectionSize;

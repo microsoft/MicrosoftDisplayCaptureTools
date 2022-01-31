@@ -288,13 +288,13 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         rgbDataType* rgbData = (rgbDataType*)rawCaptureData.data();
         for (int i = 0; i < rawCaptureData.size() / sizeof(rgbDataType); i++)
         {
-            pixels.push_back(rgbData->red1);
-            pixels.push_back(rgbData->green1);
             pixels.push_back(rgbData->blue1);
+            pixels.push_back(rgbData->green1);
+            pixels.push_back(rgbData->red1);
             pixels.push_back(0); // alpha
-            pixels.push_back(rgbData->red2);
-            pixels.push_back(rgbData->green2);
             pixels.push_back(rgbData->blue2);
+            pixels.push_back(rgbData->green2);
+            pixels.push_back(rgbData->red2);
             pixels.push_back(0); // alpha
             rgbData++;
         }
@@ -326,22 +326,48 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
         // TODO: allow saving the diff
         //
-        constexpr uint8_t ColorChannelTolerance = 0;
-        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[0] - (float)predictBuffer.data()[0])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
-        {
-            // TODO: replace with actual logging
-            printf(
-                "Captured  - %d, %d, %d\nPredicted - %d, %d, %d\n\n",
-                captureBuffer.data()[0],
-                captureBuffer.data()[1],
-                captureBuffer.data()[2],
-                predictBuffer.data()[0],
-                predictBuffer.data()[1],
-                predictBuffer.data()[2]);
 
-            //throw winrt::hresult_error();
+        if (captureBuffer.Capacity() != predictBuffer.Capacity())
+        {
+            printf("Capture Sizes don't match!  Captured=%d, Predicted=%d\n\n",
+                captureBuffer.Capacity(),
+                predictBuffer.Capacity());
+        }
+        else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), captureBuffer.Capacity()))
+        {
+            {
+                struct PixelStruct
+                {
+                    uint8_t r, g, b, a;
+                };
+
+                PixelStruct* cap = reinterpret_cast<PixelStruct*>(captureBuffer.data());
+                PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictBuffer.data());
+                for (auto i = 0; i < captureBuffer.Capacity(); i++)
+                {
+                    if (cap->r != pre->r ||
+                        cap->g != pre->g ||
+                        cap->b != pre->b)
+                    {
+                        printf(
+                            "First Difference: (%d,%d)\n\tCaptured  - %d, %d, %d\n\tPredicted - %d, %d, %d\n\n",
+                            i%1920,
+                            i/1920,
+                            cap->r,
+                            cap->g,
+                            cap->b,
+                            pre->r,
+                            pre->g,
+                            pre->b);
+
+                        break;
+                    }
+
+                    cap++;
+                    pre++;
+                }
+            }
+
             {
                 auto folder = winrt::KnownFolders::PicturesLibrary();
                 auto file = folder.CreateFileAsync(L"Captured.bmp", winrt::CreationCollisionOption::GenerateUniqueName).get();

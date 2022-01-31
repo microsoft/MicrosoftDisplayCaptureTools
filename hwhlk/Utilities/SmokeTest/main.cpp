@@ -164,7 +164,7 @@ int main()
     if (!bestMode) throw winrt::hresult_error();
 
     displayEngine.GetProperties().ActiveMode(bestMode);
-    displayEngine.GetProperties().GetPlaneProperties()[0].ClearColor({ 0.0f,0.0f,1.0f });
+    displayEngine.GetProperties().GetPlaneProperties()[0].ClearColor({ 1.0f,0.0f,0.0f });
 
     auto render = displayEngine.StartRender();
 

@@ -202,10 +202,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         //       and a test run should make sure to start operations on all of them.
         auto renderer = m_displayManager.StartRender();
 
-        // TODO: make this configurable, this is the amount of time we are waiting for display settings to 
-        //       stabilize after the 'StartRender' call causes a mode change and the rendering to start
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
         // Capture the frame.
         auto capturedFrame = captureInput.CaptureFrame();
         auto predictedFrame = m_displayManager.GetPrediction();
