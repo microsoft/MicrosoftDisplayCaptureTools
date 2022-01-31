@@ -257,18 +257,50 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         throw hresult_not_implemented();
     }
 
-    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> pixels)
+    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> rawCaptureData)
     {
-        if (pixels.size() == 0) 
+        if (rawCaptureData.size() == 0) 
         {
             throw hresult_invalid_argument();
         }
 
-        // Yes this is doing a double copy at the moment - because the interfaces are dumb
+        typedef struct
+        {
+            uint64_t pad1 : 2;
+            uint64_t red1 : 8;
+            uint64_t pad2 : 2;
+            uint64_t green1 : 8;
+            uint64_t pad3 : 2;
+            uint64_t blue1 : 8;
+            uint64_t pad4 : 2;
+            uint64_t red2 : 8;
+            uint64_t pad5 : 2;
+            uint64_t green2 : 8;
+            uint64_t pad6 : 2;
+            uint64_t blue2 : 8;
+            uint64_t rsvd : 4;
+        } rgbDataType;
+
+        // Yes this is doing a double copy (triple to remove padding) at the moment - because the interfaces are dumb
         // I want to pull the comparisons entirely away from using SoftwareBitmap as the solution here
 
+        std::vector<byte> pixels;
+        rgbDataType* rgbData = (rgbDataType*)rawCaptureData.data();
+        for (int i = 0; i < rawCaptureData.size() / sizeof(rgbDataType); i++)
+        {
+            pixels.push_back(rgbData->red1);
+            pixels.push_back(rgbData->green1);
+            pixels.push_back(rgbData->blue1);
+            pixels.push_back(0); // alpha
+            pixels.push_back(rgbData->red2);
+            pixels.push_back(rgbData->green2);
+            pixels.push_back(rgbData->blue2);
+            pixels.push_back(0); // alpha
+            rgbData++;
+        }
+
         m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Bgra8, 1920, 1080, winrt::BitmapAlphaMode::Ignore);
+            winrt::BitmapPixelFormat::Rgba8, 1920, 1080, winrt::BitmapAlphaMode::Ignore);
 
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();

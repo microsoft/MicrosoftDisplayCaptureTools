@@ -19,7 +19,7 @@ namespace winrt::TanagerPlugin::implementation
 	void Fx3FpgaInterface::Write(unsigned short address, std::vector<byte> data)
 	{
 		// Since I'm testing on USB2 break this up into chunks
-		const size_t writeBlockSize = 0x40;
+		const size_t writeBlockSize = 0x20;
         for (size_t i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
 		{
 			size_t amountToWrite = min(writeBlockSize, remaining);
@@ -71,22 +71,13 @@ namespace winrt::TanagerPlugin::implementation
 
 	std::vector<byte> Fx3FpgaInterface::ReadEndPointData(UINT32 dataSize)
 	{
-		std::vector<byte> frameBuffer;
+        std::vector<byte> buffer(dataSize);
         auto bulkInPipe = m_usbDevice.DefaultInterface().BulkInPipes().GetAt(0);
 
         DataReader reader = DataReader(bulkInPipe.InputStream());
-        auto readSize = dataSize;
-        auto bytesRemaining = dataSize;
-        while (bytesRemaining)
-        {
-            std::vector<byte> buffer(dataSize);
-            auto bytesToRead = min(bytesRemaining, readSize);
-            reader.LoadAsync(bytesToRead).get();
-            reader.ReadBytes(buffer);
-            frameBuffer.insert(frameBuffer.end(), buffer.begin(), buffer.end());
-            bytesRemaining -= bytesToRead;
-        }
-        return frameBuffer;
+        reader.LoadAsync(dataSize).get();
+        reader.ReadBytes(buffer);
+        return buffer;
 	}
 
 	void Fx3FpgaInterface::FlashFpgaFirmware(Windows::Foundation::Uri uri)
