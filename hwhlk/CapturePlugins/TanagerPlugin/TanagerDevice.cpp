@@ -153,9 +153,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
         // query resolution
         auto timing = parent->getVideoTiming();
-        // TODO: Timings aren't always accurate, hard-code for now. Work item 37886422
-        timing.hActive = 1920;
-        timing.vActive = 1080;
         // compute size of buffer
         uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
         // FX3 requires the read size to be a multiple of 1024 DWORDs
