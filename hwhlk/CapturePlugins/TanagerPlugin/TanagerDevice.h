@@ -83,13 +83,15 @@ namespace winrt::TanagerPlugin::implementation
 
     struct TanagerDisplayCapture : implements<TanagerDisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
-        TanagerDisplayCapture(std::vector<byte> pixels);
+        TanagerDisplayCapture(std::vector<byte> pixels, uint16_t horizontalResolution, uint16_t verticalResolution);
 
         void CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:
         winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
+        uint16_t m_horizontalResolution;
+        uint16_t m_verticalResolution;
     };
 
     struct TanagerCaptureCapabilities : implements<TanagerCaptureCapabilities, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities>

@@ -179,7 +179,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         // turn off read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
-        return winrt::make<TanagerDisplayCapture>(frameData);
+        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive);
     }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
@@ -254,7 +254,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         throw hresult_not_implemented();
     }
 
-    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> rawCaptureData)
+    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution) :
+        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution)
     {
         if (rawCaptureData.size() == 0) 
         {
@@ -297,7 +298,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         }
 
         m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Rgba8, 1920, 1080, winrt::BitmapAlphaMode::Ignore);
+            winrt::BitmapPixelFormat::Rgba8, m_horizontalResolution, m_verticalResolution, winrt::BitmapAlphaMode::Ignore);
 
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
@@ -342,7 +343,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 
             // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
             const int samples = 10000;
-            const int pixelCount = 1920 * 1080;
+            const int pixelCount = m_horizontalResolution * m_verticalResolution;
             for (auto i = 0; i < samples; i++)
             {
                 auto index = rand() % pixelCount;
