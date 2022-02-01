@@ -20,15 +20,16 @@ namespace winrt
 bool PictTests::Setup()
 {
     winrt::init_apartment();
-    
-    // Load the framework
-    framework = winrt::Libraries::LoadInterfaceFromPath<winrt::Framework::ICore>(
-        L"Core\\Core.dll", L"MicrosoftDisplayCaptureTools.Framework.Core");
 
-    // Load the config file from disk
+    // Identify the config file path
     auto cwd = std::filesystem::current_path();
-    winrt::hstring fullPath = winrt::hstring(cwd.c_str()) + L".\\BasicConfig.json";
-    framework.LoadConfigFile(fullPath.c_str());
+    winrt::hstring configPath = winrt::hstring(cwd.c_str()) + L"\\Tests\\TestConfig.json";
+
+    // Load the framework
+    framework = winrt::Libraries::LoadInterfaceFromPath<winrt::Framework::ICore>
+        (L"Core\\Core.dll", L"MicrosoftDisplayCaptureTools.Framework.Core");
+
+    framework.LoadConfigFile(configPath.c_str());
 
     Log::Comment(L"Initialization Complete");
     

@@ -3,8 +3,6 @@ namespace winrt::DisplayConfiguration::implementation
 {
 	enum class ResolutionToolConfigurations
 	{
-		w640h360,
-		w1280h720,
 		w1920h1080
 	};
 
@@ -16,6 +14,7 @@ namespace winrt::DisplayConfiguration::implementation
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
 		winrt::com_array<winrt::hstring> GetSupportedConfigurations();
 		winrt::hstring GetDefaultConfiguration();
+        winrt::hstring GetConfiguration();
 		void SetConfiguration(winrt::hstring configuration);
 		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine reference);
 

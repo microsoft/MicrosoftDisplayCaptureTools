@@ -201,7 +201,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
             throw winrt::hresult_error();
         }
 
-        Sleep(5000);
+        Sleep(3500);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
@@ -285,13 +285,13 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         rgbDataType* rgbData = (rgbDataType*)rawCaptureData.data();
         for (int i = 0; i < rawCaptureData.size() / sizeof(rgbDataType); i++)
         {
-            pixels.push_back(rgbData->blue1);
-            pixels.push_back(rgbData->green1);
             pixels.push_back(rgbData->red1);
+            pixels.push_back(rgbData->green1);
+            pixels.push_back(rgbData->blue1);
             pixels.push_back(0); // alpha
-            pixels.push_back(rgbData->blue2);
-            pixels.push_back(rgbData->green2);
             pixels.push_back(rgbData->red2);
+            pixels.push_back(rgbData->green2);
+            pixels.push_back(rgbData->blue2);
             pixels.push_back(0); // alpha
             rgbData++;
         }
@@ -320,8 +320,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         // plugin only RGB8 is supported.
         //
         // TODO: this needs to handle multiple formats
-        // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
-        // TODO: allow saving the diff
         //
 
         if (captureBuffer.Capacity() != predictBuffer.Capacity())
@@ -332,42 +330,35 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         }
         else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), captureBuffer.Capacity()))
         {
+            struct PixelStruct
             {
-                struct PixelStruct
+                uint8_t r, g, b, a;
+            };
+
+            auto differenceCount = 0;
+
+            PixelStruct* cap = reinterpret_cast<PixelStruct*>(captureBuffer.data());
+            PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictBuffer.data());
+
+            // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
+            const int samples = 10000;
+            const int pixelCount = 1920 * 1080;
+            for (auto i = 0; i < samples; i++)
+            {
+                auto index = rand() % pixelCount;
+
+                if (cap[index].r != pre[index].r ||
+                    cap[index].g != pre[index].g ||
+                    cap[index].b != pre[index].b)
                 {
-                    uint8_t r, g, b, a;
-                };
-
-                PixelStruct* cap = reinterpret_cast<PixelStruct*>(captureBuffer.data());
-                PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictBuffer.data());
-                for (auto i = 0; i < captureBuffer.Capacity(); i++)
-                {
-                    if (cap->r != pre->r ||
-                        cap->g != pre->g ||
-                        cap->b != pre->b)
-                    {
-                        printf(
-                            "First Difference: (%d,%d)\n\tCaptured  - %d, %d, %d\n\tPredicted - %d, %d, %d\n\n",
-                            i%1920,
-                            i/1920,
-                            cap->r,
-                            cap->g,
-                            cap->b,
-                            pre->r,
-                            pre->g,
-                            pre->b);
-
-                        break;
-                    }
-
-                    cap++;
-                    pre++;
+                    differenceCount++;
                 }
             }
 
             {
+                auto filename = name + L"_Captured.bmp";
                 auto folder = winrt::KnownFolders::PicturesLibrary();
-                auto file = folder.CreateFileAsync(L"Captured.bmp", winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
                 auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
                 encoder.SetSoftwareBitmap(m_bitmap);
@@ -375,13 +366,21 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
                 encoder.FlushAsync().get();
             }
             {
+                auto filename = name + L"_Predicted.bmp";
                 auto folder = winrt::KnownFolders::PicturesLibrary();
-                auto file = folder.CreateFileAsync(L"Predicted.bmp", winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
                 auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
                 encoder.SetSoftwareBitmap(prediction.GetBitmap());
 
                 encoder.FlushAsync().get();
+            }
+
+            float diff = (float)differenceCount / (float)pixelCount;
+            if (diff > 0.10f)
+            {
+                printf("\n\tMatch = %2.2f\n\n", diff);
+                throw winrt::hresult_error();
             }
         }
     }

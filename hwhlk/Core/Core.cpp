@@ -186,10 +186,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     {
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
+        
+        winrt::hstring testName = L"";
 
         for (auto tool : m_toolList)
         {
             tool.Apply(m_displayManager);
+            testName = testName + tool.GetConfiguration() + L"_";
         }
 
         // Make sure the capture card is ready
@@ -202,12 +205,16 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         //       and a test run should make sure to start operations on all of them.
         auto renderer = m_displayManager.StartRender();
 
+        // TODO: make this configurable, this is the amount of time we are waiting for display settings to 
+        //       stabilize after the 'StartRender' call causes a mode change and the rendering to start
+        //std::this_thread::sleep_for(std::chrono::seconds(5));
+
         // Capture the frame.
         auto capturedFrame = captureInput.CaptureFrame();
         auto predictedFrame = m_displayManager.GetPrediction();
 
         // TODO: build a uniquely identifying string from the currently selected tools
-        capturedFrame.CompareCaptureToPrediction(L"TestString", predictedFrame);
+        capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
     }
 
     com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> Core::GetLoadedTools()

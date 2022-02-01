@@ -1,4 +1,4 @@
-Pattern:     White, Black, Green
+Pattern:     White, Black, Red, Green, Blue
 WireFormat:  RGB8
-Resolution:  1920x1080, 1280x720
-RefreshRate: 60hz, 50hz
+Resolution:  1920x1080
+RefreshRate: 60hz

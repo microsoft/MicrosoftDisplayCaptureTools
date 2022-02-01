@@ -4,7 +4,7 @@ namespace winrt::DisplayConfiguration::implementation
 	enum class RefreshRateToolConfigurations
 	{
 		r60,
-		r50,
+		r75,
 	};
 
 	struct RefreshRateTool : implements<RefreshRateTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
@@ -15,6 +15,7 @@ namespace winrt::DisplayConfiguration::implementation
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
 		winrt::com_array<winrt::hstring> GetSupportedConfigurations();
 		winrt::hstring GetDefaultConfiguration();
+        winrt::hstring GetConfiguration();
 		void SetConfiguration(winrt::hstring configuration);
 		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine reference);
 

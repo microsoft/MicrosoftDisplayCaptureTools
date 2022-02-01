@@ -516,16 +516,17 @@ namespace winrt::DisplayControl::implementation
 
                 double delta = fabs(presentationRate - m_properties->RefreshRate());
 
-                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized &&
-                    mode.IsInterlaced() == false &&
+                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
                     mode.TargetResolution().Height == m_properties->Resolution().Height &&
-                    mode.TargetResolution().Width  == m_properties->Resolution().Width)
+                    mode.TargetResolution().Width == m_properties->Resolution().Width)
+                {
 
                     if (delta < sc_refreshRateEpsilon)
-                {
-                    // we have a mode matching the requirements.
-                    m_properties->ActiveMode(mode);
-                    return;
+                    {
+                        // we have a mode matching the requirements.
+                        m_properties->ActiveMode(mode);
+                        return;
+                    }
                 }
             }
             

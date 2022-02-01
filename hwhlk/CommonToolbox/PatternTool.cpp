@@ -55,6 +55,11 @@ namespace winrt::DisplayConfiguration::implementation
 		return PatternConfigurationMap[sc_defaultConfig];
 	}
 
+	hstring PatternTool::GetConfiguration()
+    {
+        return PatternConfigurationMap[m_currentConfig];
+	}
+
 	void PatternTool::SetConfiguration(hstring configuration)
 	{
 		for (auto config : PatternConfigurationMap)

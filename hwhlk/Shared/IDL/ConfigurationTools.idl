@@ -90,6 +90,13 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //
         void SetConfiguration(String configuration);
 
+        // GetConfiguration
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This gets the PICT configuration set to use for this tool.
+        //
+        String GetConfiguration();
+
         // Apply
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

@@ -14,7 +14,7 @@ namespace winrt::DisplayConfiguration::implementation
 	std::map<RefreshRateToolConfigurations, winrt::hstring> RefreshRateConfigurationMap
 	{
 		{ RefreshRateToolConfigurations::r60, L"60hz" },
-		{ RefreshRateToolConfigurations::r50, L"50hz" }
+		{ RefreshRateToolConfigurations::r75, L"75hz" }
 	};
 
 	RefreshRateTool::RefreshRateTool() : m_currentConfig(sc_defaultConfig)
@@ -52,6 +52,11 @@ namespace winrt::DisplayConfiguration::implementation
 		return RefreshRateConfigurationMap[sc_defaultConfig];
 	}
 
+	hstring RefreshRateTool::GetConfiguration()
+	{
+        return RefreshRateConfigurationMap[m_currentConfig];
+	}
+
 	void RefreshRateTool::SetConfiguration(hstring configuration)
 	{
 		for (auto config : RefreshRateConfigurationMap)
@@ -77,8 +82,8 @@ namespace winrt::DisplayConfiguration::implementation
 		case RefreshRateToolConfigurations::r60:
 			displayProperties.RefreshRate(60.);
 			break;
-		case RefreshRateToolConfigurations::r50:
-			displayProperties.RefreshRate(50.);
+		case RefreshRateToolConfigurations::r75:
+			displayProperties.RefreshRate(75.);
 			break;
 		}
 	}

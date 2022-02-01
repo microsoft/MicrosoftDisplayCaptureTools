@@ -13,8 +13,6 @@ namespace winrt::DisplayConfiguration::implementation
 {
 	std::map<ResolutionToolConfigurations, winrt::hstring> ResolutionConfigurationMap
 	{
-		{ ResolutionToolConfigurations::w640h360,   L"640x360" },
-		{ ResolutionToolConfigurations::w1280h720,  L"1280x720" },
 		{ ResolutionToolConfigurations::w1920h1080, L"1920x1080" }
 	};
 
@@ -53,6 +51,11 @@ namespace winrt::DisplayConfiguration::implementation
 		return ResolutionConfigurationMap[sc_defaultConfig];
 	}
 
+    hstring ResolutionTool::GetConfiguration()
+    {
+        return ResolutionConfigurationMap[m_currentConfig];
+	}
+
 	void ResolutionTool::SetConfiguration(hstring configuration)
 	{
 		for (auto config : ResolutionConfigurationMap)
@@ -75,12 +78,6 @@ namespace winrt::DisplayConfiguration::implementation
 
 		switch (m_currentConfig)
 		{
-		case ResolutionToolConfigurations::w640h360:
-			displayProperties.Resolution({ 640, 360 });
-			break;
-		case ResolutionToolConfigurations::w1280h720:
-			displayProperties.Resolution({ 1280, 720 });
-			break;
 		case ResolutionToolConfigurations::w1920h1080:
 			displayProperties.Resolution({ 1920, 1080 });
 			break;

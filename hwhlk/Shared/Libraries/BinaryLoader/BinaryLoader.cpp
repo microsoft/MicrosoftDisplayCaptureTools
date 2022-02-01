@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "BinaryLoader.h"
+#include <filesystem>
 
 extern "C"
 {
@@ -125,8 +126,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::Libraries
             // 
             // TODO - Attempt again using the provided path as a relative path, using
             //        GetModulePath as a base.
+            auto cwd = std::filesystem::current_path();
+            winrt::hstring cwdInclusivePath = winrt::hstring(cwd.c_str()) + L"\\" + loaderPath.GetPath();
+            loadPath = cwdInclusivePath.data();
+            library = LoadLibraryExW(loadPath, nullptr, 0);
 
-            return HRESULT_FROM_WIN32(GetLastError());
+            if (!library)
+            {
+                return HRESULT_FROM_WIN32(GetLastError());
+            }
         }
 
         using DllGetActivationFactory = HRESULT __stdcall(HSTRING classId, void** factory);
