@@ -213,7 +213,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
             throw winrt::hresult_error();
         }
 
-        Sleep(3500);
+        Sleep(5000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
@@ -338,12 +338,13 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
 
-        if (ref.Capacity() < pixels.size())
+        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger 
+        if (ref.Capacity() < (pixels.size() - 4096))
         {
             throw hresult_invalid_argument();
         }
 
-        RtlCopyMemory(ref.data(), pixels.data(), pixels.size());
+        RtlCopyMemory(ref.data(), pixels.data(), ref.Capacity());
     }
 
     void TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)

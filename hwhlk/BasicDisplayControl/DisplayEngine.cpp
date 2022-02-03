@@ -514,8 +514,19 @@ namespace winrt::DisplayControl::implementation
                 double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) / 
                     static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
 
-                double delta = fabs(presentationRate - m_properties->RefreshRate());
+                /*
+                    TODO 38041452: remove this, it's only here because this has been handy in debugging bringup a few times and I didn't want
+                    to write it out over and over again.
 
+                    printf("\n\tmode\n\tResolution: (%d, %d)\n\tRefresh Rate: %f\n\tFormat: %s\n\n",
+                    mode.TargetResolution().Width,
+                    mode.TargetResolution().Height,
+                    presentationRate,
+                    mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized ? "RGB8" : "not-RGB8");
+                */
+
+                double delta = fabs(presentationRate - m_properties->RefreshRate());
+                
                 if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
                     mode.TargetResolution().Height == m_properties->Resolution().Height &&
                     mode.TargetResolution().Width == m_properties->Resolution().Width)

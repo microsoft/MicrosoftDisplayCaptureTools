@@ -171,11 +171,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
                     auto pluginInputName = mapping.GetNamedString(L"PluginInputName");
                     auto displayId = mapping.GetNamedString(L"DisplayId");
 
-                    // Attempt to initialize the DisplayEngine with this
-                    // TODO - this needs to be adjusted to handle multiple concurrent DisplayEngines for
-                    //        multiple displays
-                    m_displayManager.InitializeForStableMonitorId(displayId);
-
                     m_targetMap[pluginInputName] = displayId;
                 }
             }
@@ -187,6 +182,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
         
+        // Make sure the capture card is ready
+        // TODO: As with the DisplayEngine note below, this should be done on _every_ target in the map.
+        auto captureInput = m_captureCard.EnumerateDisplayInputs()[0];
+        captureInput.FinalizeDisplayState();
+
+        // Reset the display manager to the correct 
+        auto displayId = m_targetMap[captureInput.Name()];
+        m_displayManager.InitializeForStableMonitorId(displayId);
+
         winrt::hstring testName = L"";
 
         for (auto tool : m_toolList)
@@ -195,11 +199,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             testName = testName + tool.GetConfiguration() + L"_";
         }
 
-        // Make sure the capture card is ready
-        // TODO: As with the DisplayEngine note below, this should be done on _every_ target in the map.
-        auto captureInput = m_captureCard.EnumerateDisplayInputs()[0];
-        captureInput.FinalizeDisplayState();
-
         // Start the render
         // TODO: allow a map of multiple DisplayEngines here, there is a mapping of display Engine to capture card inputs
         //       and a test run should make sure to start operations on all of them.
@@ -207,7 +206,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // TODO: make this configurable, this is the amount of time we are waiting for display settings to 
         //       stabilize after the 'StartRender' call causes a mode change and the rendering to start
-        //std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
         // Capture the frame.
         auto capturedFrame = captureInput.CaptureFrame();

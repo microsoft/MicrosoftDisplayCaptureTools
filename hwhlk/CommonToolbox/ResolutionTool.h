@@ -3,7 +3,8 @@ namespace winrt::DisplayConfiguration::implementation
 {
 	enum class ResolutionToolConfigurations
 	{
-		w1920h1080
+		w1920h1080,
+		w800h600
 	};
 
 	struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>

@@ -13,7 +13,8 @@ namespace winrt::DisplayConfiguration::implementation
 {
 	std::map<ResolutionToolConfigurations, winrt::hstring> ResolutionConfigurationMap
 	{
-		{ ResolutionToolConfigurations::w1920h1080, L"1920x1080" }
+		{ ResolutionToolConfigurations::w1920h1080, L"1920x1080" },
+		{ ResolutionToolConfigurations::w800h600, L"800x600" }
 	};
 
 	ResolutionTool::ResolutionTool() : m_currentConfig(sc_defaultConfig)
@@ -80,6 +81,9 @@ namespace winrt::DisplayConfiguration::implementation
 		{
 		case ResolutionToolConfigurations::w1920h1080:
 			displayProperties.Resolution({ 1920, 1080 });
+			break;
+		case ResolutionToolConfigurations::w800h600:
+			displayProperties.Resolution({ 800, 600 });
 			break;
 		}
 
