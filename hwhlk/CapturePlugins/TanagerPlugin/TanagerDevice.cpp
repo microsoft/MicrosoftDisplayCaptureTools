@@ -112,16 +112,28 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 
     void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor)
     {
-        if (descriptor.GetType() != MicrosoftDisplayCaptureTools::Display::MonitorDescriptorType::EDID)
+        switch (m_port)
         {
-            throw winrt::hresult_invalid_argument();
-        }
+        case TanagerDisplayInputPort::hdmi:
+        {
+            if (descriptor.GetType() != MicrosoftDisplayCaptureTools::Display::MonitorDescriptorType::EDID)
+            {
+                throw winrt::hresult_invalid_argument();
+            }
 
-        auto edidMemoryReference = descriptor.GetData();
-        auto edidBuffer = edidMemoryReference.data();
-        std::vector<byte> edid(edidBuffer, edidBuffer + edidMemoryReference.Capacity());
-        
-        SetEdid(edid);
+            auto edidMemoryReference = descriptor.GetData();
+            auto edidBuffer = edidMemoryReference.data();
+            std::vector<byte> edid(edidBuffer, edidBuffer + edidMemoryReference.Capacity());
+
+            SetEdid(edid);
+            break;
+        }
+        case TanagerDisplayInputPort::displayPort:
+        default:
+        {
+            throw winrt::hresult_not_implemented();
+        }
+        }
     }
 
     MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger TanagerDisplayInput::GetCaptureTrigger()
@@ -131,7 +143,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 
 	MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities TanagerDisplayInput::GetCapabilities()
 	{
-        auto caps = winrt::make<TanagerCaptureCapabilities>();
+        auto caps = winrt::make<TanagerCaptureCapabilities>(m_port);
         return caps;
     }
 
@@ -207,10 +219,20 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
     {
         // TODO: Add some sort of size check?
+        unsigned short writeAddress;
+        switch (m_port)
+        {
+            case TanagerDisplayInputPort::hdmi:
+                writeAddress = 0x400;
+                break;
+            default:
+            case TanagerDisplayInputPort::displayPort:
+                throw winrt::hresult_error();
+        }
 
         if (auto parent = m_parent.lock())
         {
-            parent->FpgaWrite(0x400, edid);
+            parent->FpgaWrite(writeAddress, edid);
         }
         else
         {
@@ -241,7 +263,13 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 
     bool TanagerCaptureCapabilities::CanConfigureEDID()
     {
-        return false;
+        switch (m_port)
+		{
+		case TanagerDisplayInputPort::hdmi:
+			return true;
+		case TanagerDisplayInputPort::displayPort:
+			return false;
+		}
     }
 
     bool TanagerCaptureCapabilities::CanConfigureDisplayID()
@@ -251,7 +279,14 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 
     uint32_t TanagerCaptureCapabilities::GetMaxDescriptorSize()
     {
-        throw hresult_not_implemented();
+        switch (m_port)
+		{
+		case TanagerDisplayInputPort::hdmi:
+			return 1024;
+		case TanagerDisplayInputPort::displayPort:
+        default:
+			throw winrt::hresult_not_implemented();
+		}
     }
 
     TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution) :

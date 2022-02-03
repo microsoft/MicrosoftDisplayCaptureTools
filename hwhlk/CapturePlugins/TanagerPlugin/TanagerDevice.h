@@ -96,7 +96,9 @@ namespace winrt::TanagerPlugin::implementation
 
     struct TanagerCaptureCapabilities : implements<TanagerCaptureCapabilities, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities>
     {
-        TanagerCaptureCapabilities() = default;
+        TanagerCaptureCapabilities(TanagerDisplayInputPort Port) : m_port(Port)
+        {
+        }
 
         bool CanReturnRawFramesToHost();
         bool CanReturnFramesToHost();
@@ -105,6 +107,8 @@ namespace winrt::TanagerPlugin::implementation
         bool CanConfigureEDID();
         bool CanConfigureDisplayID();
         uint32_t GetMaxDescriptorSize();
+
+        TanagerDisplayInputPort m_port;
     };
 }
 
