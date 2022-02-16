@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Enable deterministic outputs, which can help with build caching-->
+    <Deterministic>true</Deterministic>
+    
+    <!-- To enable project specific directory for temporary files. -->
+    <UseProjectTMPDirectory>true</UseProjectTMPDirectory>
+
+    <!-- To enable MSBuild Resource Manager in VS 2019 16.11 (on by default in VS 2022) -->
+    <UseMSBuildResourceManager>true</UseMSBuildResourceManager>
+
+    <!-- Uncomment to enable MultiToolTask (MTT) mode. -->
+    <!--<UseMultiToolTask>true</UseMultiToolTask>
+      <EnforceProcessCountAcrossBuilds>true</EnforceProcessCountAcrossBuilds>-->
+
+    <!-- Uncomment to enable experimental MTT ClServer mode, available in VS 2022. -->
+    <EnableClServerMode>true</EnableClServerMode>
+
+    <!-- Uncomment and change the value to control the maximum number of cl.exe processes running in parallel. 
+         If using MTT without MSBuild Resource Manager, 10-20% oversubscription is often beneficial. -->
+    <!--<CL_MPCount>20</CL_MPCount>-->
+
+    <!--Uncomment to allow executing more build operations in parallel-->
+    <!--<BuildPassReferences>true</BuildPassReferences> -->
+    <!--<AllowParallelCompileInReferencedProjects>true</AllowParallelCompileInReferencedProjects> -->
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <!--  Enable parallel compilation (cl.exe /MP) -->
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <!--  Enable parallel execution of a custom build tool-->
+    <CustomBuild>
+      <BuildInParallel>true</BuildInParallel>
+    </CustomBuild>
+  </ItemDefinitionGroup>
+
+  <!-- Define project specific directory for temporary files -->
+  <Target Name="SetProjectTMPDirectory"
+          Condition="'$(UseProjectTMPDirectory)' == 'true'"
+          AfterTargets="SetBuildDefaultEnvironmentVariables">
+    <MakeDir Directories="$(IntDir)TMP"/>
+    <SetEnv Name   ="TMP"
+            Value  ="$(IntDir)TMP"
+            Prefix ="false">
+    </SetEnv>
+  </Target>
+</Project>
