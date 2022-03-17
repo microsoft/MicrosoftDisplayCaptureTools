@@ -213,6 +213,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         auto predictedFrame = m_displayManager.GetPrediction();
 
         // TODO: build a uniquely identifying string from the currently selected tools
+
         capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
     }
 
