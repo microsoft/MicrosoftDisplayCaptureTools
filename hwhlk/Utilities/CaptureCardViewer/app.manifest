@@ -81,7 +81,7 @@
 
 	<file name="Core.dll">
 		<activatableClass
-		    name="MicrosoftDisplayCaptureTools.Core.Framework"
+		    name="MicrosoftDisplayCaptureTools.Framework.Core"
 		    threadingModel="both"
 		    xmlns="urn:schemas-microsoft-com:winrt.v1" />
 	</file>

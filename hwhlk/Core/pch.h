@@ -9,6 +9,7 @@
 
 // STD headers
 #include <mutex>
+#include <filesystem>
 
 // Windows Headers
 #include <Windows.h>

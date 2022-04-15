@@ -8,7 +8,7 @@
     <MinimalCoreWin>true</MinimalCoreWin>
     <ProjectGuid>{5c8be39a-d80b-4851-a6e7-00e2928e79f2}</ProjectGuid>
     <ProjectName>BasicDisplayControl</ProjectName>
-    <RootNamespace>BasicDisplayControl</RootNamespace>
+    <RootNamespace>DisplayControl</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Windows Store</ApplicationType>

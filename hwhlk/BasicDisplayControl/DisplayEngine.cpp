@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "DisplayEngine.h"
-#include "DisplayControl.DisplayEngine.g.cpp"
+#include "DisplayEngine.g.cpp"
 
 namespace winrt
 {

@@ -21,6 +21,6 @@ namespace winrt::DisplayConfiguration::implementation
 
 	private:
 		ResolutionToolConfigurations m_currentConfig;
-		static const ResolutionToolConfigurations sc_defaultConfig = ResolutionToolConfigurations::w1920h1080;
+        static const ResolutionToolConfigurations sc_defaultConfig = ResolutionToolConfigurations::w1920h1080;
 	};
 }

@@ -55,19 +55,40 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
 
+        // First try to see if the string passed in is a self-contained json file
         auto jsonObject = JsonObject();
-        auto isJsonString = JsonObject::TryParse(configFile, jsonObject);
+        auto hasParsed = JsonObject::TryParse(configFile, jsonObject);
 
-        if (!isJsonString)
+        // if no, treat the argument as a fully qualified path
+        if (!hasParsed)
         {
-            auto file = StorageFile::GetFileFromPathAsync(configFile).get();
-            auto text = winrt::FileIO::ReadTextAsync(file).get();
-            if (!JsonObject::TryParse(text, jsonObject))
+            try
             {
-                // Parsing the config file failed!
-                // TODO - log and fail
-                throw winrt::hresult_not_implemented();
+                auto file = StorageFile::GetFileFromPathAsync(configFile).get();
+                auto text = winrt::FileIO::ReadTextAsync(file).get();
+                hasParsed = JsonObject::TryParse(text, jsonObject);
             }
+            catch (...)
+            {
+                // we're going to try again, so don't bubble exeptions from this up.
+            }
+        }
+       
+        // if neither of the previous has worked, try a final time as a local path
+        if (!hasParsed)
+        {
+            auto cwd = std::filesystem::current_path();
+            winrt::hstring path = winrt::hstring(cwd.c_str()) + L"\\" + configFile;
+
+            auto file = StorageFile::GetFileFromPathAsync(path).get();
+            auto text = winrt::FileIO::ReadTextAsync(file).get();
+            hasParsed = JsonObject::TryParse(text, jsonObject);
+        }
+
+        if (!hasParsed)
+        {
+            // Log this case and exit
+            throw winrt::hresult_error();
         }
 
         m_configFile = jsonObject;

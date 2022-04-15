@@ -24,6 +24,6 @@ namespace winrt::DisplayConfiguration::implementation
 
 	private:
 		PatternToolConfigurations m_currentConfig;
-		static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Black;
+        static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Green;
 	};
 }

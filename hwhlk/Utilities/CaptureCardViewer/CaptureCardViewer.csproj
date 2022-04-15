@@ -7,7 +7,6 @@
 		<UseWPF>true</UseWPF>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>AnyCPU;x64;ARM64</Platforms>
-		<CsWinRTIncludes>MicrosoftDisplayCaptureTools</CsWinRTIncludes>
 	</PropertyGroup>
 
 	<!-- Generates a C# projection of WinRT types (see https://docs.microsoft.com/en-us/windows/uwp/csharp-winrt/net-projection-from-cppwinrt-component)-->
@@ -36,6 +35,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\BasicDisplayControl\BasicDisplayControl.vcxproj">
+			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+		</ProjectReference>
+		<ProjectReference Include="..\..\CapturePlugins\GenericCaptureCardPlugin\GenericCaptureCardPlugin.vcxproj">
+		</ProjectReference>
+		<ProjectReference Include="..\..\CapturePlugins\TanagerPlugin\TanagerPlugin.vcxproj" />
+		<ProjectReference Include="..\..\CommonToolbox\CommonToolbox.vcxproj">
+			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+		</ProjectReference>
 		<ProjectReference Include="..\..\Core\Core.vcxproj" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="TestConfig.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "DisplayControl.DisplayEngine.g.h"
+#include "DisplayEngine.g.h"
 
 namespace MonitorUtilities
 {

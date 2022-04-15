@@ -6,21 +6,56 @@
         xmlns:local="clr-namespace:CaptureCardViewer"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-
-        <Border Background="Gray">
-            <Image Name="frameImageViewer" />
-        </Border>
-
-        <StackPanel Orientation="Vertical">
-            <Button Click="LoadPlugin_Click">Load Plugin</Button>
-            <ToggleButton>Connect Monitor</ToggleButton>
-            <ToggleButton>Capture Frames</ToggleButton>
+    <StackPanel Orientation="Horizontal">
+        <StackPanel x:Name="SPanel" Orientation="Vertical" Width="400">
+            <Label Content="Predicted Image" HorizontalAlignment="Left" VerticalAlignment="Top" />
+            <Image x:Name="PredictedImage"  Stretch="Fill" MinHeight="200" MinWidth="400"/>
+            <Label Content="Available tools" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ComboBox x:Name="availableTools" SelectionChanged="availableTools_SelectionChanged">
+                <ComboBox.RenderTransform>
+                    <TransformGroup>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </ComboBox.RenderTransform>
+                <ComboBoxItem Content="Event Log"/>
+                <ComboBoxItem Content="Supported Features"/>
+            </ComboBox>
+            <Label Content="Tool Settings" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ComboBox x:Name="toolSettings" RenderTransformOrigin="0.5,0.5">
+                <ComboBox.RenderTransform>
+                    <TransformGroup>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </ComboBox.RenderTransform>
+                <ComboBoxItem Content="Option 1"/>
+                <ComboBoxItem Content="Option 2"/>
+            </ComboBox>
+            <Image Height="100" Width="100"/>
         </StackPanel>
+        <StackPanel Orientation="Vertical" Width="400">
 
-    </Grid>
+            <Label Content="Actual Image" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Image x:Name="ActualImage" Stretch="Fill" MinHeight="200"/>
+            <Label Content="Configurations" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+            <StackPanel Orientation="Horizontal">
+                <ComboBox Grid.Column="1" HorizontalAlignment="Left" Width="200" VerticalAlignment="Top" >
+                    <ComboBoxItem Content="Resolution"/>
+                    <ComboBoxItem Content="Refresh Rate"/>
+                    <ComboBoxItem Content="Capture Card"/>
+                    <ComboBoxItem Content="Frames"/>
+                    <ComboBoxItem Content="EDID"/>
+                </ComboBox>
+                <Label Content="Live Updates:" HorizontalAlignment="Left" VerticalAlignment="Top" Height="24" Margin="50,0,0,0"/>
+                <CheckBox x:Name="LiveUpdates" VerticalAlignment="Center"/>
+
+            </StackPanel>
+            <Button x:Name="Run" Content="Run &amp; Compare" Click="runAndCompareButtonClick" Margin="0,26"/>
+
+        </StackPanel>
+    </StackPanel>
 </Window>
