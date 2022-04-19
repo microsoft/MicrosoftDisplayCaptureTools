@@ -41,9 +41,7 @@
 		<ProjectReference Include="..\..\CapturePlugins\GenericCaptureCardPlugin\GenericCaptureCardPlugin.vcxproj">
 		</ProjectReference>
 		<ProjectReference Include="..\..\CapturePlugins\TanagerPlugin\TanagerPlugin.vcxproj" />
-		<ProjectReference Include="..\..\CommonToolbox\CommonToolbox.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
+		<ProjectReference Include="..\..\CommonToolbox\CommonToolbox.vcxproj" />
 		<ProjectReference Include="..\..\Core\Core.vcxproj" />
 
 	</ItemGroup>
