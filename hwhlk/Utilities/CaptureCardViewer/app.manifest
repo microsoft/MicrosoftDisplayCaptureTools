@@ -79,11 +79,11 @@
 		See https://blogs.windows.com/windowsdeveloper/2019/04/30/enhancing-non-packaged-desktop-apps-using-windows-runtime-components/
     -->
 
-	<file name="Core.dll">
+	<!--<file name="MicrosoftDisplayCaptureTools.dll">
 		<activatableClass
 		    name="MicrosoftDisplayCaptureTools.Framework.Core"
 		    threadingModel="both"
 		    xmlns="urn:schemas-microsoft-com:winrt.v1" />
-	</file>
+	</file>-->
 
 </assembly>

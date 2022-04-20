@@ -7,7 +7,7 @@
     <CppWinRTGenerateWindowsMetadata>true</CppWinRTGenerateWindowsMetadata>
     <MinimalCoreWin>true</MinimalCoreWin>
     <ProjectGuid>{d007aa97-b58a-47d6-9fd3-f1b24757f53b}</ProjectGuid>
-    <ProjectName>Core</ProjectName>
+    <ProjectName>MicrosoftDisplayCaptureTools</ProjectName>
     <RootNamespace>MicrosoftDisplayCaptureTools</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>

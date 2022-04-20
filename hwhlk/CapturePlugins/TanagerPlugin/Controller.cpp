@@ -54,6 +54,58 @@ namespace winrt::TanagerPlugin::implementation
 		// There is no config data to be consumed right now.
     }
 
+    ControllerFirmwareState Controller::FirmwareState()
+    {
+        auto firmwareStates = m_captureBoards | std::views::transform([](auto x) { return x->GetFirmwareState(); });
+
+		// Return the most "severe" firmware state
+        return *std::ranges::min_element(firmwareStates);
+    }
+
+    Windows::Foundation::IAsyncAction Controller::UpdateFirmwareAsync()
+    {
+        winrt::apartment_context origContext;
+
+		// Resume onto a background thread
+        co_await winrt::resume_background();
+
+		// Update all firmware async
+        for (auto captureBoard : m_captureBoards)
+        {
+            auto firmwareState = captureBoard->GetFirmwareState();
+            if (firmwareState == ControllerFirmwareState::UpdateAvailable || firmwareState == ControllerFirmwareState::UpdateRequired)
+            {
+                co_await captureBoard->UpdateFirmwareAsync();
+            }
+		}
+
+		// Switch back to calling context
+		co_await origContext;
+    }
+
+    winrt::hstring Controller::FirmwareVersion()
+    {
+        std::wstringstream version;
+
+        for (auto&& captureBoard : m_captureBoards)
+        {
+            auto deviceId = captureBoard->GetDeviceId();
+            auto firmwareVersion = captureBoard->GetFirmwareVersionInfo();
+            version << std::format(
+                L"{}: FPGA {}.{}.{}, FX3 {}.{}.{}, HW {}\n",
+                deviceId,
+                firmwareVersion.fpgaFirmwareVersionMajor,
+                firmwareVersion.fpgaFirmwareVersionMinor,
+                firmwareVersion.fpgaFirmwareVersionPatch,
+                firmwareVersion.fx3FirmwareVersionMajor,
+                firmwareVersion.fx3FirmwareVersionMinor,
+                firmwareVersion.fx3FirmwareVersionPatch,
+                firmwareVersion.hardwareRevision);
+        }
+
+        return winrt::hstring{version.str()};
+    }
+
     void Controller::DiscoverCaptureBoards()
     {
 		/*

@@ -253,11 +253,16 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="HardwareVerificationTests.h" />
+    <ClInclude Include="CaptureFrameworkTestBase.h" />
+    <ClInclude Include="DescriptorTests.h" />
+    <ClInclude Include="PictTests.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HardwareVerificationTests.cpp" />
+    <ClCompile Include="CaptureFrameworkTestBase.cpp" />
+    <ClCompile Include="DescriptorTests.cpp" />
+    <ClCompile Include="PictTests.cpp" />
+    <ClCompile Include="Module.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

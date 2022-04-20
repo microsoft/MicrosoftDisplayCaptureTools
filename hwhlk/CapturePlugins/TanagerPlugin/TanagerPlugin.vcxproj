@@ -133,6 +133,10 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -166,6 +170,10 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -189,7 +197,9 @@
     </Midl>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Controller.h" />
+    <ClInclude Include="Controller.h">
+      <DependentUpon>TanagerPlugin.idl</DependentUpon>
+    </ClInclude>
     <ClInclude Include="FrankenboardDevice.h" />
     <ClInclude Include="Fx3FpgaInterface.h" />
     <ClInclude Include="I2cDriver.h" />
@@ -200,7 +210,9 @@
     <ClInclude Include="TanagerDevice.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="Controller.cpp">
+      <DependentUpon>TanagerPlugin.idl</DependentUpon>
+    </ClCompile>
     <ClCompile Include="FrankenboardDevice.cpp" />
     <ClCompile Include="Fx3FpgaInterface.cpp" />
     <ClCompile Include="I2cDriver.cpp" />

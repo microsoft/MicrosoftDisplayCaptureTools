@@ -80,12 +80,12 @@ namespace winrt::TanagerPlugin::implementation
         return buffer;
 	}
 
-	void Fx3FpgaInterface::FlashFpgaFirmware(Windows::Foundation::Uri uri)
+	void Fx3FpgaInterface::FlashFpgaFirmware(winrt::hstring uri)
 	{
 		throw winrt::hresult_not_implemented();
 	}
 
-	void Fx3FpgaInterface::FlashFx3Firmware(Windows::Foundation::Uri uri)
+	void Fx3FpgaInterface::FlashFx3Firmware(winrt::hstring uri)
 	{
 		throw winrt::hresult_not_implemented();
 	}

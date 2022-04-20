@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="FrankenboardDevice.cpp" />
+    <ClCompile Include="Fx3FpgaInterface.cpp" />
+    <ClCompile Include="I2cDriver.cpp" />
+    <ClCompile Include="IteIt6803.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="TanagerDevice.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FrankenboardDevice.h" />
+    <ClInclude Include="Fx3FpgaInterface.h" />
+    <ClInclude Include="I2cDriver.h" />
+    <ClInclude Include="IteIt6803.h" />
+    <ClInclude Include="IteIt6803Registers.h" />
+    <ClInclude Include="IteIt68051.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="TanagerDevice.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="debug.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="TanagerPlugin.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="TanagerPlugin.def" />
+    <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+</Project>
