@@ -13,8 +13,8 @@ namespace winrt::TanagerPlugin::implementation
         void Write(unsigned short address, std::vector<byte> data);
         std::vector<byte> Read(unsigned short address, UINT16 size);
         std::vector<byte> ReadEndPointData(UINT32 dataSize);
-        void FlashFpgaFirmware(Windows::Foundation::Uri uri);
-        void FlashFx3Firmware(Windows::Foundation::Uri uri);
+        void FlashFpgaFirmware(winrt::hstring uri);
+        void FlashFx3Firmware(winrt::hstring uri);
         struct FirmwareVersionInfo GetFirmwareVersionInfo();
         void SysReset();
         bool IsFpgaReady();

@@ -6,22 +6,33 @@ namespace winrt::TanagerPlugin::implementation
         public IMicrosoftCaptureBoard,
         public std::enable_shared_from_this<TanagerDevice>
     {
+        inline static constinit const PCWSTR FpgaFirmwareFileName = L"TanagerFpgaFirmware.bin";
+        inline static constinit const PCWSTR Fx3FirmwareFileName = L"TanagerFx3Firmware.bin";
+        inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFpgaVersion{1, 0, 0};
+        inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFx3Version{1, 0, 0};
+
     public:
         TanagerDevice(winrt::param::hstring deviceId);
         ~TanagerDevice();
 
+        winrt::hstring GetDeviceId() override;
         std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() override;
         void TriggerHdmiCapture() override;
         void FpgaWrite(unsigned short address, std::vector<byte> data) override;
         std::vector<byte> FpgaRead(unsigned short address, UINT16 data) override;
         std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
-        void FlashFpgaFirmware(Windows::Foundation::Uri uri) override;
-        void FlashFx3Firmware(Windows::Foundation::Uri uri) override;
+
+        // Firmware updates
+        void FlashFpgaFirmware(winrt::hstring filePath) override;
+        void FlashFx3Firmware(winrt::hstring filePath) override;
         FirmwareVersionInfo GetFirmwareVersionInfo() override;
+        winrt::Windows::Foundation::IAsyncAction UpdateFirmwareAsync() override;
+        MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() override;
 
         IteIt68051Plugin::VideoTiming getVideoTiming();
 
     private:
+        winrt::hstring m_deviceId;
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
         std::shared_ptr<I2cDriver> m_pDriver;
         IteIt68051Plugin::IteIt68051 hdmiChip;

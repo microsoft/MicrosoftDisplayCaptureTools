@@ -19,6 +19,10 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
+#include <numeric>
+#include <ranges>
+#include <iterator>
 
 #include "IteIt6803.h"
 #include "IteIt68051.h"

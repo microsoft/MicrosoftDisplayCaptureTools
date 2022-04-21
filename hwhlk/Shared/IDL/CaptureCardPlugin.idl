@@ -205,4 +205,30 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
     }
+
+    enum ControllerFirmwareState
+    {
+        // The firmware isn't recognized or can't be updated to a known-good state by the 
+        ManualUpdateNeeded,
+
+        // A firmware update is required
+        UpdateRequired,
+
+        // A firmware update is available but not required
+        UpdateAvailable,
+
+        // No update is needed
+        UpToDate
+    };
+
+    /// <summary>
+    /// An interface implemented by capture cards that support firmware updates.
+    /// </summary>
+    interface IControllerWithFirmware
+    {
+        ControllerFirmwareState FirmwareState { get; };
+        String FirmwareVersion { get; };
+
+        Windows.Foundation.IAsyncAction UpdateFirmwareAsync();
+    };
 }

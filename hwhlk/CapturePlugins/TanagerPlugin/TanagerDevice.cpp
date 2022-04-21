@@ -71,14 +71,14 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
 		return m_fpga.ReadEndPointData(dataSize);
 	}
 
-	void TanagerDevice::FlashFpgaFirmware(Windows::Foundation::Uri uri)
+	void TanagerDevice::FlashFpgaFirmware(winrt::hstring filePath)
 	{
-		m_fpga.FlashFpgaFirmware(uri);
+        m_fpga.FlashFpgaFirmware(filePath);
 	}
 
-	void TanagerDevice::FlashFx3Firmware(Windows::Foundation::Uri uri)
+	void TanagerDevice::FlashFx3Firmware(winrt::hstring filePath)
 	{
-		m_fpga.FlashFx3Firmware(uri);
+        m_fpga.FlashFx3Firmware(filePath);
 	}
 
 	FirmwareVersionInfo TanagerDevice::GetFirmwareVersionInfo()
@@ -89,6 +89,32 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
     IteIt68051Plugin::VideoTiming TanagerDevice::getVideoTiming()
     {
         return hdmiChip.GetVideoTiming();
+    }
+
+    winrt::hstring TanagerDevice::GetDeviceId()
+    {
+        return m_deviceId;
+    }
+
+    winrt::Windows::Foundation::IAsyncAction TanagerDevice::UpdateFirmwareAsync()
+    {
+        co_await winrt::resume_background();
+
+        FlashFpgaFirmware(FpgaFirmwareFileName);
+        FlashFx3Firmware(Fx3FirmwareFileName);
+    }
+
+    MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState TanagerDevice::GetFirmwareState()
+    {
+        auto versionInfo = GetFirmwareVersionInfo();
+        if (versionInfo.GetFpgaFirmwareVersion() < MinimumFpgaVersion || versionInfo.GetFx3FirmwareVersion() < MinimumFx3Version)
+        {
+            return MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState::UpdateRequired;
+        }
+        else
+        {
+            return MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState::UpToDate;
+        }
     }
 
 	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port)

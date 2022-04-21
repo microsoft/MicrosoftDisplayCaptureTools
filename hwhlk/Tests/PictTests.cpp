@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "HardwareVerificationTests.h"
+#include "PictTests.h"
 
 // Shared Utilities
 #include "BinaryLoader.h"
@@ -19,31 +19,17 @@ namespace winrt
 
 bool PictTests::Setup()
 {
-    winrt::init_apartment();
-
-    // Identify the config file path
-    auto cwd = std::filesystem::current_path();
-    winrt::hstring configPath = winrt::hstring(cwd.c_str()) + L"\\Tests\\TestConfig.json";
-
-    // Load the framework
-    framework = winrt::Libraries::LoadInterfaceFromPath<winrt::Framework::ICore>
-        (L"Core\\Core.dll", L"MicrosoftDisplayCaptureTools.Framework.Core");
-
-    framework.LoadConfigFile(configPath.c_str());
-
-    Log::Comment(L"Initialization Complete");
-    
-    return true;
+    return __super::Setup();
 }
 
 bool PictTests::Cleanup()
 {
-    return true;
+    return __super::Cleanup();
 }
 
 void PictTests::Test()
 {
-    auto tools = framework.GetLoadedTools();
+    auto tools = m_framework.GetLoadedTools();
     for (auto tool : tools)
     {
         String toolSetting;
@@ -56,5 +42,5 @@ void PictTests::Test()
         }
     }
 
-    framework.RunTest();
+    m_framework.RunTest();
 }

@@ -8,28 +8,42 @@ namespace winrt::TanagerPlugin::implementation
 {
     struct FirmwareVersionInfo
     {
-        byte fx3FirmwareVersionMajor;
-        byte fx3FirmwareVersionMinor;
-        byte fx3FirmwareVersionPatch;
-        byte fpgaFirmwareVersionMajor;
-        byte fpgaFirmwareVersionMinor;
-        byte fpgaFirmwareVersionPatch;
-        byte hardwareRevision;
+        uint8_t fx3FirmwareVersionMajor;
+        uint8_t fx3FirmwareVersionMinor;
+        uint8_t fx3FirmwareVersionPatch;
+        uint8_t fpgaFirmwareVersionMajor;
+        uint8_t fpgaFirmwareVersionMinor;
+        uint8_t fpgaFirmwareVersionPatch;
+        uint8_t hardwareRevision;
+
+        std::tuple<uint8_t, uint8_t, uint8_t> GetFx3FirmwareVersion()
+        {
+            return {fx3FirmwareVersionMajor, fx3FirmwareVersionMinor, fx3FirmwareVersionPatch};
+        }
+        std::tuple<uint8_t, uint8_t, uint8_t> GetFpgaFirmwareVersion()
+        {
+            return {fpgaFirmwareVersionMajor, fpgaFirmwareVersionMinor, fpgaFirmwareVersionPatch};
+        }
     };
 
     // Provides an abstraction for different boards to provide display inputs
     class IMicrosoftCaptureBoard abstract
     {
     public:
+        virtual winrt::hstring GetDeviceId() = 0;
         virtual std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() = 0;
 
         virtual void TriggerHdmiCapture() = 0;
         virtual std::vector<byte> ReadEndPointData(UINT32 dataSize) = 0;
         virtual std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize) = 0;
         virtual void FpgaWrite(unsigned short address, std::vector<byte> data) = 0;
-        virtual void FlashFpgaFirmware(Windows::Foundation::Uri uri) = 0;
-        virtual void FlashFx3Firmware(Windows::Foundation::Uri uri) = 0;
+
+        // Firmware update support
+        virtual winrt::Windows::Foundation::IAsyncAction UpdateFirmwareAsync() = 0;
+        virtual void FlashFpgaFirmware(winrt::hstring filePath) = 0;
+        virtual void FlashFx3Firmware(winrt::hstring filePath) = 0;
         virtual FirmwareVersionInfo GetFirmwareVersionInfo() = 0;
+        virtual MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() = 0;
     };
 
     // I2C bus device
@@ -56,6 +70,10 @@ namespace winrt::TanagerPlugin::implementation
         com_array<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
         void SetConfigData(Windows::Data::Json::IJsonValue data);
 
+        // IControllerWithFirmware
+        MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState FirmwareState();
+        Windows::Foundation::IAsyncAction UpdateFirmwareAsync();
+        winrt::hstring FirmwareVersion();
        
     private:
         void DiscoverCaptureBoards();
