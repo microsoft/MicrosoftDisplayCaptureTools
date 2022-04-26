@@ -38,7 +38,7 @@ using System.Net.Http.Headers;
 using MicrosoftDisplayCaptureTools.CaptureCard;
 using System.Diagnostics;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 
 namespace CaptureCardViewer
 {
@@ -151,11 +151,11 @@ namespace CaptureCardViewer
 				await pSource.SetBitmapAsync(bitmap);
 				
 				this.Dispatcher.Invoke(
-				new Action(() =>
-				{
-					
-					PredictedImage.Source = pSource;
-				}
+					new Action(() =>
+					{
+
+						PredictedImage.Source = pSource.As<System.Windows.Media.ImageSource>();
+					}
 				));
 				Thread.Sleep(1000);
 			});
