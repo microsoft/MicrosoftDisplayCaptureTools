@@ -11,10 +11,10 @@ using namespace WEX::TestExecution;
 namespace winrt
 {
     using namespace Windows::Foundation;
-    using namespace MicrosoftDisplayCaptureTools;
     using namespace Windows::Devices::Display;
     using namespace Windows::Devices::Display::Core;
     using namespace Windows::Graphics::Imaging;
+    using namespace MicrosoftDisplayCaptureTools;
 }
 
 bool PictTests::Setup()
@@ -29,7 +29,7 @@ bool PictTests::Cleanup()
 
 void PictTests::Test()
 {
-    auto tools = m_framework.GetLoadedTools();
+    auto tools = g_framework.GetLoadedTools();
     for (auto tool : tools)
     {
         String toolSetting;
@@ -42,5 +42,5 @@ void PictTests::Test()
         }
     }
 
-    m_framework.RunTest();
+    g_framework.RunTest();
 }

@@ -27,6 +27,9 @@
     <ClInclude Include="CaptureFrameworkTestBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TestSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PictTests.cpp">

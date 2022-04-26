@@ -92,6 +92,9 @@ namespace winrt::TanagerPlugin::implementation
 
 	FirmwareVersionInfo Fx3FpgaInterface::GetFirmwareVersionInfo()
 	{
+        auto bufferLen = sizeof(FirmwareVersionInfo);
+        Buffer inBuffer(bufferLen);
+        inBuffer.Length(bufferLen);
 		UsbSetupPacket setupPacket;
 		UsbControlRequestType requestType;
 		requestType.AsByte(0xC0);
@@ -99,13 +102,13 @@ namespace winrt::TanagerPlugin::implementation
 		setupPacket.Request(VR_VERSION);
 		setupPacket.Value(0);
 		setupPacket.Index(0);
-		setupPacket.Length(sizeof(FirmwareVersionInfo));
-		auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket).get();
+        setupPacket.Length(bufferLen);
+		auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket, inBuffer).get();
 		if (buffer == nullptr)
 		{
 			throw_last_error();
 		}
-		if (buffer.Length() != sizeof(FirmwareVersionInfo))
+        if (buffer.Length() != bufferLen)
 		{
 			throw winrt::hresult_error();
 		}

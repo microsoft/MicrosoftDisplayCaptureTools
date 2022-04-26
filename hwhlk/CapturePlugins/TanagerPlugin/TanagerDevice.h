@@ -8,8 +8,8 @@ namespace winrt::TanagerPlugin::implementation
     {
         inline static constinit const PCWSTR FpgaFirmwareFileName = L"TanagerFpgaFirmware.bin";
         inline static constinit const PCWSTR Fx3FirmwareFileName = L"TanagerFx3Firmware.bin";
-        inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFpgaVersion{1, 0, 0};
-        inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFx3Version{1, 0, 0};
+        inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFpgaVersion{0, 0, 0};
+        inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFx3Version{0, 0, 0};
 
     public:
         TanagerDevice(winrt::param::hstring deviceId);
