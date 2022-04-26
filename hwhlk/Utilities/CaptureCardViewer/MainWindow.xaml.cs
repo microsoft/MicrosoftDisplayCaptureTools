@@ -23,6 +23,8 @@ using Windows.Graphics.Imaging;
 using Windows.Data.Json;
 using Windows.Media.Capture;
 using System.Threading;
+using System.Drawing;
+using System.IO;
 using WinRT;
 using ABI.Windows.Foundation;
 using System.Runtime.InteropServices;
@@ -33,6 +35,10 @@ using MicrosoftDisplayCaptureTools.Display;
 using Windows.UI.Core;
 using Windows.Graphics.DirectX;
 using System.Net.Http.Headers;
+using MicrosoftDisplayCaptureTools.CaptureCard;
+using System.Diagnostics;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.UI.Xaml.Media.Imaging;
 
 namespace CaptureCardViewer
 {
@@ -48,15 +54,7 @@ namespace CaptureCardViewer
 	{
 		void GetBuffer(out byte* buffer, out uint capacity);
 	}
-	public class Hstring
-	{
-		private string monitorId;
-		public string MonitorId
-		{
-			get { return monitorId; }
-			set { monitorId = value;}
-		}
-	}
+
 	public partial class MainWindow : Window
     {
 		public string? setTool;
@@ -128,53 +126,34 @@ namespace CaptureCardViewer
 		} 
 
 		//getting predicted frames to frame comparison
-		private async void displayPredictedFrames(Core testFramework)
+		private async void displayPredictedFrames(IDisplayEngine displayEngine,IDisplayInput captureInput)
 		{
-			await Task.Run(() =>
+			await Task.Run(async() =>
 			{
-				string fullPath = "C:\\Users\\lumulinga\\source\\repos\\DisplayHardwareHLK\\hwhlk\\Tests\\PredFrameConfig.json";
-				testFramework.LoadConfigFile(fullPath);
-				var displayEngine = testFramework.GetDisplayEngine();
-				var predictedFrame = displayEngine.GetPrediction();
+				//Reset the display manager to the correct one
+				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
-				/*var dispMan = DisplayManager.Create(DisplayManagerOptions.None);
-				var connectedTargets = dispMan.GetCurrentTargets();
-				//substitute with setting up the config file testing system 
-				var target = connectedTargets.FirstOrDefault();  //should get the last but one monitor
-				displayEngine.InitializeForDisplayTarget(target);
+				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
+				var tools = testFramework.GetLoadedTools();
 
-				var caps = displayEngine.GetCapabilities();
-				var modes = caps.GetSupportedModes();
-				var bestmode = DisplayModeInfo.FromAbi(IntPtr.Zero);
-				double bestModeDiff = Single.PositiveInfinity;
-				foreach (var mode in modes)
-				{
-					if (mode.SourcePixelFormat==DirectXPixelFormat.R8G8B8A8UIntNormalized &&
-					mode.IsInterlaced==false && mode.TargetResolution.Height==1080 && mode.SourceResolution.Height == 1080)
-					{
-						var vSync = mode.PresentationRate.VerticalSyncRate;
-						var vSyncDouble = (double)vSync.Numerator/vSync.Denominator;
-						double modeDiff = Math.Abs(vSyncDouble - 60);
-						if (modeDiff < bestModeDiff)
-						{
-							bestmode = mode;
-							bestModeDiff = modeDiff;	
-						}
-					}
-				}
-				var prop = displayEngine.GetProperties();
-				prop.ActiveMode = bestmode;
-				var render = displayEngine.StartRender();*/
+				foreach (var tool in tools)
+					tool.Apply(displayEngine);
 
-				var predImgBmp = predictedFrame.GetBitmap();
-				predImgBmp = SoftwareBitmap.Convert(predImgBmp, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-				ImageSourceConverter c = new ImageSourceConverter();
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-				ImageSource pSource = (ImageSource)c.ConvertFrom(predImgBmp);
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+				var renderer = displayEngine.StartRender();
+
+				Thread.Sleep(5000);
+
+				var capturedFrame = captureInput.CaptureFrame();
+				renderer.Dispose();
+				var prediction = displayEngine.GetPrediction();
+				var bitmap = prediction.GetBitmap();
+				SoftwareBitmapSource pSource = new SoftwareBitmapSource();
+				await pSource.SetBitmapAsync(bitmap);
+				
 				this.Dispatcher.Invoke(
 				new Action(() =>
 				{
+					
 					PredictedImage.Source = pSource;
 				}
 				));
@@ -212,7 +191,7 @@ namespace CaptureCardViewer
 					break;
 			}
 
-			BitmapSource bSource;
+			System.Windows.Media.Imaging.BitmapSource bSource;
 			
 			//capturing frames 
 			await Task.Run(() =>
@@ -224,7 +203,9 @@ namespace CaptureCardViewer
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 
-				//Reset the display manager to the correct one
+				displayPredictedFrames(displayEngine, captureInput);
+
+				/*//Reset the display manager to the correct one
 				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
 				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
@@ -240,7 +221,8 @@ namespace CaptureCardViewer
 
 				renderer.Dispose();
 
-				var prediction = displayEngine.GetPrediction();
+				var prediction = displayEngine.GetPrediction();*/
+				var capturedFrame = captureInput.CaptureFrame();
 				var pixelBuffer = capturedFrame.GetRawPixelData();
 				
 				// This needs to be inside of an unsafe block because we are manipulating bytes directly
@@ -262,7 +244,7 @@ namespace CaptureCardViewer
 					}
 					var pixCap = pixelBuffer.Capacity;
 
-					bSource = BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
+					bSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
 					
 				}
 
@@ -280,7 +262,6 @@ namespace CaptureCardViewer
 					
 				
 			});
-			//displayPredictedFrames(testFramework);
 
 
 
