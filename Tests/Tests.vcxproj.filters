@@ -52,6 +52,7 @@
     <None Include="TestConfig.json" />
     <None Include="cpp.hint" />
     <None Include="packages.config" />
+    <None Include="pict.exe" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="SimplePICT.txt" />

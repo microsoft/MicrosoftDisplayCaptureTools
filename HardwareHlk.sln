@@ -32,7 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IDL", "IDL", "{22D37EEC-603
 		Shared\IDL\Framework.idl = Shared\IDL\Framework.idl
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj", "{D007AA97-B58A-47D6-9FD3-F1B24757F53B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicrosoftDisplayCaptureTools", "Core\Core.vcxproj", "{D007AA97-B58A-47D6-9FD3-F1B24757F53B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7A67ED3A-51A2-4121-8F46-40C128A25531} = {7A67ED3A-51A2-4121-8F46-40C128A25531}
 	EndProjectSection
@@ -83,6 +83,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CaptureCardViewer", "Utilit
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TanagerPlugin", "CapturePlugins\TanagerPlugin\TanagerPlugin.vcxproj", "{C2EA574E-B9CE-47EF-909B-40425A7E31BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{893F8111-A827-4191-B800-D2526D28BDDA}"
+	ProjectSection(SolutionItems) = preProject
+		MicrosoftDisplayCaptureTools.nuspec = MicrosoftDisplayCaptureTools.nuspec
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

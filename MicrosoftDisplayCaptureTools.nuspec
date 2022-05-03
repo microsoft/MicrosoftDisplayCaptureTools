@@ -1,0 +1,18 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata>
+		<id>MicrosoftDisplayCaptureTools</id>
+		<version>0.0.1</version>
+		<authors>daspr</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>A set of tools for running display tests on Windows.</description>
+	</metadata>
+	<files>
+		<file src="x64\Debug\MicrosoftDisplayCaptureTools.dll" target="lib"/>
+		<file src="x64\Debug\MicrosoftDisplayCaptureTools.winmd" target="lib"/>
+		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.dll" target="DisplayControllers"/>
+		<file src="x64\Debug\TanagerPlugin\TanagerPlugin.dll" target="CapturePlugins"/>
+		<file src="x64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.dll" target="CapturePlugins"/>
+		<file src="x64\Debug\CommonToolbox\CommonToolbox.dll" target="Toolboxes"/>
+	</files>
+</package>

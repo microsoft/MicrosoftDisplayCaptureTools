@@ -20,9 +20,6 @@
     <ClInclude Include="TanagerDevice.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="debug.lib" />
-  </ItemGroup>
-  <ItemGroup>
     <Midl Include="TanagerPlugin.idl" />
   </ItemGroup>
   <ItemGroup>

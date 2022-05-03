@@ -27,7 +27,6 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Taef" Version="10.68.220224001" />
 		<PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
@@ -44,7 +43,9 @@
 		<ProjectReference Include="..\..\CommonToolbox\CommonToolbox.vcxproj">
 			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
 		</ProjectReference>
-		<ProjectReference Include="..\..\Core\Core.vcxproj" />
+		<ProjectReference Include="..\..\Core\Core.vcxproj">
+			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+		</ProjectReference>
 
 	</ItemGroup>
 
