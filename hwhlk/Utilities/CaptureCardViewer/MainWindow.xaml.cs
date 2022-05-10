@@ -128,15 +128,19 @@ namespace CaptureCardViewer
 		//getting predicted frames to frame comparison
 		private async void displayPredictedFrames(IDisplayEngine displayEngine,IDisplayInput captureInput)
 		{
-			await Task.Run(async() =>
+
+			await Task.Run(() =>
 			{
+				System.Windows.Media.Imaging.BitmapSource pSource;
+
 				//Reset the display manager to the correct one
 				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
 				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
 				var tools = testFramework.GetLoadedTools();
-
+				
 				foreach (var tool in tools)
+				
 					tool.Apply(displayEngine);
 
 				var renderer = displayEngine.StartRender();
@@ -147,14 +151,35 @@ namespace CaptureCardViewer
 				renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
 				var bitmap = prediction.GetBitmap();
-				SoftwareBitmapSource pSource = new SoftwareBitmapSource();
-				await pSource.SetBitmapAsync(bitmap);
-				
+				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
+				IMemoryBufferReference reference = bmpBuffer.CreateReference();
+				unsafe
+				{
+
+					byte[] bytes = new byte[reference.Capacity];
+					fixed (byte* bytesAccess = bytes)
+					{
+						byte* ptr;
+						uint capacity;
+						var ByteAccess = reference.As<IMemoryBufferByteAccess>();
+						ByteAccess.GetBuffer(out ptr, out capacity);
+
+						// copy the raw memory out to the byte array
+						Unsafe.CopyBlockUnaligned(
+							ref bytesAccess[0], ref ptr[0], capacity);
+
+					}
+					var pixCap = reference.Capacity;
+
+					pSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
+
+				}
+				pSource.Freeze();
 				this.Dispatcher.Invoke(
 					new Action(() =>
 					{
 
-						PredictedImage.Source = pSource.As<System.Windows.Media.ImageSource>();
+						PredictedImage.Source = pSource;
 					}
 				));
 				Thread.Sleep(1000);

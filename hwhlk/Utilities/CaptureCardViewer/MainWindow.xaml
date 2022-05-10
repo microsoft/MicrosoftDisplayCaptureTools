@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CaptureCardViewer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="1200">
     
     <StackPanel Orientation="Horizontal">
         <StackPanel x:Name="SPanel" Orientation="Vertical" Width="400">
@@ -57,6 +57,16 @@
             </StackPanel>
             <Button x:Name="Run" Content="Run &amp; Compare" Click="runAndCompareButtonClick" Margin="0,26"/>
 
+        </StackPanel>
+        <StackPanel Orientation="Vertical" Width="401" Height="430">
+            <Label Content="Properties" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <RichTextBox x:Name="rtb" Height="200">
+                <FlowDocument>
+                    <Paragraph>
+                        <Run Text=""/>
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
         </StackPanel>
     </StackPanel>
 </Window>
