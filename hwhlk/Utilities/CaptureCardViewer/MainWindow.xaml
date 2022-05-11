@@ -11,6 +11,7 @@
         <StackPanel x:Name="SPanel" Orientation="Vertical" Width="400">
             <Label Content="Predicted Image" HorizontalAlignment="Left" VerticalAlignment="Top" />
             <Image x:Name="PredictedImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
+            <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
             <Label Content="Available tools" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <ComboBox x:Name="availableTools" SelectionChanged="availableTools_SelectionChanged">
                 <ComboBox.RenderTransform>
@@ -41,6 +42,7 @@
 
             <Label Content="Actual Image" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <Image x:Name="ActualImage" Stretch="Fill" MinHeight="200"/>
+            <Button x:Name="dP" Content="Display Properties" Click="displayProperties" Margin="0,26"/>
             <Label Content="Configurations" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
             <StackPanel Orientation="Horizontal">
@@ -55,7 +57,6 @@
                 <CheckBox x:Name="LiveUpdates" VerticalAlignment="Center"/>
 
             </StackPanel>
-            <Button x:Name="Run" Content="Run &amp; Compare" Click="runAndCompareButtonClick" Margin="0,26"/>
 
         </StackPanel>
         <StackPanel Orientation="Vertical" Width="401" Height="430">
@@ -67,6 +68,8 @@
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
+            
         </StackPanel>
+        
     </StackPanel>
 </Window>
