@@ -10,7 +10,7 @@
     <StackPanel Orientation="Horizontal">
         <StackPanel x:Name="SPanel" Orientation="Vertical" Width="400">
             <Label Content="Predicted Image" HorizontalAlignment="Left" VerticalAlignment="Top" />
-            <Image x:Name="PredictedImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
+            <Image x:Name="PredImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
             <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
             <Label Content="Available tools" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <ComboBox x:Name="availableTools" SelectionChanged="availableTools_SelectionChanged">
@@ -41,7 +41,7 @@
         <StackPanel Orientation="Vertical" Width="400">
 
             <Label Content="Actual Image" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <Image x:Name="ActualImage" Stretch="Fill" MinHeight="200"/>
+            <Image x:Name="CaptImage" Stretch="Fill" MinHeight="200"/>
             <Button x:Name="dP" Content="Display Properties" Click="displayProperties" Margin="0,26"/>
             <Label Content="Configurations" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 

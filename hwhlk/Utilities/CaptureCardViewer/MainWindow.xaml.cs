@@ -83,12 +83,38 @@ namespace CaptureCardViewer
 
 		}
 
+		//Converting buffer to image source
+		private static System.Windows.Media.Imaging.BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer)
+		{
+			System.Windows.Media.Imaging.BitmapSource imgSource;
+			unsafe
+			{
+
+				byte[] bytes = new byte[pixelBuffer.Capacity];
+				fixed (byte* bytesAccess = bytes)
+				{
+					byte* ptr;
+					uint capacity;
+					var ByteAccess = pixelBuffer.As<IMemoryBufferByteAccess>();
+					ByteAccess.GetBuffer(out ptr, out capacity);
+
+					// copy the raw memory out to the byte array
+					Unsafe.CopyBlockUnaligned(
+						ref bytesAccess[0], ref ptr[0], capacity);
+
+				}
+				var pixCap = pixelBuffer.Capacity;
+				imgSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
+
+			}
+
+			imgSource.Freeze();
+			return imgSource;	
+		}
+
 		//Displaying frames & properties from the plugin
 		private async void displayProperties(object sender, RoutedEventArgs e)
 		{
-			// image sources for generated & captured frames 
-			System.Windows.Media.Imaging.BitmapSource bSource;
-			System.Windows.Media.Imaging.BitmapSource pSource;
 			
 			//Display & Capture of frames 
 			await Task.Run(() =>
@@ -100,46 +126,15 @@ namespace CaptureCardViewer
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 				var capturedFrame = captureInput.CaptureFrame();
-				var pixelBuffer = capturedFrame.GetRawPixelData();
-
-				// This needs to be inside of an unsafe block because we are manipulating bytes directly
-				unsafe
-				{
-
-					byte[] bytes = new byte[pixelBuffer.Capacity];
-					fixed (byte* bytesAccess = bytes)
-					{
-						byte* ptr;
-						uint capacity;
-						var ByteAccess = pixelBuffer.As<IMemoryBufferByteAccess>();
-						ByteAccess.GetBuffer(out ptr, out capacity);
-
-						// copy the raw memory out to the byte array
-						Unsafe.CopyBlockUnaligned(
-							ref bytesAccess[0], ref ptr[0], capacity);
-
-					}
-					var pixCap = pixelBuffer.Capacity;
-					bSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
-
-				}
-
-				bSource.Freeze();
-				// You can't update UI elements from a background thread (here in the Await Task.Run). So we update the UI by queuing up an operation on the UI thread
-				this.Dispatcher.Invoke(
-						new Action(() =>
-						{
-							ActualImage.Source = bSource;
-						}
-						));
-
-				Thread.Sleep(1000);
+				var capPixelBuffer = capturedFrame.GetRawPixelData();
+				var capSrc = BufferToImgConv(capPixelBuffer);
 
 				//Loading & displaying tools
 				//Reset the display manager to the correct one
 				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
 				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
+				//TODO: Print the tools on the UI
 				var tools = testFramework.GetLoadedTools();
 
 				foreach (var tool in tools)
@@ -149,45 +144,25 @@ namespace CaptureCardViewer
 
 				Thread.Sleep(5000);
 
-				//TODO: Add Textbox displaying plugin tools ia string form
 
 				//Generate  & display frames to compare the Tanager's frames against
 				renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
 				var bitmap = prediction.GetBitmap();
 				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
-				IMemoryBufferReference reference = bmpBuffer.CreateReference();
-				unsafe
-				{
+				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
+				var predSrc = BufferToImgConv(predPixelBuffer);
 
-					byte[] bytes = new byte[reference.Capacity];
-					fixed (byte* bytesAccess = bytes)
-					{
-						byte* ptr;
-						uint capacity;
-						var ByteAccess = reference.As<IMemoryBufferByteAccess>();
-						ByteAccess.GetBuffer(out ptr, out capacity);
-
-						// copy the raw memory out to the byte array
-						Unsafe.CopyBlockUnaligned(
-							ref bytesAccess[0], ref ptr[0], capacity);
-
-					}
-					var pixCap = reference.Capacity;
-
-					pSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
-
-				}
-				pSource.Freeze();
+				// You can't update UI elements from a background thread (here in the Await Task.Run). So we update the UI by queuing up an operation on the UI thread
 				this.Dispatcher.Invoke(
-					new Action(() =>
-					{
+						new Action(() =>
+						{
+							CaptImage.Source = capSrc;
+							PredImage.Source = predSrc;
+						}
+						));
 
-						PredictedImage.Source = pSource;
-					}
-				));
 				Thread.Sleep(1000);
-				
 
 			});
 		
