@@ -80,6 +80,7 @@ namespace CaptureCardViewer
 			{
 				testFramework.LoadConfigFile(configPath);
 			});
+			MessageBox.Show("Capture card plugin done loading");
 
 		}
 
@@ -89,7 +90,6 @@ namespace CaptureCardViewer
 			System.Windows.Media.Imaging.BitmapSource imgSource;
 			unsafe
 			{
-
 				byte[] bytes = new byte[pixelBuffer.Capacity];
 				fixed (byte* bytesAccess = bytes)
 				{
@@ -105,7 +105,6 @@ namespace CaptureCardViewer
 				}
 				var pixCap = pixelBuffer.Capacity;
 				imgSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
-
 			}
 
 			imgSource.Freeze();
@@ -134,16 +133,18 @@ namespace CaptureCardViewer
 				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
 				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
-				//TODO: Print the tools on the UI
 				var tools = testFramework.GetLoadedTools();
-
 				foreach (var tool in tools)
 					tool.Apply(displayEngine);
 
 				var renderer = displayEngine.StartRender();
-
 				Thread.Sleep(5000);
 
+				//Get the framowork's properties
+				var prop = displayEngine.GetProperties();
+				var mode = prop.ActiveMode;
+				var resolution = prop.Resolution;
+				var refreshRate = prop.RefreshRate;
 
 				//Generate  & display frames to compare the Tanager's frames against
 				renderer.Dispose();
