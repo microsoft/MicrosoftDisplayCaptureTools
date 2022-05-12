@@ -114,7 +114,6 @@ namespace CaptureCardViewer
 		//Displaying frames & properties from the plugin
 		private async void displayProperties(object sender, RoutedEventArgs e)
 		{
-			
 			//Display & Capture of frames 
 			await Task.Run(() =>
 			{
@@ -145,6 +144,8 @@ namespace CaptureCardViewer
 				var mode = prop.ActiveMode;
 				var resolution = prop.Resolution;
 				var refreshRate = prop.RefreshRate;
+				var planeProp = prop.GetPlaneProperties();
+				
 
 				//Generate  & display frames to compare the Tanager's frames against
 				renderer.Dispose();
@@ -160,13 +161,18 @@ namespace CaptureCardViewer
 						{
 							CaptImage.Source = capSrc;
 							PredImage.Source = predSrc;
+							TextBlock.Text = "Mode:  " + mode.ToString() + "\r\n";
+							TextBlock.Text += "Resolution: " + resolution.ToString() +"\r\n";
+							TextBlock.Text += "Refresh Rate: " + refreshRate.ToString() + "\r\n";
+							TextBlock.Text += "Plane Properties: " + planeProp.ToString() + "\r\n";
 						}
 						));
 
 				Thread.Sleep(1000);
 
 			});
-		
+
+			
 		}
 
 		//sets the tool from the selected item in the ComboBox

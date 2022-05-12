@@ -61,14 +61,7 @@
         </StackPanel>
         <StackPanel Orientation="Vertical" Width="401" Height="430">
             <Label Content="Properties" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <RichTextBox x:Name="rtb" Height="200">
-                <FlowDocument>
-                    <Paragraph>
-                        <Run Text=""/>
-                    </Paragraph>
-                </FlowDocument>
-            </RichTextBox>
-            
+            <TextBox x:Name="TextBlock" Height="200" />
         </StackPanel>
         
     </StackPanel>
