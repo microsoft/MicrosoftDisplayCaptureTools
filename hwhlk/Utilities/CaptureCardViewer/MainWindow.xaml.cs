@@ -72,7 +72,7 @@ namespace CaptureCardViewer
 		private async void loadFramework (object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog(); //file picker
-			dialog.Filter = "Confid file|*.json";
+			dialog.Filter = "Config file|*.json";
 			dialog.Title = "Load a Capture Plugin";
 			if (dialog.ShowDialog() == true)
 			{
@@ -89,13 +89,6 @@ namespace CaptureCardViewer
 
 			}
 			else { MessageBox.Show("Dialog Box trouble loading"); }
-			/*String configPath= "TestConfig.json";
-			await Task.Run(() =>
-			{
-				testFramework.LoadConfigFile(configPath);
-			});
-			MessageBox.Show("Capture card plugin done loading");*/
-
 		}
 
 		//Converting buffer to image source
@@ -189,25 +182,58 @@ namespace CaptureCardViewer
 		}
 
 		//sets the tool from the selected item in the ComboBox
-		private void availableTools_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		private void configurations(object sender, SelectionChangedEventArgs e)
 		{	
-			ComboBoxItem cbi = (ComboBoxItem)availableTools.SelectedItem;	
+			ComboBoxItem cbi = (ComboBoxItem)configs.SelectedItem;	
 			string? selected = cbi.Content.ToString();
 			switch (selected)
 			{
-				case "Event Log":
-					setTool = "EventLog";
+				case "Create Config File":
+					createConfigFile();
 					break;
 
-				case "Supported Features":
-					setTool = "SuppFeat";
+				case "Specify Frame Comp":
+					specifyComponents();
 					break;
 
-				case "":
-					setTool = "LoadFromDisk";
+				case "Change Pluging Properties":
+					changeProperties();
 					break;
 
 			}
+		}
+
+		//specify the framework components
+		private void specifyComponents()
+		{
+			var dialog = new OpenFileDialog();
+			dialog.Title = "Framework Files";
+
+			if(dialog.ShowDialog()??false)
+			{
+				try
+				{
+					testFramework.LoadPlugin(dialog.FileName, dialog.FileName.ToString()+".Plugin");
+					testFramework.LoadToolbox(dialog.FileName, dialog.FileName.ToString()+".Toolbox");
+					testFramework.LoadDisplayManager(dialog.FileName, dialog.FileName.ToString()+".DisplayEngine");
+				}
+				catch (Exception) { }
+				MessageBox.Show("Done loading components");
+			}
+			else
+			{	MessageBox.Show("Trouble specifying components");	}
+		}
+
+		//creating the configuration file
+		private void createConfigFile()
+		{
+
+		}
+
+		//change the plugin properties
+		private void changeProperties()
+		{
+
 		}
 
     }}

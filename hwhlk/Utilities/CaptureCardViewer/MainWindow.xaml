@@ -13,7 +13,7 @@
             <Image x:Name="PredImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
             <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
             <Label Content="Available tools" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="availableTools" SelectionChanged="availableTools_SelectionChanged">
+            <ComboBox x:Name="configs" SelectionChanged="configurations">
                 <ComboBox.RenderTransform>
                     <TransformGroup>
                         <SkewTransform/>
@@ -21,8 +21,9 @@
                         <TranslateTransform/>
                     </TransformGroup>
                 </ComboBox.RenderTransform>
-                <ComboBoxItem Content="Event Log"/>
-                <ComboBoxItem Content="Supported Features"/>
+                <ComboBoxItem Content="Create Config File"/>
+                <ComboBoxItem Content="Specify Frame Comp"/>
+                <ComboBoxItem Content="Change Pluging Properties"/>
             </ComboBox>
             <Label Content="Tool Settings" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <ComboBox x:Name="toolSettings" RenderTransformOrigin="0.5,0.5">
