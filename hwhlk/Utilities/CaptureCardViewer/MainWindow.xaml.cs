@@ -71,16 +71,30 @@ namespace CaptureCardViewer
 		//Loading the plugin framework
 		private async void loadFramework (object sender, RoutedEventArgs e)
 		{
-			/*var dialog = new OpenFileDialog(); //file picker
-			dialog.Filter = "Plugin DLLs|*.dll";
+			var dialog = new OpenFileDialog(); //file picker
+			dialog.Filter = "Confid file|*.json";
 			dialog.Title = "Load a Capture Plugin";
-			string configPath = "TestConfig.json";*/
-			String configPath= "TestConfig.json";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var configFile = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadConfigFile(configFile);
+					});
+					MessageBox.Show("Capture card plugin done loading");
+				}
+				catch (Exception) { }	
+
+			}
+			else { MessageBox.Show("Dialog Box trouble loading"); }
+			/*String configPath= "TestConfig.json";
 			await Task.Run(() =>
 			{
 				testFramework.LoadConfigFile(configPath);
 			});
-			MessageBox.Show("Capture card plugin done loading");
+			MessageBox.Show("Capture card plugin done loading");*/
 
 		}
 
@@ -169,7 +183,6 @@ namespace CaptureCardViewer
 						));
 
 				Thread.Sleep(1000);
-
 			});
 
 			
