@@ -203,6 +203,24 @@ namespace CaptureCardViewer
 			}
 		}
 
+		//dialog to filename string
+		private string dialogToFilename()
+		{
+			var filename = "";
+			var dialog = new OpenFileDialog();
+			dialog.Title = "Select file";
+			if(dialog.ShowDialog()==true)
+			{
+				try
+				{
+					filename = dialog.FileName.ToString();
+				}
+				catch (Exception) { }
+			}
+			return filename;
+
+		}
+
 		//specify the framework components
 		private void specifyComponents()
 		{
@@ -213,9 +231,12 @@ namespace CaptureCardViewer
 			{
 				try
 				{
-					testFramework.LoadPlugin(dialog.FileName, dialog.FileName.ToString()+".Plugin");
-					testFramework.LoadToolbox(dialog.FileName, dialog.FileName.ToString()+".Toolbox");
-					testFramework.LoadDisplayManager(dialog.FileName, dialog.FileName.ToString()+".DisplayEngine");
+					var pluginFile = dialogToFilename();
+					testFramework.LoadPlugin(pluginFile, pluginFile+".Plugin");
+					var toolboxFile = dialogToFilename();
+					testFramework.LoadToolbox(toolboxFile, toolboxFile + ".Toolbox");
+					var displayManFile = dialogToFilename();
+					testFramework.LoadDisplayManager(displayManFile, displayManFile + ".Plugin");
 				}
 				catch (Exception) { }
 				MessageBox.Show("Done loading components");
