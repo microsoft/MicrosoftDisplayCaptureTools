@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
-#include "Plugin.h"
-#include "Plugin.g.cpp"
+#include "GenericCaptureCardPlugin.h"
+#include "Controller.g.cpp"
 
 #include "winrt\MicrosoftDisplayCaptureTools.Display.h"
 
@@ -28,14 +28,14 @@ struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novta
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
-    Plugin::Plugin()
+    Controller::Controller()
     {
     }
-    hstring Plugin::Name()
+    hstring Controller::Name()
     {
         return L"GenericCapture";
     }
-    com_array<IDisplayInput> Plugin::EnumerateDisplayInputs()
+    com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
     {
         m_displayInput = *make_self<DisplayInput>(m_deviceId);
 
@@ -43,7 +43,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         inputs.push_back(m_displayInput);
         return com_array<IDisplayInput>(inputs);
     }
-    void Plugin::SetConfigData(winrt::IJsonValue data)
+    void Controller::SetConfigData(winrt::IJsonValue data)
     {
         // The JSON object returned here is the "settings" sub-object for this plugin. It's definition is capture card plugin-specific.
         if (!data || data.ValueType() == winrt::JsonValueType::Null)
