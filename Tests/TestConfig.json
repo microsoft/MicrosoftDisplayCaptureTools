@@ -8,13 +8,13 @@
 		},
 		"DisplayEngine": {
 			"Path": "BasicDisplayControl\\BasicDisplayControl.dll",
-			"Class": "DisplayControl.DisplayEngine",
+			"Class": "BasicDisplayControl.DisplayEngine",
 			"Settings": null
 		},
 		"ConfigurationToolboxes": [
 			{
-				"Path": "CommonToolbox\\CommonToolbox.dll",
-				"Class": "DisplayConfiguration.Toolbox",
+				"Path": "BasicDisplayConfiguration\\BasicDisplayConfiguration.dll",
+				"Class": "BasicDisplayConfiguration.Toolbox",
 				"Settings": null
 			}
 		]

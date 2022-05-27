@@ -1,7 +1,7 @@
 #pragma once
 #include "Toolbox.g.h"
 
-namespace winrt::DisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation
 {
     struct Toolbox : ToolboxT<Toolbox>
     {
@@ -13,7 +13,7 @@ namespace winrt::DisplayConfiguration::implementation
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
     };
 }
-namespace winrt::DisplayConfiguration::factory_implementation
+namespace winrt::BasicDisplayConfiguration::factory_implementation
 {
     struct Toolbox : ToolboxT<Toolbox, implementation::Toolbox>
     {

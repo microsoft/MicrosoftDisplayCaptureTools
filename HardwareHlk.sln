@@ -37,7 +37,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicrosoftDisplayCaptureTool
 		{7A67ED3A-51A2-4121-8F46-40C128A25531} = {7A67ED3A-51A2-4121-8F46-40C128A25531}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CommonToolbox", "CommonToolbox\CommonToolbox.vcxproj", "{1BE7443A-1E02-42C2-AF8C-DAB2E93E4205}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BasicDisplayConfiguration", "BasicDisplayConfiguration\BasicDisplayConfiguration.vcxproj", "{1BE7443A-1E02-42C2-AF8C-DAB2E93E4205}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D007AA97-B58A-47D6-9FD3-F1B24757F53B} = {D007AA97-B58A-47D6-9FD3-F1B24757F53B}
 	EndProjectSection

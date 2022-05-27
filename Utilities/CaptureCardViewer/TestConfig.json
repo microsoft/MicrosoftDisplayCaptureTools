@@ -13,7 +13,7 @@
 		},
 		"ConfigurationToolboxes": [
 			{
-				"Path": "CommonToolbox.dll",
+				"Path": "BasicDisplayConfiguration.dll",
 				"Class": "DisplayConfiguration.Toolbox",
 				"Settings": null
 			}

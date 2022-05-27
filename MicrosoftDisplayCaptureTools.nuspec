@@ -23,6 +23,6 @@
 		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.dll" target="runtimes\win10-x64\native\DisplayControllers\BasicDisplayControl.dll"/>
 		<file src="x64\Debug\TanagerPlugin\TanagerPlugin.dll" target="runtimes\win10-x64\native\CapturePlugins\TanagerPlugin.dll"/>
 		<file src="x64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.dll" target="runtimes\win10-x64\native\CapturePlugins\GenericCaptureCardPlugin.dll"/>
-		<file src="x64\Debug\CommonToolbox\CommonToolbox.dll" target="runtimes\win10-x64\native\Toolboxes\CommonToolbox.dll"/>
+		<file src="x64\Debug\BasicDisplayConfiguration\BasicDisplayConfiguration.dll" target="runtimes\win10-x64\native\Toolboxes\BasicDisplayConfiguration.dll"/>
 	</files>
 </package>
