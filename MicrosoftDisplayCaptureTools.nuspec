@@ -10,7 +10,7 @@
 			<dependency id="Microsoft.Taef" version="10.68.220224001"/>
 			<dependency id="Microsoft.VCRTForwarders.140" version="1.0.7"/>
         </dependencies>
-		<tags>display testing</tags>
+		<tags>display testing capture</tags>
     </metadata>
     <files>
 		<file src="MicrosoftDisplayCaptureTools.native.targets" target="build\native\MicrosoftDisplayCaptureTools.targets"/>
