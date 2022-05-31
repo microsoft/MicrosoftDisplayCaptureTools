@@ -1,0 +1,8 @@
+namespace GenericCaptureCardPlugin
+{
+    [default_interface]
+    runtimeclass Controller : MicrosoftDisplayCaptureTools.CaptureCard.IController
+    {
+        Controller();
+    }
+}

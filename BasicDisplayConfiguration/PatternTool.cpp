@@ -9,7 +9,7 @@ namespace winrt
 	using namespace MicrosoftDisplayCaptureTools::Display;
 }
 
-namespace winrt::DisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation
 {
 	std::map<PatternToolConfigurations, winrt::hstring> PatternConfigurationMap
 	{

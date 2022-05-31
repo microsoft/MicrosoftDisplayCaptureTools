@@ -1,15 +1,15 @@
 #pragma once
-namespace winrt::DisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation
 {
-	enum class RefreshRateToolConfigurations
+	enum class ResolutionToolConfigurations
 	{
-		r60,
-		r75,
+		w1920h1080,
+		w800h600
 	};
 
-	struct RefreshRateTool : implements<RefreshRateTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+	struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
-		RefreshRateTool();
+		ResolutionTool();
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -20,7 +20,7 @@ namespace winrt::DisplayConfiguration::implementation
 		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine reference);
 
 	private:
-		RefreshRateToolConfigurations m_currentConfig;
-		static const RefreshRateToolConfigurations sc_defaultConfig = RefreshRateToolConfigurations::r60;
+		ResolutionToolConfigurations m_currentConfig;
+        static const ResolutionToolConfigurations sc_defaultConfig = ResolutionToolConfigurations::w1920h1080;
 	};
 }

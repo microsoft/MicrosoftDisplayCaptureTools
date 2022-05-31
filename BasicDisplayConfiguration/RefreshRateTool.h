@@ -1,18 +1,15 @@
 #pragma once
-namespace winrt::DisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation
 {
-	enum class PatternToolConfigurations
+	enum class RefreshRateToolConfigurations
 	{
-		Black,
-		White,
-		Red,
-		Green,
-		Blue
+		r60,
+		r75,
 	};
 
-	struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+	struct RefreshRateTool : implements<RefreshRateTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
-		PatternTool();
+		RefreshRateTool();
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -23,7 +20,7 @@ namespace winrt::DisplayConfiguration::implementation
 		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine reference);
 
 	private:
-		PatternToolConfigurations m_currentConfig;
-        static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Green;
+		RefreshRateToolConfigurations m_currentConfig;
+		static const RefreshRateToolConfigurations sc_defaultConfig = RefreshRateToolConfigurations::r60;
 	};
 }

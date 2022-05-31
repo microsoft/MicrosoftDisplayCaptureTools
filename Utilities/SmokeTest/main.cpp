@@ -53,7 +53,7 @@ int main()
             // Specify the ConfigurationToolbox to load
             auto configToolboxArray = winrt::JsonArray::JsonArray();
             auto configToolbox = winrt::JsonObject::JsonObject();
-            configToolbox.Insert(L"Path", winrt::JsonValue::CreateStringValue(L"CommonToolbox\\CommonToolbox.dll"));
+            configToolbox.Insert(L"Path", winrt::JsonValue::CreateStringValue(L"BasicDisplayConfiguration\\BasicDisplayConfiguration.dll"));
             configToolbox.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"DisplayConfiguration.Toolbox"));
             configToolbox.Insert(L"Settings", winrt::JsonValue::CreateNullValue());
             configToolboxArray.Append(configToolbox);
@@ -77,7 +77,7 @@ int main()
         {
             // Tell the framework to load the components.
             core.LoadPlugin(L"GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll", L"GenericCaptureCardPlugin.Plugin");
-            core.LoadToolbox(L"CommonToolbox\\CommonToolbox.dll", L"DisplayConfiguration.Toolbox");
+            core.LoadToolbox(L"BasicDisplayConfiguration\\BasicDisplayConfiguration.dll", L"DisplayConfiguration.Toolbox");
             core.LoadDisplayManager(L"BasicDisplayControl\\BasicDisplayControl.dll", L"DisplayControl.DisplayEngine");
         }
         break;

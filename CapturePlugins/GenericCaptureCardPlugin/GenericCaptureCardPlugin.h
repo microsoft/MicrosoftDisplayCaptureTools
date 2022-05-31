@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Plugin.g.h"
+#include "Controller.g.h"
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
@@ -73,9 +73,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         winrt::com_ptr<DisplayCapture> m_capture;
     };
 
-    struct Plugin : PluginT<Plugin>
+    struct Controller : ControllerT<Controller>
     {
-        Plugin();
+        Controller();
 
         hstring Name();
         com_array<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
@@ -92,7 +92,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
 namespace winrt::GenericCaptureCardPlugin::factory_implementation
 {
-    struct Plugin : PluginT<Plugin, implementation::Plugin>
+    struct Controller : ControllerT<Controller, implementation::Controller>
     {
     };
 }

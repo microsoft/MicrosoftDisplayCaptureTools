@@ -7,13 +7,23 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
+    const std::wstring c_CapturePluginDefaultName        = L".Controller";
+    const std::wstring c_ConfigurationToolboxDefaultName = L".Toolbox";
+    const std::wstring c_DisplayManagerDefaultName       = L".DisplayManager";
+
     struct Core : CoreT<Core>
     {
         Core() = default;
 
-        void LoadPlugin(hstring const& pluginPath, hstring const& className);
+        void LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
+        void LoadCapturePlugin(hstring const& pluginPath);
+
         void LoadToolbox(hstring const& toolboxPath, hstring const& className);
+        void LoadToolbox(hstring const& toolboxPath);
+
         void LoadDisplayManager(hstring const& displayManagerPath, hstring const& className);
+        void LoadDisplayManager(hstring const& displayManagerPath);
+
         void LoadConfigFile(hstring const& configFilePath);
         void RunTest();
         com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> GetLoadedTools();

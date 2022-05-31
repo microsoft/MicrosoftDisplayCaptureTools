@@ -1,15 +1,18 @@
 #pragma once
-namespace winrt::DisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation
 {
-	enum class ResolutionToolConfigurations
+	enum class PatternToolConfigurations
 	{
-		w1920h1080,
-		w800h600
+		Black,
+		White,
+		Red,
+		Green,
+		Blue
 	};
 
-	struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+	struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
-		ResolutionTool();
+		PatternTool();
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -20,7 +23,7 @@ namespace winrt::DisplayConfiguration::implementation
 		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine reference);
 
 	private:
-		ResolutionToolConfigurations m_currentConfig;
-        static const ResolutionToolConfigurations sc_defaultConfig = ResolutionToolConfigurations::w1920h1080;
+		PatternToolConfigurations m_currentConfig;
+        static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Green;
 	};
 }

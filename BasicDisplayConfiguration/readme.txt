@@ -1,5 +1,5 @@
 ========================================================================
-    C++/WinRT CommonToolbox Project Overview
+    C++/WinRT BasicDisplayConfiguration Project Overview
 ========================================================================
 
 This project demonstrates how to get started authoring Windows Runtime 

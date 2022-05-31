@@ -7,8 +7,8 @@
     <CppWinRTGenerateWindowsMetadata>true</CppWinRTGenerateWindowsMetadata>
     <MinimalCoreWin>true</MinimalCoreWin>
     <ProjectGuid>{1be7443a-1e02-42c2-af8c-dab2e93e4205}</ProjectGuid>
-    <ProjectName>CommonToolbox</ProjectName>
-    <RootNamespace>DisplayConfiguration</RootNamespace>
+    <ProjectName>BasicDisplayConfiguration</ProjectName>
+    <RootNamespace>BasicDisplayConfiguration</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>Windows Store</ApplicationType>
@@ -98,7 +98,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
-      <ModuleDefinitionFile>CommonToolbox.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>BasicDisplayConfiguration.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -136,7 +136,7 @@
     <Midl Include="Toolbox.idl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CommonToolbox.def" />
+    <None Include="BasicDisplayConfiguration.def" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

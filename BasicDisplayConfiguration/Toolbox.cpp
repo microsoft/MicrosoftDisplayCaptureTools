@@ -12,7 +12,7 @@ namespace winrt
     using namespace winrt::Windows::Data::Json;
 }
 
-namespace winrt::DisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation
 {
     enum class Tools
     {
@@ -30,7 +30,7 @@ namespace winrt::DisplayConfiguration::implementation
 
     hstring Toolbox::Name()
     {
-        return L"CommonToolbox";
+        return L"BasicDisplayConfiguration";
     }
     com_array<hstring> Toolbox::GetSupportedTools()
     {

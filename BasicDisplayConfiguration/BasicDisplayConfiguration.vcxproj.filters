@@ -12,23 +12,23 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="Toolbox.cpp" />
     <ClCompile Include="PatternTool.cpp" />
     <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="RefreshRateTool.cpp" />
+    <ClCompile Include="Toolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Toolbox.h" />
     <ClInclude Include="PatternTool.h" />
     <ClInclude Include="ResolutionTool.h" />
     <ClInclude Include="RefreshRateTool.h" />
+    <ClInclude Include="Toolbox.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Toolbox.idl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CommonToolbox.def" />
+    <None Include="BasicDisplayConfiguration.def" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

@@ -116,21 +116,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Plugin.h">
-      <DependentUpon>Plugin.idl</DependentUpon>
+    <ClInclude Include="GenericCaptureCardPlugin.h">
+      <DependentUpon>GenericCaptureCardPlugin.idl</DependentUpon>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Plugin.cpp">
-      <DependentUpon>Plugin.idl</DependentUpon>
+    <ClCompile Include="GenericCaptureCardPlugin.cpp">
+      <DependentUpon>GenericCaptureCardPlugin.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="Plugin.idl" />
+    <Midl Include="GenericCaptureCardPlugin.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GenericCaptureCardPlugin.def" />

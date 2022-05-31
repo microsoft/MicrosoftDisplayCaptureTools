@@ -13,9 +13,14 @@ namespace winrt
     using namespace winrt::MicrosoftDisplayCaptureTools::Libraries;
 }
 
+namespace std
+{
+    using namespace std::filesystem;
+}
+
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
-    void Core::LoadPlugin(hstring const& pluginPath, hstring const& className)
+    void Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
     {
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
@@ -23,7 +28,14 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // Load the capture card from the provided path.
         m_captureCard = LoadInterfaceFromPath<CaptureCard::IController>(pluginPath, className);
 
-        wprintf(L"Plugin Loaded: %s\n", m_captureCard.Name().c_str());
+        wprintf(L"Capture Plugin Loaded: %s\n", m_captureCard.Name().c_str());
+    }
+
+    void Core::LoadCapturePlugin(hstring const& pluginPath)
+    {
+        // Create the className string from 
+        winrt::hstring className = std::path(pluginPath.c_str()).stem().c_str();
+        LoadCapturePlugin(pluginPath, className + c_CapturePluginDefaultName);
     }
 
     void Core::LoadToolbox(hstring const& toolboxPath, hstring const& className)
@@ -34,12 +46,19 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // Load the toolbox from the provided path.
         m_toolboxes.push_back(LoadInterfaceFromPath<ConfigurationTools::IConfigurationToolbox>(toolboxPath, className));
 
-        wprintf(L"Toolbox Opened: %s\n", m_toolboxes[0].Name().c_str());
+        wprintf(L"Configuration Toolbox Opened: %s\n", m_toolboxes[0].Name().c_str());
 
         UpdateToolList();
     }
 
-    void Framework::implementation::Core::LoadDisplayManager(hstring const& displayManagerPath, hstring const& className)
+    void Core::LoadToolbox(hstring const& toolboxPath)
+    {
+        // Create the className string from
+        winrt::hstring className = std::path(toolboxPath.c_str()).stem().c_str();
+        LoadToolbox(toolboxPath, className + c_ConfigurationToolboxDefaultName);
+    }
+
+    void Core::LoadDisplayManager(hstring const& displayManagerPath, hstring const& className)
     {
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
@@ -48,6 +67,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         m_displayManager = LoadInterfaceFromPath<Display::IDisplayEngine>(displayManagerPath, className);
 
         wprintf(L"DisplayManager Loaded: %s\n", m_displayManager.Name().c_str());
+    }
+
+    void Core::LoadDisplayManager(hstring const& displayManagerPath)
+    {
+        // Create the className string from
+        winrt::hstring className = std::path(displayManagerPath.c_str()).stem().c_str();
+        LoadDisplayManager(displayManagerPath, className + c_CapturePluginDefaultName);
     }
 
     void Core::LoadConfigFile(hstring const& configFile)

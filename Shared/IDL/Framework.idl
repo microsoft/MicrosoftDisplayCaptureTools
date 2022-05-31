@@ -10,20 +10,26 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface ICore
     {
-        // OpenPlugin
+        // LoadCapturePlugin
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Loads a new plugin into the Core. Note that only one plugin can be loaded at a time, so calling this
-        //      multiple times is not recommended outside of testing scenarios.
+        //      Loads a new plugin into the capture framework. Note that only one plugin can be loaded at a time, so 
+        //      calling this multiple times is not recommended outside of testing scenarios.
         //
         // Parameters:
         //      pluginPath
         //          This string represents a filepath from which a conformant plugin implementation is exposed.
         // 
-        //      className
+        //      className (optional)
         //          This string represents the namespace.classname of the class implementing the plugin interface
         //
-        void LoadPlugin(String pluginPath, String className);
+        //          If not provided, the className will be constructed from the pluginPath's name, followed by a standard
+        //          suffix, '.Controller'
+        //          Example: pluginPath = ".\\GenericCaptureCard.dll"
+        //                   className  = "GenericCaptureCard.Controller"
+        // 
+        void LoadCapturePlugin(String pluginPath, String className);
+        void LoadCapturePlugin(String pluginPath);
 
         // LoadToolbox
         // ----------------------------------------------------------------------------------------------------------------
@@ -36,9 +42,15 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          This string represents a filepath from which a conformant Toolbox implementation is exposed.
         // 
         //      className
-        //          This string represents the namespace.classname of the class implementing the toolbox interface
+        //          This string represents the namespace.classname of the class implementing the toolbox interface.
+        //
+        //          If not provided, the className will be constructed from the toolboxPath's name, followed by a standard
+        //          suffix, '.Toolbox'
+        //          Example: pluginPath = ".\\BasicConfigurationTools.dll"
+        //                   className  = "BasicConfigurationTools.Toolbox"
         //
         void LoadToolbox(String toolboxPath, String className);
+        void LoadToolbox(String toolboxPath);
 
         // LoadDisplayManager
         // ----------------------------------------------------------------------------------------------------------------
@@ -50,9 +62,15 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          This string represents a filepath from which a conformant DisplayManager implementation is exposed.
         // 
         //      className
-        //          This string represents the namespace.classname of the class implementing the displayEngine interface
+        //          This string represents the namespace.classname of the class implementing the displayEngine interface.
+        //
+        //          If not provided, the className will be constructed from the displayManagerPath's name, followed by a 
+        //          standard '.DisplayManager' suffix.
+        //          Example: pluginPath = ".\\BasicDisplayManager.dll"
+        //                   className  = "BasicDisplayManager.DisplayManager"
         //
         void LoadDisplayManager(String displayManagerPath, String className);
+        void LoadDisplayManager(String displayManagerPath);
 
         // LoadConfigFile
         // ----------------------------------------------------------------------------------------------------------------
