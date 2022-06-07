@@ -1,0 +1,8 @@
+namespace BasicDisplayConfiguration
+{
+    [default_interface]
+    runtimeclass Toolbox : MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox
+    {
+        Toolbox();
+    }
+}

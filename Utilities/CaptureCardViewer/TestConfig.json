@@ -1,0 +1,30 @@
+{
+  "Version": "0.1",
+	"Components": {
+		"CapturePlugin": {
+			"Path": "TanagerPlugin.dll",
+			"Class": "TanagerPlugin.Controller",
+			"Settings": null
+		},
+		"DisplayEngine": {
+			"Path": "BasicDisplayControl.dll",
+			"Class": "DisplayControl.DisplayEngine",
+			"Settings": null
+		},
+		"ConfigurationToolboxes": [
+			{
+				"Path": "BasicDisplayConfiguration.dll",
+				"Class": "DisplayConfiguration.Toolbox",
+				"Settings": null
+			}
+		]
+	},
+  "TestSystem": {
+	"DisplayInputMapping": [
+		{
+			"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+			"PluginInputName": "HDMI"
+		}
+	]
+  }
+}

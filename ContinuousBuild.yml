@@ -1,0 +1,25 @@
+pool:
+  vmImage: windows-latest
+
+steps:
+  - task: NuGetAuthenticate@0
+  - task: NuGetToolInstaller@1
+    displayName: Install NuGet tools
+    inputs:
+      checkLatest: true
+
+  - task: NuGetCommand@2
+    displayName: 'Restore Nuget Packages'
+    inputs:
+      restoreDirectory: packages
+      nugetConfigPath: 'nuget.config'
+      restoreSolution: '*.sln'
+      feedsToUse: 'config'
+
+  - task: VSBuild@1
+    displayName: 'Visual Studio 2022 Build, Debug x64'
+    inputs:
+      solution: '**\*.sln'
+      vsVersion: '17.0'
+      platform: 'x64'
+      configuration: 'debug'

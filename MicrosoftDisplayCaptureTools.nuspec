@@ -1,0 +1,28 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>MicrosoftDisplayCaptureTools</id>
+        <version>0.0.1</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>A set of tools for running display tests on Windows.</description>
+        <dependencies>
+			<dependency id="Microsoft.Taef" version="10.68.220224001"/>
+			<dependency id="Microsoft.VCRTForwarders.140" version="1.0.7"/>
+        </dependencies>
+		<tags>display testing capture</tags>
+    </metadata>
+    <files>
+		<file src="MicrosoftDisplayCaptureTools.native.targets" target="build\native\MicrosoftDisplayCaptureTools.targets"/>
+		<file src="MicrosoftDisplayCaptureTools.win10.targets" target="build\win10\MicrosoftDisplayCaptureTools.targets"/>
+		<file src="MicrosoftDisplayCaptureTools.common.targets" target="build\MicrosoftDisplayCaptureTools.common.targets"/>
+
+		<file src="x64\Debug\MicrosoftDisplayCaptureTools.winmd" target="lib\uap10.0\MicrosoftDisplayCaptureTools.winmd"/>
+
+		<file src="x64\Debug\MicrosoftDisplayCaptureTools.dll" target="runtimes\win10-x64\native\MicrosoftDisplayCaptureTools.dll"/>
+		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.dll" target="runtimes\win10-x64\native\DisplayControllers\BasicDisplayControl.dll"/>
+		<file src="x64\Debug\TanagerPlugin\TanagerPlugin.dll" target="runtimes\win10-x64\native\CapturePlugins\TanagerPlugin.dll"/>
+		<file src="x64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.dll" target="runtimes\win10-x64\native\CapturePlugins\GenericCaptureCardPlugin.dll"/>
+		<file src="x64\Debug\BasicDisplayConfiguration\BasicDisplayConfiguration.dll" target="runtimes\win10-x64\native\Toolboxes\BasicDisplayConfiguration.dll"/>
+	</files>
+</package>

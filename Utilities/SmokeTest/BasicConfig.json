@@ -1,0 +1,23 @@
+{
+  "Version": "0.1",
+  "Components": {
+	"CapturePlugin": {
+		"Path": "TanagerPlugin\\TanagerPlugin.dll",
+		"Class": "TanagerPlugin.Controller",
+		"Settings": null
+	},
+    "DisplayEngine": {
+      "Path": "BasicDisplayControl\\BasicDisplayControl.dll",
+      "Class": "DisplayControl.DisplayEngine",
+      "Settings": null
+    },
+    "ConfigurationToolboxes": [
+      {
+        "Path": "BasicDisplayConfiguration\\BasicDisplayConfiguration.dll",
+        "Class": "DisplayConfiguration.Toolbox",
+        "Settings": null
+      }
+    ]
+  }
+
+}
