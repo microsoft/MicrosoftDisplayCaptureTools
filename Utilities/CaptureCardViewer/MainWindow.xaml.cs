@@ -146,7 +146,7 @@ namespace CaptureCardViewer
 				var renderer = displayEngine.StartRender();
 				Thread.Sleep(5000);
 
-				//Get the framowork's properties
+				//Get the framework's properties
 				var prop = displayEngine.GetProperties();
 				var mode = prop.ActiveMode;
 				var resolution = prop.Resolution;
@@ -221,7 +221,7 @@ namespace CaptureCardViewer
 
 		}
 
-		//specify the framework components
+		//specify the framework components files
 		private void specifyComponents()
 		{
 			var dialog = new OpenFileDialog();
