@@ -19,5 +19,6 @@
 #include "BinaryLoader.h"
 
 // Component Headers
+#include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
 #include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"

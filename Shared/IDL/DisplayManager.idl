@@ -1,3 +1,5 @@
+import "Framework.idl";
+
 namespace MicrosoftDisplayCaptureTools.Display
 {
     //
@@ -170,4 +172,21 @@ namespace MicrosoftDisplayCaptureTools.Display
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
     };
+
+    //
+    // The required initializer for IDisplayEngine implementations. This is how other components of this project will
+    // instantiate IDisplayEngine implementations.
+    //
+    // This is to be implemented by capture card producer.
+    //
+    interface IDisplayEngineFactory
+    {
+        // Create
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates an IDisplayEngine implementation instance with a defined logger.
+        //
+        IDisplayEngine CreateDisplayEngine(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+    };
+
 }

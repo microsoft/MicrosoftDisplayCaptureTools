@@ -1,9 +1,9 @@
-
 #include "pch.h"
 
 #include "IteIt6803.h"
 #include <initguid.h>
 #include "Controller.g.cpp"
+#include "ControllerFactory.g.cpp"
 
 using namespace winrt;
 using namespace winrt::Windows::Devices::Enumeration;
@@ -11,6 +11,7 @@ using namespace winrt::Windows::Devices::Usb;
 using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::MicrosoftDisplayCaptureTools;
 using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 
 //
 // Device Interface GUID.
@@ -23,8 +24,15 @@ DEFINE_GUID(GUID_DEVINTERFACE_Tanager, 0x237e1ed8, 0x4c6b, 0x421e, 0xbe, 0x8f, 0
 
 namespace winrt::TanagerPlugin::implementation
 {
-    Controller::Controller()
+    CaptureCard::IController ControllerFactory::CreateController(ILogger const& logger)
     {
+        return winrt::make<Controller>(logger);
+    }
+
+    Controller::Controller(ILogger const& logger) : m_logger(logger)
+    {
+        m_logger.LogNote(L"Instantiated the" + Name() + L"Plugin");
+		
         DiscoverCaptureBoards();
 
         // Add the inputs from all the discovered capture boards to the m_displayInputs list
@@ -36,6 +44,12 @@ namespace winrt::TanagerPlugin::implementation
                 m_displayInputs.push_back(boardInput);
             }
         }
+    }
+
+    Controller::Controller()
+    {
+        // Throw - callers should explicitly instantiate through the factory
+        throw winrt::hresult_illegal_method_call();
     }
 
     hstring Controller::Name()

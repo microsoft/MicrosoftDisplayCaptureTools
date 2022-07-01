@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DisplayEngine.g.h"
+#include "DisplayEngineFactory.g.h"
 
 namespace MonitorUtilities
 {
@@ -131,6 +132,7 @@ namespace winrt::DisplayControl::implementation
     struct DisplayEngine : DisplayEngineT<DisplayEngine>
     {
         DisplayEngine();
+        DisplayEngine(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         ~DisplayEngine();
 
@@ -161,11 +163,24 @@ namespace winrt::DisplayControl::implementation
 
         std::mutex m_targetLock;
         std::unique_ptr<MonitorUtilities::MonitorControl> m_monitorControl;
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+    };
+
+    struct DisplayEngineFactory : DisplayEngineFactoryT<DisplayEngineFactory>
+    {
+        DisplayEngineFactory() = default;
+
+        winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine CreateDisplayEngine(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
     };
 }
+
 namespace winrt::DisplayControl::factory_implementation
 {
     struct DisplayEngine : DisplayEngineT<DisplayEngine, implementation::DisplayEngine>
+    {
+    };
+    struct DisplayEngineFactory : DisplayEngineFactoryT<DisplayEngineFactory, implementation::DisplayEngineFactory>
     {
     };
 }

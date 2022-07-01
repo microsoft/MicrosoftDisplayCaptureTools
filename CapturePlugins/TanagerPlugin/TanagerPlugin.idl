@@ -1,10 +1,16 @@
 namespace TanagerPlugin
 {
-    [default_interface] runtimeclass Controller :
+    [default_interface] 
+    runtimeclass Controller :
         MicrosoftDisplayCaptureTools.CaptureCard.IController,
         MicrosoftDisplayCaptureTools.CaptureCard.IControllerWithFirmware
     {
-        // Default constructor, which is discovered by the framework
-        Controller();
+        Controller(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+    }
+
+    [default_interface] 
+    runtimeclass ControllerFactory : MicrosoftDisplayCaptureTools.CaptureCard.IControllerFactory
+    {
+        ControllerFactory();
     }
 }

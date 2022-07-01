@@ -1,4 +1,5 @@
 import "DisplayManager.idl";
+import "Framework.idl";
 
 namespace MicrosoftDisplayCaptureTools.ConfigurationTools
 {
@@ -117,9 +118,6 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
         String Name{ get; };
 
-        // Implementations should declare a public construction for the class named "ConfigurationToolbox"
-        //ConfigurationToolbox();
-
         // GetSupportedTools
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
@@ -155,4 +153,20 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
     }
+
+    //
+    // The required static initializer for IConfigurationToolbox implementations. This is how other components of this 
+    // project will instantiate IController implementations.
+    //
+    // This is to be implemented by toolbox producer.
+    //
+    interface IConfigurationToolboxFactory
+    {
+        // Create
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates an IController implementation instance with a defined logger.
+        //
+        IConfigurationToolbox CreateConfigurationToolbox(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+    };
 }

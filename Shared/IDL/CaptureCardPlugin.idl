@@ -1,4 +1,5 @@
 import "ConfigurationTools.idl";
+import "Framework.idl";
 
 namespace MicrosoftDisplayCaptureTools.CaptureCard
 {
@@ -178,7 +179,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     // 
     // This is to be implemented by capture card producer.
     //
-    interface IController
+    interface IController 
     {
         // A string identifier for this particular implementation of the framework, this is only to be used for logging.
         String Name{ get; };
@@ -205,6 +206,22 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
     }
+
+    //
+    // The required static initializer for IController implementations. This is how other components of this project will
+    // instantiate IController implementations.
+    // 
+    // This is to be implemented by capture card producer.
+    //
+    interface IControllerFactory
+    {
+        // Create
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates an IController implementation instance with a defined logger.
+        //
+        IController CreateController(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+    };
 
     enum ControllerFirmwareState
     {

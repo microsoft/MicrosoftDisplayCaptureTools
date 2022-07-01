@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "GenericCaptureCardPlugin.h"
 #include "Controller.g.cpp"
+#include "ControllerFactory.g.cpp"
 
 #include "winrt\MicrosoftDisplayCaptureTools.Display.h"
 
@@ -19,6 +20,7 @@ namespace winrt
 
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
     using namespace MicrosoftDisplayCaptureTools::Display;
+    using namespace MicrosoftDisplayCaptureTools::Framework;
 }
 
 struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
@@ -28,13 +30,27 @@ struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novta
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
+    winrt::IController ControllerFactory::CreateController(winrt::ILogger const& logger)
+    {
+        return winrt::make<Controller>(logger);
+    }
+
     Controller::Controller()
     {
+        // Throw - callers should explicitly instantiate through the factory
+        throw winrt::hresult_illegal_method_call();
     }
+
+    Controller::Controller(winrt::ILogger const& logger) : m_logger(logger)
+    {
+        m_logger.LogNote(L"Capture Plugin " + Name() + L" Instantiated");
+    }
+
     hstring Controller::Name()
     {
         return L"GenericCapture";
     }
+
     com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
     {
         m_displayInput = *make_self<DisplayInput>(m_deviceId);
@@ -43,6 +59,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         inputs.push_back(m_displayInput);
         return com_array<IDisplayInput>(inputs);
     }
+
     void Controller::SetConfigData(winrt::IJsonValue data)
     {
         // The JSON object returned here is the "settings" sub-object for this plugin. It's definition is capture card plugin-specific.
@@ -63,26 +80,32 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     {
         return false;
     }
+
     bool CaptureCapabilities::CanReturnFramesToHost()
     {
         return true;
     }
+
     bool CaptureCapabilities::CanCaptureFrameSeries()
     {
         return false;
     }
+
     bool CaptureCapabilities::CanHotPlug()
     {
         return false;
     }
+
     bool CaptureCapabilities::CanConfigureEDID()
     {
         return false;
     }
+
     bool CaptureCapabilities::CanConfigureDisplayID()
     {
         return false;
     }
+
     uint32_t CaptureCapabilities::GetMaxDescriptorSize()
     {
         // This should never be called given that neither CanConfigureEDID nor CanConfigureDisplayID
@@ -94,14 +117,17 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     {
         return m_type;
     }
+
     void CaptureTrigger::Type(CaptureTriggerType type)
     {
         m_type = type;
     }
+
     uint32_t CaptureTrigger::TimeToCapture()
     {
         return m_time;
     }
+
     void CaptureTrigger::TimeToCapture(uint32_t time)
     {
         m_time = time;
@@ -135,22 +161,27 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_captureCapabilities = make_self<CaptureCapabilities>();
         m_captureTrigger = make_self<CaptureTrigger>();
     }
+
     hstring DisplayInput::Name()
     {
         hstring ret = L"Input 1";
         return ret;
     }
+
     void DisplayInput::FinalizeDisplayState()
     {
     }
+
     ICaptureCapabilities DisplayInput::GetCapabilities()
     {
         return *m_captureCapabilities;
     }
+
     ICaptureTrigger DisplayInput::GetCaptureTrigger()
     {
         return *m_captureTrigger;
     }
+
     IDisplayCapture DisplayInput::CaptureFrame()
     {
         auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
@@ -172,6 +203,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto bitmap = frame.SoftwareBitmap();
         m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
     }
+
     void DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
@@ -197,6 +229,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             throw winrt::hresult_error();
         }
     }
+
     IMemoryBufferReference DisplayCapture::GetRawPixelData()
     {
         auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);

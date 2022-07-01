@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "DisplayEngine.h"
 #include "DisplayEngine.g.cpp"
+#include "DisplayEngineFactory.g.cpp"
 
 namespace winrt
 {
@@ -22,6 +23,7 @@ namespace winrt
 
     // Hardware HLK project
     using namespace winrt::MicrosoftDisplayCaptureTools::Display;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 }
 
 namespace MonitorUtilities
@@ -94,25 +96,37 @@ namespace MonitorUtilities
 
 namespace winrt::DisplayControl::implementation
 {
-    DisplayEngine::DisplayEngine() :
-        m_displayManager(nullptr),
-        m_displayTarget(nullptr)
+    winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
+    {
+        return winrt::make<DisplayEngine>(logger);
+    }
+
+    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) : 
+        m_logger(logger)
     {
         m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
-        m_monitorControl = nullptr;
+
+        m_logger.LogNote(L"DisplayEngine " + Name() + L" Instantiated");
     }
+
+    DisplayEngine::DisplayEngine()
+    {
+        // Throw - callers should explicitly instantiate through the factory
+        throw winrt::hresult_illegal_method_call();
+    }
+
     DisplayEngine::~DisplayEngine()
     {
 
     }
+
     hstring DisplayEngine::Name()
     {
         return L"BasicDisplayControl";
     }
+
     void DisplayEngine::InitializeForDisplayTarget(winrt::DisplayTarget const& target)
     {
-        std::scoped_lock lock(m_targetLock);
-
         // Reset the currently tracked target to the supplied one
         m_displayTarget = target;
         RefreshTarget();
@@ -147,6 +161,7 @@ namespace winrt::DisplayControl::implementation
         // Mark the base plane as active
         m_propertySet->m_planeProperties[0]->Active(true);
     }
+
     void DisplayEngine::InitializeForStableMonitorId(winrt::hstring target)
     {
         // Translate the target string to a DisplayTarget and call 'InitializeForDisplayTarget'
@@ -170,28 +185,34 @@ namespace winrt::DisplayControl::implementation
 
         InitializeForDisplayTarget(chosenTarget);
     }
+
     winrt::DisplayTarget DisplayEngine::GetTarget()
     {
         return m_displayTarget;
     }
+
     winrt::IDisplayEngineCapabilities DisplayEngine::GetCapabilities()
     {
         return *m_capabilities;
     }
+
     winrt::IDisplayEnginePropertySet DisplayEngine::GetProperties()
     {
         return *m_propertySet;
     }
+
     winrt::IDisplayEnginePrediction DisplayEngine::GetPrediction()
     {
         auto prediction = make_self<DisplayEnginePrediction>(m_propertySet.get());
 
         return *prediction;
     }
+
     void DisplayEngine::SetConfigData(IJsonValue data)
     {
 
     }
+
     winrt::IClosable DisplayEngine::StartRender()
     {
         // Re-connect the target
@@ -209,6 +230,7 @@ namespace winrt::DisplayControl::implementation
         renderer->StartRender(m_propertySet.get());
         return renderer.as<IClosable>();
     }
+
     void DisplayEngine::RefreshTarget()
     {
         if (m_displayManager && m_displayTarget && m_displayTarget.IsStale())
@@ -228,6 +250,7 @@ namespace winrt::DisplayControl::implementation
             throw winrt::hresult_changed_state();
         }
     }
+
     void DisplayEngine::ConnectTarget()
     {
         // Disconnect if already connected
@@ -265,6 +288,7 @@ namespace winrt::DisplayControl::implementation
         m_displayPath = m_displayState.ConnectTarget(m_displayTarget);
         m_displayDevice = m_displayManager.CreateDisplayDevice(m_displayTarget.Adapter());
     }
+
     void DisplayEngine::PopulateCapabilities()
     {
         // Create the capabilities objects for the base plane (the only plane supported by this implementation)
@@ -280,10 +304,12 @@ namespace winrt::DisplayControl::implementation
     DisplayEngineCapabilities::DisplayEngineCapabilities()
     {
     }
+
     winrt::com_array<winrt::DisplayModeInfo> DisplayEngineCapabilities::GetSupportedModes()
     {
         return winrt::com_array<winrt::DisplayModeInfo>(m_modes);
     }
+
     winrt::com_array<winrt::IDisplayEnginePlaneCapabilities> DisplayEngineCapabilities::GetPlaneCapabilities()
     {
         std::vector<winrt::IDisplayEnginePlaneCapabilities> retVector;
@@ -302,33 +328,40 @@ namespace winrt::DisplayControl::implementation
         m_requeryMode(true)
     {
     }
+
     winrt::DisplayModeInfo DisplayEnginePropertySet::ActiveMode()
     {
         return m_mode;
     }
+
     void DisplayEnginePropertySet::ActiveMode(winrt::DisplayModeInfo mode)
     {
         m_mode = std::move(mode);
         m_requeryMode = false;
     }
+
     double DisplayEnginePropertySet::RefreshRate()
     {
         return m_refreshRate;
     }
+
     void DisplayEnginePropertySet::RefreshRate(double rate)
     {
         m_refreshRate = rate;
         m_requeryMode = true;
     }
+
     winrt::Windows::Graphics::SizeInt32 DisplayEnginePropertySet::Resolution()
     {
         return m_resolution;
     }
+
     void DisplayEnginePropertySet::Resolution(winrt::Windows::Graphics::SizeInt32 resolution)
     {
         m_resolution = resolution;
         m_requeryMode = true;
     }
+
     winrt::com_array<winrt::IDisplayEnginePlanePropertySet> DisplayEnginePropertySet::GetPlaneProperties()
     {
         std::vector<winrt::IDisplayEnginePlanePropertySet> retVector;
@@ -349,35 +382,44 @@ namespace winrt::DisplayControl::implementation
     {
         return m_active;
     }
+
     void DisplayEnginePlanePropertySet::Active(bool active)
     {
         m_active = active;
     }
+
     winrt::BitmapBounds DisplayEnginePlanePropertySet::Rect()
     {
         return winrt::BitmapBounds();
     }
+
     void DisplayEnginePlanePropertySet::Rect(winrt::BitmapBounds bounds)
     {
     }
+
     winrt::DirectXPixelFormat DisplayEnginePlanePropertySet::Format()
     {
         return winrt::DirectXPixelFormat::R8G8B8A8UIntNormalized;
     }
+
     void DisplayEnginePlanePropertySet::Format(winrt::DirectXPixelFormat format) 
     {
     }
+
     winrt::SoftwareBitmap DisplayEnginePlanePropertySet::SourceBitmap()
     {
         return nullptr;
     }
+
     void DisplayEnginePlanePropertySet::SourceBitmap(winrt::SoftwareBitmap bitmap)
     {
     }
+
     PixelColor DisplayEnginePlanePropertySet::ClearColor()
     {
         return m_color;
     }
+
     void DisplayEnginePlanePropertySet::ClearColor(PixelColor clearColor)
     {
         m_color = clearColor;
@@ -396,6 +438,7 @@ namespace winrt::DisplayControl::implementation
             }
         }
     }
+
     void Renderer::StartRender(DisplayEnginePropertySet* properties)
     {
         m_presenting = false;
@@ -415,6 +458,7 @@ namespace winrt::DisplayControl::implementation
             std::this_thread::yield();
         }
     }
+
     void Renderer::Render()
     {
         winrt::init_apartment();
@@ -503,6 +547,7 @@ namespace winrt::DisplayControl::implementation
             m_presenting = true;
         }
     }
+
     void Renderer::RefreshMode()
     {
         if (m_properties->RequeryMode())
@@ -628,6 +673,7 @@ namespace winrt::DisplayControl::implementation
 
         ClearPixelBuffer(bufferReference, properties->GetPlaneProperties()[0].ClearColor(), mode.SourcePixelFormat());
     }
+
     SoftwareBitmap DisplayEnginePrediction::GetBitmap()
     {
         return m_bitmap;

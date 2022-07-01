@@ -3,18 +3,18 @@
 	"Components": {
 		"CapturePlugin": {
 			"Path": "TanagerPlugin\\TanagerPlugin.dll",
-			"Class": "TanagerPlugin.Controller",
+			"Class": "TanagerPlugin.ControllerFactory",
 			"Settings": null
 		},
 		"DisplayEngine": {
 			"Path": "BasicDisplayControl\\BasicDisplayControl.dll",
-			"Class": "BasicDisplayControl.DisplayEngine",
+			"Class": "DisplayControl.DisplayEngineFactory",
 			"Settings": null
 		},
 		"ConfigurationToolboxes": [
 			{
 				"Path": "BasicDisplayConfiguration\\BasicDisplayConfiguration.dll",
-				"Class": "BasicDisplayConfiguration.Toolbox",
+				"Class": "BasicDisplayConfiguration.ToolboxFactory",
 				"Settings": null
 			}
 		]

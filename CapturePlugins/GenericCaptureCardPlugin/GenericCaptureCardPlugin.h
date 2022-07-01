@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Controller.g.h"
+#include "ControllerFactory.g.h"
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
@@ -75,7 +76,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     struct Controller : ControllerT<Controller>
     {
-        Controller();
+        Controller(); 
+        Controller(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         hstring Name();
         com_array<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
@@ -87,12 +89,24 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
         // This plugin only supports a single display input.
         winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput m_displayInput;
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+    };
+
+    struct ControllerFactory : ControllerFactoryT<ControllerFactory>
+    {
+        ControllerFactory() = default;
+
+        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController CreateController(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
     };
 }
 
 namespace winrt::GenericCaptureCardPlugin::factory_implementation
 {
     struct Controller : ControllerT<Controller, implementation::Controller>
+    {
+    };
+    struct ControllerFactory : ControllerFactoryT<ControllerFactory, implementation::ControllerFactory>
     {
     };
 }

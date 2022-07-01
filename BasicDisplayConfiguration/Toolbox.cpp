@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Toolbox.h"
 #include "Toolbox.g.cpp"
+#include "ToolboxFactory.g.cpp"
 
 #include "PatternTool.h"
 #include "ResolutionTool.h"
@@ -8,12 +9,29 @@
 
 namespace winrt
 {
-    using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace winrt::Windows::Data::Json;
+    using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 }
 
-namespace winrt::BasicDisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation 
 {
+    winrt::IConfigurationToolbox ToolboxFactory::CreateConfigurationToolbox(winrt::ILogger const& logger)
+    {
+        return winrt::make<Toolbox>(logger);
+    }
+
+    Toolbox::Toolbox()
+    {
+        // Throw - callers should explicitly instantiate through the factory
+        throw winrt::hresult_illegal_method_call();
+    }
+
+    Toolbox::Toolbox(winrt::ILogger const& logger) : m_logger(logger)
+    {
+        m_logger.LogNote(L"Toolbox " + Name() + L" Instantiated");
+    }
+
     enum class Tools
     {
         Pattern,

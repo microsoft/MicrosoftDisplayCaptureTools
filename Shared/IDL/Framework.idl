@@ -5,6 +5,61 @@ import "DisplayManager.idl";
 namespace MicrosoftDisplayCaptureTools.Framework
 {
     //
+    // An abstracted Logger for the Hardware HLK project. A default implementation will be provided in this project, but 
+    // custom implementations may be created and passed to the Core framework object, which will be promulgated throughout
+    // the components loaded.
+    // 
+    // The default implementation will have further interactions with the TAEF testing platform if that is being used.
+    //
+    interface ILogger
+    {
+        // LogNote
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Logs an informational note, which does not imply any error or warning
+        //
+        // Parameters:
+        //      note
+        //          The string holding the note to log
+        //
+        void LogNote(String note);
+        
+        // LogWarning
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Logs a warning, which does not imply any error. These might be used to inform a caller of a non-standard or
+        //      unexpected setup, of valid-yet-unexpected inputs, etc.
+        //
+        // Parameters:
+        //      warning
+        //          The string holding the warning to log
+        //
+        void LogWarning(String warning);
+
+        // LogError
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Logs an error - either in setup or in test running.
+        //
+        // Parameters:
+        //      error
+        //          The string holding the error to log
+        //
+        void LogError(String error);
+
+        // LogAssert
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Logs an assert - either in setup or in test running.
+        //
+        // Parameters:
+        //      assert
+        //          The string holding the error to log
+        //
+        void LogAssert(String error);
+    };
+
+    //
     // The core of the Hardware HLK project, this object manages communication and coordination between the various other
     // components of this framework.
     //

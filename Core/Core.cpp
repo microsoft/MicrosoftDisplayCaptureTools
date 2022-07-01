@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "Core.h"
+#include "Logger.h"
 #include "Framework.Core.g.cpp"
 
 namespace winrt
@@ -20,15 +21,27 @@ namespace std
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
+    // Constructor that uses the default WEX logger
+    Core::Core() : m_logger(winrt::make<WEXLogger>().as<ILogger>())
+    {
+    }
+
+    // Constructor taking a caller-defined logging class
+    Core::Core(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger)
+    {
+    }
+
     void Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
     {
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
 
         // Load the capture card from the provided path.
-        m_captureCard = LoadInterfaceFromPath<CaptureCard::IController>(pluginPath, className);
+        auto captureCardFactory = LoadInterfaceFromPath<CaptureCard::IControllerFactory>(pluginPath, className);
 
-        wprintf(L"Capture Plugin Loaded: %s\n", m_captureCard.Name().c_str());
+        m_captureCard = captureCardFactory.CreateController(m_logger);
+
+        m_logger.LogNote(L"Capture Plugin Loaded: " + m_captureCard.Name());
     }
 
     void Core::LoadCapturePlugin(hstring const& pluginPath)
@@ -44,9 +57,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         std::scoped_lock lock(m_testLock);
 
         // Load the toolbox from the provided path.
-        m_toolboxes.push_back(LoadInterfaceFromPath<ConfigurationTools::IConfigurationToolbox>(toolboxPath, className));
+        auto toolboxFactory = LoadInterfaceFromPath<ConfigurationTools::IConfigurationToolboxFactory>(toolboxPath, className);
 
-        wprintf(L"Configuration Toolbox Opened: %s\n", m_toolboxes[0].Name().c_str());
+        m_toolboxes.push_back(toolboxFactory.CreateConfigurationToolbox(m_logger));
+
+        m_logger.LogNote(L"Configuration Toolbox Opened: %s\n" + m_toolboxes[0].Name());
 
         UpdateToolList();
     }
@@ -58,22 +73,24 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         LoadToolbox(toolboxPath, className + c_ConfigurationToolboxDefaultName);
     }
 
-    void Core::LoadDisplayManager(hstring const& displayManagerPath, hstring const& className)
+    void Core::LoadDisplayManager(hstring const& displayEnginePath, hstring const& className)
     {
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
 
         // Load the toolbox from the provided path.
-        m_displayManager = LoadInterfaceFromPath<Display::IDisplayEngine>(displayManagerPath, className);
+        auto displayEngineFactory = LoadInterfaceFromPath<Display::IDisplayEngineFactory>(displayEnginePath, className);
 
-        wprintf(L"DisplayManager Loaded: %s\n", m_displayManager.Name().c_str());
+        m_displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
+
+        m_logger.LogNote(L"DisplayManager Loaded: " + m_displayEngine.Name());
     }
 
-    void Core::LoadDisplayManager(hstring const& displayManagerPath)
+    void Core::LoadDisplayManager(hstring const& displayEnginePath)
     {
         // Create the className string from
-        winrt::hstring className = std::path(displayManagerPath.c_str()).stem().c_str();
-        LoadDisplayManager(displayManagerPath, className + c_CapturePluginDefaultName);
+        winrt::hstring className = std::path(displayEnginePath.c_str()).stem().c_str();
+        LoadDisplayManager(displayEnginePath, className + c_CapturePluginDefaultName);
     }
 
     void Core::LoadConfigFile(hstring const& configFile)
@@ -133,20 +150,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             auto componentConfigData = componentConfigDataValue.GetObjectW();
 
             // Attempt to load the DisplayManager
-            auto displayManagerValue = componentConfigData.TryLookup(L"DisplayEngine");
-            if (displayManagerValue && displayManagerValue.ValueType() == winrt::JsonValueType::Object)
+            auto displayEngineValue = componentConfigData.TryLookup(L"DisplayEngine");
+            if (displayEngineValue && displayEngineValue.ValueType() == winrt::JsonValueType::Object)
             {
-                auto displayManager = displayManagerValue.GetObjectW();
+                auto displayEngine = displayEngineValue.GetObjectW();
 
-                // Load the toolbox from the provided path.
-                m_displayManager = LoadInterfaceFromPath<Display::IDisplayEngine>(
-                    displayManager.GetNamedString(L"Path"),
-                    displayManager.GetNamedString(L"Class"));
+                LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
 
-                wprintf(L"DisplayManager Loaded: %s\n", m_displayManager.Name().c_str());
-
-                auto displayManagerConfig = displayManager.TryLookup(L"Settings");
-                m_displayManager.SetConfigData(displayManagerConfig);
+                auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
+                m_displayEngine.SetConfigData(displayEngineConfig);
             }
 
             // Attempt to load the CapturePlugin
@@ -155,13 +167,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             {
                 auto capturePlugin = capturePluginValue.GetObjectW();
 
-                // Load the toolbox from the provided path.
-                m_captureCard = LoadInterfaceFromPath<CaptureCard::IController>(
-                    capturePlugin.GetNamedString(L"Path"),
-                    capturePlugin.GetNamedString(L"Class"));
-
-                wprintf(L"Plugin Loaded: %s\n", m_captureCard.Name().c_str());
-
+                LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
+;
                 auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
                 m_captureCard.SetConfigData(captureCardConfig);
             }
@@ -176,17 +183,10 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
                 {
                     auto toolboxConfigEntry = toolbox.GetObjectW();
 
-                    // Load the toolbox from the provided path.
-                    auto newToolbox = LoadInterfaceFromPath<ConfigurationTools::IConfigurationToolbox>(
-                        toolboxConfigEntry.GetNamedString(L"Path"),
-                        toolboxConfigEntry.GetNamedString(L"Class"));
-
-                    m_toolboxes.push_back(newToolbox);
-
-                    wprintf(L"Toolbox Opened: %s\n", m_toolboxes[0].Name().c_str());
+                    LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"),toolboxConfigEntry.GetNamedString(L"Class"));
 
                     auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
-                    newToolbox.SetConfigData(toolboxConfig);
+                    m_toolboxes.back().SetConfigData(toolboxConfig);
                 }
 
                 UpdateToolList();
@@ -236,20 +236,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // Reset the display manager to the correct 
         auto displayId = m_targetMap[captureInput.Name()];
-        m_displayManager.InitializeForStableMonitorId(displayId);
+        m_displayEngine.InitializeForStableMonitorId(displayId);
 
         winrt::hstring testName = L"";
 
         for (auto tool : m_toolList)
         {
-            tool.Apply(m_displayManager);
+            tool.Apply(m_displayEngine);
             testName = testName + tool.GetConfiguration() + L"_";
         }
 
         // Start the render
         // TODO: allow a map of multiple DisplayEngines here, there is a mapping of display Engine to capture card inputs
         //       and a test run should make sure to start operations on all of them.
-        auto renderer = m_displayManager.StartRender();
+        auto renderer = m_displayEngine.StartRender();
 
         // TODO: make this configurable, this is the amount of time we are waiting for display settings to 
         //       stabilize after the 'StartRender' call causes a mode change and the rendering to start
@@ -257,7 +257,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // Capture the frame.
         auto capturedFrame = captureInput.CaptureFrame();
-        auto predictedFrame = m_displayManager.GetPrediction();
+        auto predictedFrame = m_displayEngine.GetPrediction();
 
         // TODO: build a uniquely identifying string from the currently selected tools
 
@@ -285,7 +285,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
 
-        return m_displayManager;
+        return m_displayEngine;
     }
 
     void Framework::implementation::Core::UpdateToolList()

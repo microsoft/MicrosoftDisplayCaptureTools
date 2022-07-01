@@ -7,13 +7,14 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
-    const std::wstring c_CapturePluginDefaultName        = L".Controller";
-    const std::wstring c_ConfigurationToolboxDefaultName = L".Toolbox";
-    const std::wstring c_DisplayManagerDefaultName       = L".DisplayManager";
+    const std::wstring c_CapturePluginDefaultName        = L".ControllerFactory"; 
+    const std::wstring c_ConfigurationToolboxDefaultName = L".ToolboxFactory";
+    const std::wstring c_DisplayEngineDefaultName       = L".DisplayEngineFactory";
 
     struct Core : CoreT<Core>
     {
-        Core() = default;
+        Core();
+        Core(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         void LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         void LoadCapturePlugin(hstring const& pluginPath);
@@ -21,8 +22,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         void LoadToolbox(hstring const& toolboxPath, hstring const& className);
         void LoadToolbox(hstring const& toolboxPath);
 
-        void LoadDisplayManager(hstring const& displayManagerPath, hstring const& className);
-        void LoadDisplayManager(hstring const& displayManagerPath);
+        void LoadDisplayManager(hstring const& displayEnginePath, hstring const& className);
+        void LoadDisplayManager(hstring const& displayEnginePath);
 
         void LoadConfigFile(hstring const& configFilePath);
         void RunTest();
@@ -39,7 +40,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         CaptureCard::IController m_captureCard = nullptr;
 
         // The object which manages the display under test
-        Display::IDisplayEngine m_displayManager = nullptr;
+        Display::IDisplayEngine m_displayEngine = nullptr;
 
         // A list of all ConfigurationToolboxes that have been loaded
         std::vector<ConfigurationTools::IConfigurationToolbox> m_toolboxes;
@@ -55,7 +56,10 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         std::map<winrt::hstring, winrt::hstring> m_targetMap;
 
         // Loading components/config files is not allowed while a test is running and vice-versa.
-        std::mutex m_testLock;
+        std::recursive_mutex m_testLock;
+
+        // The logging system for this framework instance
+        const ILogger m_logger;
     };
 }
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::factory_implementation
