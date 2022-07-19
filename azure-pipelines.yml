@@ -4,6 +4,14 @@ trigger:
 pool:
   vmImage: windows-latest
 
+variables:
+  majorMinorVersion: 0.1
+  semanticVersion: $[counter(variables['majorMinorVersion'], 0)]
+  projectName: 'MicrosoftDisplayCaptureTools'
+  buildConfiguration: 'Release'
+
+name: $(majorMinorVersion).$(semanticVersion).$(rev:r)
+
 steps:
   - task: NuGetAuthenticate@0
   - task: NuGetToolInstaller@1
@@ -32,10 +40,7 @@ steps:
       command: 'pack'
       packagesToPack: '**/*.nuspec'
       configuration: 
-      versioningScheme: 'byPrereleaseNumber'
-      majorVersion: '0'
-      minorVersion: '1'
-      patchVersion: '0'
+      versioningScheme: 'byBuildNumber'
 
   - task: NuGetCommand@2
     displayName: 'Nuget push'
