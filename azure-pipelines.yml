@@ -5,12 +5,13 @@ pool:
   vmImage: windows-latest
 
 variables:
-  majorMinorVersion: 0.1
-  semanticVersion: $[counter(variables['majorMinorVersion'], 0)]
-  projectName: 'MicrosoftDisplayCaptureTools'
-  buildConfiguration: 'Release'
+  major: 0
+  minor: 1
+  semantic: ${{variables.major}}.${{variables.minor}}
+  semanticVersion: $[counter(variables['semantic'], 0)]
+  buildConfiguration: 'Debug'
 
-name: $(majorMinorVersion).$(semanticVersion).$(rev:r)
+name: $(semantic).$(semanticVersion).$(rev:r)
 
 steps:
   - task: NuGetAuthenticate@0
