@@ -36,8 +36,8 @@ namespace MonitorUtilities
     class MonitorControl
     {
     public:
-        MonitorControl(LUID adapterId, UINT targetId) :
-            m_luid(adapterId), m_targetId(targetId), m_removeSpecializationOnExit(true)
+        MonitorControl(LUID adapterId, UINT targetId, winrt::ILogger const& logger) :
+            m_luid(adapterId), m_targetId(targetId), m_removeSpecializationOnExit(true), m_logger(logger)
         {
             DISPLAYCONFIG_GET_MONITOR_SPECIALIZATION getSpecialization{};
             getSpecialization.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_SPECIALIZATION;
@@ -49,7 +49,7 @@ namespace MonitorUtilities
 
             if (0 == getSpecialization.isSpecializationAvailableForSystem)
             {
-                printf("Monitor specialization is not available on this system - have you enabled testsigning?\n");
+                m_logger.LogError(L"Monitor specialization is not available - have you enabled testsigning?");
                 throw winrt::hresult_error();
             }
 
@@ -91,6 +91,7 @@ namespace MonitorUtilities
         LUID m_luid;
         UINT m_targetId;
         bool m_removeSpecializationOnExit;
+        const winrt::ILogger m_logger;
     };
 }
 
@@ -105,8 +106,6 @@ namespace winrt::DisplayControl::implementation
         m_logger(logger)
     {
         m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
-
-        m_logger.LogNote(L"DisplayEngine " + Name() + L" Instantiated");
     }
 
     DisplayEngine::DisplayEngine()
@@ -133,20 +132,22 @@ namespace winrt::DisplayControl::implementation
 
         if (!target)
         {
-            // Nothing else to do.
-            return;
+            // The chosen target was not found - was the config file generated for this machine?
+            m_logger.LogError(L"Attempted to initialize with a null display targer.");
+            throw winrt::hresult_invalid_argument();
         }
 
         // Remove the targeted display from composition.
         m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
             MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()),
-            m_displayTarget.AdapterRelativeId());
+            m_displayTarget.AdapterRelativeId(),
+            m_logger);
 
         ConnectTarget();
 
         // Instantiate the Capabilities and Properties objects
-        m_capabilities = winrt::make_self<DisplayEngineCapabilities>();
-        m_propertySet = winrt::make_self<DisplayEnginePropertySet>();
+        m_capabilities = winrt::make_self<DisplayEngineCapabilities>(m_logger);
+        m_propertySet = winrt::make_self<DisplayEnginePropertySet>(m_logger);
 
         // Get the display capabilities
         PopulateCapabilities();
@@ -154,7 +155,7 @@ namespace winrt::DisplayControl::implementation
         // Ensure that there are the same number of planes on both the capabilities and property trees
         for (auto planes : m_capabilities->m_planeCapabilities)
         {
-            auto planeProperties = winrt::make_self<DisplayEnginePlanePropertySet>();
+            auto planeProperties = winrt::make_self<DisplayEnginePlanePropertySet>(m_logger);
             m_propertySet->m_planeProperties.push_back(planeProperties);
         }
 
@@ -179,7 +180,7 @@ namespace winrt::DisplayControl::implementation
         if (!chosenTarget)
         {
             // The chosen target was not found - was the config file generated for this machine?
-            // TODO - log this case
+            m_logger.LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -203,7 +204,7 @@ namespace winrt::DisplayControl::implementation
 
     winrt::IDisplayEnginePrediction DisplayEngine::GetPrediction()
     {
-        auto prediction = make_self<DisplayEnginePrediction>(m_propertySet.get());
+        auto prediction = make_self<DisplayEnginePrediction>(m_propertySet.get(), m_logger);
 
         return *prediction;
     }
@@ -218,10 +219,9 @@ namespace winrt::DisplayControl::implementation
         // Re-connect the target
         ConnectTarget();
 
-        auto renderer = make_self<Renderer>();
+        auto renderer = make_self<Renderer>(m_logger);
 
         renderer->displayDevice = m_displayDevice;
-
         renderer->displayManager = m_displayManager;
         renderer->displayTarget  = m_displayTarget;
         renderer->displayState   = m_displayState;
@@ -246,7 +246,7 @@ namespace winrt::DisplayControl::implementation
             }
 
             // The selected target is no longer showing up as current or connected!
-            // TODO: log this case
+            m_logger.LogError(L"The selected target can no longer be found. Selected Target: " + m_displayTarget.StableMonitorId());
             throw winrt::hresult_changed_state();
         }
     }
@@ -280,7 +280,7 @@ namespace winrt::DisplayControl::implementation
         if (result.ErrorCode() != winrt::DisplayManagerResult::Success)
         {
             // We failed to acquire control of the target.
-            // TODO: log this case and throw a more useful error
+            m_logger.LogError(L"Failed to acquire control of the target. Error: " + result.ExtendedErrorCode());
             throw winrt::hresult_error();
         }
 
@@ -292,7 +292,7 @@ namespace winrt::DisplayControl::implementation
     void DisplayEngine::PopulateCapabilities()
     {
         // Create the capabilities objects for the base plane (the only plane supported by this implementation)
-        auto basePlaneCapabilities = winrt::make_self<DisplayEnginePlaneCapabilities>();
+        auto basePlaneCapabilities = winrt::make_self<DisplayEnginePlaneCapabilities>(m_logger);
         m_capabilities->m_planeCapabilities.push_back(basePlaneCapabilities);
 
         // Populate the mode list
@@ -301,7 +301,8 @@ namespace winrt::DisplayControl::implementation
     }
 
     // DisplayEngineCapabilities
-    DisplayEngineCapabilities::DisplayEngineCapabilities()
+    DisplayEngineCapabilities::DisplayEngineCapabilities(winrt::ILogger const& logger) : 
+        m_logger(logger)
     {
     }
 
@@ -321,11 +322,12 @@ namespace winrt::DisplayControl::implementation
     }
 
     // DisplayEnginePropertySet
-    DisplayEnginePropertySet::DisplayEnginePropertySet() :
+    DisplayEnginePropertySet::DisplayEnginePropertySet(winrt::ILogger const& logger) :
         m_resolution({ 0,0 }),
         m_refreshRate(0.),
         m_mode(nullptr),
-        m_requeryMode(true)
+        m_requeryMode(true), 
+        m_logger(logger)
     {
     }
 
@@ -428,6 +430,8 @@ namespace winrt::DisplayControl::implementation
     // Renderer
     void Renderer::Close()
     {
+        m_logger.LogNote(L"Stopping Renderer Thread");
+
         if (m_valid)
         {
             m_valid = false;
@@ -441,6 +445,8 @@ namespace winrt::DisplayControl::implementation
 
     void Renderer::StartRender(DisplayEnginePropertySet* properties)
     {
+        m_logger.LogNote(L"Preparing Renderer Thread");
+
         m_presenting = false;
 
         m_properties = properties;
@@ -462,6 +468,8 @@ namespace winrt::DisplayControl::implementation
     void Renderer::Render()
     {
         winrt::init_apartment();
+
+        m_logger.LogNote(L"Starting Render");
 
         // Initialize D3D objects
         winrt::com_ptr<IDXGIFactory6> dxgiFactory;
@@ -546,6 +554,8 @@ namespace winrt::DisplayControl::implementation
 
             m_presenting = true;
         }
+
+        m_logger.LogNote(L"Stopping Render");
     }
 
     void Renderer::RefreshMode()
@@ -558,17 +568,6 @@ namespace winrt::DisplayControl::implementation
             {
                 double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) / 
                     static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
-
-                /*
-                    TODO 38041452: remove this, it's only here because this has been handy in debugging bringup a few times and I didn't want
-                    to write it out over and over again.
-
-                    printf("\n\tmode\n\tResolution: (%d, %d)\n\tRefresh Rate: %f\n\tFormat: %s\n\n",
-                    mode.TargetResolution().Width,
-                    mode.TargetResolution().Height,
-                    presentationRate,
-                    mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized ? "RGB8" : "not-RGB8");
-                */
 
                 double delta = fabs(presentationRate - m_properties->RefreshRate());
                 
@@ -587,7 +586,7 @@ namespace winrt::DisplayControl::implementation
             }
             
             // No mode fit the set tools
-            // TODO: log this case
+            m_logger.LogError(L"No display mode fit the selected options");
             throw winrt::hresult_invalid_argument();
         }
     }
@@ -652,8 +651,11 @@ namespace winrt::DisplayControl::implementation
         }
     }
 
-    DisplayEnginePrediction::DisplayEnginePrediction(DisplayEnginePropertySet* properties)
+    DisplayEnginePrediction::DisplayEnginePrediction(DisplayEnginePropertySet* properties, winrt::ILogger const& logger) : 
+        m_logger(logger)
     {
+        m_logger.LogNote(L"Creating Prediction object from properties.");
+
         auto mode = properties->ActiveMode();
 
         BitmapPixelFormat bitmapFormat;
@@ -676,6 +678,8 @@ namespace winrt::DisplayControl::implementation
 
     SoftwareBitmap DisplayEnginePrediction::GetBitmap()
     {
+        m_logger.LogNote(L"Fetching predicted bitmap.");
+
         return m_bitmap;
     }
 }

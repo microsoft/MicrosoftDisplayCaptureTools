@@ -12,7 +12,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
-		PatternTool();
+        PatternTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -25,5 +25,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	private:
 		PatternToolConfigurations m_currentConfig;
         static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Green;
+
+		const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 	};
 }

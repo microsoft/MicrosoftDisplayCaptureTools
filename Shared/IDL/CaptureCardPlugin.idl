@@ -184,6 +184,9 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         // A string identifier for this particular implementation of the framework, this is only to be used for logging.
         String Name{ get; };
 
+        // Get the version of this implementation, in Major.Minor format.
+        String Version{ get; };
+
         // EnumerateDisplayInputs
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

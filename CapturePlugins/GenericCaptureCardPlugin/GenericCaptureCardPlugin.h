@@ -11,13 +11,14 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
-        DisplayCapture(winrt::Windows::Media::Capture::CapturedFrame frame);
+        DisplayCapture(winrt::Windows::Media::Capture::CapturedFrame frame, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         void CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:
-        winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{ nullptr };
+        winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct CaptureTrigger : implements<CaptureTrigger, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger>
@@ -50,7 +51,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     struct DisplayInput : implements<DisplayInput, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
     {
-        DisplayInput(winrt::hstring deviceId);
+        DisplayInput(winrt::hstring deviceId, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         winrt::hstring Name();
 
@@ -72,6 +73,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
         // This basic plugin can only handle 1 capture at a time.
         winrt::com_ptr<DisplayCapture> m_capture;
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct Controller : ControllerT<Controller>
@@ -82,6 +85,11 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         hstring Name();
         com_array<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
+
+        hstring Version()
+        {
+            return L"0.1";
+        };  
 
     private:
         // Identifier that allows this plugin to identify the actual USB device. Here it is read from the supplied config file.

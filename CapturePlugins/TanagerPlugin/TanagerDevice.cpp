@@ -16,8 +16,10 @@ namespace winrt::TanagerPlugin::implementation
 {
 const unsigned char it68051i2cAddress = 0x48;
 
-TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
+TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
+    m_logger(logger),
     m_usbDevice(nullptr),
+    m_deviceId(deviceId),
     hdmiChip(
         [&](uint8_t address, uint8_t value) // I2C write
         { m_pDriver->writeRegisterByte(it68051i2cAddress, address, value); },
@@ -36,6 +38,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId) :
         m_fpga.SysReset(); // Blocks until FPGA is ready
 
 		hdmiChip.Initialize();
+
+        m_logger.LogNote(L"Initializing Tanager Device: " + m_deviceId);
 	}
 
 	TanagerDevice::~TanagerDevice()

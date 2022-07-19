@@ -395,3 +395,7 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# TAEF log files
+*.wtl
+*.wtl.trace

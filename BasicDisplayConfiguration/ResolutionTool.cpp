@@ -1,23 +1,24 @@
 #include "pch.h"
-#include "winrt\MicrosoftDisplayCaptureTools.Display.h"
-#include "winrt\MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 #include "ResolutionTool.h"
 
 namespace winrt
 {
 	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
 	using namespace MicrosoftDisplayCaptureTools::Display;
+	using namespace MicrosoftDisplayCaptureTools::Framework;
 }
 
 namespace winrt::BasicDisplayConfiguration::implementation
 {
-	std::map<ResolutionToolConfigurations, winrt::hstring> ResolutionConfigurationMap
+	std::map<ResolutionToolConfigurations, winrt::hstring> ConfigurationMap
 	{
 		{ ResolutionToolConfigurations::w1920h1080, L"1920x1080" },
 		{ ResolutionToolConfigurations::w800h600, L"800x600" }
 	};
 
-	ResolutionTool::ResolutionTool() : m_currentConfig(sc_defaultConfig)
+	ResolutionTool::ResolutionTool(winrt::ILogger const& logger) : 
+		m_currentConfig(sc_defaultConfig), 
+		m_logger(logger)
 	{
 	}
 
@@ -39,7 +40,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	com_array<hstring> ResolutionTool::GetSupportedConfigurations()
 	{
 		std::vector<hstring> configs;
-		for (auto config : ResolutionConfigurationMap)
+		for (auto config : ConfigurationMap)
 		{
 			configs.push_back(config.second);
 		}
@@ -49,17 +50,17 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	hstring ResolutionTool::GetDefaultConfiguration()
 	{
-		return ResolutionConfigurationMap[sc_defaultConfig];
+		return ConfigurationMap[sc_defaultConfig];
 	}
 
     hstring ResolutionTool::GetConfiguration()
     {
-        return ResolutionConfigurationMap[m_currentConfig];
+        return ConfigurationMap[m_currentConfig];
 	}
 
 	void ResolutionTool::SetConfiguration(hstring configuration)
 	{
-		for (auto config : ResolutionConfigurationMap)
+		for (auto config : ConfigurationMap)
 		{
 			if (config.second == configuration)
 			{
@@ -69,7 +70,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		}
 
 		// An invalid configuration was asked for
-		// TODO: log this case
+        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+
 		throw winrt::hresult_invalid_argument();
 	}
 
@@ -87,5 +89,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
 			break;
 		}
 
+		m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
 	}
 }

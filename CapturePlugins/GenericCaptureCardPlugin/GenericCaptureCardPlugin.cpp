@@ -5,6 +5,8 @@
 
 #include "winrt\MicrosoftDisplayCaptureTools.Display.h"
 
+#include <format>
+
 namespace winrt
 {
     using namespace Windows::Foundation;
@@ -43,17 +45,16 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     Controller::Controller(winrt::ILogger const& logger) : m_logger(logger)
     {
-        m_logger.LogNote(L"Capture Plugin " + Name() + L" Instantiated");
     }
 
     hstring Controller::Name()
     {
-        return L"GenericCapture";
+        return L"GenericCapture Plugin";
     }
 
     com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
     {
-        m_displayInput = *make_self<DisplayInput>(m_deviceId);
+        m_displayInput = *make_self<DisplayInput>(m_deviceId, m_logger);
 
         std::vector<IDisplayInput> inputs;
         inputs.push_back(m_displayInput);
@@ -133,8 +134,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_time = time;
     }
 
-    DisplayInput::DisplayInput(hstring deviceId) :
-        m_deviceId(deviceId)
+    DisplayInput::DisplayInput(hstring deviceId, winrt::ILogger const& logger) :
+        m_deviceId(deviceId),
+        m_logger(logger)
     {
         hstring cameraId;
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
@@ -187,17 +189,18 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
         auto photo = cap.get().CaptureAsync().get();
 
-        m_capture = make_self<DisplayCapture>(photo.Frame());
+        m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger);
         return *m_capture;
     }
 
-    DisplayCapture::DisplayCapture(CapturedFrame frame)
+    DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::ILogger const& logger) :
+        m_logger(logger)
     {                
         // Mirror the pixel data over to this object's storage. 
         if (!frame.CanRead())
         {
-            // For some reason we are unable to read the frame, log this and throw
-            // TODO - add logging
+            m_logger.LogError(L"Cannot read pixel data fram frame.");
+            throw winrt::hresult_invalid_argument();
         }
 
         auto bitmap = frame.SoftwareBitmap();
@@ -221,10 +224,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
             ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
         {
-            // TODO: replace with actual logging
-            printf("Captured  - %d, %d, %d\nPredicted - %d, %d, %d\n\n",
+            m_logger.LogError(std::format(L"Captured pixel ({},{},{}) - Expected ({},{},{})",
                 captureBuffer.data()[0], captureBuffer.data()[1], captureBuffer.data()[2],
-                predictBuffer.data()[0], predictBuffer.data()[1], predictBuffer.data()[2]);
+                predictBuffer.data()[0], predictBuffer.data()[1], predictBuffer.data()[2]));
 
             throw winrt::hresult_error();
         }

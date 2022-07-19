@@ -31,6 +31,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController GetCaptureCard();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine GetDisplayEngine();
 
+        hstring Version()
+        {
+            return L"0.1";
+        };
+
     private:
         // Iterate through Toolboxes and consolidate a single list of all tools from all sources.
         void UpdateToolList();

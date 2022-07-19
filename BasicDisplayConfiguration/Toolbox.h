@@ -14,6 +14,11 @@ namespace winrt::BasicDisplayConfiguration::implementation
         winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool GetTool(hstring const& toolName);
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
 
+        hstring Version()
+        {
+            return L"0.1";
+        };
+
     private:
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };

@@ -13,7 +13,8 @@ namespace winrt::DisplayControl::implementation
 
     struct DisplayEnginePlanePropertySet : implements<DisplayEnginePlanePropertySet, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet>
     {
-        DisplayEnginePlanePropertySet() = default;
+        DisplayEnginePlanePropertySet(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
+            m_logger(logger){};
 
         bool Active();
         void Active(bool active);        
@@ -31,20 +32,30 @@ namespace winrt::DisplayControl::implementation
         void ClearColor(MicrosoftDisplayCaptureTools::Display::PixelColor pixelColor);
 
         bool m_active = false;
-        MicrosoftDisplayCaptureTools::Display::PixelColor m_color {0};
+        MicrosoftDisplayCaptureTools::Display::PixelColor m_color{0};
+
+    private:
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct DisplayEnginePlaneCapabilities : implements<DisplayEnginePlaneCapabilities, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneCapabilities>
     {
-        DisplayEnginePlaneCapabilities() = default;
+        DisplayEnginePlaneCapabilities(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
+            m_logger(logger){};
 
         // TODO: this is a placeholder for the time being
-        winrt::hstring Name() { return L"Placeholder"; };
+        winrt::hstring Name()
+        {
+            return L"Placeholder";
+        };
+
+    private:
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct DisplayEnginePropertySet : implements<DisplayEnginePropertySet, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet>
     {
-        DisplayEnginePropertySet();
+        DisplayEnginePropertySet(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         winrt::Windows::Devices::Display::Core::DisplayModeInfo ActiveMode();
         void ActiveMode(winrt::Windows::Devices::Display::Core::DisplayModeInfo mode);
@@ -64,26 +75,34 @@ namespace winrt::DisplayControl::implementation
 
         bool m_requeryMode;
         bool RequeryMode();
+
+    private:
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct DisplayEngineCapabilities : implements<DisplayEngineCapabilities, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngineCapabilities>
     {
-        DisplayEngineCapabilities();
+        DisplayEngineCapabilities(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
         com_array<winrt::Windows::Devices::Display::Core::DisplayModeInfo> GetSupportedModes();
         com_array<winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneCapabilities> GetPlaneCapabilities();
 
         std::vector<winrt::com_ptr<DisplayEnginePlaneCapabilities>> m_planeCapabilities;
         std::vector<winrt::Windows::Devices::Display::Core::DisplayModeInfo> m_modes;
+
+    private:
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct DisplayEnginePrediction : implements<DisplayEnginePrediction, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction>
     {
-        DisplayEnginePrediction(DisplayEnginePropertySet* properties);
+        DisplayEnginePrediction(DisplayEnginePropertySet* properties, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         winrt::Windows::Graphics::Imaging::SoftwareBitmap GetBitmap();
 
     private:
         winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{ nullptr };
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     //
@@ -94,7 +113,7 @@ namespace winrt::DisplayControl::implementation
     struct Renderer : implements<Renderer, winrt::Windows::Foundation::IClosable>
     {
     public: // Constructors/Destructors/IClosable
-        Renderer() = default;
+        Renderer(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger){};
 
         ~Renderer() { Close(); };
         void Close();
@@ -127,6 +146,8 @@ namespace winrt::DisplayControl::implementation
         std::thread renderThread;
         std::atomic_bool m_valid = true;
         std::atomic_bool m_presenting = false;
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct DisplayEngine : DisplayEngineT<DisplayEngine>
@@ -145,6 +166,11 @@ namespace winrt::DisplayControl::implementation
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction GetPrediction();
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
         winrt::Windows::Foundation::IClosable StartRender();
+
+        hstring Version()
+        {
+            return L"0.1";
+        };
 
     private:
         void RefreshTarget();

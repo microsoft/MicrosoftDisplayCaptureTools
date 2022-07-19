@@ -9,7 +9,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
-		ResolutionTool();
+		ResolutionTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -22,5 +22,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	private:
 		ResolutionToolConfigurations m_currentConfig;
         static const ResolutionToolConfigurations sc_defaultConfig = ResolutionToolConfigurations::w1920h1080;
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 	};
 }

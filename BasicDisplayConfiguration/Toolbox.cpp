@@ -29,7 +29,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     Toolbox::Toolbox(winrt::ILogger const& logger) : m_logger(logger)
     {
-        m_logger.LogNote(L"Toolbox " + Name() + L" Instantiated");
     }
 
     enum class Tools
@@ -65,11 +64,11 @@ namespace winrt::BasicDisplayConfiguration::implementation
         switch (MapNameToTool[toolName])
         {
         case Tools::Pattern:
-            return winrt::make<PatternTool>();
-        case Tools::RefreshRate:
-            return winrt::make<RefreshRateTool>();
-        case Tools::Resolution:
-            return winrt::make<ResolutionTool>();
+            return winrt::make<PatternTool>(m_logger);
+        case Tools::RefreshRate: 
+            return winrt::make<RefreshRateTool>(m_logger);
+        case Tools::Resolution: 
+            return winrt::make<ResolutionTool>(m_logger);
         }
 
         // The caller has asked for a tool that is not exposed from this toolbox

@@ -84,4 +84,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework
     {
         Log::Assert(assert.c_str());
     }
+
+    void WEXLogger::LogConfig(hstring const& config)
+    {
+        Log::Comment(config.c_str());
+    }
 }

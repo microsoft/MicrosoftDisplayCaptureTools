@@ -12,7 +12,7 @@ namespace winrt::TanagerPlugin::implementation
         inline static constinit const std::tuple<uint8_t, uint8_t, uint8_t> MinimumFx3Version{0, 0, 0};
 
     public:
-        TanagerDevice(winrt::param::hstring deviceId);
+        TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
         ~TanagerDevice();
 
         winrt::hstring GetDeviceId() override;
@@ -37,6 +37,10 @@ namespace winrt::TanagerPlugin::implementation
         std::shared_ptr<I2cDriver> m_pDriver;
         IteIt68051Plugin::IteIt68051 hdmiChip;
         Fx3FpgaInterface m_fpga;
+
+    public:
+        // Adding logger as public member as classes use a weak_from_this pattern
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     enum class TanagerDisplayInputPort

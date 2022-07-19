@@ -118,6 +118,9 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
         String Name{ get; };
 
+        // Get the version of this implementation, in Major.Minor format
+        String Version{ get; };
+
         // GetSupportedTools
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

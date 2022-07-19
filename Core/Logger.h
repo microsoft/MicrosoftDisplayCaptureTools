@@ -11,6 +11,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework
         void LogWarning(hstring const& warning);
         void LogError(hstring const& error);
         void LogAssert(hstring const& assert);
+        void LogConfig(hstring const& config);
 
     private:
         const bool m_selfInitialized;

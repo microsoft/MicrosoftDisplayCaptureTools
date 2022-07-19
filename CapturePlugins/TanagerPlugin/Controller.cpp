@@ -31,8 +31,6 @@ namespace winrt::TanagerPlugin::implementation
 
     Controller::Controller(ILogger const& logger) : m_logger(logger)
     {
-        m_logger.LogNote(L"Instantiated the" + Name() + L"Plugin");
-		
         DiscoverCaptureBoards();
 
         // Add the inputs from all the discovered capture boards to the m_displayInputs list
@@ -54,7 +52,7 @@ namespace winrt::TanagerPlugin::implementation
 
     hstring Controller::Name()
     {
-        return L"Software Test Plugin";
+        return L"Tanager Plugin";
     }
 
     com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
@@ -117,7 +115,7 @@ namespace winrt::TanagerPlugin::implementation
                 firmwareVersion.hardwareRevision);
         }
 
-        return winrt::hstring{version.str()};
+        return winrt::hstring{ version.str() };
     }
 
     void Controller::DiscoverCaptureBoards()
@@ -132,7 +130,7 @@ namespace winrt::TanagerPlugin::implementation
 
 		for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Tanager)).get())
 		{
-			auto input = std::make_shared<TanagerDevice>(device.Id());
+			auto input = std::make_shared<TanagerDevice>(device.Id(), m_logger);
 			m_captureBoards.push_back(input);
 		}
     }

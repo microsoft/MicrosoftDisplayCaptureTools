@@ -9,7 +9,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	struct RefreshRateTool : implements<RefreshRateTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
-		RefreshRateTool();
+        RefreshRateTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 		winrt::hstring Name();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
 		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -21,6 +21,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	private:
 		RefreshRateToolConfigurations m_currentConfig;
-		static const RefreshRateToolConfigurations sc_defaultConfig = RefreshRateToolConfigurations::r60;
+        static const RefreshRateToolConfigurations sc_defaultConfig = RefreshRateToolConfigurations::r60;
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 	};
 }

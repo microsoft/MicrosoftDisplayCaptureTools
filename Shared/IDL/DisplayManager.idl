@@ -61,13 +61,16 @@ namespace MicrosoftDisplayCaptureTools.Display
         String Name{ get; };
     };
 
-    // Used to set parameters to the current display engine
+    // Used to set parameters to the selected display
     interface IDisplayEnginePropertySet
     {
+        // The active mode of this display
         Windows.Devices.Display.Core.DisplayModeInfo ActiveMode{ get; set; };
 
+        // The refresh rate of this display
         Double RefreshRate{ get; set; };
 
+        // The resolution of this display
         Windows.Graphics.SizeInt32 Resolution{ get; set; };
 
         // Get the per-plane property set for this display
@@ -103,6 +106,9 @@ namespace MicrosoftDisplayCaptureTools.Display
     {
         // Get the name of this IDisplayEngine implementation
         String Name{ get; };
+
+        // Get the version of this implementation, in Major.Minor format
+        String Version{ get; };
 
         // InitializeForDisplayTarget 
         // ------------------------------------------------------------------------------------------------------------

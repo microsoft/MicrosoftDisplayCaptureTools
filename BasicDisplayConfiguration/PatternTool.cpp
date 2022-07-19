@@ -1,17 +1,16 @@
 #include "pch.h"
-#include "winrt\MicrosoftDisplayCaptureTools.Display.h"
-#include "winrt\MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 #include "PatternTool.h"
 
 namespace winrt
 {
 	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
 	using namespace MicrosoftDisplayCaptureTools::Display;
+	using namespace MicrosoftDisplayCaptureTools::Framework;
 }
 
 namespace winrt::BasicDisplayConfiguration::implementation
 {
-	std::map<PatternToolConfigurations, winrt::hstring> PatternConfigurationMap
+	std::map<PatternToolConfigurations, winrt::hstring> ConfigurationMap
 	{
 		{ PatternToolConfigurations::Black, L"Black" },
 		{ PatternToolConfigurations::White, L"White" },
@@ -20,7 +19,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		{ PatternToolConfigurations::Blue,  L"Blue"  }
 	};
 
-	PatternTool::PatternTool() : m_currentConfig(sc_defaultConfig)
+	PatternTool::PatternTool(winrt::ILogger const& logger) :
+		m_currentConfig(sc_defaultConfig),
+		m_logger(logger)
 	{
 	}
 
@@ -42,7 +43,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	com_array<hstring> PatternTool::GetSupportedConfigurations()
 	{
 		std::vector<hstring> configs;
-		for (auto config : PatternConfigurationMap)
+		for (auto config : ConfigurationMap)
 		{
 			configs.push_back(config.second);
 		}
@@ -52,17 +53,17 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	hstring PatternTool::GetDefaultConfiguration()
 	{
-		return PatternConfigurationMap[sc_defaultConfig];
+		return ConfigurationMap[sc_defaultConfig];
 	}
 
 	hstring PatternTool::GetConfiguration()
     {
-        return PatternConfigurationMap[m_currentConfig];
+        return ConfigurationMap[m_currentConfig];
 	}
 
 	void PatternTool::SetConfiguration(hstring configuration)
 	{
-		for (auto config : PatternConfigurationMap)
+		for (auto config : ConfigurationMap)
 		{
 			if (config.second == configuration)
 			{
@@ -72,7 +73,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		}
 
 		// An invalid configuration was asked for
-		// TODO: log this case
+        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+
 		throw winrt::hresult_invalid_argument();
 	}
 
@@ -99,5 +101,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 			planeProperties.ClearColor({ 0.f,0.f,1.f });
 			break;
 		}
+
+        m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
 	}
 }

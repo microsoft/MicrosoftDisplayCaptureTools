@@ -24,11 +24,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     // Constructor that uses the default WEX logger
     Core::Core() : m_logger(winrt::make<WEXLogger>().as<ILogger>())
     {
+        m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version());
     }
 
     // Constructor taking a caller-defined logging class
     Core::Core(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger)
     {
+        m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version());
     }
 
     void Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
@@ -41,7 +43,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         m_captureCard = captureCardFactory.CreateController(m_logger);
 
-        m_logger.LogNote(L"Capture Plugin Loaded: " + m_captureCard.Name());
+        m_logger.LogNote(L"Using Capture Plugin: " + m_captureCard.Name() + L", Version " + m_captureCard.Version());
     }
 
     void Core::LoadCapturePlugin(hstring const& pluginPath)
@@ -61,7 +63,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         m_toolboxes.push_back(toolboxFactory.CreateConfigurationToolbox(m_logger));
 
-        m_logger.LogNote(L"Configuration Toolbox Opened: %s\n" + m_toolboxes[0].Name());
+        m_logger.LogNote(L"Using Toolbox: " + m_toolboxes[0].Name() + L", Version " + m_toolboxes[0].Version());
 
         UpdateToolList();
     }
@@ -83,7 +85,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         m_displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
 
-        m_logger.LogNote(L"DisplayManager Loaded: " + m_displayEngine.Name());
+        m_logger.LogNote(L"Using DisplayManager: " + m_displayEngine.Name() + L", Version " + m_displayEngine.Version());
     }
 
     void Core::LoadDisplayManager(hstring const& displayEnginePath)
@@ -95,6 +97,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     void Core::LoadConfigFile(hstring const& configFile)
     {
+        m_logger.LogNote(L"Loading configuration...");
+
         // Ensure that a test can't start while a component is still being loaded.
         std::scoped_lock lock(m_testLock);
 
@@ -130,11 +134,14 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         if (!hasParsed)
         {
-            // Log this case and exit
+            m_logger.LogError(L"Loading Configuration Failed.");
             throw winrt::hresult_error();
         }
 
         m_configFile = jsonObject;
+
+        // Dump the config file to the log - this is to make debugging easier
+        m_logger.LogConfig(m_configFile.ToString());
 
         // Parse component information out of the config file
         {
@@ -143,53 +150,54 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             if (!componentConfigDataValue || componentConfigDataValue.ValueType() == winrt::JsonValueType::Null)
             {
                 // No data was found.
-                // TODO - log this case
-                return;
+                m_logger.LogWarning(L"Configuration doesn't specify components to load.");
             }
-
-            auto componentConfigData = componentConfigDataValue.GetObjectW();
-
-            // Attempt to load the DisplayManager
-            auto displayEngineValue = componentConfigData.TryLookup(L"DisplayEngine");
-            if (displayEngineValue && displayEngineValue.ValueType() == winrt::JsonValueType::Object)
+            else
             {
-                auto displayEngine = displayEngineValue.GetObjectW();
+                auto componentConfigData = componentConfigDataValue.GetObjectW();
 
-                LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
-
-                auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
-                m_displayEngine.SetConfigData(displayEngineConfig);
-            }
-
-            // Attempt to load the CapturePlugin
-            auto capturePluginValue = componentConfigData.TryLookup(L"CapturePlugin");
-            if (capturePluginValue && capturePluginValue.ValueType() == winrt::JsonValueType::Object)
-            {
-                auto capturePlugin = capturePluginValue.GetObjectW();
-
-                LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
-;
-                auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
-                m_captureCard.SetConfigData(captureCardConfig);
-            }
-
-            // Attempt to load any ConfigurationToolboxes, if applicable
-            auto configurationToolboxesValue = componentConfigData.TryLookup(L"ConfigurationToolboxes");
-            if (configurationToolboxesValue && configurationToolboxesValue.ValueType() == winrt::JsonValueType::Array)
-            {
-                auto configurationToolboxes = configurationToolboxesValue.GetArray();
-
-                for (auto toolbox : configurationToolboxes)
+                // Attempt to load the DisplayManager
+                auto displayEngineValue = componentConfigData.TryLookup(L"DisplayEngine");
+                if (displayEngineValue && displayEngineValue.ValueType() == winrt::JsonValueType::Object)
                 {
-                    auto toolboxConfigEntry = toolbox.GetObjectW();
+                    auto displayEngine = displayEngineValue.GetObjectW();
 
-                    LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"),toolboxConfigEntry.GetNamedString(L"Class"));
+                    LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
 
-                    auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
-                    m_toolboxes.back().SetConfigData(toolboxConfig);
+                    auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
+                    m_displayEngine.SetConfigData(displayEngineConfig);
                 }
 
-                UpdateToolList();
+                // Attempt to load the CapturePlugin
+                auto capturePluginValue = componentConfigData.TryLookup(L"CapturePlugin");
+                if (capturePluginValue && capturePluginValue.ValueType() == winrt::JsonValueType::Object)
+                {
+                    auto capturePlugin = capturePluginValue.GetObjectW();
+
+                    LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
+                    ;
+                    auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
+                    m_captureCard.SetConfigData(captureCardConfig);
+                }
+
+                // Attempt to load any ConfigurationToolboxes, if applicable
+                auto configurationToolboxesValue = componentConfigData.TryLookup(L"ConfigurationToolboxes");
+                if (configurationToolboxesValue && configurationToolboxesValue.ValueType() == winrt::JsonValueType::Array)
+                {
+                    auto configurationToolboxes = configurationToolboxesValue.GetArray();
+
+                    for (auto toolbox : configurationToolboxes)
+                    {
+                        auto toolboxConfigEntry = toolbox.GetObjectW();
+
+                        LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"), toolboxConfigEntry.GetNamedString(L"Class"));
+
+                        auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
+                        m_toolboxes.back().SetConfigData(toolboxConfig);
+                    }
+
+                    UpdateToolList();
+                }
             }
         }
 
@@ -200,25 +208,26 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             if (!testSystemConfigDataValue || testSystemConfigDataValue.ValueType() == winrt::JsonValueType::Null)
             {
                 // No data was found.
-                // TODO - log this case
-                return;
+                m_logger.LogWarning(L"Configuration does not specify test system setup.");
             }
-
-            auto testSystemConfigData = testSystemConfigDataValue.GetObjectW();
-
-            auto displayInputMappingObject = testSystemConfigData.TryLookup(L"DisplayInputMapping");
-            if (displayInputMappingObject && displayInputMappingObject.ValueType() == winrt::JsonValueType::Array)
+            else
             {
-                auto displayInputMappingArray = displayInputMappingObject.GetArray();
+                auto testSystemConfigData = testSystemConfigDataValue.GetObjectW();
 
-                for (auto displayInputMapping : displayInputMappingArray)
+                auto displayInputMappingObject = testSystemConfigData.TryLookup(L"DisplayInputMapping");
+                if (displayInputMappingObject && displayInputMappingObject.ValueType() == winrt::JsonValueType::Array)
                 {
-                    auto mapping = displayInputMapping.GetObjectW();
+                    auto displayInputMappingArray = displayInputMappingObject.GetArray();
 
-                    auto pluginInputName = mapping.GetNamedString(L"PluginInputName");
-                    auto displayId = mapping.GetNamedString(L"DisplayId");
+                    for (auto displayInputMapping : displayInputMappingArray)
+                    {
+                        auto mapping = displayInputMapping.GetObjectW();
 
-                    m_targetMap[pluginInputName] = displayId;
+                        auto pluginInputName = mapping.GetNamedString(L"PluginInputName");
+                        auto displayId = mapping.GetNamedString(L"DisplayId");
+
+                        m_targetMap[pluginInputName] = displayId;
+                    }
                 }
             }
         }
