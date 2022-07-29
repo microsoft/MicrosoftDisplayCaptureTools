@@ -19,7 +19,7 @@ namespace winrt
 // 3. Directly interact with with framework
 //
 enum class Scenario { LoadFromDisk, CreateInMemory, DirectSet };
-auto currentScenario = Scenario::LoadFromDisk;
+auto currentScenario = Scenario::DirectSet;
 
 int main()
 {
