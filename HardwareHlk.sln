@@ -86,7 +86,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TanagerPlugin", "CapturePlu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{893F8111-A827-4191-B800-D2526D28BDDA}"
 	ProjectSection(SolutionItems) = preProject
+		MicrosoftDisplayCaptureTools.common.targets = MicrosoftDisplayCaptureTools.common.targets
+		MicrosoftDisplayCaptureTools.native.targets = MicrosoftDisplayCaptureTools.native.targets
 		MicrosoftDisplayCaptureTools.nuspec = MicrosoftDisplayCaptureTools.nuspec
+		MicrosoftDisplayCaptureTools.win10.targets = MicrosoftDisplayCaptureTools.win10.targets
 	EndProjectSection
 EndProject
 Global
