@@ -36,6 +36,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             return L"0.1";
         };
 
+        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger Logger()
+        {
+            return m_logger;
+        }
+
     private:
         // Iterate through Toolboxes and consolidate a single list of all tools from all sources.
         void UpdateToolList();

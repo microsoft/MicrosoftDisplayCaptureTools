@@ -77,8 +77,17 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface ICore
     {
-        // Get the version of this implementation, in Major.Minor format
-        String Version{ get; };
+        // Get the version, in Major.Minor format
+        String Version
+        { 
+            get;
+        };
+
+        // Get the logger for this instance
+        ILogger Logger
+        {
+            get;
+        };
 
         // LoadCapturePlugin
         // ----------------------------------------------------------------------------------------------------------------

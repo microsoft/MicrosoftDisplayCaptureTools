@@ -92,7 +92,7 @@ namespace winrt::TanagerPlugin::implementation
 
 	FirmwareVersionInfo Fx3FpgaInterface::GetFirmwareVersionInfo()
 	{
-        auto bufferLen = sizeof(FirmwareVersionInfo);
+        uint32_t bufferLen = sizeof(FirmwareVersionInfo);
         Buffer inBuffer(bufferLen);
         inBuffer.Length(bufferLen);
 		UsbSetupPacket setupPacket;

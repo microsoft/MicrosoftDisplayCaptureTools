@@ -299,7 +299,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 			return true;
 		case TanagerDisplayInputPort::displayPort:
 			return false;
-		}
+        }
+
+        return false;
     }
 
     bool TanagerCaptureCapabilities::CanConfigureDisplayID()

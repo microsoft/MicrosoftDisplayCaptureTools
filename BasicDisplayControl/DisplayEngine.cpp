@@ -24,9 +24,13 @@ namespace winrt
     // Hardware HLK project
     using namespace winrt::MicrosoftDisplayCaptureTools::Display;
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
-}
+} // namespace winrt
 
-namespace MonitorUtilities
+// Disable 'unreferenced formal parameter' errors
+#pragma warning(push)
+#pragma warning(disable : 4100)
+
+    namespace MonitorUtilities
 {
     static LUID LuidFromAdapterId(winrt::Windows::Graphics::DisplayAdapterId id)
     {
@@ -683,3 +687,5 @@ namespace winrt::DisplayControl::implementation
         return m_bitmap;
     }
 }
+
+#pragma warning(pop)
