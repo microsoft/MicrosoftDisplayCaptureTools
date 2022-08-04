@@ -140,15 +140,19 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\IteIt68051\$(Configuration)\IteIt68051.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\IteIt68051\$(Configuration)\IteIt68051.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\IteIt68051\$(Configuration)\IteIt68051.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\IteIt68051\$(Configuration)\IteIt68051.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Midl>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(SolutionDir)IDL;</AdditionalIncludeDirectories>
@@ -182,6 +186,10 @@
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\$(Configuration)\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\$(Configuration)\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;$(MSBuildProjectDirectory)\$(Configuration)\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Midl>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(SolutionDir)IDL;</AdditionalIncludeDirectories>
