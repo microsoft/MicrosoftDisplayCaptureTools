@@ -71,6 +71,16 @@ namespace MicrosoftDisplayCaptureTools.Framework
         void LogConfig(String config);
     };
 
+    // 
+    // A struct mapping a display sink (capture card input) to source (GPU output, corresponds to DisplayTarget in the 
+    // Windows API).
+    //
+    struct DisplayToCaptureMapping
+    {
+        MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput displaySink;
+        Windows.Devices.Display.Core.DisplayEngine displaySource;
+    };
+
     //
     // The core of the Hardware HLK project, this object manages communication and coordination between the various other
     // components of this framework.
@@ -164,13 +174,33 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         void LoadConfigFile(String configFile);
 
-        // RunTest
+        // LockFramework
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      This method will begin running through a test scenario with current test settings. This is a blocking 
-        //      operation and all methods on this object will fail while this is in progress.
+        //      Locks the framework so that components can't be changed. The intention is that this should be used when 
+        //      writing tests to prevent accidental changes that would be difficult to debug.
         //
-        void RunTest();
+        // Returns:
+        //      The IClosable object returned represents the lock on framework, calling .Close() or allowing the object to
+        //      be destroyed will unlock the Framework.
+        //
+        Windows.Foundation.IClosable LockFramework();
+
+        // GetDisplayToCaptureMappings
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns a list of all capture card inputs with their corresponding displays, a source-to-sink mapping.
+        //
+        // Parameters:
+        //      regenerateMappings
+        //          If true, the framework will attempt to automatically generate a mapping of display sources to sinks 
+        //          using any currently loaded CaptureCardPlugins and DisplayEngines. If false the framework will provide
+        //          only whichever mappings were provided by configuration file.
+        // 
+        // Returns:
+        //      An array of structs containing the source and sink references.
+        //
+        DisplayToCaptureMapping[] GetDisplayToCaptureMappings(Bool regenerateMappings);
 
         // GetLoadedTools
         // ----------------------------------------------------------------------------------------------------------------

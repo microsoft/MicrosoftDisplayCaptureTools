@@ -11,6 +11,34 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     const std::wstring c_ConfigurationToolboxDefaultName = L".ToolboxFactory";
     const std::wstring c_DisplayEngineDefaultName        = L".DisplayEngineFactory";
 
+    // Struct to ensure that all components are locked and can't be modified while a user is running tests
+    struct TestLock : implements<TestLock, winrt::Windows::Foundation::IClosable>
+    {
+        TestLock(std::atomic_bool* testLock) : m_isLocked(testLock)
+        {
+            *m_isLocked = true;
+        };
+
+        ~TestLock()
+        {
+            Close();
+        };
+
+        void Close()
+        {
+            *m_isLocked = false;
+        }
+
+        bool IsLocked()
+        {
+            return *m_isLocked;
+        };
+
+    private:
+        // Loading components/config files is not allowed while a test is running and vice-versa.
+        std::atomic_bool* m_isLocked;
+    };
+
     struct Core : CoreT<Core>
     {
         Core();
@@ -26,7 +54,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         void LoadDisplayManager(hstring const& displayEnginePath);
 
         void LoadConfigFile(hstring const& configFilePath);
-        void RunTest();
+
+        winrt::Windows::Foundation::IClosable LockFramework();
+
         com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> GetLoadedTools();
         winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController GetCaptureCard();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine GetDisplayEngine();
@@ -65,11 +95,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // from the IController plugin.
         std::map<winrt::hstring, winrt::hstring> m_targetMap;
 
-        // Loading components/config files is not allowed while a test is running and vice-versa.
-        std::recursive_mutex m_testLock;
-
         // The logging system for this framework instance
         const ILogger m_logger;
+
+        // Has a test locked components
+        std::atomic_bool m_isLocked = false;
     };
 }
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::factory_implementation

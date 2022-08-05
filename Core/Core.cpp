@@ -5,6 +5,7 @@
 
 namespace winrt
 {
+    using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Data::Json;
     using namespace winrt::Windows::Storage;
     using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
@@ -36,8 +37,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     void Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
     {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
+        // Ensure that a component can't be changed if a test has locked the framework
+        if (m_isLocked)
+        {
+            m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
+            throw winrt::hresult_illegal_method_call();
+        }
 
         // Load the capture card from the provided path.
         auto captureCardFactory = LoadInterfaceFromPath<CaptureCard::IControllerFactory>(pluginPath, className);
@@ -56,8 +61,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     void Core::LoadToolbox(hstring const& toolboxPath, hstring const& className)
     {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
+        // Ensure that a component can't be changed if a test has locked the framework
+        if (m_isLocked)
+        {
+            m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
+            throw winrt::hresult_illegal_method_call();
+        }
 
         // Load the toolbox from the provided path.
         auto toolboxFactory = LoadInterfaceFromPath<ConfigurationTools::IConfigurationToolboxFactory>(toolboxPath, className);
@@ -78,8 +87,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     void Core::LoadDisplayManager(hstring const& displayEnginePath, hstring const& className)
     {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
+        // Ensure that a component can't be changed if a test has locked the framework
+        if (m_isLocked)
+        {
+            m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
+            throw winrt::hresult_illegal_method_call();
+        }
 
         // Load the toolbox from the provided path.
         auto displayEngineFactory = LoadInterfaceFromPath<Display::IDisplayEngineFactory>(displayEnginePath, className);
@@ -100,8 +113,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     {
         m_logger.LogNote(L"Loading configuration...");
 
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
+        // Ensure that a component can't be changed if a test has locked the framework
+        if (m_isLocked)
+        {
+            m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
+            throw winrt::hresult_illegal_method_call();
+        }
 
         // First try to see if the string passed in is a self-contained json file
         auto jsonObject = JsonObject();
@@ -234,71 +251,22 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         }
     }
 
-    void Core::RunTest()
-    {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
-        
-        // Make sure the capture card is ready
-        // TODO: As with the DisplayEngine note below, this should be done on _every_ target in the map.
-        auto captureInput = m_captureCard.EnumerateDisplayInputs()[0];
-        captureInput.FinalizeDisplayState();
-
-        // Reset the display manager to the correct 
-        auto displayId = m_targetMap[captureInput.Name()];
-        m_displayEngine.InitializeForStableMonitorId(displayId);
-
-        winrt::hstring testName = L"";
-
-        for (auto tool : m_toolList)
-        {
-            tool.Apply(m_displayEngine);
-            testName = testName + tool.GetConfiguration() + L"_";
-        }
-
-        // Start the render
-        // TODO: allow a map of multiple DisplayEngines here, there is a mapping of display Engine to capture card inputs
-        //       and a test run should make sure to start operations on all of them.
-        auto renderer = m_displayEngine.StartRender();
-
-        // TODO: make this configurable, this is the amount of time we are waiting for display settings to 
-        //       stabilize after the 'StartRender' call causes a mode change and the rendering to start
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        // Capture the frame.
-        auto capturedFrame = captureInput.CaptureFrame();
-        auto predictedFrame = m_displayEngine.GetPrediction();
-
-        // TODO: build a uniquely identifying string from the currently selected tools
-
-        capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
-    }
-
     com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> Core::GetLoadedTools()
     {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
-
         return winrt::com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>(m_toolList);
     }
 
-    winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController Framework::implementation::Core::GetCaptureCard()
+    winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController Core::GetCaptureCard()
     {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
-
         return m_captureCard;
     }
 
-    winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine Framework::implementation::Core::GetDisplayEngine()
+    winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine Core::GetDisplayEngine()
     {
-        // Ensure that a test can't start while a component is still being loaded.
-        std::scoped_lock lock(m_testLock);
-
         return m_displayEngine;
     }
 
-    void Framework::implementation::Core::UpdateToolList()
+    void Core::UpdateToolList()
     {
         if (m_toolboxes.empty()) return;
 
@@ -312,5 +280,16 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
                 m_toolList.push_back(toolbox.GetTool(toolName));
             }
         }
+    }
+
+    winrt::Windows::Foundation::IClosable Core::LockFramework()
+    {
+        if (m_isLocked)
+        {
+            m_logger.LogAssert(L"Attempted to lock framework while already locked!");
+            throw winrt::hresult_illegal_method_call();
+        }
+
+        return winrt::make<TestLock>(&m_isLocked);
     }
 }
