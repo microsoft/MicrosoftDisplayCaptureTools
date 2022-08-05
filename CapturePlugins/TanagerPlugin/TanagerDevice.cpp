@@ -381,8 +381,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 
     void TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
+        auto predictedBitmap = prediction.GetBitmap();
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
-        auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+        auto predictBuffer = predictedBitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
 
         //
         // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
@@ -440,7 +441,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
                 auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
                 auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
-                encoder.SetSoftwareBitmap(prediction.GetBitmap());
+                encoder.SetSoftwareBitmap(predictedBitmap);
 
                 encoder.FlushAsync().get();
             }
