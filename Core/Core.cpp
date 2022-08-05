@@ -21,8 +21,8 @@ namespace std
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
-    // Constructor that uses the default WEX logger
-    Core::Core() : m_logger(winrt::make<WEXLogger>().as<ILogger>())
+    // Constructor that uses the default logger
+    Core::Core() : m_logger(winrt::make<winrt::Logger>().as<ILogger>())
     {
         m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version());
     }

@@ -12,6 +12,8 @@
 #include <Wex.Logger.h>
 #include <WexString.h>
 #include <WexTestClass.h>
+#include <WexLogTrace.h>
+#include <WexTypes.h>
 
 // Project headers
 #include "winrt/Windows.Foundation.h"
@@ -20,3 +22,4 @@
 #include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
 
 #include "TestSettings.h"
+#include "Logger.h"

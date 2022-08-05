@@ -1,11 +1,13 @@
 #pragma once
+#include <iostream>
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework
 {
-    struct WEXLogger : winrt::implements<WEXLogger, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger>
+    struct Logger : winrt::implements<Logger, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger>
     {
-        WEXLogger();
-        ~WEXLogger();
+        Logger();
+        Logger(std::wostream outStream);
+        ~Logger();
 
         void LogNote(hstring const& note);
         void LogWarning(hstring const& warning);
@@ -14,6 +16,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework
         void LogConfig(hstring const& config);
 
     private:
-        const bool m_selfInitialized;
+        hstring GetTimeStamp();
+
+    private:
+        std::shared_ptr<std::wostream> m_output;
+        std::wfilebuf m_fb;
+        std::mutex m_mutex;
     };
 }

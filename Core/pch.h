@@ -10,6 +10,7 @@
 // STD headers
 #include <mutex>
 #include <filesystem>
+#include <fstream>
 
 // Windows Headers
 #include <Windows.h>

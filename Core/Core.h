@@ -9,7 +9,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
     const std::wstring c_CapturePluginDefaultName        = L".ControllerFactory"; 
     const std::wstring c_ConfigurationToolboxDefaultName = L".ToolboxFactory";
-    const std::wstring c_DisplayEngineDefaultName       = L".DisplayEngineFactory";
+    const std::wstring c_DisplayEngineDefaultName        = L".DisplayEngineFactory";
 
     struct Core : CoreT<Core>
     {

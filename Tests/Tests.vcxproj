@@ -271,6 +271,7 @@
   <ItemGroup>
     <ClInclude Include="CaptureFrameworkTestBase.h" />
     <ClInclude Include="DescriptorTests.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="PictTests.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="TestSettings.h" />
@@ -278,6 +279,7 @@
   <ItemGroup>
     <ClCompile Include="CaptureFrameworkTestBase.cpp" />
     <ClCompile Include="DescriptorTests.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="PictTests.cpp" />
     <ClCompile Include="Module.cpp" />
     <ClCompile Include="pch.cpp">

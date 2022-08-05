@@ -10,9 +10,11 @@ using namespace MicrosoftDisplayCaptureTools;
 using namespace Windows::Devices::Display;
 using namespace Windows::Devices::Display::Core;
 using namespace Windows::Graphics::Imaging;
+using namespace MicrosoftDisplayCaptureTools::Tests::Logging;
 } // namespace winrt
 
 winrt::Framework::Core g_framework{nullptr};
+winrt::MicrosoftDisplayCaptureTools::Framework::ILogger g_logger{nullptr};
 
 namespace MicrosoftDisplayCaptureTools::Tests {
 
@@ -28,6 +30,9 @@ MODULE_SETUP(ModuleSetup)
 {
     winrt::init_apartment();
 
+    // Create WEX logger to log tests/results/errors
+    g_logger = winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>();
+
     // Identify the config file path
     auto cwd = std::filesystem::current_path();
     winrt::hstring defaultConfigPath = winrt::hstring(cwd.c_str()) + L"\\Tests\\TestConfig.json";
@@ -36,7 +41,7 @@ MODULE_SETUP(ModuleSetup)
     RuntimeParameters::TryGetValue(ConfigFileRuntimeParameter, configPath);
 
     // Load the framework
-    g_framework = winrt::Framework::Core();
+    g_framework = winrt::Framework::Core(g_logger);
     g_framework.LoadConfigFile(static_cast<const wchar_t*>(configPath));
 
     Log::Comment(L"Loaded plugins");
