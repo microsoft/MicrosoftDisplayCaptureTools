@@ -11,6 +11,7 @@ namespace winrt
     using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace winrt::MicrosoftDisplayCaptureTools::Display;
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities;
     using namespace winrt::MicrosoftDisplayCaptureTools::Libraries;
 }
 

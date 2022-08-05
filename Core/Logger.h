@@ -1,8 +1,10 @@
 #pragma once
 #include <iostream>
 
-namespace winrt::MicrosoftDisplayCaptureTools::Framework
+namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities 
 {
+    static std::wstring GetTimeStamp();
+
     struct Logger : winrt::implements<Logger, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger>
     {
         Logger();
@@ -14,9 +16,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework
         void LogError(hstring const& error);
         void LogAssert(hstring const& assert);
         void LogConfig(hstring const& config);
-
-    private:
-        hstring GetTimeStamp();
 
     private:
         std::shared_ptr<std::wostream> m_output;
