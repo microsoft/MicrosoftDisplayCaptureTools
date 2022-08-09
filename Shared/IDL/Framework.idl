@@ -72,13 +72,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
     };
 
     // 
-    // A struct mapping a display sink (capture card input) to source (GPU output, corresponds to DisplayTarget in the 
-    // Windows API).
+    // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection
+    // for the test setup.
     //
-    struct DisplayToCaptureMapping
+    interface ISourceToSinkMapping
     {
-        MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput displaySink;
-        Windows.Devices.Display.Core.DisplayEngine displaySource;
+        Windows.Devices.Display.Core.DisplayTarget GetSource();
+        MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput GetSink();
     };
 
     //
@@ -186,7 +186,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         Windows.Foundation.IClosable LockFramework();
 
-        // GetDisplayToCaptureMappings
+        // GetSourceToSinkMapping
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
         //      Returns a list of all capture card inputs with their corresponding displays, a source-to-sink mapping.
@@ -195,12 +195,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //      regenerateMappings
         //          If true, the framework will attempt to automatically generate a mapping of display sources to sinks 
         //          using any currently loaded CaptureCardPlugins and DisplayEngines. If false the framework will provide
-        //          only whichever mappings were provided by configuration file.
+        //          only whichever mappings were provided by configuration file. If false and no mappings were provided via
+        //          config files, an empty array will be returned.
         // 
         // Returns:
         //      An array of structs containing the source and sink references.
         //
-        DisplayToCaptureMapping[] GetDisplayToCaptureMappings(Bool regenerateMappings);
+        ISourceToSinkMapping[] GetSourceToSinkMappings(Boolean regenerateMappings);
 
         // GetLoadedTools
         // ----------------------------------------------------------------------------------------------------------------

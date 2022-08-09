@@ -266,6 +266,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         return m_displayEngine;
     }
 
+    com_array<Framework::ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings)
+    {
+        auto mappings = std::vector<Framework::ISourceToSinkMapping>();
+
+
+
+        return com_array<Framework::ISourceToSinkMapping>(mappings);
+    }
+
     void Core::UpdateToolList()
     {
         if (m_toolboxes.empty()) return;
@@ -292,4 +301,19 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         return winrt::make<TestLock>(&m_isLocked);
     }
-}
+
+    SourceToSinkMapping::SourceToSinkMapping(IDisplayInput sink, winrt::Windows::Devices::Display::Core::DisplayTarget source) :
+        m_sink(sink), m_source(source)
+    {
+    }
+
+    IDisplayInput SourceToSinkMapping::GetSink()
+    {
+        return m_sink;
+    }
+
+    winrt::Windows::Devices::Display::Core::DisplayTarget SourceToSinkMapping::GetSource()
+    {
+        return m_source;
+    }
+} // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation

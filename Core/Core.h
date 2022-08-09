@@ -39,10 +39,22 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         std::atomic_bool* m_isLocked;
     };
 
+    struct SourceToSinkMapping : implements <SourceToSinkMapping,ISourceToSinkMapping>
+    {
+        SourceToSinkMapping(CaptureCard::IDisplayInput sink, winrt::Windows::Devices::Display::Core::DisplayTarget source);
+
+        CaptureCard::IDisplayInput GetSink();
+        winrt::Windows::Devices::Display::Core::DisplayTarget GetSource();
+
+    private:
+        const CaptureCard::IDisplayInput m_sink;
+        const winrt::Windows::Devices::Display::Core::DisplayTarget m_source;
+    };
+
     struct Core : CoreT<Core>
     {
         Core();
-        Core(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        Core(Framework::ILogger const& logger);
 
         void LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         void LoadCapturePlugin(hstring const& pluginPath);
@@ -57,9 +69,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         winrt::Windows::Foundation::IClosable LockFramework();
 
-        com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> GetLoadedTools();
-        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController GetCaptureCard();
-        winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine GetDisplayEngine();
+        com_array<ConfigurationTools::IConfigurationTool> GetLoadedTools();
+        CaptureCard::IController GetCaptureCard();
+        Display::IDisplayEngine GetDisplayEngine();
+
+        
+        com_array<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(bool regenerateMappings);
 
         hstring Version()
         {
