@@ -77,7 +77,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface ISourceToSinkMapping
     {
-        Windows.Devices.Display.Core.DisplayTarget GetSource();
+        MicrosoftDisplayCaptureTools.Display.IDisplayOutput GetSource();
         MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput GetSink();
     };
 
@@ -102,9 +102,12 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // LoadCapturePlugin
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Loads a new plugin into the capture framework. Note that only one plugin can be loaded at a time, so 
-        //      calling this multiple times is not recommended outside of testing scenarios.
+        //      Loads a new plugin into the capture framework. Note that loading multiple instances of the same capture
+        //      card is not supported, this function will fail.
         //
+        // Returns:
+        //      The newly loaded capture card controller object
+        // 
         // Parameters:
         //      pluginPath
         //          This string represents a filepath from which a conformant plugin implementation is exposed.
@@ -117,14 +120,17 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          Example: pluginPath = ".\\GenericCaptureCard.dll"
         //                   className  = "GenericCaptureCard.Controller"
         // 
-        void LoadCapturePlugin(String pluginPath, String className);
-        void LoadCapturePlugin(String pluginPath);
+        MicrosoftDisplayCaptureTools.CaptureCard.IController LoadCapturePlugin(String pluginPath, String className);
+        MicrosoftDisplayCaptureTools.CaptureCard.IController LoadCapturePlugin(String pluginPath);
 
         // LoadToolbox
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
         //      Adds a Toolbox to the Core, any configuration tools exposed by the Toolbox opened here will now be 
         //      available to the Core for test runs.
+        //
+        // Returns:
+        //      The newly loaded toolbox object
         //
         // Parameters:
         //      toolboxPath
@@ -138,13 +144,17 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          Example: pluginPath = ".\\BasicConfigurationTools.dll"
         //                   className  = "BasicConfigurationTools.Toolbox"
         //
-        void LoadToolbox(String toolboxPath, String className);
-        void LoadToolbox(String toolboxPath);
+        MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox LoadToolbox(String toolboxPath, String className);
+        MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox LoadToolbox(String toolboxPath);
 
-        // LoadDisplayManager
+        // LoadDisplayEngine
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Adds a DisplayManager to the Core. This will be used 
+        //      Sets a DisplayEngine to the Core, this can be used to take over display outputs on the test system and
+        //      control their outputs. Only a single DisplayEngine can be loaded at a time.
+        //
+        // Returns:
+        //      The newly loaded DisplayEngine
         //
         // Parameters:
         //      displayManagerPath
@@ -158,8 +168,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          Example: pluginPath = ".\\BasicDisplayManager.dll"
         //                   className  = "BasicDisplayManager.DisplayManager"
         //
-        void LoadDisplayManager(String displayManagerPath, String className);
-        void LoadDisplayManager(String displayManagerPath);
+        MicrosoftDisplayCaptureTools.Display.IDisplayEngine LoadDisplayManager(String displayManagerPath, String className);
+        MicrosoftDisplayCaptureTools.Display.IDisplayEngine LoadDisplayManager(String displayManagerPath);
 
         // LoadConfigFile
         // ----------------------------------------------------------------------------------------------------------------
@@ -201,30 +211,26 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // Returns:
         //      An array of structs containing the source and sink references.
         //
-        ISourceToSinkMapping[] GetSourceToSinkMappings(Boolean regenerateMappings);
+        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(Boolean regenerateMappings);
 
         // GetLoadedTools
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Returns a collection of all tools loaded by the framework. This is intended to allow utilities and tests to 
-        //      inspect and configure settings for tools before calling RunTest.
+        //      Returns a collection of all tools loaded by the framework.
         //
         MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationTool[] GetLoadedTools();
-
+        
         // GetCaptureCard
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Returns a reference to the capture card plugin loaded by the framework. This is intended to allow utilities
-        //      and tests to directly control the flow of a test for development purposes.
+        //      Returns a collection of all capture cards loaded by the framework.
         //
-        MicrosoftDisplayCaptureTools.CaptureCard.IController GetCaptureCard();
+        MicrosoftDisplayCaptureTools.CaptureCard.IController[] GetCaptureCards();
 
         // GetDisplayEngine
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Returns a reference to the DisplayEngine loaded by the framework. This is intended to allow utilities and 
-        //      tests to directly control the rendering to the physical display as well as managing the "predicted" output 
-        //      rendering.
+        //      Returns a reference to the DisplayEngine loaded by the framework.
         //
         MicrosoftDisplayCaptureTools.Display.IDisplayEngine GetDisplayEngine();
     }

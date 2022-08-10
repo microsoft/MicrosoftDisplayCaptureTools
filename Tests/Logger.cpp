@@ -1,11 +1,5 @@
 #include "pch.h"
-#include "Logger.h"
 
-#include <Wex.Common.h>
-#include <WexLogTrace.h>
-#include <Wex.Logger.h>
-#include <LogController.h>
-#include <Log.h>
 #include <iostream>
 
 using namespace WEX::Logging;

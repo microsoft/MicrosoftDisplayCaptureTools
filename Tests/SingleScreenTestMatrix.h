@@ -1,6 +1,5 @@
 #pragma once
 
-#include <WexTestClass.h>
 #include "CaptureFrameworkTestBase.h"
 
 class SingleScreenTestMatrix : public CaptureFrameworkTestBase

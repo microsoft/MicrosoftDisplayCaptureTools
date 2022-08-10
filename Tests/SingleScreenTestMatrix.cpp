@@ -15,6 +15,7 @@ namespace winrt
     using namespace Windows::Devices::Display::Core;
     using namespace Windows::Graphics::Imaging;
     using namespace MicrosoftDisplayCaptureTools;
+    using namespace MicrosoftDisplayCaptureTools::Framework;
 }
 
 bool SingleScreenTestMatrix::Setup()
@@ -31,6 +32,15 @@ void SingleScreenTestMatrix::Test()
 {
     // Lock the framework's set of loaded components
     auto frameworkLock = g_framework.LockFramework();
+    VERIFY_IS_NOT_NULL(frameworkLock);
+
+    // Get the display/capture mappings
+    auto mappings = g_framework.GetSourceToSinkMappings(true);
+    VERIFY_IS_GREATER_THAN(mappings.Size(), (uint32_t)0);
+    winrt::ISourceToSinkMapping mapping = mappings.GetAt(0);
+
+    auto displayEngine = mapping.GetSource();
+    auto displayInput = mapping.GetSink();
     
     winrt::hstring testName = L"";
     auto tools = g_framework.GetLoadedTools();
@@ -43,28 +53,21 @@ void SingleScreenTestMatrix::Test()
 
             // Setting the tool value
             tool.SetConfiguration(winrt::hstring(toolSetting));
-            tool.Apply(m_displayEngine);
+            tool.Apply(displayEngine);
             testName = testName + tool.GetConfiguration() + L"_";
         }
     }
 
     // Make sure the capture card is ready
-    // TODO: This should use the configured path mapping, instead of guessing input 0.
-    auto captureCard = g_framework->GetCaptureCard();
-    auto captureInput = captureCard.EnumerateDisplayInputs()[0];
-    captureInput.FinalizeDisplayState();
-
-    // Reset the display manager to the correct
-    auto displayId = m_targetMap[captureInput.Name()];
-    m_displayEngine.InitializeForStableMonitorId(displayId);
+    displayInput.FinalizeDisplayState();
 
     {
-        auto renderer = m_displayEngine.StartRender();
+        auto renderer = displayEngine.StartRender();
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         // Capture the frame.
-        auto capturedFrame = captureInput.CaptureFrame();
-        auto predictedFrame = m_displayEngine.GetPrediction();
+        auto capturedFrame = displayInput.CaptureFrame();
+        auto predictedFrame = displayEngine.GetPrediction();
 
         // TODO: build a uniquely identifying string from the currently selected tools
 

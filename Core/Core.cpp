@@ -6,6 +6,7 @@
 namespace winrt
 {
     using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Data::Json;
     using namespace winrt::Windows::Storage;
     using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
@@ -30,12 +31,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     }
 
     // Constructor taking a caller-defined logging class
-    Core::Core(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger)
+    Core::Core(ILogger const& logger) : m_logger(logger)
     {
         m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version());
     }
 
-    void Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
+    IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
     {
         // Ensure that a component can't be changed if a test has locked the framework
         if (m_isLocked)
@@ -45,21 +46,24 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         }
 
         // Load the capture card from the provided path.
-        auto captureCardFactory = LoadInterfaceFromPath<CaptureCard::IControllerFactory>(pluginPath, className);
+        auto captureCardFactory = LoadInterfaceFromPath<IControllerFactory>(pluginPath, className);
 
-        m_captureCard = captureCardFactory.CreateController(m_logger);
+        auto captureCardController = captureCardFactory.CreateController(m_logger);
+        m_captureCards.push_back(captureCardController);
 
-        m_logger.LogNote(L"Using Capture Plugin: " + m_captureCard.Name() + L", Version " + m_captureCard.Version());
+        m_logger.LogNote(L"Using Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version());
+
+        return captureCardController;
     }
 
-    void Core::LoadCapturePlugin(hstring const& pluginPath)
+    IController Core::LoadCapturePlugin(hstring const& pluginPath)
     {
         // Create the className string from 
         winrt::hstring className = std::path(pluginPath.c_str()).stem().c_str();
-        LoadCapturePlugin(pluginPath, className + c_CapturePluginDefaultName);
+        return LoadCapturePlugin(pluginPath, className + c_CapturePluginDefaultName);
     }
 
-    void Core::LoadToolbox(hstring const& toolboxPath, hstring const& className)
+    IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring const& className)
     {
         // Ensure that a component can't be changed if a test has locked the framework
         if (m_isLocked)
@@ -69,23 +73,27 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         }
 
         // Load the toolbox from the provided path.
-        auto toolboxFactory = LoadInterfaceFromPath<ConfigurationTools::IConfigurationToolboxFactory>(toolboxPath, className);
+        auto toolboxFactory = LoadInterfaceFromPath<IConfigurationToolboxFactory>(toolboxPath, className);
 
-        m_toolboxes.push_back(toolboxFactory.CreateConfigurationToolbox(m_logger));
+        auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
+
+        m_toolboxes.push_back(toolbox);
 
         m_logger.LogNote(L"Using Toolbox: " + m_toolboxes[0].Name() + L", Version " + m_toolboxes[0].Version());
 
         UpdateToolList();
+
+        return toolbox;
     }
 
-    void Core::LoadToolbox(hstring const& toolboxPath)
+    IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath)
     {
         // Create the className string from
         winrt::hstring className = std::path(toolboxPath.c_str()).stem().c_str();
-        LoadToolbox(toolboxPath, className + c_ConfigurationToolboxDefaultName);
+        return LoadToolbox(toolboxPath, className + c_ConfigurationToolboxDefaultName);
     }
 
-    void Core::LoadDisplayManager(hstring const& displayEnginePath, hstring const& className)
+    IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath, hstring const& className)
     {
         // Ensure that a component can't be changed if a test has locked the framework
         if (m_isLocked)
@@ -95,18 +103,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         }
 
         // Load the toolbox from the provided path.
-        auto displayEngineFactory = LoadInterfaceFromPath<Display::IDisplayEngineFactory>(displayEnginePath, className);
+        auto displayEngineFactory = LoadInterfaceFromPath<IDisplayEngineFactory>(displayEnginePath, className);
 
         m_displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
 
         m_logger.LogNote(L"Using DisplayManager: " + m_displayEngine.Name() + L", Version " + m_displayEngine.Version());
+
+        return m_displayEngine;
     }
 
-    void Core::LoadDisplayManager(hstring const& displayEnginePath)
+    IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath)
     {
         // Create the className string from
         winrt::hstring className = std::path(displayEnginePath.c_str()).stem().c_str();
-        LoadDisplayManager(displayEnginePath, className + c_CapturePluginDefaultName);
+        return LoadDisplayManager(displayEnginePath, className + c_CapturePluginDefaultName);
     }
 
     void Core::LoadConfigFile(hstring const& configFile)
@@ -192,10 +202,10 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
                 {
                     auto capturePlugin = capturePluginValue.GetObjectW();
 
-                    LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
-                    ;
+                    auto captureCard = LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
+
                     auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
-                    m_captureCard.SetConfigData(captureCardConfig);
+                    captureCard.SetConfigData(captureCardConfig);
                 }
 
                 // Attempt to load any ConfigurationToolboxes, if applicable
@@ -230,6 +240,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             }
             else
             {
+                // TODO: assert that we do in fact have at least a displayEngine and a capture plugin, otherwise these mappings don't make sense.
                 auto testSystemConfigData = testSystemConfigDataValue.GetObjectW();
 
                 auto displayInputMappingObject = testSystemConfigData.TryLookup(L"DisplayInputMapping");
@@ -241,38 +252,69 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
                     {
                         auto mapping = displayInputMapping.GetObjectW();
 
+                        auto pluginName = mapping.GetNamedString(L"CapturePluginName");
                         auto pluginInputName = mapping.GetNamedString(L"PluginInputName");
                         auto displayId = mapping.GetNamedString(L"DisplayId");
 
-                        m_targetMap[pluginInputName] = displayId;
+                        m_logger.LogConfig(hstring(L"Display: ") + displayId + L" connected to " + pluginName + L"." + pluginInputName);
+
+                        IDisplayInput foundInput = nullptr;
+                        for (auto&& plugin : m_captureCards)
+                        {
+                            if (plugin.Name() == pluginName)
+                            {
+                                for (auto&& input : plugin.EnumerateDisplayInputs())
+                                {
+                                    if (input.Name() == pluginInputName)
+                                    {
+                                        foundInput = input;
+
+                                        // TODO: Remove this call - if the machine is going to be set up via config file, then the caller is responsible
+                                        //       for ensuring that the system is setup before trying to load the config file.
+                                        foundInput.FinalizeDisplayState();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!foundInput)
+                        {
+                            m_logger.LogError(L"Display input mapped from config file not found.");
+                        }
+
+                        m_displayMapping[foundInput] = m_displayEngine.InitializeOutput(displayId);
                     }
                 }
             }
         }
     }
 
-    com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool> Core::GetLoadedTools()
+    com_array<IConfigurationTool> Core::GetLoadedTools()
     {
-        return winrt::com_array<winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>(m_toolList);
+        return com_array<IConfigurationTool>(m_toolList);
     }
 
-    winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController Core::GetCaptureCard()
+    com_array<IController> Core::GetCaptureCards()
     {
-        return m_captureCard;
+        return com_array<IController>(m_captureCards);
     }
 
-    winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine Core::GetDisplayEngine()
+    IDisplayEngine Core::GetDisplayEngine()
     {
         return m_displayEngine;
     }
 
-    com_array<Framework::ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings)
+    IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings)
     {
-        auto mappings = std::vector<Framework::ISourceToSinkMapping>();
+        auto mappings = winrt::single_threaded_vector<ISourceToSinkMapping>();
 
+        // TODO: delete existing mapping and regerenate them if regenerateMappings
+        for (auto&& entry : m_displayMapping)
+        {
+            mappings.Append(winrt::make<SourceToSinkMapping>(entry.first, entry.second));
+        }
 
-
-        return com_array<Framework::ISourceToSinkMapping>(mappings);
+        return mappings;
     }
 
     void Core::UpdateToolList()
@@ -302,8 +344,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         return winrt::make<TestLock>(&m_isLocked);
     }
 
-    SourceToSinkMapping::SourceToSinkMapping(IDisplayInput sink, winrt::Windows::Devices::Display::Core::DisplayTarget source) :
-        m_sink(sink), m_source(source)
+    SourceToSinkMapping::SourceToSinkMapping(IDisplayInput const& sink, IDisplayOutput const& source) : m_sink(sink), m_source(source)
     {
     }
 
@@ -312,7 +353,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         return m_sink;
     }
 
-    winrt::Windows::Devices::Display::Core::DisplayTarget SourceToSinkMapping::GetSource()
+    IDisplayOutput SourceToSinkMapping::GetSource()
     {
         return m_source;
     }

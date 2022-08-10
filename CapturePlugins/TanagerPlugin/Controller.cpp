@@ -52,7 +52,7 @@ namespace winrt::TanagerPlugin::implementation
 
     hstring Controller::Name()
     {
-        return L"Tanager Plugin";
+        return L"Tanager";
     }
 
     com_array<IDisplayInput> Controller::EnumerateDisplayInputs()

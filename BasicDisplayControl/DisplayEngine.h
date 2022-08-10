@@ -150,27 +150,19 @@ namespace winrt::DisplayControl::implementation
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
-    struct DisplayEngine : DisplayEngineT<DisplayEngine>
+    struct DisplayOutput : implements<DisplayOutput, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput>
     {
-        DisplayEngine();
-        DisplayEngine(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        DisplayOutput(
+            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger, 
+            winrt::Windows::Devices::Display::Core::DisplayTarget const& target,
+            winrt::Windows::Devices::Display::Core::DisplayManager const& manager);
 
-        ~DisplayEngine();
-
-        hstring Name();
-        void InitializeForDisplayTarget(winrt::Windows::Devices::Display::Core::DisplayTarget const& target);
-        void InitializeForStableMonitorId(winrt::hstring target);
-        winrt::Windows::Devices::Display::Core::DisplayTarget GetTarget();
+        winrt::Windows::Devices::Display::Core::DisplayTarget Target();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngineCapabilities GetCapabilities();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet GetProperties();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction GetPrediction();
-        void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
-        winrt::Windows::Foundation::IClosable StartRender();
 
-        hstring Version()
-        {
-            return L"0.1";
-        };
+        winrt::Windows::Foundation::IClosable StartRender();
 
     private:
         void RefreshTarget();
@@ -178,11 +170,11 @@ namespace winrt::DisplayControl::implementation
         void PopulateCapabilities();
 
     private:
-        winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{ nullptr };
-        winrt::Windows::Devices::Display::Core::DisplayTarget m_displayTarget{ nullptr };
-        winrt::Windows::Devices::Display::Core::DisplayState m_displayState{ nullptr };
-        winrt::Windows::Devices::Display::Core::DisplayPath m_displayPath{ nullptr };
-        winrt::Windows::Devices::Display::Core::DisplayDevice m_displayDevice{ nullptr };
+        winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
+        winrt::Windows::Devices::Display::Core::DisplayTarget m_displayTarget{nullptr};
+        winrt::Windows::Devices::Display::Core::DisplayState m_displayState{nullptr};
+        winrt::Windows::Devices::Display::Core::DisplayPath m_displayPath{nullptr};
+        winrt::Windows::Devices::Display::Core::DisplayDevice m_displayDevice{nullptr};
 
         winrt::com_ptr<DisplayEngineCapabilities> m_capabilities;
         winrt::com_ptr<DisplayEnginePropertySet> m_propertySet;
@@ -191,6 +183,31 @@ namespace winrt::DisplayControl::implementation
         std::unique_ptr<MonitorUtilities::MonitorControl> m_monitorControl;
 
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+    };
+
+    struct DisplayEngine : DisplayEngineT<DisplayEngine>
+    {
+        DisplayEngine();
+        DisplayEngine(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+
+        ~DisplayEngine();
+
+        hstring Name()
+        {
+            return L"BasicDisplayControl";
+        }
+        hstring Version()
+        {
+            return L"0.1";
+        };
+
+        winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(winrt::Windows::Devices::Display::Core::DisplayTarget const& target);
+        winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(hstring target);
+        void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
+
+    private:
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
     };
 
     struct DisplayEngineFactory : DisplayEngineFactoryT<DisplayEngineFactory>

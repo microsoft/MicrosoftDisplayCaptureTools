@@ -41,14 +41,14 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     struct SourceToSinkMapping : implements <SourceToSinkMapping,ISourceToSinkMapping>
     {
-        SourceToSinkMapping(CaptureCard::IDisplayInput sink, winrt::Windows::Devices::Display::Core::DisplayTarget source);
+        SourceToSinkMapping(CaptureCard::IDisplayInput const& sink, Display::IDisplayOutput const& source);
 
         CaptureCard::IDisplayInput GetSink();
-        winrt::Windows::Devices::Display::Core::DisplayTarget GetSource();
+        Display::IDisplayOutput GetSource();
 
     private:
         const CaptureCard::IDisplayInput m_sink;
-        const winrt::Windows::Devices::Display::Core::DisplayTarget m_source;
+        const Display::IDisplayOutput m_source;
     };
 
     struct Core : CoreT<Core>
@@ -56,25 +56,25 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         Core();
         Core(Framework::ILogger const& logger);
 
-        void LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
-        void LoadCapturePlugin(hstring const& pluginPath);
+        CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
+        CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath);
 
-        void LoadToolbox(hstring const& toolboxPath, hstring const& className);
-        void LoadToolbox(hstring const& toolboxPath);
+        ConfigurationTools::IConfigurationToolbox LoadToolbox(hstring const& toolboxPath, hstring const& className);
+        ConfigurationTools::IConfigurationToolbox LoadToolbox(hstring const& toolboxPath);
 
-        void LoadDisplayManager(hstring const& displayEnginePath, hstring const& className);
-        void LoadDisplayManager(hstring const& displayEnginePath);
+        Display::IDisplayEngine LoadDisplayManager(hstring const& displayEnginePath, hstring const& className);
+        Display::IDisplayEngine LoadDisplayManager(hstring const& displayEnginePath);
 
         void LoadConfigFile(hstring const& configFilePath);
 
         winrt::Windows::Foundation::IClosable LockFramework();
 
         com_array<ConfigurationTools::IConfigurationTool> GetLoadedTools();
-        CaptureCard::IController GetCaptureCard();
+        com_array<CaptureCard::IController> GetCaptureCards();
         Display::IDisplayEngine GetDisplayEngine();
 
         
-        com_array<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(bool regenerateMappings);
+        winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(bool regenerateMappings);
 
         hstring Version()
         {
@@ -92,10 +92,10 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     private:
         // The capture card object represented by the capture plugin
-        CaptureCard::IController m_captureCard = nullptr;
+        std::vector<CaptureCard::IController> m_captureCards;
 
-        // The object which manages the display under test
-        Display::IDisplayEngine m_displayEngine = nullptr;
+        // The object which manages the displays under test
+        Display::IDisplayEngine m_displayEngine;
 
         // A list of all ConfigurationToolboxes that have been loaded
         std::vector<ConfigurationTools::IConfigurationToolbox> m_toolboxes;
@@ -108,7 +108,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // A map parsed from the configuration file which identifies which DisplayTargets match up with which IDisplayInputs
         // from the IController plugin.
-        std::map<winrt::hstring, winrt::hstring> m_targetMap;
+        std::map<CaptureCard::IDisplayInput, Display::IDisplayOutput> m_displayMapping;
 
         // The logging system for this framework instance
         const ILogger m_logger;

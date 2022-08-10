@@ -50,51 +50,54 @@ MODULE_SETUP(ModuleSetup)
     RuntimeParameters::TryGetValue(DisableFirmwareUpdateRuntimeParameter, disableFirmwareUpdate);
 
     // Check for a firmware update
-    auto captureCard = g_framework.GetCaptureCard();
-    if (auto firmwareInterface = captureCard.try_as<winrt::CaptureCard::IControllerWithFirmware>())
+    auto captureCards = g_framework.GetCaptureCards();
+    for (auto&& captureCard : captureCards)
     {
-        auto firmwareState = firmwareInterface.FirmwareState();
-        auto firmwareVersion = firmwareInterface.FirmwareVersion();
-
-        Log::Comment((std::wstring(L"Firmware version detected:\n") + firmwareVersion).c_str());
-
-        if (!disableFirmwareUpdate)
+        if (auto firmwareInterface = captureCard.try_as<winrt::CaptureCard::IControllerWithFirmware>())
         {
-            switch (firmwareState)
+            auto firmwareState = firmwareInterface.FirmwareState();
+            auto firmwareVersion = firmwareInterface.FirmwareVersion();
+
+            Log::Comment((std::wstring(L"Firmware version detected:\n") + firmwareVersion).c_str());
+
+            if (!disableFirmwareUpdate)
             {
-            case winrt::CaptureCard::ControllerFirmwareState::ManualUpdateNeeded:
-                Log::Error(
-                    L"The capture device requires a manual firmware update, or the firmware version cannot be identified.");
-                return false;
-
-            case winrt::CaptureCard::ControllerFirmwareState::UpdateRequired:
-                Log::Comment(L"The capture device requires a firmware update. Starting update...");
-
-                try
+                switch (firmwareState)
                 {
-                    // Trigger a firmware update synchronously
-                    firmwareInterface.UpdateFirmwareAsync().get();
-
-                    firmwareVersion = firmwareInterface.FirmwareVersion();
-                    Log::Comment((std::wstring(L"Successfully updated to new firmware version:\n") + firmwareVersion).c_str());
-                }
-                catch (...)
-                {
+                case winrt::CaptureCard::ControllerFirmwareState::ManualUpdateNeeded:
                     Log::Error(
-                        L"Failed to update capture device firmware. Please manually update the firmware and restart the test.");
+                        L"The capture device requires a manual firmware update, or the firmware version cannot be identified.");
                     return false;
+
+                case winrt::CaptureCard::ControllerFirmwareState::UpdateRequired:
+                    Log::Comment(L"The capture device requires a firmware update. Starting update...");
+
+                    try
+                    {
+                        // Trigger a firmware update synchronously
+                        firmwareInterface.UpdateFirmwareAsync().get();
+
+                        firmwareVersion = firmwareInterface.FirmwareVersion();
+                        Log::Comment((std::wstring(L"Successfully updated to new firmware version:\n") + firmwareVersion).c_str());
+                    }
+                    catch (...)
+                    {
+                        Log::Error(L"Failed to update capture device firmware. Please manually update the firmware and restart "
+                                   L"the test.");
+                        return false;
+                    }
+                    break;
+
+                case winrt::CaptureCard::ControllerFirmwareState::UpdateAvailable:
+                    Log::Warning(
+                        L"A newer firmware version is available for the capture device but is not required. For best results, "
+                        L"consider upgrading firmware.");
+                    break;
+
+                case winrt::CaptureCard::ControllerFirmwareState::UpToDate:
+                    Log::Comment(L"The capture device firmware is up to date!");
+                    break;
                 }
-                break;
-
-            case winrt::CaptureCard::ControllerFirmwareState::UpdateAvailable:
-                Log::Warning(
-                    L"A newer firmware version is available for the capture device but is not required. For best results, "
-                    L"consider upgrading firmware.");
-                break;
-
-            case winrt::CaptureCard::ControllerFirmwareState::UpToDate:
-                Log::Comment(L"The capture device firmware is up to date!");
-                break;
             }
         }
     }
