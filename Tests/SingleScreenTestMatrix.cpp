@@ -69,8 +69,6 @@ void SingleScreenTestMatrix::Test()
         auto capturedFrame = displayInput.CaptureFrame();
         auto predictedFrame = displayEngine.GetPrediction();
 
-        // TODO: build a uniquely identifying string from the currently selected tools
-
         capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
     }
 }

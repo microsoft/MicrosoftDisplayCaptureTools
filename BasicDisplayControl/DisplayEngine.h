@@ -206,6 +206,7 @@ namespace winrt::DisplayControl::implementation
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
 
     private:
+
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
     };
