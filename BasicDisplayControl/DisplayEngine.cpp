@@ -129,7 +129,20 @@ namespace winrt::DisplayControl::implementation
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
     {
-        return winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+        // First try to return an already initialized output
+        for (auto&& preexisting : m_targets)
+        {
+            if (preexisting.first.IsSame(target))
+            {
+                return preexisting.second;
+            }
+        }
+
+        // No output for this target has been created yet, create one.
+        auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+        m_targets[target] = output;
+
+        return output;
     }
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::hstring target)
