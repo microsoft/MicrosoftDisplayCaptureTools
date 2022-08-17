@@ -9,6 +9,8 @@ namespace winrt
     using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Data::Json;
     using namespace winrt::Windows::Storage;
+    using namespace winrt::Windows::Devices::Display;
+    using namespace winrt::Windows::Devices::Display::Core;
     using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
     using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace winrt::MicrosoftDisplayCaptureTools::Display;
@@ -307,6 +309,70 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings)
     {
         auto mappings = winrt::single_threaded_vector<ISourceToSinkMapping>();
+
+        if (regenerateMappings)
+        {
+            // If the framework is requested to regenerate display-to-capture mappings, a display capture plugin and a display engine are both
+            // required.
+            if (m_captureCards.empty() || !m_displayEngine)
+            {
+                m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine and a capture card.");
+                throw winrt::hresult_illegal_method_call();
+            }
+
+            {
+                // Prevent component changes while we are attempting auto configuration
+                // TODO: this should be fixed and changed to a shared_lock system... right now a previous lock could be released halfway through.
+                IClosable lock = nullptr;
+                if (!m_isLocked)
+                {
+                    lock = LockFramework();
+                }
+
+                // Create a display manager
+                auto manager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
+
+                // Get all display targets, add to unassigned list
+                std::vector<winrt::DisplayTarget> unassignedTargets;
+                auto allTargets = manager.GetCurrentTargets();
+                for (auto&& target : allTargets)
+                {
+                    if (target.IsConnected())
+                    {
+                        unassignedTargets.push_back(target);
+                    }
+                }
+
+                // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
+                std::vector<winrt::IDisplayInput> unassignedInputs_EDID, unassignedInputs_NoEDID;
+                for (auto&& card : m_captureCards)
+                {
+                    for (auto&& input : card.EnumerateDisplayInputs())
+                    {
+                        if (input.GetCapabilities().CanConfigureEDID())
+                        {
+                            // This input can HPD with a specified EDID
+                            unassignedInputs_EDID.push_back(input);
+                        }
+                        else
+                        {
+                            // This input cannot HPD with a specified EDID
+                            unassignedInputs_NoEDID.push_back(input);
+                        }
+                    }
+                }
+
+                // For all edid inputs
+                //    HPD custom EDID, wait, iterate through unassigned targets for descriptor matches
+
+                // For all still unassigned targets
+                //    Initialize the displayengine's output and use default tool settings to generate an output/prediction.
+                //    For every still unassigned inputs
+                //        Pass prediction to input until one succeeds.
+
+                // should we just use default settings for the displayengine prediction? Or do we need tools to be required.
+            }
+        }
 
         // TODO: delete existing mapping and regerenate them if regenerateMappings
         for (auto&& entry : m_displayMapping)
