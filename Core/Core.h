@@ -39,7 +39,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         std::atomic_bool* m_isLocked;
     };
 
-    struct SourceToSinkMapping : implements <SourceToSinkMapping,ISourceToSinkMapping>
+    struct SourceToSinkMapping : implements<SourceToSinkMapping, ISourceToSinkMapping>
     {
         SourceToSinkMapping(CaptureCard::IDisplayInput const& sink, Display::IDisplayOutput const& source);
 

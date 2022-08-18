@@ -374,7 +374,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             }
         }
 
-        // TODO: delete existing mapping and regerenate them if regenerateMappings
+        // TODO: delete existing mapping and regenerate them if regenerateMappings
         for (auto&& entry : m_displayMapping)
         {
             mappings.Append(winrt::make<SourceToSinkMapping>(entry.first, entry.second));
