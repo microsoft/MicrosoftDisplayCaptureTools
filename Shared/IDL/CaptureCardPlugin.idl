@@ -132,7 +132,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         //      descriptor
         //          This represents the monitor descriptor to represent to represent the emulated display.
         //
-        void SetDescriptor(MicrosoftDisplayCaptureTools.Display.IMonitorDescriptor descriptor);
+        void SetDescriptor(MicrosoftDisplayCaptureTools.Framework.IMonitorDescriptor descriptor);
 
         // GetCaptureTrigger
         // ----------------------------------------------------------------------------------------------------------------

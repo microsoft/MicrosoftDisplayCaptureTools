@@ -62,7 +62,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame();
 
         // Methods that this particular capture card can't support
-        void SetDescriptor(winrt::MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor) { throw winrt::hresult_not_implemented(); }
+        void SetDescriptor(winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor) { throw winrt::hresult_not_implemented(); }
 
     private:
         winrt::hstring m_deviceId;

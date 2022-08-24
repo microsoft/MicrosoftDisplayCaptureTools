@@ -140,13 +140,13 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         throw winrt::hresult_invalid_argument();
     }
 
-    void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor)
+    void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
     {
         switch (m_port)
         {
         case TanagerDisplayInputPort::hdmi:
         {
-            if (descriptor.GetType() != MicrosoftDisplayCaptureTools::Display::MonitorDescriptorType::EDID)
+            if (descriptor.GetType() != MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType::EDID)
             {
                 throw winrt::hresult_invalid_argument();
             }

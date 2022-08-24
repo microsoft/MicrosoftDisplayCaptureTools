@@ -71,14 +71,57 @@ namespace MicrosoftDisplayCaptureTools.Framework
         void LogConfig(String config);
     };
 
+    //
+    // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
+    // descriptor from the framework - plugins are largely expected to only need the memory block.
+    //
+    enum MonitorDescriptorType
+    {
+        EDID,
+        DisplayID,
+        EmbeddedDisplayID
+    };
+
+    //
+    // Represents a monitor descriptor (i.e. EDID, DisplayID).
+    //
+    interface IMonitorDescriptor
+    {
+        MonitorDescriptorType Type
+        {
+            get;
+        };
+
+        // The main data of the descriptor is returned in a read only vector to make 
+        IVectorView<UInt8> Data
+        {
+            get;
+        };
+
+        // Allow getting and setting the serial number from the descriptor. This is primarily used to identify synthetic displays. A 4-byte
+        // unsigned integer is used as the serial number fields for both EDID and DisplayID match this size.
+        UInt32 SerialNumber
+        {
+            get;
+            set;
+        };
+    };
+
     // 
     // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection
     // for the test setup.
     //
     interface ISourceToSinkMapping
     {
-        MicrosoftDisplayCaptureTools.Display.IDisplayOutput GetSource();
-        MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput GetSink();
+        MicrosoftDisplayCaptureTools.Display.IDisplayOutput Source
+        {
+            get;
+        };
+
+        MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput Sink
+        {
+            get;
+        };
     };
 
     //

@@ -3,26 +3,6 @@ import "Framework.idl";
 namespace MicrosoftDisplayCaptureTools.Display
 {
     //
-    // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the 
-    // descriptor from the framework - plugins are largely expected to only need the memory block.
-    //
-    enum MonitorDescriptorType
-    {
-        EDID,
-        DisplayID,
-        EmbeddedDisplayID
-    };
-
-	//
-	// Represents a monitor descriptor (i.e. EDID, DisplayID).
-	//
-	interface IMonitorDescriptor
-	{
-		MonitorDescriptorType GetType();
-		Windows.Foundation.IMemoryBufferReference GetData();
-	};
-
-    //
     // Struct representing a 3-channel color
     // 
     // TODO: this is intended as a demonstrative for the time being, a more expressive version will replace this to

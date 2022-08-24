@@ -54,7 +54,7 @@ namespace winrt::TanagerPlugin::implementation
     public:
         TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port);
         hstring Name();
-        void SetDescriptor(MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor);
+        void SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor);
         MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger GetCaptureTrigger();
         MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities GetCapabilities();
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame();
