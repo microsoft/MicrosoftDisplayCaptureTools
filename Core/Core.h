@@ -44,6 +44,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     {
         // Create the EDID with predefined data
         EDIDDescriptor(std::vector<uint8_t> data);
+        EDIDDescriptor(winrt::com_array<uint8_t> data);
 
         MonitorDescriptorType Type()
         {
@@ -65,8 +66,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         static const uint32_t MinEDIDSize = 128;
         static const uint32_t SerialNumberLocation = 12;
     };
-
-    static IMonitorDescriptor CreateStandardEDID();
 
     struct SourceToSinkMapping : implements<SourceToSinkMapping, ISourceToSinkMapping>
     {

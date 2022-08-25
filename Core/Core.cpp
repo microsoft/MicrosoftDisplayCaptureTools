@@ -336,10 +336,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             auto allTargets = manager.GetCurrentTargets();
             for (auto&& target : allTargets)
             {
-                if (target.IsConnected())
-                {
-                    unassignedTargets.push_back(target);
-                }
+                unassignedTargets.push_back(target);
             }
 
             // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
@@ -363,6 +360,39 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
             // For all edid inputs
             //    HPD custom EDID, wait, iterate through unassigned targets for descriptor matches
+            uint32_t serialNum = 0xFFFFAAAA;
+            for (auto&& input : unassignedInputs_EDID)
+            {
+                auto standardEDID = EDIDDescriptor::CreateStandardEDID();
+                standardEDID.SerialNumber(serialNum);
+
+                auto test = standardEDID.SerialNumber();
+                input.SetDescriptor(standardEDID);
+                input.FinalizeDisplayState();
+
+                // Wait a moment and then iterate through targets.
+                Sleep(2000);
+
+                for (auto&& target : unassignedTargets)
+                {
+                    auto monitor = target.TryGetMonitor();
+
+                    if (monitor)
+                    {
+                        auto retrievedEDID = winrt::make<EDIDDescriptor>(monitor.GetDescriptor(DisplayMonitorDescriptorKind::Edid));
+
+                        if (retrievedEDID.SerialNumber() == serialNum)
+                        {
+                            // We found the match
+                            mappings.Append(winrt::make<SourceToSinkMapping>(input, m_displayEngine.InitializeOutput(target)));
+                            break;
+                        }
+                    }
+                }
+
+                serialNum++;
+            }
+
 
             // For all still unassigned targets
             //    Initialize the displayengine's output and use default tool settings to generate an output/prediction.
@@ -431,8 +461,21 @@ EDIDDescriptor::EDIDDescriptor(std::vector<uint8_t> data)
         throw winrt::hresult_invalid_argument();
     }
 
-    m_data = winrt::single_threaded_vector<uint8_t>();
+    m_data = winrt::single_threaded_vector<uint8_t>(std::move(data));
 }
+
+EDIDDescriptor::EDIDDescriptor(com_array<uint8_t> data)
+{
+    if (data.size() < MinEDIDSize)
+    {
+        throw winrt::hresult_invalid_argument();
+    }
+
+    std::vector<uint8_t> vec(data.begin(), data.end());
+
+    m_data = winrt::single_threaded_vector<uint8_t>(std::move(vec));
+}
+
 
 winrt::IVectorView<uint8_t> EDIDDescriptor::Data()
 {
@@ -449,10 +492,10 @@ uint32_t EDIDDescriptor::SerialNumber()
 
 void EDIDDescriptor::SerialNumber(uint32_t number)
 {
-    m_data.SetAt(SerialNumberLocation + 3, (uint8_t)(number));
-    m_data.SetAt(SerialNumberLocation + 2, (uint8_t)(number >> 8));
-    m_data.SetAt(SerialNumberLocation + 1, (uint8_t)(number >> 16));
-    m_data.SetAt(SerialNumberLocation + 0, (uint8_t)(number >> 24));
+    m_data.SetAt(SerialNumberLocation + 3, static_cast<uint8_t>(number));
+    m_data.SetAt(SerialNumberLocation + 2, static_cast<uint8_t>(number >> 8));
+    m_data.SetAt(SerialNumberLocation + 1, static_cast<uint8_t>(number >> 16));
+    m_data.SetAt(SerialNumberLocation + 0, static_cast<uint8_t>(number >> 24));
 }
 
 IMonitorDescriptor EDIDDescriptor::CreateStandardEDID()

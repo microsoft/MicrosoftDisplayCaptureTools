@@ -18,14 +18,5 @@
 				"Settings": null
 			}
 		]
-	},
-	"TestSystem": {
-		"DisplayInputMapping": [
-			{
-				"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
-	      "CapturePluginName": "Tanager",
-				"PluginInputName": "HDMI"
-			}
-		]
 	}
 }
