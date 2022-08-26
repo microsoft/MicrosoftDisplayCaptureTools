@@ -111,11 +111,11 @@ MODULE_SETUP(ModuleSetup)
     }
 
     // First see if the config file contained any display mappings, if so we will use these.
-    auto mappings = g_framework.GetSourceToSinkMappings(false);
-    if (mappings.Size() == 0)
+    g_displayMap = g_framework.GetSourceToSinkMappings(false);
+    if (g_displayMap.Size() == 0)
     {
         // if no display mappings were in the config file - attempt to figure out the mappings automatically
-        mappings = g_framework.GetSourceToSinkMappings(true);
+        g_displayMap = g_framework.GetSourceToSinkMappings(true);
     }
 
 	return true;
