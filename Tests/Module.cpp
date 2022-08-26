@@ -6,6 +6,7 @@ using namespace WEX::TestExecution;
 
 namespace winrt {
 using namespace Windows::Foundation;
+using namespace Windows::Foundation::Collections;
 using namespace MicrosoftDisplayCaptureTools;
 using namespace Windows::Devices::Display;
 using namespace Windows::Devices::Display::Core;
@@ -14,7 +15,8 @@ using namespace MicrosoftDisplayCaptureTools::Tests::Logging;
 } // namespace winrt
 
 winrt::Framework::Core g_framework{nullptr};
-winrt::MicrosoftDisplayCaptureTools::Framework::ILogger g_logger{nullptr};
+winrt::Framework::ILogger g_logger{nullptr};
+winrt::IVector<winrt::Framework::ISourceToSinkMapping> g_displayMap;
 
 namespace MicrosoftDisplayCaptureTools::Tests {
 
@@ -44,7 +46,7 @@ MODULE_SETUP(ModuleSetup)
     g_framework = winrt::Framework::Core(g_logger);
     g_framework.LoadConfigFile(static_cast<const wchar_t*>(configPath));
 
-    Log::Comment(L"Loaded plugins");
+    g_logger.LogNote(L"Loaded plugins");
 
     bool disableFirmwareUpdate = false;
     RuntimeParameters::TryGetValue(DisableFirmwareUpdateRuntimeParameter, disableFirmwareUpdate);
@@ -58,19 +60,19 @@ MODULE_SETUP(ModuleSetup)
             auto firmwareState = firmwareInterface.FirmwareState();
             auto firmwareVersion = firmwareInterface.FirmwareVersion();
 
-            Log::Comment((std::wstring(L"Firmware version detected:\n") + firmwareVersion).c_str());
+            g_logger.LogNote((std::wstring(L"Firmware version detected:\n") + firmwareVersion).c_str());
 
             if (!disableFirmwareUpdate)
             {
                 switch (firmwareState)
                 {
                 case winrt::CaptureCard::ControllerFirmwareState::ManualUpdateNeeded:
-                    Log::Error(
+                    g_logger.LogError(
                         L"The capture device requires a manual firmware update, or the firmware version cannot be identified.");
                     return false;
 
                 case winrt::CaptureCard::ControllerFirmwareState::UpdateRequired:
-                    Log::Comment(L"The capture device requires a firmware update. Starting update...");
+                    g_logger.LogNote(L"The capture device requires a firmware update. Starting update...");
 
                     try
                     {
@@ -78,28 +80,42 @@ MODULE_SETUP(ModuleSetup)
                         firmwareInterface.UpdateFirmwareAsync().get();
 
                         firmwareVersion = firmwareInterface.FirmwareVersion();
-                        Log::Comment((std::wstring(L"Successfully updated to new firmware version:\n") + firmwareVersion).c_str());
+                        g_logger.LogNote((std::wstring(L"Successfully updated to new firmware version:\n") + firmwareVersion).c_str());
                     }
                     catch (...)
                     {
-                        Log::Error(L"Failed to update capture device firmware. Please manually update the firmware and restart "
+                        g_logger.LogError(L"Failed to update capture device firmware. Please manually update the firmware and restart "
                                    L"the test.");
                         return false;
                     }
                     break;
 
                 case winrt::CaptureCard::ControllerFirmwareState::UpdateAvailable:
-                    Log::Warning(
+                    g_logger.LogWarning(
                         L"A newer firmware version is available for the capture device but is not required. For best results, "
                         L"consider upgrading firmware.");
                     break;
 
                 case winrt::CaptureCard::ControllerFirmwareState::UpToDate:
-                    Log::Comment(L"The capture device firmware is up to date!");
+                    g_logger.LogNote(L"The capture device firmware is up to date!");
                     break;
                 }
             }
         }
+    }
+
+    auto frameworkLock = g_framework.LockFramework();
+    if (!frameworkLock)
+    {
+        g_logger.LogError(L"Unable to lock the framework during test setup.");
+    }
+
+    // First see if the config file contained any display mappings, if so we will use these.
+    auto mappings = g_framework.GetSourceToSinkMappings(false);
+    if (mappings.Size() == 0)
+    {
+        // if no display mappings were in the config file - attempt to figure out the mappings automatically
+        mappings = g_framework.GetSourceToSinkMappings(true);
     }
 
 	return true;

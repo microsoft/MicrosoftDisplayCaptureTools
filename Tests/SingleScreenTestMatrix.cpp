@@ -34,10 +34,9 @@ void SingleScreenTestMatrix::Test()
     auto frameworkLock = g_framework.LockFramework();
     VERIFY_IS_NOT_NULL(frameworkLock);
 
-    // Get the display/capture mappings
-    auto mappings = g_framework.GetSourceToSinkMappings(true);
-    VERIFY_IS_GREATER_THAN(mappings.Size(), (uint32_t)0);
-    winrt::ISourceToSinkMapping mapping = mappings.GetAt(0);
+    // Pick the display - capture pair to use for this test.
+    VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
+    winrt::ISourceToSinkMapping mapping = g_displayMap.GetAt(0);
 
     auto displayEngine = mapping.Source();
     auto displayInput = mapping.Sink();

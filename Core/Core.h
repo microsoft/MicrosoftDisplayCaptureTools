@@ -60,6 +60,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         static IMonitorDescriptor CreateStandardEDID();
 
     private:
+        void UpdateChecksum();
+
         Windows::Foundation::Collections::IVector<uint8_t> m_data;
         ILogger m_logger;
 
@@ -136,7 +138,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // A map parsed from the configuration file which identifies which DisplayTargets match up with which IDisplayInputs
         // from the IController plugin.
-        std::map<CaptureCard::IDisplayInput, Display::IDisplayOutput> m_displayMapping;
+        std::map<CaptureCard::IDisplayInput, Display::IDisplayOutput> m_displayMappingsFromFile;
 
         // The logging system for this framework instance
         const ILogger m_logger;

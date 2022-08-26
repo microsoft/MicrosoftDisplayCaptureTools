@@ -236,7 +236,7 @@ namespace winrt::DisplayControl::implementation
 
         auto renderer = make_self<Renderer>(m_logger);
 
-        renderer->displayDevice = m_displayDevice;
+        renderer->displayDevice  = m_displayDevice;
         renderer->displayManager = m_displayManager;
         renderer->displayTarget  = m_displayTarget;
         renderer->displayState   = m_displayState;
