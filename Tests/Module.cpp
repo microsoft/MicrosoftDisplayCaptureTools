@@ -114,8 +114,17 @@ MODULE_SETUP(ModuleSetup)
     g_displayMap = g_framework.GetSourceToSinkMappings(false);
     if (g_displayMap.Size() == 0)
     {
+        g_logger.LogNote(
+            L"No display output to display capture device mapping from the configuration file - attempting to auto-map.");
+
         // if no display mappings were in the config file - attempt to figure out the mappings automatically
         g_displayMap = g_framework.GetSourceToSinkMappings(true);
+
+        if (g_displayMap.Size() == 0)
+        {
+            g_logger.LogError(
+                L"Unable to determine any display output to display capture device mappings - tests cannot continue.");
+        }
     }
 
 	return true;
