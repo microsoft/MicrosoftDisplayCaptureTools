@@ -16,10 +16,12 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="EDIDDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="EDIDDescriptor.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Core.idl" />

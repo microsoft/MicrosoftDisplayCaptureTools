@@ -39,36 +39,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         std::atomic_bool* m_isLocked;
     };
 
-    // Create a simple EDID descriptor implementation that the framework itself will use when trying to determine display mappings.
-    struct EDIDDescriptor : implements<EDIDDescriptor, IMonitorDescriptor>
-    {
-        // Create the EDID with predefined data
-        EDIDDescriptor(std::vector<uint8_t> data);
-        EDIDDescriptor(winrt::com_array<uint8_t> data);
-
-        MonitorDescriptorType Type()
-        {
-            return MonitorDescriptorType::EDID;
-        };
-
-        // The only part of the EDID we currently allow modifying on the fly is the serial number, which is useful identifying display mappings
-        uint32_t SerialNumber();
-        void SerialNumber(uint32_t number);
-
-        Windows::Foundation::Collections::IVectorView<uint8_t> Data();
-
-        static IMonitorDescriptor CreateStandardEDID();
-
-    private:
-        void UpdateChecksum();
-
-        Windows::Foundation::Collections::IVector<uint8_t> m_data;
-        ILogger m_logger;
-
-        static const uint32_t MinEDIDSize = 128;
-        static const uint32_t SerialNumberLocation = 12;
-    };
-
     struct SourceToSinkMapping : implements<SourceToSinkMapping, ISourceToSinkMapping>
     {
         SourceToSinkMapping(CaptureCard::IDisplayInput const& sink, Display::IDisplayOutput const& source);
