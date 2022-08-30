@@ -10,16 +10,17 @@ struct EDIDDescriptor : winrt::implements<EDIDDescriptor, winrt::MicrosoftDispla
     EDIDDescriptor(std::vector<uint8_t> data);
     EDIDDescriptor(winrt::com_array<uint8_t> data);
 
+    // IMonitorDescriptor APIs
     winrt::MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType Type()
     {
         return winrt::MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType::EDID;
     };
+    winrt::Windows::Foundation::Collections::IVectorView<uint8_t> Data();
 
     // The only part of the EDID we currently allow modifying on the fly is the serial number, which is useful identifying display mappings
     uint32_t SerialNumber();
     void SerialNumber(uint32_t number);
-
-    winrt::Windows::Foundation::Collections::IVectorView<uint8_t> Data();
+    bool IsSame(winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor other);
 
     static winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor CreateStandardEDID();
 

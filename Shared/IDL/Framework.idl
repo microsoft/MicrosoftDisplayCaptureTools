@@ -87,6 +87,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface IMonitorDescriptor
     {
+        // The type of the monitor descriptor, various forms of EDID/DisplayID
         MonitorDescriptorType Type
         {
             get;
@@ -105,6 +106,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
             get;
             set;
         };
+
+        Boolean IsSame(IMonitorDescriptor other);
     };
 
     // 

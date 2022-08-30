@@ -330,14 +330,6 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             // Create a display manager
             auto manager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
 
-            // Get all display targets, add to unassigned list
-            std::vector<winrt::DisplayTarget> unassignedTargets;
-            auto allTargets = manager.GetCurrentTargets();
-            for (auto&& target : allTargets)
-            {
-                unassignedTargets.push_back(target);
-            }
-
             // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
             std::vector<winrt::IDisplayInput> unassignedInputs_EDID, unassignedInputs_NoEDID;
             for (auto&& card : m_captureCards)
@@ -362,11 +354,16 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             uint32_t serialNum = 0xFFFFAAAA;
             for (auto&& input : unassignedInputs_EDID)
             {
+                // Create a standard EDID, and give it a specific serial number
                 auto standardEDID = EDIDDescriptor::CreateStandardEDID();
                 standardEDID.SerialNumber(serialNum);
+
+                // Set the EDID to the capture device plugin and instruct it to hotplug with it.
                 input.SetDescriptor(standardEDID);
                 input.FinalizeDisplayState();
 
+                // Enumerate all new targets - the previous FinalizeDisplayState call should only return once the display is visible to windows. So this call
+                // should include the newly plugged-in display.
                 auto newtargets = manager.GetCurrentTargets();
 
                 for (auto&& target : newtargets)
@@ -375,9 +372,10 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
                     if (monitor)
                     {
+                        // Try to get the EDID from this monitor - the display we are looking for will have the same EDID we plugged in earlier
                         auto retrievedEDID = winrt::make<EDIDDescriptor>(monitor.GetDescriptor(DisplayMonitorDescriptorKind::Edid));
 
-                        if (retrievedEDID.SerialNumber() == serialNum)
+                        if (standardEDID.IsSame(retrievedEDID))
                         {
                             // We found the match
                             mappings.Append(winrt::make<SourceToSinkMapping>(input, m_displayEngine.InitializeOutput(target)));

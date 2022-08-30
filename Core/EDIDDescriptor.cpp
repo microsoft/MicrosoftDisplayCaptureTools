@@ -32,6 +32,31 @@ EDIDDescriptor::EDIDDescriptor(winrt::com_array<uint8_t> data)
     m_data = winrt::single_threaded_vector<uint8_t>(std::move(vec));
 }
 
+bool EDIDDescriptor::IsSame(winrt::IMonitorDescriptor other)
+{
+    if (Type() != other.Type())
+    {
+        return false;
+    }
+
+    auto otherData = other.Data();
+
+    if (m_data.Size() != otherData.Size())
+    {
+        return false;
+    }
+
+    for (uint32_t i = 0; i < m_data.Size(); i++)
+    {
+        if (m_data.GetAt(i) != otherData.GetAt(i))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 winrt::IVectorView<uint8_t> EDIDDescriptor::Data()
 {
     return m_data.GetView();
