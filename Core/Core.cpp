@@ -10,6 +10,7 @@ namespace winrt
     using namespace winrt::Windows::Storage;
     using namespace winrt::Windows::Devices::Display;
     using namespace winrt::Windows::Devices::Display::Core;
+    using namespace winrt::Windows::Graphics;
     using namespace winrt::MicrosoftDisplayCaptureTools::CaptureCard;
     using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace winrt::MicrosoftDisplayCaptureTools::Display;
@@ -331,28 +332,30 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             auto manager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
 
             // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
-            std::vector<winrt::IDisplayInput> unassignedInputs_EDID, unassignedInputs_NoEDID;
+            std::vector<std::tuple<winrt::IController, winrt::IDisplayInput>> unassignedInputs_EDID, unassignedInputs_NoEDID;
             for (auto&& card : m_captureCards)
             {
                 for (auto&& input : card.EnumerateDisplayInputs())
                 {
-                    if (input.GetCapabilities().CanConfigureEDID())
+                    if (input.GetCapabilities().CanConfigureEDID() && input.GetCapabilities().CanHotPlug())
                     {
                         // This input can HPD with a specified EDID
-                        unassignedInputs_EDID.push_back(input);
+                        unassignedInputs_EDID.push_back({card, input});
                     }
                     else
                     {
                         // This input cannot HPD with a specified EDID
-                        unassignedInputs_NoEDID.push_back(input);
+                        unassignedInputs_NoEDID.push_back({card, input});
                     }
                 }
             }
 
+            std::vector<winrt::DisplayTarget> mappedTargets;
+
             // For all edid inputs
             //    HPD custom EDID, wait, iterate through unassigned targets for descriptor matches
             uint32_t serialNum = 0xFFFFAAAA;
-            for (auto&& input : unassignedInputs_EDID)
+            for (auto [card, input] : unassignedInputs_EDID)
             {
                 // Create a standard EDID, and give it a specific serial number
                 auto standardEDID = EDIDDescriptor::CreateStandardEDID();
@@ -377,8 +380,20 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
                         if (standardEDID.IsSame(retrievedEDID))
                         {
-                            // We found the match
-                            mappings.Append(winrt::make<SourceToSinkMapping>(input, m_displayEngine.InitializeOutput(target)));
+                            {
+                                auto pluginName = input.Name();
+                                auto pluginInputName = card.Name();
+                                auto displayId = target.StableMonitorId();
+
+                                m_logger.LogConfig(hstring(L"Display: ") + displayId + L" connected to " + pluginName + L"." + pluginInputName);
+                            }
+
+                            // We found the match, add it to the mappings with this input
+                            auto mapping = winrt::make<SourceToSinkMapping>(input, m_displayEngine.InitializeOutput(target));
+                            mappings.Append(mapping);
+
+                            // Also note that this target has already been mapped
+                            mappedTargets.push_back(target);
                             break;
                         }
                     }
@@ -388,12 +403,80 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             }
 
 
+            // Similar to how a basic test works - use basic tools to set up output and prediction and then just go through until we
+            // find a match. If we don't have access to the basic tools from the test pass (resolution, refresh rate, basic pattern,
+            // etc. - then just dump the source/sink IDs to the logs so that the user can construct an appropriate config file.
+
+            // TODO: print out whatever EDID-based mappings we have already found
+            // TODO: print out all displays and all capture inputs.
+
+            // TODO: print out that we are trying last ditch effort to locate the remaining displays
+
+            bool printRemainingTargets = false;
+            if (m_toolList.empty())
+            {
+                m_logger.LogWarning(L"No tools have been loaded - it may be impossible to automatically determine display output "
+                                    L"- capture input mapping.");
+
+                printRemainingTargets = true;
+            }
+
+            m_logger.LogNote(L"Using default values for all tools.");
+
             // For all still unassigned targets
             //    Initialize the displayengine's output and use default tool settings to generate an output/prediction.
             //    For every still unassigned inputs
             //        Pass prediction to input until one succeeds.
+            auto targets = manager.GetCurrentTargets();
+            for (auto&& target : targets) 
+            {
+                // For this type of capture card - targets should appear to Windows as regular displays and would be composed normally.
+                // This means we can filter to only 'connected' targets.
+                if (!target.IsConnected())
+                {
+                    continue;
+                }
 
-            // should we just use default settings for the displayengine prediction? Or do we need tools to be required.
+                // Second, make sure that we aren't bothering with already mapped targets.
+                bool alreadyMapped = false;
+                for (auto&& mappedTarget : mappedTargets)
+                {
+                    if (target.IsSame(mappedTarget))
+                    {
+                        alreadyMapped = true;
+                        break;
+                    }
+                }
+                if (alreadyMapped)
+                {
+                    continue;
+                }
+
+                // We have a target which has not yet been mapped - take control of it and see if any capture input matches it with
+                // default Tool settings.
+                auto output = m_displayEngine.InitializeOutput(target);
+                for (auto&& tool : m_toolList)
+                {
+                    tool.SetConfiguration(tool.GetDefaultConfiguration());
+                    tool.Apply(output);
+                }
+
+                // Get the predicted frame
+                auto prediction = output.GetPrediction();
+                
+                // Start outputting to the target with the current settings
+                auto renderer = output.StartRender();
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                // Iterate through the still unassigned inputs to find any matches
+                for (auto [card, input] : unassignedInputs_NoEDID)
+                {
+                    input.FinalizeDisplayState();
+                    auto capture = input.CaptureFrame();
+
+                    // TODO: run the comparison of frame against prediction.
+                }
+            }
         }
     }
     else

@@ -38,7 +38,7 @@ void SingleScreenTestMatrix::Test()
     VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
     winrt::ISourceToSinkMapping mapping = g_displayMap.GetAt(0);
 
-    auto displayEngine = mapping.Source();
+    auto displayOutput = mapping.Source();
     auto displayInput = mapping.Sink();
     
     winrt::hstring testName = L"";
@@ -52,7 +52,7 @@ void SingleScreenTestMatrix::Test()
 
             // Setting the tool value
             tool.SetConfiguration(winrt::hstring(toolSetting));
-            tool.Apply(displayEngine);
+            tool.Apply(displayOutput);
             testName = testName + tool.GetConfiguration() + L"_";
         }
     }
@@ -61,12 +61,12 @@ void SingleScreenTestMatrix::Test()
     displayInput.FinalizeDisplayState();
 
     {
-        auto renderer = displayEngine.StartRender();
+        auto renderer = displayOutput.StartRender();
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         // Capture the frame.
         auto capturedFrame = displayInput.CaptureFrame();
-        auto predictedFrame = displayEngine.GetPrediction();
+        auto predictedFrame = displayOutput.GetPrediction();
 
         capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
     }

@@ -83,10 +83,6 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         // Notes:
         //      Compares the captured image against a software-generated reference image.
         //
-        //      Microsoft will be providing a lib that does this image comparison on the host computer and will log various
-        //      statistics and data about the comparison. Others are welcome to consume or modify this for their own 
-        //      capture card plugins if applicable.
-        //
         // Parameters:
         //      name
         //          A string name uniquely identifying the set of parameters specifying this particular test run.
