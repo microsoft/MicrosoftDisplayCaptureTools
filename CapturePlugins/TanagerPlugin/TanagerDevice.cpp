@@ -279,7 +279,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 
     bool TanagerCaptureCapabilities::CanHotPlug()
     {
-        return false;
+        return true;
     }
 
     bool TanagerCaptureCapabilities::CanConfigureEDID()

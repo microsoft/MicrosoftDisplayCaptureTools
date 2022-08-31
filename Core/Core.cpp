@@ -427,54 +427,57 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             //    Initialize the displayengine's output and use default tool settings to generate an output/prediction.
             //    For every still unassigned inputs
             //        Pass prediction to input until one succeeds.
-            auto targets = manager.GetCurrentTargets();
-            for (auto&& target : targets) 
+            if (unassignedInputs_NoEDID.size() > 0)
             {
-                // For this type of capture card - targets should appear to Windows as regular displays and would be composed normally.
-                // This means we can filter to only 'connected' targets.
-                if (!target.IsConnected())
+                auto targets = manager.GetCurrentTargets();
+                for (auto&& target : targets)
                 {
-                    continue;
-                }
-
-                // Second, make sure that we aren't bothering with already mapped targets.
-                bool alreadyMapped = false;
-                for (auto&& mappedTarget : mappedTargets)
-                {
-                    if (target.IsSame(mappedTarget))
+                    // For this type of capture card - targets should appear to Windows as regular displays and would be composed
+                    // normally. This means we can filter to only 'connected' targets.
+                    if (!target.IsConnected())
                     {
-                        alreadyMapped = true;
-                        break;
+                        continue;
                     }
-                }
-                if (alreadyMapped)
-                {
-                    continue;
-                }
 
-                // We have a target which has not yet been mapped - take control of it and see if any capture input matches it with
-                // default Tool settings.
-                auto output = m_displayEngine.InitializeOutput(target);
-                for (auto&& tool : m_toolList)
-                {
-                    tool.SetConfiguration(tool.GetDefaultConfiguration());
-                    tool.Apply(output);
-                }
+                    // Second, make sure that we aren't bothering with already mapped targets.
+                    bool alreadyMapped = false;
+                    for (auto&& mappedTarget : mappedTargets)
+                    {
+                        if (target.IsSame(mappedTarget))
+                        {
+                            alreadyMapped = true;
+                            break;
+                        }
+                    }
+                    if (alreadyMapped)
+                    {
+                        continue;
+                    }
 
-                // Get the predicted frame
-                auto prediction = output.GetPrediction();
-                
-                // Start outputting to the target with the current settings
-                auto renderer = output.StartRender();
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                    // We have a target which has not yet been mapped - take control of it and see if any capture input matches it
+                    // with default Tool settings.
+                    auto output = m_displayEngine.InitializeOutput(target);
+                    for (auto&& tool : m_toolList)
+                    {
+                        tool.SetConfiguration(tool.GetDefaultConfiguration());
+                        tool.Apply(output);
+                    }
 
-                // Iterate through the still unassigned inputs to find any matches
-                for (auto [card, input] : unassignedInputs_NoEDID)
-                {
-                    input.FinalizeDisplayState();
-                    auto capture = input.CaptureFrame();
+                    // Start outputting to the target with the current settings
+                    auto renderer = output.StartRender();
+                    std::this_thread::sleep_for(std::chrono::seconds(5));
+                    
+                    // Get the predicted frame
+                    auto prediction = output.GetPrediction();
 
-                    // TODO: run the comparison of frame against prediction.
+                    // Iterate through the still unassigned inputs to find any matches
+                    for (auto [card, input] : unassignedInputs_NoEDID)
+                    {
+                        input.FinalizeDisplayState();
+                        auto capture = input.CaptureFrame();
+
+                        // TODO: run the comparison of frame against prediction.
+                    }
                 }
             }
         }
