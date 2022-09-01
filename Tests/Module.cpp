@@ -132,7 +132,7 @@ MODULE_SETUP(ModuleSetup)
 
 MODULE_CLEANUP(ModuleCleanup)
 {
-    // enforce the order of main object cleanup
+    // enforce the order of main object cleanupw    
     g_displayMap = nullptr;
     g_framework = nullptr;
     g_logger = nullptr;

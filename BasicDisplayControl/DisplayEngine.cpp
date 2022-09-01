@@ -128,7 +128,7 @@ namespace winrt::DisplayControl::implementation
     }
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
-    {
+    { /*
         // First try to return an already initialized output
         for (auto&& preexisting : m_targets)
         {
@@ -139,8 +139,9 @@ namespace winrt::DisplayControl::implementation
         }
 
         // No output for this target has been created yet, create one.
+        */
         auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
-        m_targets[target] = output;
+        //m_targets[target] = output;
 
         return output;
     }
@@ -205,6 +206,11 @@ namespace winrt::DisplayControl::implementation
 
         // Mark the base plane as active
         m_propertySet->m_planeProperties[0]->Active(true);
+    }
+
+    DisplayOutput::~DisplayOutput()
+    {
+        
     }
 
     winrt::DisplayTarget DisplayOutput::Target()

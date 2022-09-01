@@ -157,6 +157,8 @@ namespace winrt::DisplayControl::implementation
             winrt::Windows::Devices::Display::Core::DisplayTarget const& target,
             winrt::Windows::Devices::Display::Core::DisplayManager const& manager);
 
+        ~DisplayOutput();
+
         winrt::Windows::Devices::Display::Core::DisplayTarget Target();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngineCapabilities GetCapabilities();
         winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet GetProperties();
@@ -170,6 +172,10 @@ namespace winrt::DisplayControl::implementation
         void PopulateCapabilities();
 
     private:
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+
+        std::unique_ptr<MonitorUtilities::MonitorControl> m_monitorControl;
+
         winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
         winrt::Windows::Devices::Display::Core::DisplayTarget m_displayTarget{nullptr};
         winrt::Windows::Devices::Display::Core::DisplayState m_displayState{nullptr};
@@ -178,11 +184,6 @@ namespace winrt::DisplayControl::implementation
 
         winrt::com_ptr<DisplayEngineCapabilities> m_capabilities;
         winrt::com_ptr<DisplayEnginePropertySet> m_propertySet;
-
-        std::mutex m_targetLock;
-        std::unique_ptr<MonitorUtilities::MonitorControl> m_monitorControl;
-
-        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct DisplayEngine : DisplayEngineT<DisplayEngine>
@@ -206,7 +207,7 @@ namespace winrt::DisplayControl::implementation
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
 
     private:
-        std::map<winrt::Windows::Devices::Display::Core::DisplayTarget, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput> m_targets;
+        //std::map<winrt::Windows::Devices::Display::Core::DisplayTarget, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput> m_targets;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
     };

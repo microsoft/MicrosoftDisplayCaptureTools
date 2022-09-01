@@ -11,12 +11,14 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     const std::wstring c_ConfigurationToolboxDefaultName = L".ToolboxFactory";
     const std::wstring c_DisplayEngineDefaultName        = L".DisplayEngineFactory";
 
-    // Struct to ensure that all components are locked and can't be modified while a user is running tests
+    // Struct to ensure that the framework can be locked down to prevent component changes (i.e. loading new components).
+    // This is implemented with a basic refcount - m_lockCount within the Core object - wrapped in this winrt object that 
+    // can be passed over ABI boundaries.
     struct TestLock : implements<TestLock, winrt::Windows::Foundation::IClosable>
     {
-        TestLock(std::atomic_bool* testLock) : m_isLocked(testLock)
+        TestLock(std::atomic_int32_t* lock) : m_lockCount(lock)
         {
-            *m_isLocked = true;
+            (*m_lockCount)++;
         };
 
         ~TestLock()
@@ -26,17 +28,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         void Close()
         {
-            *m_isLocked = false;
+            (*m_lockCount)--;
         }
-
-        bool IsLocked()
-        {
-            return *m_isLocked;
-        };
 
     private:
         // Loading components/config files is not allowed while a test is running and vice-versa.
-        std::atomic_bool* m_isLocked;
+        std::atomic_int32_t* m_lockCount;
     };
 
     struct SourceToSinkMapping : implements<SourceToSinkMapping, ISourceToSinkMapping>
@@ -90,6 +87,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // Iterate through Toolboxes and consolidate a single list of all tools from all sources.
         void UpdateToolList();
 
+        bool IsFrameworkLocked()
+        {
+            return m_lockCount > 0;
+        }
+
     private:
         // The capture card object represented by the capture plugin
         std::vector<CaptureCard::IController> m_captureCards;
@@ -114,7 +116,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         const ILogger m_logger;
 
         // Has a test locked components
-        std::atomic_bool m_isLocked = false;
+        std::atomic_int32_t m_lockCount = 0;
     };
 }
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::factory_implementation

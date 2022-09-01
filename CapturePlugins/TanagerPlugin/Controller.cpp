@@ -33,6 +33,13 @@ namespace winrt::TanagerPlugin::implementation
     {
         DiscoverCaptureBoards();
 
+        // If no board is detected, this object will not be valid.
+        if (m_captureBoards.size() == 0)
+        {
+            m_logger.LogAssert(L"No board detected!");
+            throw winrt::hresult_access_denied();
+        }
+
         // Add the inputs from all the discovered capture boards to the m_displayInputs list
         for (auto captureBoard : m_captureBoards)
         {

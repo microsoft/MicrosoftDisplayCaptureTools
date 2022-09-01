@@ -40,7 +40,7 @@ Core::Core(ILogger const& logger) : m_logger(logger)
 IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
 {
     // Ensure that a component can't be changed if a test has locked the framework
-    if (m_isLocked)
+    if (IsFrameworkLocked())
     {
         m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
         throw winrt::hresult_illegal_method_call();
@@ -66,8 +66,8 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath)
 
 IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring const& className)
 {
-    // Ensure that a component can't be changed if a test has locked the framework
-    if (m_isLocked)
+    // Ensure that a component can't be changed if anything has locked the framework
+    if (IsFrameworkLocked())
     {
         m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
         throw winrt::hresult_illegal_method_call();
@@ -97,7 +97,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath)
 IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath, hstring const& className)
 {
     // Ensure that a component can't be changed if a test has locked the framework
-    if (m_isLocked)
+    if (IsFrameworkLocked())
     {
         m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
         throw winrt::hresult_illegal_method_call();
@@ -125,7 +125,7 @@ void Core::LoadConfigFile(hstring const& configFile)
     m_logger.LogNote(L"Loading configuration...");
 
     // Ensure that a component can't be changed if a test has locked the framework
-    if (m_isLocked)
+    if (IsFrameworkLocked())
     {
         m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
         throw winrt::hresult_illegal_method_call();
@@ -307,6 +307,9 @@ IDisplayEngine Core::GetDisplayEngine()
 
 IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings)
 {
+    // Prevent component changes while we are attempting configuration
+    auto lock = LockFramework();
+    
     auto mappings = winrt::single_threaded_vector<ISourceToSinkMapping>();
 
     if (regenerateMappings)
@@ -316,18 +319,10 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
         if (m_captureCards.empty() || !m_displayEngine)
         {
             m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine and a capture card.");
-            throw winrt::hresult_illegal_method_call();
+            throw winrt::hresult_invalid_argument();
         }
 
         {
-            // Prevent component changes while we are attempting auto configuration
-            // TODO: this should be fixed and changed to a shared_lock system... right now a previous lock could be released halfway through.
-            IClosable lock = nullptr;
-            if (!m_isLocked)
-            {
-                lock = LockFramework();
-            }
-
             // Create a display manager
             auto manager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
 
@@ -381,8 +376,8 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         if (standardEDID.IsSame(retrievedEDID))
                         {
                             {
-                                auto pluginName = input.Name();
-                                auto pluginInputName = card.Name();
+                                auto pluginName = card.Name();
+                                auto pluginInputName = input.Name();
                                 auto displayId = target.StableMonitorId();
 
                                 m_logger.LogConfig(hstring(L"Display: ") + displayId + L" connected to " + pluginName + L"." + pluginInputName);
@@ -402,23 +397,17 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                 serialNum++;
             }
 
-
-            // Similar to how a basic test works - use basic tools to set up output and prediction and then just go through until we
-            // find a match. If we don't have access to the basic tools from the test pass (resolution, refresh rate, basic pattern,
-            // etc. - then just dump the source/sink IDs to the logs so that the user can construct an appropriate config file.
-
-            // TODO: print out whatever EDID-based mappings we have already found
-            // TODO: print out all displays and all capture inputs.
-
-            // TODO: print out that we are trying last ditch effort to locate the remaining displays
-
-            bool printRemainingTargets = false;
+            // If a capture card input cannot hotplug in a display with a custom descriptor, the next mechanism is to take control of each 
+            // display and setup a scanout and prediction - similar to how a basic test works, just with all default options. 
+            // 
+            // NOTE: We will not remove any displays from composition for this - to prevent a user accidentally making their system unusable.
+            //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
+            //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
+            //       device. For the latter case, this auto-config method will print out the possible display IDs.
             if (m_toolList.empty())
             {
-                m_logger.LogWarning(L"No tools have been loaded - it may be impossible to automatically determine display output "
+                m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
                                     L"- capture input mapping.");
-
-                printRemainingTargets = true;
             }
 
             m_logger.LogNote(L"Using default values for all tools.");
@@ -439,6 +428,19 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         continue;
                     }
 
+                    auto monitor = target.TryGetMonitor();
+
+                    if (!monitor)
+                    {
+                        continue;
+                    }
+
+                    // We don't take control of displays for this config - there is too high a risk of accidental black screens
+                    if (monitor.UsageKind() == DisplayMonitorUsageKind::Standard)
+                    {
+                        continue;
+                    }
+
                     // Second, make sure that we aren't bothering with already mapped targets.
                     bool alreadyMapped = false;
                     for (auto&& mappedTarget : mappedTargets)
@@ -454,29 +456,47 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         continue;
                     }
 
-                    // We have a target which has not yet been mapped - take control of it and see if any capture input matches it
-                    // with default Tool settings.
-                    auto output = m_displayEngine.InitializeOutput(target);
-                    for (auto&& tool : m_toolList)
+                    IDisplayOutput output = nullptr;
+                    IDisplayEnginePrediction prediction = nullptr;
+                    IClosable renderer = nullptr;
+
+                    try
                     {
-                        tool.SetConfiguration(tool.GetDefaultConfiguration());
-                        tool.Apply(output);
+                        // We have a target which has not yet been mapped - take control of it and see if any capture input
+                        // matches it with default Tool settings.
+                        output = m_displayEngine.InitializeOutput(target);
+                        for (auto&& tool : m_toolList)
+                        {
+                            tool.SetConfiguration(tool.GetDefaultConfiguration());
+                            tool.Apply(output);
+                        }
+
+                        // Start outputting to the target with the current settings
+                        renderer = output.StartRender();
+                        std::this_thread::sleep_for(std::chrono::seconds(5));
+
+                        // Get the predicted frame
+                        prediction = output.GetPrediction();
+
+                        // Iterate through the still unassigned inputs to find any matches
+                        for (auto [card, input] : unassignedInputs_NoEDID)
+                        {
+                            input.FinalizeDisplayState();
+                            auto capture = input.CaptureFrame();
+
+                            // TODO: actually compare frame and prediction
+                        }
                     }
-
-                    // Start outputting to the target with the current settings
-                    auto renderer = output.StartRender();
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
-                    
-                    // Get the predicted frame
-                    auto prediction = output.GetPrediction();
-
-                    // Iterate through the still unassigned inputs to find any matches
-                    for (auto [card, input] : unassignedInputs_NoEDID)
+                    catch (...)
                     {
-                        input.FinalizeDisplayState();
-                        auto capture = input.CaptureFrame();
+                        // If something fails trying to set up this output as a target - just try others... failure here 
+                        // almost assuredly means that this is not an intended test target.
 
-                        // TODO: run the comparison of frame against prediction.
+                        renderer = nullptr;
+                        prediction = nullptr;
+                        output = nullptr;
+
+                        continue;
                     }
                 }
             }
@@ -484,7 +504,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
     }
     else
     {
-        // TODO: delete existing mapping and regenerate them if regenerateMappings
+        // RegenerateMappings is set to false, so just use any already set mappings (from config file)
         for (auto&& entry : m_displayMappingsFromFile)
         {
             mappings.Append(winrt::make<SourceToSinkMapping>(entry.first, entry.second));
@@ -513,13 +533,7 @@ void Core::UpdateToolList()
 
 winrt::Windows::Foundation::IClosable Core::LockFramework()
 {
-    if (m_isLocked)
-    {
-        m_logger.LogAssert(L"Attempted to lock framework while already locked!");
-        throw winrt::hresult_illegal_method_call();
-    }
-
-    return winrt::make<TestLock>(&m_isLocked);
+    return winrt::make<TestLock>(&m_lockCount);
 }
 
 SourceToSinkMapping::SourceToSinkMapping(IDisplayInput const& sink, IDisplayOutput const& source) : m_sink(sink), m_source(source)
