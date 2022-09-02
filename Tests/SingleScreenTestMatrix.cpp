@@ -38,8 +38,12 @@ void SingleScreenTestMatrix::Test()
     VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
     winrt::ISourceToSinkMapping mapping = g_displayMap.GetAt(0);
 
-    auto displayOutput = mapping.Source();
+    auto displayOutputTarget = mapping.Source();
     auto displayInput = mapping.Sink();
+
+    auto displayEngine = g_framework.GetDisplayEngine();
+
+    auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
     
     winrt::hstring testName = L"";
     auto tools = g_framework.GetLoadedTools();

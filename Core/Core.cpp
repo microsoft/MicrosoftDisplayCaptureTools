@@ -191,10 +191,15 @@ void Core::LoadConfigFile(hstring const& configFile)
             {
                 auto displayEngine = displayEngineValue.GetObjectW();
 
-                LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
+                // TODO: this needs to potentially handle multiple plugins
+                auto manager = LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
 
                 auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
-                m_displayEngine.SetConfigData(displayEngineConfig);
+                
+                if (manager)
+                {
+                    m_displayEngine.SetConfigData(displayEngineConfig);
+                }
             }
 
             // Attempt to load the CapturePlugin
@@ -206,7 +211,11 @@ void Core::LoadConfigFile(hstring const& configFile)
                 auto captureCard = LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
 
                 auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
-                captureCard.SetConfigData(captureCardConfig);
+                
+                if (captureCard)
+                {
+                    captureCard.SetConfigData(captureCardConfig);
+                }
             }
 
             // Attempt to load any ConfigurationToolboxes, if applicable
@@ -219,10 +228,14 @@ void Core::LoadConfigFile(hstring const& configFile)
                 {
                     auto toolboxConfigEntry = toolbox.GetObjectW();
 
-                    LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"), toolboxConfigEntry.GetNamedString(L"Class"));
+                    auto loadedToolbox = LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"), toolboxConfigEntry.GetNamedString(L"Class"));
 
                     auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
-                    m_toolboxes.back().SetConfigData(toolboxConfig);
+                    
+                    if (loadedToolbox)
+                    {
+                        loadedToolbox.SetConfigData(toolboxConfig);
+                    }
                 }
 
                 UpdateToolList();
@@ -283,7 +296,8 @@ void Core::LoadConfigFile(hstring const& configFile)
                         m_logger.LogError(L"Display input mapped from config file not found.");
                     }
 
-                    m_displayMappingsFromFile[foundInput] = m_displayEngine.InitializeOutput(displayId);
+                    m_displayMappingsFromFile.push_back(
+                        winrt::make<SourceToSinkMapping>(foundInput, m_displayEngine.InitializeOutput(displayId).Target()));
                 }
             }
         }
@@ -384,7 +398,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                             }
 
                             // We found the match, add it to the mappings with this input
-                            auto mapping = winrt::make<SourceToSinkMapping>(input, m_displayEngine.InitializeOutput(target));
+                            auto mapping = winrt::make<SourceToSinkMapping>(input, target);
                             mappings.Append(mapping);
 
                             // Also note that this target has already been mapped
@@ -434,6 +448,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                     {
                         continue;
                     }
+          
 
                     // We don't take control of displays for this config - there is too high a risk of accidental black screens
                     if (monitor.UsageKind() == DisplayMonitorUsageKind::Standard)
@@ -456,15 +471,11 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         continue;
                     }
 
-                    IDisplayOutput output = nullptr;
-                    IDisplayEnginePrediction prediction = nullptr;
-                    IClosable renderer = nullptr;
-
                     try
                     {
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
                         // matches it with default Tool settings.
-                        output = m_displayEngine.InitializeOutput(target);
+                        auto output = m_displayEngine.InitializeOutput(target);
                         for (auto&& tool : m_toolList)
                         {
                             tool.SetConfiguration(tool.GetDefaultConfiguration());
@@ -472,11 +483,11 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         }
 
                         // Start outputting to the target with the current settings
-                        renderer = output.StartRender();
+                        auto renderer = output.StartRender();
                         std::this_thread::sleep_for(std::chrono::seconds(5));
 
                         // Get the predicted frame
-                        prediction = output.GetPrediction();
+                        auto prediction = output.GetPrediction();
 
                         // Iterate through the still unassigned inputs to find any matches
                         for (auto [card, input] : unassignedInputs_NoEDID)
@@ -484,17 +495,15 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                             input.FinalizeDisplayState();
                             auto capture = input.CaptureFrame();
 
-                            // TODO: actually compare frame and prediction
+                            m_logger.LogNote(
+                                winrt::hstring(L"Comparing output of ") + target.StableMonitorId() + L" to input " + card.Name() +
+                                L"." + input.Name());
                         }
                     }
                     catch (...)
                     {
                         // If something fails trying to set up this output as a target - just try others... failure here 
                         // almost assuredly means that this is not an intended test target.
-
-                        renderer = nullptr;
-                        prediction = nullptr;
-                        output = nullptr;
 
                         continue;
                     }
@@ -507,7 +516,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
         // RegenerateMappings is set to false, so just use any already set mappings (from config file)
         for (auto&& entry : m_displayMappingsFromFile)
         {
-            mappings.Append(winrt::make<SourceToSinkMapping>(entry.first, entry.second));
+            mappings.Append(entry);
         }
     }
 
@@ -536,7 +545,11 @@ winrt::Windows::Foundation::IClosable Core::LockFramework()
     return winrt::make<TestLock>(&m_lockCount);
 }
 
-SourceToSinkMapping::SourceToSinkMapping(IDisplayInput const& sink, IDisplayOutput const& source) : m_sink(sink), m_source(source)
+SourceToSinkMapping::SourceToSinkMapping(IDisplayInput const& sink, winrt::DisplayTarget const& source) : m_sink(sink), m_source(source)
+{
+}
+
+SourceToSinkMapping::~SourceToSinkMapping()
 {
 }
 
@@ -545,7 +558,7 @@ IDisplayInput SourceToSinkMapping::Sink()
     return m_sink;
 }
 
-IDisplayOutput SourceToSinkMapping::Source()
+winrt::DisplayTarget SourceToSinkMapping::Source()
 {
     return m_source;
 }

@@ -118,6 +118,7 @@ MODULE_SETUP(ModuleSetup)
             L"No display output to display capture device mapping from the configuration file - attempting to auto-map.");
 
         // if no display mappings were in the config file - attempt to figure out the mappings automatically
+        // This uses the normal test mechanisms to control and render to displays - so if this fails normally it can be safely ignored.
         g_displayMap = g_framework.GetSourceToSinkMappings(true);
 
         if (g_displayMap.Size() == 0)

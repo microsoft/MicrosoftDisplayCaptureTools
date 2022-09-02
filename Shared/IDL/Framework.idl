@@ -116,7 +116,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface ISourceToSinkMapping
     {
-        MicrosoftDisplayCaptureTools.Display.IDisplayOutput Source
+        Windows.Devices.Display.Core.DisplayTarget Source
         {
             get;
         };

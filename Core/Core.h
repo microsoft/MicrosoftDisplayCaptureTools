@@ -38,20 +38,25 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
     struct SourceToSinkMapping : implements<SourceToSinkMapping, ISourceToSinkMapping>
     {
-        SourceToSinkMapping(CaptureCard::IDisplayInput const& sink, Display::IDisplayOutput const& source);
+        SourceToSinkMapping(CaptureCard::IDisplayInput const& sink, winrt::Windows::Devices::Display::Core::DisplayTarget const& source);
+        ~SourceToSinkMapping();
 
         CaptureCard::IDisplayInput Sink();
-        Display::IDisplayOutput Source();
+        winrt::Windows::Devices::Display::Core::DisplayTarget Source();
 
     private:
         const CaptureCard::IDisplayInput m_sink;
-        const Display::IDisplayOutput m_source;
+        const winrt::Windows::Devices::Display::Core::DisplayTarget m_source;
     };
 
     struct Core : CoreT<Core>
     {
         Core();
         Core(Framework::ILogger const& logger);
+
+        Core::~Core()
+        {
+        }
 
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath);
@@ -110,7 +115,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // A map parsed from the configuration file which identifies which DisplayTargets match up with which IDisplayInputs
         // from the IController plugin.
-        std::map<CaptureCard::IDisplayInput, Display::IDisplayOutput> m_displayMappingsFromFile;
+        std::vector<ISourceToSinkMapping> m_displayMappingsFromFile;
 
         // The logging system for this framework instance
         const ILogger m_logger;

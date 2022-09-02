@@ -120,7 +120,6 @@ namespace winrt::DisplayControl::implementation
 
     DisplayEngine::~DisplayEngine()
     {
-
     }
 
     void DisplayEngine::SetConfigData(IJsonValue data)
@@ -128,20 +127,8 @@ namespace winrt::DisplayControl::implementation
     }
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
-    { /*
-        // First try to return an already initialized output
-        for (auto&& preexisting : m_targets)
-        {
-            if (preexisting.first.IsSame(target))
-            {
-                return preexisting.second;
-            }
-        }
-
-        // No output for this target has been created yet, create one.
-        */
+    {
         auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
-        //m_targets[target] = output;
 
         return output;
     }
@@ -210,7 +197,10 @@ namespace winrt::DisplayControl::implementation
 
     DisplayOutput::~DisplayOutput()
     {
-        
+        if (m_displayTarget && m_displayState)
+        {
+            m_displayState.DisconnectTarget(m_displayTarget);
+        }
     }
 
     winrt::DisplayTarget DisplayOutput::Target()
@@ -594,7 +584,9 @@ namespace winrt::DisplayControl::implementation
                 
                 if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
                     mode.TargetResolution().Height == m_properties->Resolution().Height &&
-                    mode.TargetResolution().Width == m_properties->Resolution().Width)
+                    mode.TargetResolution().Width == m_properties->Resolution().Width &&
+                    mode.SourceResolution().Height == m_properties->Resolution().Height &&
+                    mode.SourceResolution().Width == m_properties->Resolution().Width)
                 {
 
                     if (delta < sc_refreshRateEpsilon)
@@ -606,8 +598,9 @@ namespace winrt::DisplayControl::implementation
                 }
             }
             
-            // No mode fit the set tools
-            m_logger.LogError(L"No display mode fit the selected options");
+            // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
+            // to auto-configure. So log a warning instead of an error to assist the user.
+            m_logger.LogWarning(L"No display mode fit the selected options");
             throw winrt::hresult_invalid_argument();
         }
     }
