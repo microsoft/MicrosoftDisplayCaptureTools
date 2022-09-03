@@ -591,7 +591,13 @@ namespace winrt::DisplayControl::implementation
 
                     if (delta < sc_refreshRateEpsilon)
                     {
+                        std::wstringstream buf{};
+                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height <<
+                                   L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
+
                         // we have a mode matching the requirements.
+                        m_logger.LogNote(buf.str());
+
                         m_properties->ActiveMode(mode);
                         return;
                     }

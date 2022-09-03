@@ -496,8 +496,10 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                             auto capture = input.CaptureFrame();
 
                             m_logger.LogNote(
-                                winrt::hstring(L"Comparing output of ") + target.StableMonitorId() + L" to input " + card.Name() +
+                                winrt::hstring(L"Comparing output of ") + monitor.DisplayName() + L" to input " + card.Name() +
                                 L"." + input.Name());
+
+                            // TODO: compare output to input
                         }
                     }
                     catch (...)

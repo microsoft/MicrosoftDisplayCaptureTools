@@ -23,3 +23,7 @@
 #include <winrt/Windows.Graphics.Imaging.h>
 
 #include <mutex>
+
+#include <string>
+#include <iostream>
+#include <sstream>
