@@ -207,7 +207,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
     }
 
-    void DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode)
     {
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
@@ -224,12 +224,28 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
             ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
         {
-            m_logger.LogError(std::format(L"Captured pixel ({},{},{}) - Expected ({},{},{})",
-                captureBuffer.data()[0], captureBuffer.data()[1], captureBuffer.data()[2],
-                predictBuffer.data()[0], predictBuffer.data()[1], predictBuffer.data()[2]));
+            auto logString = std::format(
+                                  L"Captured pixel ({},{},{}) - Expected ({},{},{})",
+                                  captureBuffer.data()[0],
+                                  captureBuffer.data()[1],
+                                  captureBuffer.data()[2],
+                                  predictBuffer.data()[0],
+                                  predictBuffer.data()[1],
+                                  predictBuffer.data()[2]);
 
-            throw winrt::hresult_error();
+            if (configMode)
+            {
+                m_logger.LogWarning(logString);
+                return false;
+            }
+            else
+            {
+                m_logger.LogError(logString);
+                throw winrt::hresult_error();
+            }
         }
+
+        return true;
     }
 
     IMemoryBufferReference DisplayCapture::GetRawPixelData()

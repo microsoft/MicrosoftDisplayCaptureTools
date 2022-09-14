@@ -13,7 +13,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     {
         DisplayCapture(winrt::Windows::Media::Capture::CapturedFrame frame, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        void CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:

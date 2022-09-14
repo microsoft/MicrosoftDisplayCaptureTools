@@ -499,7 +499,12 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                 winrt::hstring(L"Comparing output of ") + monitor.DisplayName() + L" to input " + card.Name() +
                                 L"." + input.Name());
 
-                            // TODO: compare output to input
+                            if (capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction, true))
+                            {
+                                // We found the match, add it to the mappings with this input
+                                auto mapping = winrt::make<SourceToSinkMapping>(input, target);
+                                mappings.Append(mapping);
+                            }
                         }
                     }
                     catch (...)

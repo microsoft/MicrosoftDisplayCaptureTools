@@ -100,7 +100,7 @@ namespace winrt::TanagerPlugin::implementation
     {
         TanagerDisplayCapture(std::vector<byte> pixels, uint16_t horizontalResolution, uint16_t verticalResolution);
 
-        void CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:

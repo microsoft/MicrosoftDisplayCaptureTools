@@ -370,7 +370,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         RtlCopyMemory(ref.data(), pixels.data(), ref.Capacity());
     }
 
-    void TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode)
     {
         auto predictedBitmap = prediction.GetBitmap();
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
@@ -441,9 +441,19 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
             if (diff > 0.10f)
             {
                 printf("\n\tMatch = %2.2f\n\n", diff);
-                throw winrt::hresult_error();
+
+                if (configMode)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw winrt::hresult_error();
+                }
             }
         }
+
+        return true;
     }
 
     winrt::Windows::Foundation::IMemoryBufferReference TanagerDisplayCapture::GetRawPixelData()
