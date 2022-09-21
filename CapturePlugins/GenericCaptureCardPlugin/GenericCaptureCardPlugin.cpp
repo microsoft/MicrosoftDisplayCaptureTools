@@ -54,11 +54,23 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
     {
-        m_displayInput = *make_self<DisplayInput>(m_deviceId, m_logger);
+        // Only try and get the input specified by config file
+        if (m_usbIdFromConfigFile != L"")
+        {
+            m_displayInputs.push_back(*make_self<DisplayInput>(m_usbIdFromConfigFile, m_logger));
+        }
+        else // Attempt to get all possible inputs
+        {
+            hstring cameraId;
+            auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
+            for (auto&& captureDevice : captureDevices)
+            {
+                m_displayInputs.push_back(*make_self<DisplayInput>(captureDevice.Id(), m_logger));
+            }
+        }
 
-        std::vector<IDisplayInput> inputs;
-        inputs.push_back(m_displayInput);
-        return com_array<IDisplayInput>(inputs);
+
+        return com_array<IDisplayInput>(m_displayInputs);
     }
 
     void Controller::SetConfigData(winrt::IJsonValue data)
@@ -66,15 +78,22 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // The JSON object returned here is the "settings" sub-object for this plugin. It's definition is capture card plugin-specific.
         if (!data || data.ValueType() == winrt::JsonValueType::Null)
         {
-            // We don't have anything that can identify the capture device
-            // TODO: log this case - potentially we can fall back to using the first camera device?
-            throw winrt::hresult_invalid_argument();
+            return;
         }
 
-        auto jsonObject = data.GetObjectW();
-        m_deviceId = jsonObject.GetNamedString(L"UsbId");
+        try
+        {
+            auto jsonObject = data.GetObjectW();
+            m_usbIdFromConfigFile = jsonObject.GetNamedString(L"UsbId");
 
-        // TODO: log that the device ID has been read
+            // Make sure we only get the capture device specified if going this route
+            m_displayInputs.clear();
+
+        }
+        catch (winrt::hresult_error const& ex)
+        {
+            m_logger.LogError(Name() + L" was provided configuration data, but was unable to parse it. Error: " + ex.message());
+        }
     }
 
     bool CaptureCapabilities::CanReturnRawFramesToHost()
@@ -166,8 +185,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     hstring DisplayInput::Name()
     {
-        hstring ret = L"Input 1";
-        return ret;
+        return m_deviceId;
     }
 
     void DisplayInput::FinalizeDisplayState()
@@ -207,7 +225,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
     }
 
-    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode)
+    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
@@ -233,16 +251,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                                   predictBuffer.data()[1],
                                   predictBuffer.data()[2]);
 
-            if (configMode)
-            {
-                m_logger.LogWarning(logString);
-                return false;
-            }
-            else
-            {
-                m_logger.LogError(logString);
-                throw winrt::hresult_error();
-            }
+            m_logger.LogError(logString);
+            return false;
         }
 
         return true;

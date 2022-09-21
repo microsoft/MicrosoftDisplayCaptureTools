@@ -371,7 +371,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         RtlCopyMemory(ref.data(), pixels.data(), ref.Capacity());
     }
 
-    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
         auto predictedBitmap = prediction.GetBitmap();
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
@@ -445,14 +445,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
                 m_logger.LogError(msg);
 
-                if (configMode)
-                {
-                    return false;
-                }
-                else
-                {
-                    throw winrt::hresult_error();
-                }
+                return false;
             }
         }
 

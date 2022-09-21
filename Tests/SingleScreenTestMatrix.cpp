@@ -72,6 +72,6 @@ void SingleScreenTestMatrix::Test()
         auto capturedFrame = displayInput.CaptureFrame();
         auto predictedFrame = displayOutput.GetPrediction();
 
-        capturedFrame.CompareCaptureToPrediction(testName, predictedFrame, false);
+        capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
     }
 }

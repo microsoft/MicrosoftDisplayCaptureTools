@@ -111,7 +111,7 @@ namespace winrt::TanagerPlugin::implementation
             uint16_t verticalResolution,
             winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode);
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:

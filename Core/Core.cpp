@@ -193,11 +193,10 @@ void Core::LoadConfigFile(hstring const& configFile)
 
                 // TODO: this needs to potentially handle multiple plugins
                 auto manager = LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
-
-                auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
                 
-                if (manager)
+                if (manager && displayEngine.HasKey(L"Settings"))
                 {
+                    auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
                     m_displayEngine.SetConfigData(displayEngineConfig);
                 }
             }
@@ -210,10 +209,9 @@ void Core::LoadConfigFile(hstring const& configFile)
 
                 auto captureCard = LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
 
-                auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
-                
-                if (captureCard)
+                if (captureCard && capturePlugin.HasKey(L"Settings"))
                 {
+                    auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
                     captureCard.SetConfigData(captureCardConfig);
                 }
             }
@@ -229,11 +227,10 @@ void Core::LoadConfigFile(hstring const& configFile)
                     auto toolboxConfigEntry = toolbox.GetObjectW();
 
                     auto loadedToolbox = LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"), toolboxConfigEntry.GetNamedString(L"Class"));
-
-                    auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
                     
-                    if (loadedToolbox)
+                    if (loadedToolbox && toolboxConfigEntry.HasKey(L"Settings"))
                     {
+                        auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
                         loadedToolbox.SetConfigData(toolboxConfig);
                     }
                 }
@@ -501,7 +498,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
                             auto suppressErrors = m_logger.LogErrorsAsWarnings();
 
-                            auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction, true);
+                            auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction);
 
                             if (captureResult && !suppressErrors.HasErrored())
                             {
@@ -519,6 +516,12 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         continue;
                     }
                 }
+            }
+
+            if (mappings.Size() == 0)
+            {
+                m_logger.LogWarning(L"Unable to match any inputs to outputs, please ensure that the proper outputs are removed "
+                                    L"from the desktop in advanced display settings.");
             }
         }
     }

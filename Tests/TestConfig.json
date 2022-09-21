@@ -2,8 +2,8 @@
 	"Version": "0.1",
 	"Components": {
 		"CapturePlugin": {
-			"Path": "TanagerPlugin\\TanagerPlugin.dll",
-			"Class": "TanagerPlugin.ControllerFactory",
+			"Path": "GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll",
+			"Class": "GenericCaptureCardPlugin.ControllerFactory",
 			"Settings": null
 		},
 		"DisplayEngine": {

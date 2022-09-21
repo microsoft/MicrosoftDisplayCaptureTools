@@ -7,13 +7,13 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     // The per-channel error tolerance for this particular capture card.
     // (20 is drastically unacceptable for a final product - the generic capture card
     // I have on my desk right now compresses the stream like crazy)
-    constexpr uint8_t ColorChannelTolerance = 20;
+    constexpr uint8_t ColorChannelTolerance = 70;
 
     struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
         DisplayCapture(winrt::Windows::Media::Capture::CapturedFrame frame, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction, bool configMode);
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:
@@ -66,13 +66,12 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     private:
         winrt::hstring m_deviceId;
-        winrt::Windows::Media::Capture::MediaCapture m_mediaCapture{ nullptr };
 
         winrt::com_ptr<CaptureCapabilities> m_captureCapabilities;
         winrt::com_ptr<CaptureTrigger> m_captureTrigger;
-
-        // This basic plugin can only handle 1 capture at a time.
         winrt::com_ptr<DisplayCapture> m_capture;
+
+        winrt::Windows::Media::Capture::MediaCapture m_mediaCapture{nullptr};
 
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
@@ -92,11 +91,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         };  
 
     private:
-        // Identifier that allows this plugin to identify the actual USB device. Here it is read from the supplied config file.
-        winrt::hstring m_deviceId;
+        std::vector<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
 
-        // This plugin only supports a single display input.
-        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput m_displayInput;
+        winrt::hstring m_usbIdFromConfigFile = L"";
 
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
