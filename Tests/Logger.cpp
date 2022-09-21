@@ -69,7 +69,15 @@ void WEXLogger::LogWarning(hstring const& warning)
 
 void WEXLogger::LogError(hstring const& error)
 {
-    Log::Error(error.c_str());
+    if (m_logErrorsAsWarnings)
+    {
+        LogWarning(error);
+        m_loggedErrorsAsWarnings++;
+    }
+    else
+    {
+        Log::Error(error.c_str());
+    }
 }
 
 void WEXLogger::LogAssert(hstring const& assert)
@@ -81,4 +89,10 @@ void WEXLogger::LogConfig(hstring const& config)
 {
     Log::Comment(config.c_str());
 }
+
+winrt::MicrosoftDisplayCaptureTools::Framework::ILoggerMode WEXLogger::LogErrorsAsWarnings()
+{
+    return winrt::make<LoggerAltMode>(m_logErrorsAsWarnings, m_loggedErrorsAsWarnings);
+}
+
 } // namespace winrt::MicrosoftDisplayCaptureTools::Tests::Logging

@@ -2,15 +2,14 @@ import "ConfigurationTools.idl";
 import "CaptureCardPlugin.idl";
 import "DisplayManager.idl";
 
-namespace MicrosoftDisplayCaptureTools.Framework
+namespace MicrosoftDisplayCaptureTools.Framework 
 {
     //
-    // An abstracted Logger for the Hardware HLK project. A default implementation will be provided in this project, but 
+    // An abstracted Logger for the Hardware HLK project. A default implementation will be provided in this project, but
     // custom implementations may be created and passed to the Core framework object, which will be promulgated throughout
     // the components loaded.
-    // 
-    // The default implementation will have further interactions with the TAEF testing platform if that is being used.
     //
+    interface ILoggerMode;
     interface ILogger
     {
         // LogNote
@@ -39,7 +38,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // LogError
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Logs an error - either in setup or in test running.
+        //      Logs a test error - like an image mismatching expectations. Issues regarding device setup/etc should be
+        //      logged with the below LogAssert
         //
         // Parameters:
         //      error
@@ -69,6 +69,28 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          The string holding the configuration info to log
         //
         void LogConfig(String config);
+
+        // LogErrorsAsWarnings
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      From this call until the returned object is destroyed/closed, the logger object will log errors as warnings
+        //      to prevent failures in situations where 'errors' are expected. This is primarily intended for use when auto
+        //      configuring components during setup.
+        //
+        // Returns:
+        //      ILoggerMode object which will return the logger to treating errors normally on closing (or destruction)
+        //
+        ILoggerMode LogErrorsAsWarnings();
+    };
+
+    //
+    // Objects implementing this interface are returned when LogErrorsAsWarnings is called on on ILogger objects. While
+    // this object exists the ILogger will continue logging errors as warnings. Calling .HasErrored will return if any errors
+    // were logged while this object lived.
+    //
+    interface ILoggerMode
+    {
+        Boolean HasErrored();
     };
 
     //

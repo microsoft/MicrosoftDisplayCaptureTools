@@ -9,6 +9,7 @@ namespace winrt
     using namespace winrt::Windows::Devices::Display::Core;
     using namespace winrt::Windows::Storage;
     using namespace winrt::Windows::Storage::Streams;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 }
 using namespace IteIt68051Plugin;
 
@@ -16,7 +17,7 @@ namespace winrt::TanagerPlugin::implementation
 {
 const unsigned char it68051i2cAddress = 0x48;
 
-TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
+TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger const& logger) :
     m_logger(logger),
     m_usbDevice(nullptr),
     m_deviceId(deviceId),
@@ -50,8 +51,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 	{
 		return std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
 		{
-			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::hdmi),
-			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::displayPort),
+			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::hdmi, m_logger),
+			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::displayPort, m_logger),
 		};
 	}
 
@@ -121,11 +122,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         }
     }
 
-	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port)
-		: m_parent(parent),
-		  m_port(port)
-	{
-	}
+	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port, winrt::ILogger const& logger) :
+        m_parent(parent), m_port(port), m_logger(logger)
+    {
+    }
 
 	hstring TanagerDisplayInput::Name()
 	{
@@ -220,7 +220,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         // turn off read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
-        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive);
+        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive, m_logger);
     }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
@@ -312,10 +312,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 		}
     }
 
-    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution) :
-        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution)
+    TanagerDisplayCapture::TanagerDisplayCapture(
+        std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution, winrt::ILogger const& logger) :
+        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution), m_logger(logger)
     {
-        if (rawCaptureData.size() == 0) 
+        if (rawCaptureData.size() == 0)
         {
             throw hresult_invalid_argument();
         }
@@ -361,7 +362,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
 
-        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger 
+        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger
         if (ref.Capacity() < (pixels.size() - 4096))
         {
             throw hresult_invalid_argument();
@@ -385,9 +386,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 
         if (captureBuffer.Capacity() != predictBuffer.Capacity())
         {
-            printf("Capture Sizes don't match!  Captured=%d, Predicted=%d\n\n",
-                captureBuffer.Capacity(),
-                predictBuffer.Capacity());
+            m_logger.LogError(
+                winrt::hstring(L"Capture Sizes don't match!  Captured=") + std::to_wstring(captureBuffer.Capacity()) +
+                L", Predicted=" + std::to_wstring(predictBuffer.Capacity()));
         }
         else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), captureBuffer.Capacity()))
         {
@@ -440,7 +441,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
             float diff = (float)differenceCount / (float)pixelCount;
             if (diff > 0.10f)
             {
-                printf("\n\tMatch = %2.2f\n\n", diff);
+                std::wstring msg;
+                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
+                m_logger.LogError(msg);
 
                 if (configMode)
                 {

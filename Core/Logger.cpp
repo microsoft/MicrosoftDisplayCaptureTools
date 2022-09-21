@@ -43,11 +43,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities
     void Logger::LogError(hstring const& error)
     {
         auto lock = std::scoped_lock(m_mutex);
-        *m_output << GetTimeStamp() << L"Error: " << error.c_str() << std::endl;
+        if (m_logErrorsAsWarnings)
+        {
+            m_loggedErrorsAsWarnings++;
+            LogWarning(error);
+        }
+        else
+        {
+            *m_output << GetTimeStamp() << L"Error: " << error.c_str() << std::endl;
+        }
     }
 
     void Logger::LogAssert(hstring const& assert)
     {
+        
         auto lock = std::scoped_lock(m_mutex);
         *m_output << GetTimeStamp() << L"Assert: " << assert.c_str() << std::endl;
     }
@@ -56,6 +65,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities
     {
         auto lock = std::scoped_lock(m_mutex);
         *m_output << GetTimeStamp() << L"Config: " << config.c_str() << std::endl;
+    }
+
+    winrt::MicrosoftDisplayCaptureTools::Framework::ILoggerMode Logger::LogErrorsAsWarnings()
+    {
+        return winrt::make<LoggerAltMode>(m_logErrorsAsWarnings, m_loggedErrorsAsWarnings);
     }
     
     // Retrieve the current time to be printed at the start of log entries.
