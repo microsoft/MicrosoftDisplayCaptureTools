@@ -202,10 +202,19 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     IDisplayCapture DisplayInput::CaptureFrame()
     {
-        auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
-        auto photo = cap.get().CaptureAsync().get();
+        try
+        {
+            auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
+            auto photo = cap.get().CaptureAsync().get();
+            m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger);
+        }
+        catch (...)
+        {
+            m_logger.LogError(L"Unable to get pixels for input: " + Name());
+            m_capture = nullptr;
+            return nullptr;
+        }
 
-        m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger);
         return *m_capture;
     }
 

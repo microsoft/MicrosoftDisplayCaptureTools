@@ -489,26 +489,28 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         // Iterate through the still unassigned inputs to find any matches
                         for (auto [card, input] : unassignedInputs_NoEDID)
                         {
-                            input.FinalizeDisplayState();
-                            auto capture = input.CaptureFrame();
-
-                            m_logger.LogNote(
-                                winrt::hstring(L"Comparing output of ") + monitor.DisplayName() + L" to input " + card.Name() +
-                                L"." + input.Name());
-
                             auto suppressErrors = m_logger.LogErrorsAsWarnings();
 
-                            auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction);
-
-                            if (captureResult && !suppressErrors.HasErrored())
+                            input.FinalizeDisplayState();
+                            auto capture = input.CaptureFrame();
+                            if (capture)
                             {
-                                // We found the match, add it to the mappings with this input
-                                auto mapping = winrt::make<SourceToSinkMapping>(input, target);
-                                mappings.Append(mapping);
-
                                 m_logger.LogNote(
-                                    L"Successfully matched output " + monitor.DisplayName() + L" to input " + card.Name() + L"." +
-                                    input.Name());
+                                    winrt::hstring(L"Comparing output of ") + monitor.DisplayName() + L" to input " +
+                                    card.Name() + L"." + input.Name());
+
+                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction);
+
+                                if (captureResult && !suppressErrors.HasErrored())
+                                {
+                                    // We found the match, add it to the mappings with this input
+                                    auto mapping = winrt::make<SourceToSinkMapping>(input, target);
+                                    mappings.Append(mapping);
+
+                                    m_logger.LogNote(
+                                        L"Successfully matched output " + monitor.DisplayName() + L" to input " + card.Name() +
+                                        L"." + input.Name());
+                                }
                             }
                         }
                     }
