@@ -7,7 +7,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     // The per-channel error tolerance for this particular capture card.
     // (20 is drastically unacceptable for a final product - the generic capture card
     // I have on my desk right now compresses the stream like crazy)
-    constexpr uint8_t ColorChannelTolerance = 70;
+    constexpr uint8_t ColorChannelTolerance = 100;
 
     struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {

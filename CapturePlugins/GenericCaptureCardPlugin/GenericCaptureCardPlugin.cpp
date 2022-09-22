@@ -237,28 +237,35 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         
-        
+        auto capturedR = captureBuffer.data()[0];
+        auto capturedG = captureBuffer.data()[1];
+        auto capturedB = captureBuffer.data()[2];
+
+        // Convert limited range to full range
+        capturedR = capturedR < 16 ? 0 : capturedR > 235 ? 235 : (uint8_t)((float)(capturedR - 16) * 1.164f);
+        capturedG = capturedG < 16 ? 0 : capturedG > 235 ? 235 : (uint8_t)((float)(capturedG - 16) * 1.164f);
+        capturedB = capturedB < 16 ? 0 : capturedB > 235 ? 235 : (uint8_t)((float)(capturedB - 16) * 1.164f);
+
         auto logString = std::format(
             L"Captured pixel ({},{},{}) - Expected ({},{},{})",
-            captureBuffer.data()[0],
-            captureBuffer.data()[1],
-            captureBuffer.data()[2],
+            capturedR,
+            capturedG,
+            capturedB,
             predictBuffer.data()[0],
             predictBuffer.data()[1],
             predictBuffer.data()[2]);
-
         m_logger.LogNote(logString);
 
         //
         // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
         // plugin only RGB8 is supported.
-        // 
-        // TODO: this needs to handle multiple formats 
+        //
+        // TODO: this needs to handle multiple formats
         // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
         //
-        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[0] - (float)predictBuffer.data()[0])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
+        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedR - (float)predictBuffer.data()[0])) ||
+            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedG - (float)predictBuffer.data()[1])) ||
+            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedB - (float)predictBuffer.data()[2])))
         {
             m_logger.LogError(L"Image comparison failed.");
             return false;
