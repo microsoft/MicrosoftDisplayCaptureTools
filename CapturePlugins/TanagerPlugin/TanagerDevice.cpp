@@ -58,7 +58,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
 	void TanagerDevice::TriggerHdmiCapture()
 	{
-		throw winrt::hresult_not_implemented();
+        m_logger.LogAssert(L"TriggerHdmiCapture not currently implemented.");
 	}
 
 	void TanagerDevice::FpgaWrite(unsigned short address, std::vector<byte> data)
@@ -137,7 +137,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 			return L"DisplayPort";
 		}
 
-        throw winrt::hresult_invalid_argument();
+        m_logger.LogAssert(L"Invalid port chosen.");
     }
 
     void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
@@ -148,7 +148,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         {
             if (descriptor.Type() != MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType::EDID)
             {
-                throw winrt::hresult_invalid_argument();
+                m_logger.LogAssert(L"Only EDID descriptors are currently supported.");
             }
 
             auto edidDataView = descriptor.Data();
@@ -160,7 +160,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         case TanagerDisplayInputPort::displayPort:
         default:
         {
-            throw winrt::hresult_not_implemented();
+            m_logger.LogAssert(L"DisplayPort input does not currently support setting descriptors.");
         }
         }
     }
@@ -181,7 +181,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         auto parent = m_parent.lock();
         if (!parent)
         {
-            throw winrt::hresult_error();
+            m_logger.LogAssert(L"Cannot obtain reference to Tanager device.");
         }
 
         // Capture frame in DRAM
@@ -231,7 +231,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
         else
         {
-            throw winrt::hresult_error();
+            m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
 
         Sleep(5000);
@@ -248,7 +248,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 break;
             default:
             case TanagerDisplayInputPort::displayPort:
-                throw winrt::hresult_error();
+                m_logger.LogAssert(L"DisplayPort input of Tanager does not currently support setting EDIDs.");
+                return;
         }
 
         if (auto parent = m_parent.lock())
@@ -257,7 +258,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
         else
         {
-            throw winrt::hresult_error();
+            m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
     }
 

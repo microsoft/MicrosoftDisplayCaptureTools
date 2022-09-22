@@ -161,23 +161,13 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
         for (auto&& captureDevice : captureDevices)
         {
-            std::wstring_view name = captureDevice.Id();
-            if (name.find(m_deviceId) != std::wstring::npos)
+            if (deviceId == captureDevice.Id())
             {
                 // Capture Camera Found!
-                cameraId = captureDevice.Id();
+                m_deviceFriendlyName = captureDevice.Name();
                 break;
             }
         }
-
-        MediaCaptureInitializationSettings mediaCaptureInitSettings;
-        mediaCaptureInitSettings.VideoDeviceId(cameraId);
-        mediaCaptureInitSettings.StreamingCaptureMode(StreamingCaptureMode::Video);
-
-        m_mediaCapture = MediaCapture();
-
-        // Initialize the capture object and block until complete
-        m_mediaCapture.InitializeAsync(mediaCaptureInitSettings).get();
 
         m_captureCapabilities = make_self<CaptureCapabilities>();
         m_captureTrigger = make_self<CaptureTrigger>();
@@ -185,11 +175,19 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     hstring DisplayInput::Name()
     {
-        return m_deviceId;
+        return m_deviceFriendlyName;
     }
 
     void DisplayInput::FinalizeDisplayState()
     {
+        MediaCaptureInitializationSettings mediaCaptureInitSettings;
+        mediaCaptureInitSettings.VideoDeviceId(m_deviceId);
+        mediaCaptureInitSettings.StreamingCaptureMode(StreamingCaptureMode::Video);
+
+        m_mediaCapture = MediaCapture();
+
+        // Initialize the capture object and block until complete
+        m_mediaCapture.InitializeAsync(mediaCaptureInitSettings).get();
     }
 
     ICaptureCapabilities DisplayInput::GetCapabilities()
@@ -217,7 +215,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // Mirror the pixel data over to this object's storage. 
         if (!frame.CanRead())
         {
-            m_logger.LogError(L"Cannot read pixel data fram frame.");
+            m_logger.LogError(L"Cannot read pixel data from frame.");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -230,28 +228,30 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         
+        
+        auto logString = std::format(
+            L"Captured pixel ({},{},{}) - Expected ({},{},{})",
+            captureBuffer.data()[0],
+            captureBuffer.data()[1],
+            captureBuffer.data()[2],
+            predictBuffer.data()[0],
+            predictBuffer.data()[1],
+            predictBuffer.data()[2]);
+
+        m_logger.LogNote(logString);
+
         //
         // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
         // plugin only RGB8 is supported.
         // 
         // TODO: this needs to handle multiple formats 
         // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
-        // TODO: allow saving the diff
         //
         if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[0] - (float)predictBuffer.data()[0])) ||
             ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
             ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
         {
-            auto logString = std::format(
-                                  L"Captured pixel ({},{},{}) - Expected ({},{},{})",
-                                  captureBuffer.data()[0],
-                                  captureBuffer.data()[1],
-                                  captureBuffer.data()[2],
-                                  predictBuffer.data()[0],
-                                  predictBuffer.data()[1],
-                                  predictBuffer.data()[2]);
-
-            m_logger.LogError(logString);
+            m_logger.LogError(L"Image comparison failed.");
             return false;
         }
 

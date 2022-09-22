@@ -128,7 +128,7 @@ void Core::LoadConfigFile(hstring const& configFile)
     if (IsFrameworkLocked())
     {
         m_logger.LogAssert(L"Attemped to modify framework configuration while test locked!");
-        throw winrt::hresult_illegal_method_call();
+        return;
     }
 
     // First try to see if the string passed in is a self-contained json file
@@ -164,7 +164,7 @@ void Core::LoadConfigFile(hstring const& configFile)
     if (!hasParsed)
     {
         m_logger.LogError(L"Loading Configuration Failed.");
-        throw winrt::hresult_error();
+        return;
     }
 
     m_configFile = jsonObject;
@@ -330,7 +330,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
         if (m_captureCards.empty() || !m_displayEngine)
         {
             m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine and a capture card.");
-            throw winrt::hresult_invalid_argument();
+            return mappings;
         }
 
         {
@@ -505,6 +505,10 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                 // We found the match, add it to the mappings with this input
                                 auto mapping = winrt::make<SourceToSinkMapping>(input, target);
                                 mappings.Append(mapping);
+
+                                m_logger.LogNote(
+                                    L"Successfully matched output " + monitor.DisplayName() + L" to input " + card.Name() + L"." +
+                                    input.Name());
                             }
                         }
                     }
