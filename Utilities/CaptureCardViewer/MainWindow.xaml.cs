@@ -37,8 +37,8 @@ using Windows.Graphics.DirectX;
 using System.Net.Http.Headers;
 using MicrosoftDisplayCaptureTools.CaptureCard;
 using System.Diagnostics;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Media;
+//using Microsoft.UI.Xaml.Media.Imaging;
+//using Microsoft.UI.Xaml.Media;
 
 namespace CaptureCardViewer
 {
@@ -60,6 +60,7 @@ namespace CaptureCardViewer
 		public string? setTool;
 		public string? currentTool;
 		Core testFramework = new Core();
+		bool userInput = false;
 
 		//private IBuffer predBuffer;
 
@@ -118,6 +119,39 @@ namespace CaptureCardViewer
 			return imgSource;	
 		}
 
+		// Apply and Render Method
+		// Apply Render and capture reusable method
+		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
+		{
+			var tools = this.testFramework.GetLoadedTools();
+			foreach (var tool in tools)
+			{
+
+				if (userInput)
+				{
+					var suppConfig = tool.GetSupportedConfigurations();
+					foreach (var config in suppConfig)
+						{
+						if (cbi_res == config)
+						{
+							tool.SetConfiguration(config);
+						}
+							
+						else if(cbi_ref == config)
+						{
+							tool.SetConfiguration (config);
+						}
+
+					}
+				}
+				tool.Apply(displayEngine);
+			}
+			var renderer = this.testFramework.GetDisplayEngine().StartRender();
+			Thread.Sleep(5000);
+			renderer.Dispose();
+		}
+
+
 		//Displaying frames & properties from the plugin
 		private async void displayProperties(object sender, RoutedEventArgs e)
 		{
@@ -125,9 +159,9 @@ namespace CaptureCardViewer
 			await Task.Run(() =>
 			{
 				//Captured frames from the tanager board 
-				var genericCapture = testFramework.GetCaptureCard();
+				var genericCapture = this.testFramework.GetCaptureCard();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
-				var displayEngine = testFramework.GetDisplayEngine();
+				var displayEngine = this.testFramework.GetDisplayEngine();
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 				var capturedFrame = captureInput.CaptureFrame();
@@ -232,7 +266,7 @@ namespace CaptureCardViewer
 				try
 				{
 					var pluginFile = dialogToFilename();
-					testFramework.LoadPlugin(pluginFile, pluginFile+".Plugin");
+					testFramework.LoadCapturePlugin(pluginFile, pluginFile+".Plugin");
 					var toolboxFile = dialogToFilename();
 					testFramework.LoadToolbox(toolboxFile, toolboxFile + ".Toolbox");
 					var displayManFile = dialogToFilename();
@@ -257,4 +291,82 @@ namespace CaptureCardViewer
 
 		}
 
-    }}
+		private void compareFrames_Click(object sender, RoutedEventArgs e)
+		{
+			var genericCapture = this.testFramework.GetCaptureCard();
+			var captureInputs = genericCapture.EnumerateDisplayInputs();
+			var displayEngine = this.testFramework.GetDisplayEngine();
+			var captureInput = captureInputs[0];
+			var capturedFrame = captureInput.CaptureFrame();
+			var prediction = displayEngine.GetPrediction();
+			capturedFrame.CompareCaptureToPrediction("Basic Test",prediction);
+		}
+
+		//Loading Display Manager file
+		private async void DispMan_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new OpenFileDialog(); //file picker
+			dialog.Title = "Load Display Manager file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var DispMan_filename = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadDisplayManager(DispMan_filename);
+					});
+					MessageBox.Show("Display Manager file loaded");
+				}
+				catch (Exception) { }
+
+			}
+			else { MessageBox.Show("Display Manager trouble loading"); }
+		}
+
+		//Loading Capture Plugin file
+		private async void CapPlgn_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new OpenFileDialog(); 
+			dialog.Title = "Load Capture Plugin file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var plugin_filename = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadCapturePlugin(plugin_filename);
+					});
+					MessageBox.Show("Plugin file loaded");
+				}
+				catch (Exception) { }
+
+			}
+			else { MessageBox.Show("Capture Plugin trouble loading"); }
+		}
+
+		//Loading Toolbox file
+		private async void Tlbx_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new OpenFileDialog(); 
+			dialog.Title = "Load Toolbox file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var tlbx_filename = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadToolbox(tlbx_filename);
+					});
+					MessageBox.Show("Toolbox file loaded");
+				}
+				catch (Exception) { }
+			}
+			else { MessageBox.Show("Toolbox trouble loading"); }
+		}
+
+
+	}
+}

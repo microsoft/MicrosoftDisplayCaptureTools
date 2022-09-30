@@ -12,8 +12,8 @@
             <Label Content="Predicted Image" HorizontalAlignment="Left" VerticalAlignment="Top" />
             <Image x:Name="PredImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
             <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
-            <Label Content="Available tools" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="configs" SelectionChanged="configurations">
+            <Label Content="Refresh rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ComboBox x:Name="cbi_ref" SelectionChanged="configurations">
                 <ComboBox.RenderTransform>
                     <TransformGroup>
                         <SkewTransform/>
@@ -21,12 +21,11 @@
                         <TranslateTransform/>
                     </TransformGroup>
                 </ComboBox.RenderTransform>
-                <ComboBoxItem Content="Create Config File"/>
-                <ComboBoxItem Content="Specify Frame Comp"/>
-                <ComboBoxItem Content="Change Pluging Properties"/>
+                <ComboBoxItem Content="60 HZ"/>
+                <ComboBoxItem Content="75 HZ"/>
             </ComboBox>
-            <Label Content="Tool Settings" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="toolSettings" RenderTransformOrigin="0.5,0.5">
+            <Label Content="Resolution Rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ComboBox x:Name="cbi_res" RenderTransformOrigin="0.5,0.5">
                 <ComboBox.RenderTransform>
                     <TransformGroup>
                         <SkewTransform/>
@@ -34,8 +33,8 @@
                         <TranslateTransform/>
                     </TransformGroup>
                 </ComboBox.RenderTransform>
-                <ComboBoxItem Content="Option 1"/>
-                <ComboBoxItem Content="Option 2"/>
+                <ComboBoxItem Content="1920x1080"/>
+                <ComboBoxItem Content="720x800"/>
             </ComboBox>
             <Image Height="100" Width="100"/>
         </StackPanel>
@@ -44,25 +43,22 @@
             <Label Content="Actual Image" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <Image x:Name="CaptImage" Stretch="Fill" MinHeight="200"/>
             <Button x:Name="dP" Content="Display Properties" Click="displayProperties" Margin="0,26"/>
-            <Label Content="Configurations" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
             <StackPanel Orientation="Horizontal">
-                <ComboBox Grid.Column="1" HorizontalAlignment="Left" Width="200" VerticalAlignment="Top" >
-                    <ComboBoxItem Content="Resolution"/>
-                    <ComboBoxItem Content="Refresh Rate"/>
-                    <ComboBoxItem Content="Capture Card"/>
-                    <ComboBoxItem Content="Frames"/>
-                    <ComboBoxItem Content="EDID"/>
-                </ComboBox>
-                <Label Content="Live Updates:" HorizontalAlignment="Left" VerticalAlignment="Top" Height="24" Margin="50,0,0,0"/>
-                <CheckBox x:Name="LiveUpdates" VerticalAlignment="Center"/>
-
+                <Menu HorizontalAlignment = "Left" VerticalAlignment = "Top" Width = "517">
+                    <MenuItem Header = "Load Framework Components">
+                        <MenuItem Header = "Capture Plugin" HorizontalAlignment = "Left" Width = "140" Click = "CapPlgn_Click"/>
+                        <MenuItem Header = "Display Manager" HorizontalAlignment = "Left"  Width = "140" Click = "DispMan_Click"/>
+                        <MenuItem Header = "Toolbox" HorizontalAlignment = "Left"  Width = "140" Click = "Tlbx_Click"/>
+                    </MenuItem>
+                </Menu>
             </StackPanel>
 
         </StackPanel>
         <StackPanel Orientation="Vertical" Width="401" Height="430">
             <Label Content="Properties" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <TextBox x:Name="TextBlock" Height="200" />
+            <Button x:Name="cF" Content="Compare Frames" Click="compareFrames_Click" Margin="0,26"/>
         </StackPanel>
         
     </StackPanel>
