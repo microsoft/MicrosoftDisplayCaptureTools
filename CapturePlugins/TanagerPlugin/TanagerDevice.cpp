@@ -135,9 +135,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 			return L"HDMI";
 		case TanagerDisplayInputPort::displayPort:
 			return L"DisplayPort";
+        default: 
+            m_logger.LogAssert(L"Invalid port chosen.");
+            return L"";
 		}
-
-        m_logger.LogAssert(L"Invalid port chosen.");
     }
 
     void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
