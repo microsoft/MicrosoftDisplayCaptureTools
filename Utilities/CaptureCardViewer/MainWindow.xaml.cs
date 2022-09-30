@@ -119,34 +119,31 @@ namespace CaptureCardViewer
 			return imgSource;	
 		}
 
-		// Apply and Render Method
 		// Apply Render and capture reusable method
 		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
 		{
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
-
 				if (userInput)
 				{
 					var suppConfig = tool.GetSupportedConfigurations();
 					foreach (var config in suppConfig)
 						{
-						if (cbi_res == config)
+						if (cbi_res.SelectionBoxItem.ToString() == config)
 						{
 							tool.SetConfiguration(config);
 						}
 							
-						else if(cbi_ref == config)
+						else if(cbi_ref.SelectionBoxItem.ToString() == config)
 						{
-							tool.SetConfiguration (config);
+							tool.SetConfiguration(config);
 						}
-
 					}
 				}
 				tool.Apply(displayEngine);
 			}
-			var renderer = this.testFramework.GetDisplayEngine().StartRender();
+			var renderer = displayEngine.StartRender();
 			Thread.Sleep(5000);
 			renderer.Dispose();
 		}
@@ -174,11 +171,12 @@ namespace CaptureCardViewer
 
 				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
 				var tools = testFramework.GetLoadedTools();
-				foreach (var tool in tools)
+				ApplyRenderAndCapture(displayEngine);
+				/*foreach (var tool in tools)
 					tool.Apply(displayEngine);
 
 				var renderer = displayEngine.StartRender();
-				Thread.Sleep(5000);
+				Thread.Sleep(5000);*/
 
 				//Get the framework's properties
 				var prop = displayEngine.GetProperties();
@@ -189,7 +187,7 @@ namespace CaptureCardViewer
 				
 
 				//Generate  & display frames to compare the Tanager's frames against
-				renderer.Dispose();
+				//renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
 				var bitmap = prediction.GetBitmap();
 				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
@@ -213,28 +211,6 @@ namespace CaptureCardViewer
 			});
 
 			
-		}
-
-		//sets the tool from the selected item in the ComboBox
-		private void configurations(object sender, SelectionChangedEventArgs e)
-		{	
-			ComboBoxItem cbi = (ComboBoxItem)configs.SelectedItem;	
-			string? selected = cbi.Content.ToString();
-			switch (selected)
-			{
-				case "Create Config File":
-					createConfigFile();
-					break;
-
-				case "Specify Frame Comp":
-					specifyComponents();
-					break;
-
-				case "Change Pluging Properties":
-					changeProperties();
-					break;
-
-			}
 		}
 
 		//dialog to filename string
@@ -367,6 +343,19 @@ namespace CaptureCardViewer
 			else { MessageBox.Show("Toolbox trouble loading"); }
 		}
 
-
+		private void configurations(object sender, SelectionChangedEventArgs e)
+		{
+			//ComboBoxItem cbi_res = ((ComboBoxItem)cbi_res).SelectedItem;
+			if (cbi_ref!=null)
+			{
+				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+				userInput = true;
+			}
+			if (cbi_res!= null)
+			{
+				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+				userInput = true;
+			}
+		}
 	}
 }

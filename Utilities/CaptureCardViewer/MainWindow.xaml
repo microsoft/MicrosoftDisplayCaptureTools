@@ -14,18 +14,21 @@
             <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
             <Label Content="Refresh rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <ComboBox x:Name="cbi_ref" SelectionChanged="configurations">
-                <ComboBox.RenderTransform>
-                    <TransformGroup>
-                        <SkewTransform/>
-                        <RotateTransform/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </ComboBox.RenderTransform>
-                <ComboBoxItem Content="60 HZ"/>
-                <ComboBoxItem Content="75 HZ"/>
-            </ComboBox>
+                    <ComboBox.RenderTransform>
+                        <TransformGroup>
+                            <SkewTransform/>
+                            <RotateTransform/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </ComboBox.RenderTransform>
+                    <ComboBoxItem Content="60 HZ"/>
+                    <ComboBoxItem Content="75 HZ"/>
+                </ComboBox>
+          
+            
+            
             <Label Content="Resolution Rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="cbi_res" RenderTransformOrigin="0.5,0.5">
+            <ComboBox x:Name="cbi_res" SelectionChanged="configurations">
                 <ComboBox.RenderTransform>
                     <TransformGroup>
                         <SkewTransform/>
