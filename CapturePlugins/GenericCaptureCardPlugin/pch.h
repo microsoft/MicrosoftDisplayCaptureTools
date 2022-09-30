@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <iostream>
+#include <format>
 
 #include <unknwn.h>
 #include <winrt/Windows.Foundation.h>
@@ -19,3 +20,6 @@
 
 // Include the headers for the Imaging APIs
 #include <winrt/Windows.Graphics.Imaging.h>
+
+// Include the headers for the displayengine components of these tools
+#include "winrt\MicrosoftDisplayCaptureTools.Display.h"

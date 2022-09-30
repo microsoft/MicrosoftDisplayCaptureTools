@@ -251,7 +251,12 @@ void Core::LoadConfigFile(hstring const& configFile)
         }
         else
         {
-            // TODO: assert that we do in fact have at least a displayEngine and a capture plugin, otherwise these mappings don't make sense.
+            if (m_captureCards.empty() || !m_displayEngine)
+            {
+                m_logger.LogAssert(L"Display mappings specified in config file while missing a DisplayEngine or capture card plugins.");
+                return;
+            }
+
             auto testSystemConfigData = testSystemConfigDataValue.GetObjectW();
 
             auto displayInputMappingObject = testSystemConfigData.TryLookup(L"DisplayInputMapping");
@@ -338,7 +343,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             auto manager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
 
             // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
-            std::vector<std::tuple<winrt::IController, winrt::IDisplayInput>> unassignedInputs_EDID, unassignedInputs_NoEDID;
+            std::list<std::tuple<winrt::IController, winrt::IDisplayInput>> unassignedInputs_EDID, unassignedInputs_NoEDID;
             for (auto&& card : m_captureCards)
             {
                 for (auto&& input : card.EnumerateDisplayInputs())
@@ -445,7 +450,6 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                     {
                         continue;
                     }
-          
 
                     // We don't take control of displays for this config - there is too high a risk of accidental black screens
                     if (monitor.UsageKind() == DisplayMonitorUsageKind::Standard)
@@ -471,7 +475,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                     try
                     {
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
-                        // matches it with default Tool settings.
+                        // matches it, using default settings for the tools.
                         auto output = m_displayEngine.InitializeOutput(target);
                         for (auto&& tool : m_toolList)
                         {
@@ -487,8 +491,10 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         auto prediction = output.GetPrediction();
 
                         // Iterate through the still unassigned inputs to find any matches
-                        for (auto [card, input] : unassignedInputs_NoEDID)
+                        for (auto&& unassignedInput: unassignedInputs_NoEDID)
                         {
+                            auto [card, input] = unassignedInput;
+
                             auto suppressErrors = m_logger.LogErrorsAsWarnings();
 
                             input.FinalizeDisplayState();
@@ -510,15 +516,20 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                     m_logger.LogNote(
                                         L"Successfully matched output " + monitor.DisplayName() + L" to input " + card.Name() +
                                         L"." + input.Name());
+
+                                    unassignedInputs_NoEDID.remove(unassignedInput);
+
+                                    break;
                                 }
                             }
                         }
+
+                        std::this_thread::sleep_for(std::chrono::seconds(5));
                     }
                     catch (...)
                     {
                         // If something fails trying to set up this output as a target - just try others... failure here 
-                        // almost assuredly means that this is not an intended test target.
-
+                        // almost assuredly means that this is not a valid test target.
                         continue;
                     }
                 }
