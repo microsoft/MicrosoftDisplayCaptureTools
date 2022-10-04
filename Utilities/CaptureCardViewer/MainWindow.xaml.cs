@@ -233,7 +233,7 @@ namespace CaptureCardViewer
 		}
 
 		//specify the framework components files
-		private void specifyComponents()
+		/*private void specifyComponents()
 		{
 			var dialog = new OpenFileDialog();
 			dialog.Title = "Framework Files";
@@ -254,19 +254,8 @@ namespace CaptureCardViewer
 			}
 			else
 			{	MessageBox.Show("Trouble specifying components");	}
-		}
+		}*/
 
-		//creating the configuration file
-		private void createConfigFile()
-		{
-
-		}
-
-		//change the plugin properties
-		private void changeProperties()
-		{
-
-		}
 
 		private void compareFrames_Click(object sender, RoutedEventArgs e)
 		{

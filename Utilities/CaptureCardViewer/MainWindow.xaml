@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CaptureCardViewer"
         mc:Ignorable="d"
+        Background="Beige"
         Title="Frame Debugger" Height="600" Width="1200">
-
+    
     <StackPanel Orientation="Horizontal">
         <StackPanel x:Name="SPanel" Orientation="Vertical" Width="400">
             <Label Content="Predicted Image" HorizontalAlignment="Left" VerticalAlignment="Top" />
             <Image x:Name="PredImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
-            <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
+            <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26" Background="AliceBlue"/>
             <Label Content="CONFIGURATIONS" Width="398"/>
             <Grid Height="107">
                 <Grid.ColumnDefinitions>
@@ -23,13 +24,13 @@
                     <Label Content="Resolution Rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,24,0,32" Grid.Column="1" >
-                    <ComboBox x:Name="cbi_ref" SelectionChanged="configurations" Width="180" >
+                    <ComboBox x:Name="cbi_ref" SelectionChanged="configurations" Width="180" Background="AliceBlue" >
                         <ComboBoxItem Content="60hz"/>
                         <ComboBoxItem Content="75hz"/>
                     </ComboBox>
 
 
-                    <ComboBox x:Name="cbi_res" SelectionChanged="configurations" Width="180">
+                    <ComboBox x:Name="cbi_res" SelectionChanged="configurations" Width="180" Background="AliceBlue">
                         <ComboBoxItem Content="1920x1080"/>
                         <ComboBoxItem Content="720x800"/>
                     </ComboBox>
@@ -41,14 +42,15 @@
         <StackPanel Orientation="Vertical" Width="400">
             <Label Content="Actual Image" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <Image x:Name="CaptImage" Stretch="Fill" MinHeight="200"/>
-            <Button x:Name="dP" Content="Display Properties" Click="displayProperties" Margin="0,26"/>
+            <Button x:Name="dP" Content="Display Properties" Click="displayProperties" Margin="0,26" Background="AliceBlue"/>
 
             <StackPanel Orientation="Horizontal">
                 <Menu HorizontalAlignment = "Left" VerticalAlignment = "Top" Width = "517">
                     <MenuItem Header = "Load Framework Components">
-                        <MenuItem Header = "Capture Plugin" HorizontalAlignment = "Left" Width = "140" Click = "CapPlgn_Click"/>
-                        <MenuItem Header = "Display Manager" HorizontalAlignment = "Left"  Width = "140" Click = "DispMan_Click"/>
-                        <MenuItem Header = "Toolbox" HorizontalAlignment = "Left"  Width = "140" Click = "Tlbx_Click"/>
+                        <MenuItem Header = "Toolbox" HorizontalAlignment = "Left" Click = "Tlbx_Click"/>
+                        <MenuItem Header = "Capture Plugin" HorizontalAlignment = "Left"  Click = "CapPlgn_Click"/>
+                        <MenuItem Header = "Display Manager" HorizontalAlignment = "Left" Click = "DispMan_Click"/>
+                        
                     </MenuItem>
                 </Menu>
             </StackPanel>
@@ -57,7 +59,7 @@
         <StackPanel Orientation="Vertical" Width="400">
             <Label Content="Properties" HorizontalAlignment="Left" VerticalAlignment="Top" />
             <TextBox x:Name="TextBlock" Height="200" MinHeight="200" />
-            <Button x:Name="cF" Content="Compare Frames" Click="compareFrames_Click" Margin="0,26"/>
+            <Button x:Name="cF" Content="Compare Frames" Click="compareFrames_Click" Margin="0,26" Background="AliceBlue"/>
         </StackPanel>
 
     </StackPanel>
