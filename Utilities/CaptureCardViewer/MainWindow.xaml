@@ -1,48 +1,44 @@
-﻿    <Window x:Class="CaptureCardViewer.MainWindow"
+﻿<Window x:Class="CaptureCardViewer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CaptureCardViewer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="1200">
-    
+        Title="Frame Debugger" Height="600" Width="1200">
+
     <StackPanel Orientation="Horizontal">
         <StackPanel x:Name="SPanel" Orientation="Vertical" Width="400">
             <Label Content="Predicted Image" HorizontalAlignment="Left" VerticalAlignment="Top" />
             <Image x:Name="PredImage" Stretch="Fill" MinHeight="200" MinWidth="400"/>
             <Button x:Name="lF" Content="Load Framework" Click="loadFramework" Margin="0,26"/>
-            <Label Content="Refresh rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="cbi_ref" SelectionChanged="configurations">
-                    <ComboBox.RenderTransform>
-                        <TransformGroup>
-                            <SkewTransform/>
-                            <RotateTransform/>
-                            <TranslateTransform/>
-                        </TransformGroup>
-                    </ComboBox.RenderTransform>
-                    <ComboBoxItem Content="60 HZ"/>
-                    <ComboBoxItem Content="75 HZ"/>
-                </ComboBox>
-          
-            
-            
-            <Label Content="Resolution Rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="cbi_res" SelectionChanged="configurations">
-                <ComboBox.RenderTransform>
-                    <TransformGroup>
-                        <SkewTransform/>
-                        <RotateTransform/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </ComboBox.RenderTransform>
-                <ComboBoxItem Content="1920x1080"/>
-                <ComboBoxItem Content="720x800"/>
-            </ComboBox>
-            <Image Height="100" Width="100"/>
-        </StackPanel>
-        <StackPanel Orientation="Vertical" Width="400">
+            <Label Content="CONFIGURATIONS" Width="398"/>
+            <Grid Height="107">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*" SharedSizeGroup="a" />
+                    <ColumnDefinition Width="5*" SharedSizeGroup="b" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Vertical" Margin="10,16,0,32"  >
+                    <Label Content="Refresh rate" Width="398" RenderTransformOrigin="0.5,0.5" />
+                    <Label Content="Resolution Rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,24,0,32" Grid.Column="1" >
+                    <ComboBox x:Name="cbi_ref" SelectionChanged="configurations" Width="180" >
+                        <ComboBoxItem Content="60hz"/>
+                        <ComboBoxItem Content="75hz"/>
+                    </ComboBox>
 
+
+                    <ComboBox x:Name="cbi_res" SelectionChanged="configurations" Width="180">
+                        <ComboBoxItem Content="1920x1080"/>
+                        <ComboBoxItem Content="720x800"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" Width="400">
             <Label Content="Actual Image" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <Image x:Name="CaptImage" Stretch="Fill" MinHeight="200"/>
             <Button x:Name="dP" Content="Display Properties" Click="displayProperties" Margin="0,26"/>
@@ -56,13 +52,13 @@
                     </MenuItem>
                 </Menu>
             </StackPanel>
-
         </StackPanel>
-        <StackPanel Orientation="Vertical" Width="401" Height="430">
-            <Label Content="Properties" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <TextBox x:Name="TextBlock" Height="200" />
+
+        <StackPanel Orientation="Vertical" Width="400">
+            <Label Content="Properties" HorizontalAlignment="Left" VerticalAlignment="Top" />
+            <TextBox x:Name="TextBlock" Height="200" MinHeight="200" />
             <Button x:Name="cF" Content="Compare Frames" Click="compareFrames_Click" Margin="0,26"/>
         </StackPanel>
-        
+
     </StackPanel>
 </Window>

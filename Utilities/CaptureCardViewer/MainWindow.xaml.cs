@@ -190,6 +190,7 @@ namespace CaptureCardViewer
 				//renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
 				var bitmap = prediction.GetBitmap();
+				
 				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
 				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
 				var predSrc = BufferToImgConv(predPixelBuffer);
