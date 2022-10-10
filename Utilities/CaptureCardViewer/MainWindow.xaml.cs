@@ -37,6 +37,7 @@ using Windows.Graphics.DirectX;
 using System.Net.Http.Headers;
 using MicrosoftDisplayCaptureTools.CaptureCard;
 using System.Diagnostics;
+using System.Security.Cryptography;
 //using Microsoft.UI.Xaml.Media.Imaging;
 //using Microsoft.UI.Xaml.Media;
 
@@ -73,13 +74,15 @@ namespace CaptureCardViewer
 		private async void loadFramework (object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog(); //file picker
-			dialog.Filter = "Config file|*.json";
 			dialog.Title = "Load a Capture Plugin";
 			if (dialog.ShowDialog() == true)
 			{
 				try
 				{
-					var configFile = dialog.FileName.ToString();
+					//var configFile = dialog.FileName;
+					var configFile = System.IO.Path.GetFileName(dialog.FileName);
+
+
 					await Task.Run(() =>
 					{
 						testFramework.LoadConfigFile(configFile);
@@ -122,6 +125,7 @@ namespace CaptureCardViewer
 		// Apply Render and capture reusable method
 		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
 		{
+			
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
@@ -159,25 +163,23 @@ namespace CaptureCardViewer
 				var genericCapture = this.testFramework.GetCaptureCard();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
+				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
+				ApplyRenderAndCapture(displayEngine);
+
+
 				var capturedFrame = captureInput.CaptureFrame();
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
 				var capSrc = BufferToImgConv(capPixelBuffer);
 
 				//Loading & displaying tools
 				//Reset the display manager to the correct one
-				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
+				//;
 
-				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
-				var tools = testFramework.GetLoadedTools();
-				ApplyRenderAndCapture(displayEngine);
-				/*foreach (var tool in tools)
-					tool.Apply(displayEngine);
-
-				var renderer = displayEngine.StartRender();
-				Thread.Sleep(5000);*/
-
+				
+				
+				
 				//Get the framework's properties
 				var prop = displayEngine.GetProperties();
 				var mode = prop.ActiveMode;
