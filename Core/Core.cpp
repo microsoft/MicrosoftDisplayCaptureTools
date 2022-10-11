@@ -122,6 +122,8 @@ IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath)
 
 void Core::LoadConfigFile(hstring const& configFile)
 {
+    DiscoverInstalledPlugins();
+
     m_logger.LogNote(L"Loading configuration...");
 
     // Ensure that a component can't be changed if a test has locked the framework
@@ -552,6 +554,75 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
     }
 
     return mappings;
+}
+
+// Go through and discover all plugins installed for this framework on this system
+void Core::DiscoverInstalledPlugins()
+{
+    wchar_t filepath[MAX_PATH];
+    auto coreHandle = GetModuleHandle(c_CoreFrameworkName.c_str());
+    auto returnLength = GetModuleFileNameW(coreHandle, filepath, MAX_PATH);
+
+    if (returnLength == MAX_PATH)
+    {
+        m_logger.LogAssert(L"Failed to locate the filepaths for the framework - please reinstall packages.");
+        return;
+    }
+
+    // Get all plugin directories
+    std::filesystem::path path(filepath);
+    auto installedDirectory = path.parent_path();
+    auto capturePluginDirectory        = installedDirectory / c_CapturePluginDirectory;
+    auto configurationToolboxDirectory = installedDirectory / c_ConfigurationToolboxDirectory;
+    auto displayEngineDirectory        = installedDirectory / c_DisplayEngineDirectory;
+
+    // Search for capture cards
+    try
+    {
+        for (auto const& file : std::filesystem::directory_iterator{capturePluginDirectory})
+        {
+            if (file.path().extension() == L".dll")
+            {
+                printf("Discovered: %ls\n", file.path().stem().c_str());
+            }
+        }
+    }
+    catch (...)
+    {
+        m_logger.LogNote(L"Unable to load capture plugin directory.");
+    }
+
+    // Search for toolboxes
+    try
+    {
+        for (auto const& file : std::filesystem::directory_iterator{configurationToolboxDirectory})
+        {
+            if (file.path().extension() == L".dll")
+            {
+                printf("Discovered: %ls\n", file.path().stem().c_str());
+            }
+        }
+    }
+    catch (...)
+    {
+        m_logger.LogNote(L"Unable to load configuration toolbox directory.");
+    }
+
+    // Search for displayEngines
+    try
+    {
+        for (auto const& file : std::filesystem::directory_iterator{displayEngineDirectory})
+        {
+            if (file.path().extension() == L".dll")
+            {
+                printf("Discovered: %ls\n", file.path().stem().c_str());
+            }
+        }
+    }
+    catch (...)
+    {
+        m_logger.LogNote(L"Unable to load display engine directory.");
+    }
 }
 
 void Core::UpdateToolList()

@@ -7,9 +7,17 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
+    // Constant names used for automatically discovering installed plugins for this framework. These assume that items are
+    // installed via the preferred mechanism, our nuget packages.
+    const std::wstring c_CapturePluginDirectory        = L"CaptureCards";
+    const std::wstring c_ConfigurationToolboxDirectory = L"Toolboxes";
+    const std::wstring c_DisplayEngineDirectory        = L"DisplayControllers";
+
     const std::wstring c_CapturePluginDefaultName        = L".ControllerFactory"; 
     const std::wstring c_ConfigurationToolboxDefaultName = L".ToolboxFactory";
     const std::wstring c_DisplayEngineDefaultName        = L".DisplayEngineFactory";
+
+    const std::wstring c_CoreFrameworkName = L"MicrosoftDisplayCaptureTools.dll";
 
     // Struct to ensure that the framework can be locked down to prevent component changes (i.e. loading new components).
     // This is implemented with a basic refcount - m_lockCount within the Core object - wrapped in this winrt object that 
@@ -89,6 +97,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         }
 
     private:
+        // Search through the file structure relative to the core binary to determine installed components.
+        void DiscoverInstalledPlugins();
+
         // Iterate through Toolboxes and consolidate a single list of all tools from all sources.
         void UpdateToolList();
 

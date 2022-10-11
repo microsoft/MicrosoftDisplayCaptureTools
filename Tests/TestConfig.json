@@ -2,18 +2,18 @@
 	"Version": "0.1",
 	"Components": {
 		"CapturePlugin": {
-			"Path": "GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll",
-			"Class": "GenericCaptureCardPlugin.ControllerFactory",
+			"Path": "CaptureCards\\TanagerPlugin.dll",
+			"Class": "TanagerPlugin.ControllerFactory",
 			"Settings": null
 		},
 		"DisplayEngine": {
-			"Path": "BasicDisplayControl\\BasicDisplayControl.dll",
+			"Path": "DisplayControllers\\BasicDisplayControl.dll",
 			"Class": "DisplayControl.DisplayEngineFactory",
 			"Settings": null
 		},
 		"ConfigurationToolboxes": [
 			{
-				"Path": "BasicDisplayConfiguration\\BasicDisplayConfiguration.dll",
+				"Path": "Toolboxes\\BasicDisplayConfiguration.dll",
 				"Class": "BasicDisplayConfiguration.ToolboxFactory",
 				"Settings": null
 			}
