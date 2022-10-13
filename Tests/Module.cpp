@@ -35,18 +35,20 @@ MODULE_SETUP(ModuleSetup)
     // Create WEX logger to log tests/results/errors
     g_logger = winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>();
 
-    // Identify the config file path
-    auto cwd = std::filesystem::current_path();
-    winrt::hstring defaultConfigPath = winrt::hstring(cwd.c_str()) + L"\\Tests\\TestConfig.json";
-
-    String configPath = defaultConfigPath.c_str();
-    RuntimeParameters::TryGetValue(ConfigFileRuntimeParameter, configPath);
-
     // Load the framework
     g_framework = winrt::Framework::Core(g_logger);
-    //g_framework.LoadConfigFile(static_cast<const wchar_t*>(configPath));
 
-    g_framework.DiscoverInstalledPlugins();
+    // If the user specified a particular configuration file in the test command, use it. Otherwise, 
+    // the framework will auto-discover installed components.
+    String configFile;
+    if (SUCCEEDED(RuntimeParameters::TryGetValue<String>(L"Configuration", configFile)) && !String::IsNullOrEmpty(configFile))
+    {
+        g_framework.LoadConfigFile(static_cast<const wchar_t*>(configFile));
+    }
+    else
+    {
+        g_framework.DiscoverInstalledPlugins();
+    }
 
     winrt::Display::IDisplayEngine displayEngine = nullptr;
     auto displayEngines = g_framework.GetDisplayEngines();
