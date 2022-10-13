@@ -50,9 +50,8 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& cl
     auto captureCardFactory = LoadInterfaceFromPath<IControllerFactory>(pluginPath, className);
 
     auto captureCardController = captureCardFactory.CreateController(m_logger);
-    m_captureCards.push_back(captureCardController);
 
-    m_logger.LogNote(L"Using Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version());
+    m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version());
 
     return captureCardController;
 }
@@ -78,11 +77,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
 
     auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
 
-    m_toolboxes.push_back(toolbox);
-
-    m_logger.LogNote(L"Using Toolbox: " + m_toolboxes[0].Name() + L", Version " + m_toolboxes[0].Version());
-
-    UpdateToolList();
+    m_logger.LogNote(L"Loaded Toolbox: " + m_toolboxes[0].Name() + L", Version " + m_toolboxes[0].Version());
 
     return toolbox;
 }
@@ -94,7 +89,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath)
     return LoadToolbox(toolboxPath, className + c_ConfigurationToolboxDefaultName);
 }
 
-IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath, hstring const& className)
+IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring const& className)
 {
     // Ensure that a component can't be changed if a test has locked the framework
     if (IsFrameworkLocked())
@@ -106,18 +101,30 @@ IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath, hstrin
     // Load the toolbox from the provided path.
     auto displayEngineFactory = LoadInterfaceFromPath<IDisplayEngineFactory>(displayEnginePath, className);
 
-    m_displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
+    IDisplayEngine displayEngine = nullptr;
+    
+    try
+    {
+        displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
+    }
+    catch (...)
+    {
+        m_logger.LogWarning(L"Failed to load DisplayManager: " + className + L" from " + displayEnginePath);
+    }
 
-    m_logger.LogNote(L"Using DisplayManager: " + m_displayEngine.Name() + L", Version " + m_displayEngine.Version());
+    if (displayEngine)
+    {
+        m_logger.LogNote(L"Loaded DisplayManager: " + displayEngine.Name() + L", Version " + displayEngine.Version());
+    }
 
-    return m_displayEngine;
+    return displayEngine;
 }
 
-IDisplayEngine Core::LoadDisplayManager(hstring const& displayEnginePath)
+IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath)
 {
     // Create the className string from
     winrt::hstring className = std::path(displayEnginePath.c_str()).stem().c_str();
-    return LoadDisplayManager(displayEnginePath, className + c_CapturePluginDefaultName);
+    return LoadDisplayEngine(displayEnginePath, className + c_CapturePluginDefaultName);
 }
 
 void Core::LoadConfigFile(hstring const& configFile)
@@ -172,72 +179,84 @@ void Core::LoadConfigFile(hstring const& configFile)
     m_configFile = jsonObject;
 
     // Dump the config file to the log - this is to make debugging easier
-    m_logger.LogConfig(m_configFile.ToString());
+    m_logger.LogConfig(L"Using Config File: " + m_configFile.ToString());
 
     // Parse component information out of the config file
     {
-        auto componentConfigDataValue = m_configFile.TryLookup(L"Components");
+        auto configComponents = m_configFile.TryLookup(L"Components");
 
-        if (!componentConfigDataValue || componentConfigDataValue.ValueType() == winrt::JsonValueType::Null)
+        if (!configComponents || configComponents.ValueType() == winrt::JsonValueType::Null)
         {
             // No data was found.
             m_logger.LogWarning(L"Configuration doesn't specify components to load.");
         }
         else
         {
-            auto componentConfigData = componentConfigDataValue.GetObjectW();
+            auto componentConfigData = configComponents.GetObjectW();
 
-            // Attempt to load the DisplayManager
-            auto displayEngineValue = componentConfigData.TryLookup(L"DisplayEngine");
-            if (displayEngineValue && displayEngineValue.ValueType() == winrt::JsonValueType::Object)
+            // Attempt to load the DisplayEngine
+            auto configDisplayEngineValue = componentConfigData.TryLookup(L"DisplayEngine");
+            if (configDisplayEngineValue && configDisplayEngineValue.ValueType() == winrt::JsonValueType::Object)
             {
-                auto displayEngine = displayEngineValue.GetObjectW();
+                auto configDisplayEngine = configDisplayEngineValue.GetObjectW();
 
-                // TODO: this needs to potentially handle multiple plugins
-                auto manager = LoadDisplayManager(displayEngine.GetNamedString(L"Path"), displayEngine.GetNamedString(L"Class"));
+                auto displayEngine = LoadDisplayEngine(configDisplayEngine.GetNamedString(L"Path"), configDisplayEngine.GetNamedString(L"Class"));
                 
-                if (manager && displayEngine.HasKey(L"Settings"))
+                if (displayEngine)
                 {
-                    auto displayEngineConfig = displayEngine.TryLookup(L"Settings");
-                    m_displayEngine.SetConfigData(displayEngineConfig);
+                    m_displayEngines.push_back(displayEngine);
+
+                    if (configDisplayEngine.HasKey(L"Settings"))
+                    {
+                        auto configDisplayEngineSettings = configDisplayEngine.TryLookup(L"Settings");
+                        displayEngine.SetConfigData(configDisplayEngineSettings);
+                    }
                 }
             }
 
             // Attempt to load the CapturePlugin
-            auto capturePluginValue = componentConfigData.TryLookup(L"CapturePlugin");
-            if (capturePluginValue && capturePluginValue.ValueType() == winrt::JsonValueType::Object)
+            auto configCapturePluginValue = componentConfigData.TryLookup(L"CapturePlugin");
+            if (configCapturePluginValue && configCapturePluginValue.ValueType() == winrt::JsonValueType::Object)
             {
-                auto capturePlugin = capturePluginValue.GetObjectW();
+                auto configCapturePlugin = configCapturePluginValue.GetObjectW();
 
-                auto captureCard = LoadCapturePlugin(capturePlugin.GetNamedString(L"Path"), capturePlugin.GetNamedString(L"Class"));
+                auto captureCard = LoadCapturePlugin(configCapturePlugin.GetNamedString(L"Path"), configCapturePlugin.GetNamedString(L"Class"));
 
-                if (captureCard && capturePlugin.HasKey(L"Settings"))
+                if (captureCard)
                 {
-                    auto captureCardConfig = capturePlugin.TryLookup(L"Settings");
-                    captureCard.SetConfigData(captureCardConfig);
+                    m_captureCards.push_back(captureCard);
+
+                    if (configCapturePlugin.HasKey(L"Settings"))
+                    {
+                        auto configCapturePluginSettings = configCapturePlugin.TryLookup(L"Settings");
+                        captureCard.SetConfigData(configCapturePluginSettings);
+                    }
                 }
             }
 
             // Attempt to load any ConfigurationToolboxes, if applicable
-            auto configurationToolboxesValue = componentConfigData.TryLookup(L"ConfigurationToolboxes");
-            if (configurationToolboxesValue && configurationToolboxesValue.ValueType() == winrt::JsonValueType::Array)
+            auto configToolboxesValue = componentConfigData.TryLookup(L"ConfigurationToolboxes");
+            if (configToolboxesValue && configToolboxesValue.ValueType() == winrt::JsonValueType::Array)
             {
-                auto configurationToolboxes = configurationToolboxesValue.GetArray();
+                auto configToolboxes = configToolboxesValue.GetArray();
 
-                for (auto toolbox : configurationToolboxes)
+                for (auto configToolboxValue : configToolboxes)
                 {
-                    auto toolboxConfigEntry = toolbox.GetObjectW();
+                    auto configToolbox = configToolboxValue.GetObjectW();
 
-                    auto loadedToolbox = LoadToolbox(toolboxConfigEntry.GetNamedString(L"Path"), toolboxConfigEntry.GetNamedString(L"Class"));
+                    auto toolbox = LoadToolbox(configToolbox.GetNamedString(L"Path"), configToolbox.GetNamedString(L"Class"));
                     
-                    if (loadedToolbox && toolboxConfigEntry.HasKey(L"Settings"))
+                    if (toolbox)
                     {
-                        auto toolboxConfig = toolboxConfigEntry.TryLookup(L"Settings");
-                        loadedToolbox.SetConfigData(toolboxConfig);
+                        m_toolboxes.push_back(toolbox);
+
+                        if (configToolbox.HasKey(L"Settings"))
+                        {
+                            auto configToolboxSettings = configToolbox.TryLookup(L"Settings");
+                            toolbox.SetConfigData(configToolboxSettings);
+                        }
                     }
                 }
-
-                UpdateToolList();
             }
         }
     }
@@ -253,9 +272,9 @@ void Core::LoadConfigFile(hstring const& configFile)
         }
         else
         {
-            if (m_captureCards.empty() || !m_displayEngine)
+            if (m_captureCards.empty() || !m_displayEngines.empty())
             {
-                m_logger.LogAssert(L"Display mappings specified in config file while missing a DisplayEngine or capture card plugins.");
+                m_logger.LogAssert(L"Display mappings specified in config file while missing display or capture card plugins.");
                 return;
             }
 
@@ -300,17 +319,21 @@ void Core::LoadConfigFile(hstring const& configFile)
                         m_logger.LogError(L"Display input mapped from config file not found.");
                     }
 
-                    m_displayMappingsFromFile.push_back(
-                        winrt::make<SourceToSinkMapping>(foundInput, m_displayEngine.InitializeOutput(displayId).Target()));
+                    // From the stable monitor ID parsed from the config file, find the corresponding DisplayTarget. Note that any complete 
+                    // DisplayEngine implementation needs to be able to do this, so it's safe to just pick one from the list of those loaded,
+                    // this function would have already errored out if none were available.
+                    auto displaySource = m_displayEngines[0].InitializeOutput(displayId).Target();
+
+                    m_displayMappingsFromFile.push_back(winrt::make<SourceToSinkMapping>(displaySource, foundInput));
                 }
             }
         }
     }
 }
 
-com_array<IConfigurationTool> Core::GetLoadedTools()
+com_array<IConfigurationToolbox> Core::GetConfigurationToolboxes()
 {
-    return com_array<IConfigurationTool>(m_toolList);
+    return com_array<IConfigurationToolbox>(m_toolboxes);
 }
 
 com_array<IController> Core::GetCaptureCards()
@@ -318,12 +341,12 @@ com_array<IController> Core::GetCaptureCards()
     return com_array<IController>(m_captureCards);
 }
 
-IDisplayEngine Core::GetDisplayEngine()
+com_array<IDisplayEngine> Core::GetDisplayEngines()
 {
-    return m_displayEngine;
+    return com_array<IDisplayEngine>(m_displayEngines);
 }
 
-IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings)
+IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings, IDisplayEngine displayEngine)
 {
     // Prevent component changes while we are attempting configuration
     auto lock = LockFramework();
@@ -334,7 +357,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
     {
         // If the framework is requested to regenerate display-to-capture mappings, a display capture plugin and a display engine
         // are both required.
-        if (m_captureCards.empty() || !m_displayEngine)
+        if (m_captureCards.empty() || !displayEngine)
         {
             m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine and a capture card.");
             return mappings;
@@ -393,16 +416,14 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
                         if (standardEDID.IsSame(retrievedEDID))
                         {
-                            {
-                                auto pluginName = card.Name();
-                                auto pluginInputName = input.Name();
-                                auto displayId = target.StableMonitorId();
+                            auto pluginName = card.Name();
+                            auto pluginInputName = input.Name();
+                            auto displayId = target.StableMonitorId();
 
-                                m_logger.LogConfig(hstring(L"Display: ") + displayId + L" connected to " + pluginName + L"." + pluginInputName);
-                            }
+                            m_logger.LogConfig(hstring(L"Display: ") + displayId + L" connected to " + pluginName + L"." + pluginInputName);
 
                             // We found the match, add it to the mappings with this input
-                            auto mapping = winrt::make<SourceToSinkMapping>(input, target);
+                            auto mapping = winrt::make<SourceToSinkMapping>(target, input);
                             mappings.Append(mapping);
 
                             // Also note that this target has already been mapped
@@ -422,7 +443,8 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
             //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
             //       device. For the latter case, this auto-config method will print out the possible display IDs.
-            if (m_toolList.empty())
+            auto toolList = GetAllTools();
+            if (toolList.empty())
             {
                 m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
                                     L"- capture input mapping.");
@@ -478,8 +500,8 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                     {
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
                         // matches it, using default settings for the tools.
-                        auto output = m_displayEngine.InitializeOutput(target);
-                        for (auto&& tool : m_toolList)
+                        auto output = displayEngine.InitializeOutput(target);
+                        for (auto&& tool : toolList)
                         {
                             tool.SetConfiguration(tool.GetDefaultConfiguration());
                             tool.Apply(output);
@@ -512,7 +534,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                 if (captureResult && !suppressErrors.HasErrored())
                                 {
                                     // We found the match, add it to the mappings with this input
-                                    auto mapping = winrt::make<SourceToSinkMapping>(input, target);
+                                    auto mapping = winrt::make<SourceToSinkMapping>(target, input);
                                     mappings.Append(mapping);
 
                                     m_logger.LogNote(
@@ -625,21 +647,19 @@ void Core::DiscoverInstalledPlugins()
     }
 }
 
-void Core::UpdateToolList()
+std::vector<ConfigurationTools::IConfigurationTool> Core::GetAllTools()
 {
-    if (m_toolboxes.empty())
-        return;
-
-    m_toolList.clear();
+    std::vector<IConfigurationTool> tools;
 
     for (auto&& toolbox : m_toolboxes)
     {
-        auto toolList = toolbox.GetSupportedTools();
-        for (auto toolName : toolList)
+        for (auto&& toolName : toolbox.GetSupportedTools())
         {
-            m_toolList.push_back(toolbox.GetTool(toolName));
+            tools.push_back(toolbox.GetTool(toolName));
         }
     }
+
+    return tools;
 }
 
 winrt::Windows::Foundation::IClosable Core::LockFramework()
@@ -647,7 +667,8 @@ winrt::Windows::Foundation::IClosable Core::LockFramework()
     return winrt::make<TestLock>(&m_lockCount);
 }
 
-SourceToSinkMapping::SourceToSinkMapping(IDisplayInput const& sink, winrt::DisplayTarget const& source) : m_sink(sink), m_source(source)
+SourceToSinkMapping::SourceToSinkMapping(winrt::DisplayTarget const& source, IDisplayInput const& sink) :
+    m_source(source), m_sink(sink)
 {
 }
 

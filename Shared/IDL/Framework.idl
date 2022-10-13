@@ -138,11 +138,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface ISourceToSinkMapping
     {
+        // The DisplayTarget object representing the particular output (display source) for this connection
         Windows.Devices.Display.Core.DisplayTarget Source
         {
             get;
         };
 
+        // The capture card plugin object representing the input (display sink) for this particular connection
         MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput Sink
         {
             get;
@@ -236,8 +238,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          Example: pluginPath = ".\\BasicDisplayManager.dll"
         //                   className  = "BasicDisplayManager.DisplayManager"
         //
-        MicrosoftDisplayCaptureTools.Display.IDisplayEngine LoadDisplayManager(String displayManagerPath, String className);
-        MicrosoftDisplayCaptureTools.Display.IDisplayEngine LoadDisplayManager(String displayManagerPath);
+        MicrosoftDisplayCaptureTools.Display.IDisplayEngine LoadDisplayEngine(String displayManagerPath, String className);
+        MicrosoftDisplayCaptureTools.Display.IDisplayEngine LoadDisplayEngine(String displayManagerPath);
 
         // LoadConfigFile
         // ----------------------------------------------------------------------------------------------------------------
@@ -275,18 +277,20 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          using any currently loaded CaptureCardPlugins and DisplayEngines. If false the framework will provide
         //          only whichever mappings were provided by configuration file. If false and no mappings were provided via
         //          config files, an empty array will be returned.
+        //      displayEngine (optional)
+        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false.
         // 
         // Returns:
         //      An array of structs containing the source and sink references.
         //
-        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(Boolean regenerateMappings);
+        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(Boolean regenerateMappings, MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine);
 
-        // GetLoadedTools
+        // GetConfigurationToolboxes
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Returns a collection of all tools loaded by the framework.
+        //      Returns a collection of all configuration toolboxes loaded by the framework.
         //
-        MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationTool[] GetLoadedTools();
+        MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox[] GetConfigurationToolboxes();
         
         // GetCaptureCard
         // ----------------------------------------------------------------------------------------------------------------
@@ -298,8 +302,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // GetDisplayEngine
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Returns a reference to the DisplayEngine loaded by the framework.
+        //      Returns a reference to the DisplayEngines loaded by the framework.
         //
-        MicrosoftDisplayCaptureTools.Display.IDisplayEngine GetDisplayEngine();
+        MicrosoftDisplayCaptureTools.Display.IDisplayEngine[] GetDisplayEngines();
     }
 }
