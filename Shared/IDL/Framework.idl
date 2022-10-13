@@ -254,6 +254,15 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         void LoadConfigFile(String configFile);
 
+        // DiscoverInstalledPlugins
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Attempt to discover and load other installed components. This assumes that everything has been installed
+        //      via the standard nuget packages. This does not automatically mean that tests will use specific components,
+        //      just that they have the option.
+        //
+        void DiscoverInstalledPlugins();
+
         // LockFramework
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

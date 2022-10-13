@@ -77,7 +77,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
 
     auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
 
-    m_logger.LogNote(L"Loaded Toolbox: " + m_toolboxes[0].Name() + L", Version " + m_toolboxes[0].Version());
+    m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version());
 
     return toolbox;
 }
@@ -124,13 +124,11 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath)
 {
     // Create the className string from
     winrt::hstring className = std::path(displayEnginePath.c_str()).stem().c_str();
-    return LoadDisplayEngine(displayEnginePath, className + c_CapturePluginDefaultName);
+    return LoadDisplayEngine(displayEnginePath, className + c_DisplayEngineDefaultName);
 }
 
 void Core::LoadConfigFile(hstring const& configFile)
 {
-    DiscoverInstalledPlugins();
-
     m_logger.LogNote(L"Loading configuration...");
 
     // Ensure that a component can't be changed if a test has locked the framework
@@ -605,7 +603,20 @@ void Core::DiscoverInstalledPlugins()
         {
             if (file.path().extension() == L".dll")
             {
-                printf("Discovered: %ls\n", file.path().stem().c_str());
+                m_logger.LogNote(L"Discovered Capture Plugin: " + file.path().stem());
+
+                try
+                {
+                    if (auto capturePlugin = LoadCapturePlugin(file.path().c_str()))
+                    {
+                        m_logger.LogNote(L"Loaded " + file.path().stem());
+                        m_captureCards.push_back(capturePlugin);
+                    }
+                }
+                catch (...)
+                {
+                    m_logger.LogNote(L"Failed to load " + file.path().stem());
+                }
             }
         }
     }
@@ -621,7 +632,20 @@ void Core::DiscoverInstalledPlugins()
         {
             if (file.path().extension() == L".dll")
             {
-                printf("Discovered: %ls\n", file.path().stem().c_str());
+                m_logger.LogNote(L"Discovered Toolbox: " + file.path().stem());
+
+                try
+                {
+                    if (auto toolbox = LoadToolbox(file.path().c_str()))
+                    {
+                        m_logger.LogNote(L"Loaded " + file.path().stem());
+                        m_toolboxes.push_back(toolbox);
+                    }
+                }
+                catch (...)
+                {
+                    m_logger.LogNote(L"Failed to load " + file.path().stem());
+                }
             }
         }
     }
@@ -637,7 +661,20 @@ void Core::DiscoverInstalledPlugins()
         {
             if (file.path().extension() == L".dll")
             {
-                printf("Discovered: %ls\n", file.path().stem().c_str());
+                m_logger.LogNote(L"Discovered Display Engine: " + file.path().stem());
+
+                try
+                {
+                    if (auto displayEngine = LoadDisplayEngine(file.path().c_str()))
+                    {
+                        m_logger.LogNote(L"Loaded " + file.path().stem());
+                        m_displayEngines.push_back(displayEngine);
+                    }
+                }
+                catch (...)
+                {
+                    m_logger.LogNote(L"Failed to load " + file.path().stem());
+                }
             }
         }
     }

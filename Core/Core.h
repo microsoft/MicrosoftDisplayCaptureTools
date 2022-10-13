@@ -14,7 +14,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     // installed via the preferred mechanism, our nuget packages.
     const std::wstring c_CapturePluginDirectory        = L"CaptureCards";
     const std::wstring c_ConfigurationToolboxDirectory = L"Toolboxes";
-    const std::wstring c_DisplayEngineDirectory        = L"DisplayControllers";
+    const std::wstring c_DisplayEngineDirectory        = L"DisplayEngines";
 
     const std::wstring c_CapturePluginDefaultName        = L".ControllerFactory"; 
     const std::wstring c_ConfigurationToolboxDefaultName = L".ToolboxFactory";

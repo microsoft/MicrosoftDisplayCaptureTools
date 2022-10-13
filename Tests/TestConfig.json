@@ -7,8 +7,8 @@
 			"Settings": null
 		},
 		"DisplayEngine": {
-			"Path": "DisplayControllers\\BasicDisplayControl.dll",
-			"Class": "DisplayControl.DisplayEngineFactory",
+			"Path": "DisplayEngines\\BasicDisplayControl.dll",
+			"Class": "BasicDisplayControl.DisplayEngineFactory",
 			"Settings": null
 		},
 		"ConfigurationToolboxes": [

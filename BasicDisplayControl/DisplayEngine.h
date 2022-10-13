@@ -7,7 +7,7 @@ namespace MonitorUtilities
     class MonitorControl;
 }
 
-namespace winrt::DisplayControl::implementation
+namespace winrt::BasicDisplayControl::implementation
 {
     constexpr double sc_refreshRateEpsilon = 0.00000000001;
 
@@ -231,7 +231,7 @@ namespace winrt::DisplayControl::implementation
     };
 }
 
-namespace winrt::DisplayControl::factory_implementation
+namespace winrt::BasicDisplayControl::factory_implementation
 {
     struct DisplayEngine : DisplayEngineT<DisplayEngine, implementation::DisplayEngine>
     {

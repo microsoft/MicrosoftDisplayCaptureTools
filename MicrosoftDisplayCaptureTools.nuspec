@@ -21,8 +21,8 @@
 
 		<file src="x64\Debug\MicrosoftDisplayCaptureTools.dll" target="runtimes\win10-x64\native\MicrosoftDisplayCaptureTools.dll"/>
 		<file src="x64\Debug\MicrosoftDisplayCaptureTools.pdb" target="runtimes\win10-x64\native\MicrosoftDisplayCaptureTools.pdb"/>
-		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.dll" target="runtimes\win10-x64\native\DisplayControllers\BasicDisplayControl.dll"/>
-		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.pdb" target="runtimes\win10-x64\native\DisplayControllers\BasicDisplayControl.pdb"/>
+		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.dll" target="runtimes\win10-x64\native\DisplayEngines\BasicDisplayControl.dll"/>
+		<file src="x64\Debug\BasicDisplayControl\BasicDisplayControl.pdb" target="runtimes\win10-x64\native\DisplayEngines\BasicDisplayControl.pdb"/>
 		<file src="x64\Debug\TanagerPlugin\TanagerPlugin.dll" target="runtimes\win10-x64\native\CapturePlugins\TanagerPlugin.dll"/>
 		<file src="x64\Debug\TanagerPlugin\TanagerPlugin.pdb" target="runtimes\win10-x64\native\CapturePlugins\TanagerPlugin.pdb"/>
 		<file src="x64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.dll" target="runtimes\win10-x64\native\CapturePlugins\GenericCaptureCardPlugin.dll"/>

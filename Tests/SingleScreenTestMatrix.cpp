@@ -41,12 +41,32 @@ void SingleScreenTestMatrix::Test()
     auto displayOutputTarget = mapping.Source();
     auto displayInput = mapping.Sink();
 
-    auto displayEngine = g_framework.GetDisplayEngine();
+    auto displayEngines = g_framework.GetDisplayEngines();
+
+    if (displayEngines.empty())
+    {
+        g_logger.LogAssert(L"No DisplayEngine loaded.");
+    }
+    
+    // TODO: need to add some logic for selecting a specific displayEngine
+    auto displayEngine = displayEngines[0];
 
     auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
     
     winrt::hstring testName = L"";
-    auto tools = g_framework.GetLoadedTools();
+    auto toolboxes = g_framework.GetConfigurationToolboxes();
+    std::vector<winrt::ConfigurationTools::IConfigurationTool> tools;
+
+    for (auto&& toolbox : toolboxes)
+    {
+        auto toolList = toolbox.GetSupportedTools();
+
+        for (auto toolName : toolList)
+        {
+            tools.push_back(toolbox.GetTool(toolName));
+        }
+    }
+
     for (auto tool : tools)
     {
         String toolSetting;

@@ -99,7 +99,7 @@ namespace winrt
     };
 }
 
-namespace winrt::DisplayControl::implementation
+namespace winrt::BasicDisplayControl::implementation
 {
     winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
     {
