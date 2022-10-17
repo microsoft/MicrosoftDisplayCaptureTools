@@ -234,31 +234,6 @@ namespace CaptureCardViewer
 
 		}
 
-		//specify the framework components files
-		/*private void specifyComponents()
-		{
-			var dialog = new OpenFileDialog();
-			dialog.Title = "Framework Files";
-
-			if(dialog.ShowDialog()??false)
-			{
-				try
-				{
-					var pluginFile = dialogToFilename();
-					testFramework.LoadCapturePlugin(pluginFile, pluginFile+".Plugin");
-					var toolboxFile = dialogToFilename();
-					testFramework.LoadToolbox(toolboxFile, toolboxFile + ".Toolbox");
-					var displayManFile = dialogToFilename();
-					testFramework.LoadDisplayManager(displayManFile, displayManFile + ".Plugin");
-				}
-				catch (Exception) { }
-				MessageBox.Show("Done loading components");
-			}
-			else
-			{	MessageBox.Show("Trouble specifying components");	}
-		}*/
-
-
 		private void compareFrames_Click(object sender, RoutedEventArgs e)
 		{
 			var genericCapture = this.testFramework.GetCaptureCard();
