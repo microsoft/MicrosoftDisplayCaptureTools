@@ -125,7 +125,7 @@ namespace CaptureCardViewer
 		// Apply Render and capture reusable method
 		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
 		{
-			
+			displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
@@ -163,7 +163,7 @@ namespace CaptureCardViewer
 				var genericCapture = this.testFramework.GetCaptureCard();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
-				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
+				
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 				ApplyRenderAndCapture(displayEngine);
