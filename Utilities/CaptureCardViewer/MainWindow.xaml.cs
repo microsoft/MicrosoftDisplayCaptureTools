@@ -57,7 +57,7 @@ namespace CaptureCardViewer
 	}
 
 	public partial class MainWindow : Window
-    {
+	{
 		public string? setTool;
 		public string? currentTool;
 		Core testFramework = new Core();
@@ -66,12 +66,12 @@ namespace CaptureCardViewer
 		//private IBuffer predBuffer;
 
 		public MainWindow()
-        {
-            InitializeComponent();
-        }
+		{
+			InitializeComponent();
+		}
 
 		//Loading the plugin framework
-		private async void loadFramework (object sender, RoutedEventArgs e)
+		private async void loadFramework(object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog(); //file picker
 			dialog.Title = "Load a Capture Plugin";
@@ -89,10 +89,11 @@ namespace CaptureCardViewer
 					});
 					MessageBox.Show("Capture card plugin done loading");
 				}
-				catch (Exception) { }	
+				catch (Exception) { }
 
 			}
 			else { MessageBox.Show("Dialog Box trouble loading"); }
+			ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 		}
 
 		//Converting buffer to image source
@@ -119,7 +120,7 @@ namespace CaptureCardViewer
 			}
 
 			imgSource.Freeze();
-			return imgSource;	
+			return imgSource;
 		}
 
 		// Apply Render and capture reusable method
@@ -133,13 +134,13 @@ namespace CaptureCardViewer
 				{
 					var suppConfig = tool.GetSupportedConfigurations();
 					foreach (var config in suppConfig)
-						{
+					{
 						if (cbi_res.SelectionBoxItem.ToString() == config)
 						{
 							tool.SetConfiguration(config);
 						}
-							
-						else if(cbi_ref.SelectionBoxItem.ToString() == config)
+
+						else if (cbi_ref.SelectionBoxItem.ToString() == config)
 						{
 							tool.SetConfiguration(config);
 						}
@@ -163,7 +164,7 @@ namespace CaptureCardViewer
 				var genericCapture = this.testFramework.GetCaptureCard();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
-				
+
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 				ApplyRenderAndCapture(displayEngine);
@@ -177,22 +178,22 @@ namespace CaptureCardViewer
 				//Reset the display manager to the correct one
 				//;
 
-				
-				
-				
+
+
+
 				//Get the framework's properties
 				var prop = displayEngine.GetProperties();
 				var mode = prop.ActiveMode;
 				var resolution = prop.Resolution;
 				var refreshRate = prop.RefreshRate;
 				var planeProp = prop.GetPlaneProperties();
-				
+
 
 				//Generate  & display frames to compare the Tanager's frames against
 				//renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
 				var bitmap = prediction.GetBitmap();
-				
+
 				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
 				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
 				var predSrc = BufferToImgConv(predPixelBuffer);
@@ -204,7 +205,7 @@ namespace CaptureCardViewer
 							CaptImage.Source = capSrc;
 							PredImage.Source = predSrc;
 							TextBlock.Text = "Mode:  " + mode.ToString() + "\r\n";
-							TextBlock.Text += "Resolution: " + resolution.ToString() +"\r\n";
+							TextBlock.Text += "Resolution: " + resolution.ToString() + "\r\n";
 							TextBlock.Text += "Refresh Rate: " + refreshRate.ToString() + "\r\n";
 							TextBlock.Text += "Plane Properties: " + planeProp.ToString() + "\r\n";
 						}
@@ -213,7 +214,7 @@ namespace CaptureCardViewer
 				Thread.Sleep(1000);
 			});
 
-			
+
 		}
 
 		//dialog to filename string
@@ -222,7 +223,7 @@ namespace CaptureCardViewer
 			var filename = "";
 			var dialog = new OpenFileDialog();
 			dialog.Title = "Select file";
-			if(dialog.ShowDialog()==true)
+			if (dialog.ShowDialog() == true)
 			{
 				try
 				{
@@ -242,7 +243,7 @@ namespace CaptureCardViewer
 			var captureInput = captureInputs[0];
 			var capturedFrame = captureInput.CaptureFrame();
 			var prediction = displayEngine.GetPrediction();
-			capturedFrame.CompareCaptureToPrediction("Basic Test",prediction);
+			capturedFrame.CompareCaptureToPrediction("Basic Test", prediction);
 		}
 
 		//Loading Display Manager file
@@ -270,7 +271,7 @@ namespace CaptureCardViewer
 		//Loading Capture Plugin file
 		private async void CapPlgn_Click(object sender, RoutedEventArgs e)
 		{
-			var dialog = new OpenFileDialog(); 
+			var dialog = new OpenFileDialog();
 			dialog.Title = "Load Capture Plugin file";
 			if (dialog.ShowDialog() == true)
 			{
@@ -292,7 +293,7 @@ namespace CaptureCardViewer
 		//Loading Toolbox file
 		private async void Tlbx_Click(object sender, RoutedEventArgs e)
 		{
-			var dialog = new OpenFileDialog(); 
+			var dialog = new OpenFileDialog();
 			dialog.Title = "Load Toolbox file";
 			if (dialog.ShowDialog() == true)
 			{
@@ -313,15 +314,17 @@ namespace CaptureCardViewer
 		private void configurations(object sender, SelectionChangedEventArgs e)
 		{
 			//ComboBoxItem cbi_res = ((ComboBoxItem)cbi_res).SelectedItem;
-			if (cbi_ref!=null)
+			if (cbi_ref != null)
 			{
-				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 				userInput = true;
+				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+
 			}
-			if (cbi_res!= null)
+			if (cbi_res != null)
 			{
-				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 				userInput = true;
+				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+
 			}
 		}
 	}
