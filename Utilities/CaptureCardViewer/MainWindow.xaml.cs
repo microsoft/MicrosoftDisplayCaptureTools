@@ -93,6 +93,7 @@ namespace CaptureCardViewer
 
 			}
 			else { MessageBox.Show("Dialog Box trouble loading"); }
+			ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 		}
 
 		//Converting buffer to image source
@@ -125,7 +126,7 @@ namespace CaptureCardViewer
 		// Apply Render and capture reusable method
 		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
 		{
-			
+			displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
@@ -163,7 +164,7 @@ namespace CaptureCardViewer
 				var genericCapture = this.testFramework.GetCaptureCard();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
-				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
+				
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 				ApplyRenderAndCapture(displayEngine);
@@ -315,13 +316,15 @@ namespace CaptureCardViewer
 			//ComboBoxItem cbi_res = ((ComboBoxItem)cbi_res).SelectedItem;
 			if (cbi_ref!=null)
 			{
-				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 				userInput = true;
+				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+				
 			}
 			if (cbi_res!= null)
 			{
-				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 				userInput = true;
+				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+				
 			}
 		}
 	}
