@@ -148,9 +148,8 @@ namespace CaptureCardViewer
 				}
 				tool.Apply(displayEngine);
 			}
-			var renderer = displayEngine.StartRender();
-			Thread.Sleep(5000);
-			renderer.Dispose();
+			
+			
 		}
 
 
@@ -164,15 +163,14 @@ namespace CaptureCardViewer
 				var genericCapture = this.testFramework.GetCaptureCard();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
-<<<<<<< HEAD
-				
-=======
 
->>>>>>> 45bbbc9b236ceba1440832bfcb19935b3fc1b959
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
-				ApplyRenderAndCapture(displayEngine);
 
+				var renderer = displayEngine.StartRender();
+				ApplyRenderAndCapture(displayEngine);
+				Thread.Sleep(5000);
+				renderer.Dispose();
 
 				var capturedFrame = captureInput.CaptureFrame();
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
@@ -322,21 +320,12 @@ namespace CaptureCardViewer
 			{
 				userInput = true;
 				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
-<<<<<<< HEAD
-				
-=======
-
->>>>>>> 45bbbc9b236ceba1440832bfcb19935b3fc1b959
 			}
 			if (cbi_res != null)
 			{
 				userInput = true;
 				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
-<<<<<<< HEAD
-				
-=======
 
->>>>>>> 45bbbc9b236ceba1440832bfcb19935b3fc1b959
 			}
 		}
 	}
