@@ -329,4 +329,11 @@
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Taef.10.68.220224001\build\Microsoft.Taef.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Taef.10.68.220224001\build\Microsoft.Taef.targets'))" />
   </Target>
+  <PropertyGroup>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommand>.\TE.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>$(TargetFileName) -inproc -enablewttlogging</LocalDebuggerCommandArguments>
+    <LocalDebuggerMergeEnvironment>false</LocalDebuggerMergeEnvironment>
+    <LocalDebuggerWorkingDirectory>$(OutputPath)</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
 </Project>

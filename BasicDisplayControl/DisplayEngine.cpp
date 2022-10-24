@@ -171,9 +171,12 @@ namespace winrt::BasicDisplayControl::implementation
             throw winrt::hresult_invalid_argument();
         }
 
-        // Remove the targeted display from composition.
-        m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
-            MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
+        // If needed, remove the targeted display from composition.
+        if (m_displayTarget.UsageKind() != winrt::DisplayMonitorUsageKind::SpecialPurpose)
+        {
+            m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
+                MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
+        }
 
         ConnectTarget();
 
