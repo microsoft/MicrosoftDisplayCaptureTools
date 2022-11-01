@@ -38,6 +38,7 @@ using System.Net.Http.Headers;
 using MicrosoftDisplayCaptureTools.CaptureCard;
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.ComponentModel;
 //using Microsoft.UI.Xaml.Media.Imaging;
 //using Microsoft.UI.Xaml.Media;
 
@@ -93,7 +94,7 @@ namespace CaptureCardViewer
 
 			}
 			else { MessageBox.Show("Dialog Box trouble loading"); }
-			ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+			//ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 		}
 
 		//Converting buffer to image source
@@ -126,6 +127,7 @@ namespace CaptureCardViewer
 		// Apply Render and capture reusable method
 		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
 		{
+
 			displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
@@ -134,21 +136,31 @@ namespace CaptureCardViewer
 				{
 					var suppConfig = tool.GetSupportedConfigurations();
 					foreach (var config in suppConfig)
-					{
-						if (cbi_res.SelectionBoxItem.ToString() == config)
+					{						
+						if (cbi_ref.SelectedItem != null)
 						{
-							tool.SetConfiguration(config);
+							ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
+							string? sel = cbi.Content.ToString();
+							if (sel == config)
+							{
+								tool.SetConfiguration(config);
+							}
+								
 						}
+						if (cbi_res.SelectedItem != null)
+						{
+							ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
+							string? sel = cbi.Content.ToString();
+							if (sel == config)
+							{
+								tool.SetConfiguration(config);
+							}
 
-						else if (cbi_ref.SelectionBoxItem.ToString() == config)
-						{
-							tool.SetConfiguration(config);
-						}
+						}					
 					}
 				}
 				tool.Apply(displayEngine);
 			}
-			
 			
 		}
 
@@ -166,29 +178,20 @@ namespace CaptureCardViewer
 
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
-
-				var renderer = displayEngine.StartRender();
+				
 				ApplyRenderAndCapture(displayEngine);
+				var renderer = displayEngine.StartRender();
 				Thread.Sleep(5000);
-				renderer.Dispose();
-
+				
 				var capturedFrame = captureInput.CaptureFrame();
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
 				var capSrc = BufferToImgConv(capPixelBuffer);
-
-				//Loading & displaying tools
-				//Reset the display manager to the correct one
-				//;
-
-
-
 
 				//Get the framework's properties
 				var prop = displayEngine.GetProperties();
 				var mode = prop.ActiveMode;
 				var resolution = prop.Resolution;
 				var refreshRate = prop.RefreshRate;
-				var planeProp = prop.GetPlaneProperties();
 
 
 				//Generate  & display frames to compare the Tanager's frames against
@@ -199,23 +202,24 @@ namespace CaptureCardViewer
 				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
 				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
 				var predSrc = BufferToImgConv(predPixelBuffer);
-
+				
 				// You can't update UI elements from a background thread (here in the Await Task.Run). So we update the UI by queuing up an operation on the UI thread
 				this.Dispatcher.Invoke(
 						new Action(() =>
 						{
 							CaptImage.Source = capSrc;
 							PredImage.Source = predSrc;
-							TextBlock.Text = "Mode:  " + mode.ToString() + "\r\n";
-							TextBlock.Text += "Resolution: " + resolution.ToString() + "\r\n";
-							TextBlock.Text += "Refresh Rate: " + refreshRate.ToString() + "\r\n";
-							TextBlock.Text += "Plane Properties: " + planeProp.ToString() + "\r\n";
+							TextBlock.Text = "Refresh Rate: " + refreshRate.ToString() + "\r\n";
+							TextBlock.Text += "Resolution: " + resolution.Height.ToString() + "x" + resolution.Width.ToString() + "\r\n";							
+							TextBlock.Text += "Source pixel format: " + mode.SourcePixelFormat.ToString() + "\r\n";
+
 						}
 						));
 
 				Thread.Sleep(1000);
+				renderer.Dispose();
 			});
-
+			
 
 		}
 
@@ -315,18 +319,10 @@ namespace CaptureCardViewer
 
 		private void configurations(object sender, SelectionChangedEventArgs e)
 		{
-			//ComboBoxItem cbi_res = ((ComboBoxItem)cbi_res).SelectedItem;
-			if (cbi_ref != null)
-			{
-				userInput = true;
-				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
-			}
-			if (cbi_res != null)
-			{
-				userInput = true;
-				ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
+			var displayEngine = this.testFramework.GetDisplayEngine();
+			userInput = true;
+			ApplyRenderAndCapture(displayEngine);
 
-			}
 		}
 	}
 }
