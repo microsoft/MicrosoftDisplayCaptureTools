@@ -63,6 +63,7 @@ namespace CaptureCardViewer
 		public string? currentTool;
 		Core testFramework = new Core();
 		bool userInput = false;
+		bool toolsApplied = false;
 
 		//private IBuffer predBuffer;
 
@@ -155,13 +156,13 @@ namespace CaptureCardViewer
 							{
 								tool.SetConfiguration(config);
 							}
-
 						}					
 					}
 				}
+				userInput = false;
 				tool.Apply(displayEngine);
 			}
-			
+			toolsApplied = true;	
 		}
 
 
@@ -179,7 +180,11 @@ namespace CaptureCardViewer
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 				
-				ApplyRenderAndCapture(displayEngine);
+				if (!toolsApplied)
+				{
+					ApplyRenderAndCapture(displayEngine);
+				}
+				
 				var renderer = displayEngine.StartRender();
 				Thread.Sleep(5000);
 				
