@@ -126,7 +126,7 @@ namespace CaptureCardViewer
 		}
 
 		// Apply Render and capture reusable method
-		private void ApplyRenderAndCapture(IDisplayEngine displayEngine)
+		private void ApplyToolsToEngine(IDisplayEngine displayEngine)
 		{
 
 			displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
@@ -159,7 +159,7 @@ namespace CaptureCardViewer
 						}					
 					}
 				}
-				userInput = false;
+				userInput=false;
 				tool.Apply(displayEngine);
 			}
 			toolsApplied = true;	
@@ -179,13 +179,10 @@ namespace CaptureCardViewer
 
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
-				
-				if (!toolsApplied)
-				{
-					ApplyRenderAndCapture(displayEngine);
-				}
-				
-				var renderer = displayEngine.StartRender();
+
+				ApplyToolsToEngine(displayEngine);
+
+                var renderer = displayEngine.StartRender();
 				Thread.Sleep(5000);
 				
 				var capturedFrame = captureInput.CaptureFrame();
@@ -326,7 +323,7 @@ namespace CaptureCardViewer
 		{
 			var displayEngine = this.testFramework.GetDisplayEngine();
 			userInput = true;
-			ApplyRenderAndCapture(displayEngine);
+			ApplyToolsToEngine(displayEngine);
 
 		}
 	}

@@ -19,11 +19,12 @@
                     <ColumnDefinition Width="5*" SharedSizeGroup="a" />
                     <ColumnDefinition Width="5*" SharedSizeGroup="b" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Vertical" Margin="10,16,0,32"  >
-                    <Label Content="Refresh rate" Width="398" RenderTransformOrigin="0.5,0.5" />
+                <StackPanel Orientation="Vertical" Margin="10,16,0,0"  >
+                    <Label Content="Refresh rate" RenderTransformOrigin="0.5,0.5" />
                     <Label Content="Resolution Rate" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    <Label Content="Color" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </StackPanel>
-                <StackPanel Orientation="Vertical" Margin="0,24,0,32" Grid.Column="1" >
+                <StackPanel Orientation="Vertical" Margin="0,16,0,0" Grid.Column="1" >
                     <ComboBox x:Name="cbi_ref" SelectionChanged="configurations" Width="180" Background="AliceBlue" >
                         <ComboBoxItem Content="60hz"/>
                         <ComboBoxItem Content="75hz"/>
@@ -34,6 +35,15 @@
                         <ComboBoxItem Content="1920x1080"/>
                         <ComboBoxItem Content="720x800"/>
                     </ComboBox>
+
+                    <ComboBox x:Name="cbi_col" SelectionChanged="configurations" Width="180" Background="AliceBlue">
+                        <ComboBoxItem Content="Blue"/>
+                        <ComboBoxItem Content="Black"/>
+                        <ComboBoxItem Content="Green"/>
+                        <ComboBoxItem Content="Red"/>
+                        <ComboBoxItem Content="Black"/>
+                    </ComboBox>
+
                 </StackPanel>
             </Grid>
 
