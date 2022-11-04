@@ -133,8 +133,8 @@ namespace CaptureCardViewer
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
-				if (userInput)
-				{
+				//if (userInput)
+				//{
 					var suppConfig = tool.GetSupportedConfigurations();
 					foreach (var config in suppConfig)
 					{						
@@ -156,13 +156,24 @@ namespace CaptureCardViewer
 							{
 								tool.SetConfiguration(config);
 							}
-						}					
+						}
+
+						if (cbi_col.SelectedItem != null)
+						{
+							ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
+							string? sel = cbi.Content.ToString();
+							if (sel == config)
+							{
+								tool.SetConfiguration(config);
+							}
+						}
+
 					}
-				}
-				userInput=false;
+				//}
+				
 				tool.Apply(displayEngine);
 			}
-			toolsApplied = true;	
+			userInput = false;
 		}
 
 
@@ -177,12 +188,13 @@ namespace CaptureCardViewer
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
 
+
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 
 				ApplyToolsToEngine(displayEngine);
 
-                var renderer = displayEngine.StartRender();
+				var renderer = displayEngine.StartRender();
 				Thread.Sleep(5000);
 				
 				var capturedFrame = captureInput.CaptureFrame();
@@ -195,7 +207,7 @@ namespace CaptureCardViewer
 				var resolution = prop.Resolution;
 				var refreshRate = prop.RefreshRate;
 
-
+				renderer.Dispose();
 				//Generate  & display frames to compare the Tanager's frames against
 				//renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
@@ -219,7 +231,7 @@ namespace CaptureCardViewer
 						));
 
 				Thread.Sleep(1000);
-				renderer.Dispose();
+				
 			});
 			
 
