@@ -129,12 +129,12 @@ namespace CaptureCardViewer
 		private void ApplyToolsToEngine(IDisplayEngine displayEngine)
 		{
 
-			displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
+			
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
-				//if (userInput)
-				//{
+				if (userInput)
+				{
 					var suppConfig = tool.GetSupportedConfigurations();
 					foreach (var config in suppConfig)
 					{						
@@ -167,9 +167,8 @@ namespace CaptureCardViewer
 								tool.SetConfiguration(config);
 							}
 						}
-
 					}
-				//}
+				}
 				
 				tool.Apply(displayEngine);
 			}
@@ -185,12 +184,12 @@ namespace CaptureCardViewer
 			{
 				//Captured frames from the tanager board 
 				var genericCapture = this.testFramework.GetCaptureCard();
-				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var displayEngine = this.testFramework.GetDisplayEngine();
-
-
+				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
+
+				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
 				ApplyToolsToEngine(displayEngine);
 
@@ -230,11 +229,9 @@ namespace CaptureCardViewer
 						}
 						));
 
-				Thread.Sleep(1000);
+				Thread.Sleep(5000);
 				
 			});
-			
-
 		}
 
 		//dialog to filename string
