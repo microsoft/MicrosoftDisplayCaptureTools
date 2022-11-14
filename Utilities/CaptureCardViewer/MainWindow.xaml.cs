@@ -63,15 +63,13 @@ namespace CaptureCardViewer
 		public string? currentTool;
 		Core testFramework = new Core();
 		bool userInput = false;
-		bool toolsApplied = false;
-
-		//private IBuffer predBuffer;
 
 		public MainWindow()
 		{
 			InitializeComponent();
 		}
 
+		
 		//Loading the plugin framework
 		private async void loadFramework(object sender, RoutedEventArgs e)
 		{
@@ -81,10 +79,8 @@ namespace CaptureCardViewer
 			{
 				try
 				{
-					//var configFile = dialog.FileName;
+					
 					var configFile = System.IO.Path.GetFileName(dialog.FileName);
-
-
 					await Task.Run(() =>
 					{
 						testFramework.LoadConfigFile(configFile);
@@ -95,7 +91,6 @@ namespace CaptureCardViewer
 
 			}
 			else { MessageBox.Show("Dialog Box trouble loading"); }
-			//ApplyRenderAndCapture(this.testFramework.GetDisplayEngine());
 		}
 
 		//Converting buffer to image source
@@ -125,54 +120,51 @@ namespace CaptureCardViewer
 			return imgSource;
 		}
 
-		// Apply Render and capture reusable method
+		// Apply tools to the framework's display engine
 		private void ApplyToolsToEngine(IDisplayEngine displayEngine)
 		{
-
-			
+		
 			var tools = this.testFramework.GetLoadedTools();
 			foreach (var tool in tools)
 			{
 				if (userInput)
-				{
-					var suppConfig = tool.GetSupportedConfigurations();
-					foreach (var config in suppConfig)
-					{						
-						if (cbi_ref.SelectedItem != null)
+				{ 
+				var suppConfig = tool.GetSupportedConfigurations();
+				foreach (var config in suppConfig)
+				{					
+					if (cbi_ref.SelectedItem != null)
+					{
+						ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
+						string? sel = cbi.Content.ToString();
+						if (sel == config)
 						{
-							ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
-							string? sel = cbi.Content.ToString();
-							if (sel == config)
-							{
-								tool.SetConfiguration(config);
-							}
-								
-						}
-						if (cbi_res.SelectedItem != null)
-						{
-							ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
-							string? sel = cbi.Content.ToString();
-							if (sel == config)
-							{
-								tool.SetConfiguration(config);
-							}
+							tool.SetConfiguration(config);
 						}
 
-						if (cbi_col.SelectedItem != null)
+					}
+					if (cbi_res.SelectedItem != null)
+					{
+						ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
+						string? sel = cbi.Content.ToString();
+						if (sel == config)
 						{
-							ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
-							string? sel = cbi.Content.ToString();
-							if (sel == config)
-							{
-								tool.SetConfiguration(config);
-							}
+							tool.SetConfiguration(config);
+						}
+					}
+
+					if (cbi_col.SelectedItem != null)
+					{
+						ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
+						string? sel = cbi.Content.ToString();
+						if (sel == config)
+						{
+							tool.SetConfiguration(config);
 						}
 					}
 				}
-				
+			}
 				tool.Apply(displayEngine);
 			}
-			userInput = false;
 		}
 
 
@@ -207,8 +199,6 @@ namespace CaptureCardViewer
 				var refreshRate = prop.RefreshRate;
 
 				renderer.Dispose();
-				//Generate  & display frames to compare the Tanager's frames against
-				//renderer.Dispose();
 				var prediction = displayEngine.GetPrediction();
 				var bitmap = prediction.GetBitmap();
 
@@ -216,7 +206,7 @@ namespace CaptureCardViewer
 				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
 				var predSrc = BufferToImgConv(predPixelBuffer);
 				
-				// You can't update UI elements from a background thread (here in the Await Task.Run). So we update the UI by queuing up an operation on the UI thread
+				//Updating the UI by queuing up an operation on the UI thread
 				this.Dispatcher.Invoke(
 						new Action(() =>
 						{
@@ -330,10 +320,9 @@ namespace CaptureCardViewer
 
 		private void configurations(object sender, SelectionChangedEventArgs e)
 		{
-			var displayEngine = this.testFramework.GetDisplayEngine();
 			userInput = true;
-			ApplyToolsToEngine(displayEngine);
 
 		}
+		
 	}
 }
