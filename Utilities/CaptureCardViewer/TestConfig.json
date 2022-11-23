@@ -14,7 +14,7 @@
 		"ConfigurationToolboxes": [
 			{
 				"Path": "BasicDisplayConfiguration.dll",
-				"Class": "DisplayConfiguration.Toolbox",
+				"Class": "BasicDisplayConfiguration.Toolbox",
 				"Settings": null
 			}
 		]

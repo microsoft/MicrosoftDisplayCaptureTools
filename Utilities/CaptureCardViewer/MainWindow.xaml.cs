@@ -23,6 +23,8 @@ using Windows.Graphics.Imaging;
 using Windows.Data.Json;
 using Windows.Media.Capture;
 using System.Threading;
+using System.Drawing;
+using System.IO;
 using WinRT;
 using ABI.Windows.Foundation;
 using System.Runtime.InteropServices;
@@ -33,6 +35,12 @@ using MicrosoftDisplayCaptureTools.Display;
 using Windows.UI.Core;
 using Windows.Graphics.DirectX;
 using System.Net.Http.Headers;
+using MicrosoftDisplayCaptureTools.CaptureCard;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.ComponentModel;
+//using Microsoft.UI.Xaml.Media.Imaging;
+//using Microsoft.UI.Xaml.Media;
 
 namespace CaptureCardViewer
 {
@@ -48,242 +56,273 @@ namespace CaptureCardViewer
 	{
 		void GetBuffer(out byte* buffer, out uint capacity);
 	}
-	public class Hstring
-	{
-		private string monitorId;
-		public string MonitorId
-		{
-			get { return monitorId; }
-			set { monitorId = value;}
-		}
-	}
+
 	public partial class MainWindow : Window
-    {
+	{
 		public string? setTool;
 		public string? currentTool;
 		Core testFramework = new Core();
-
-		//private IBuffer predBuffer;
+		bool userInput = false;
 
 		public MainWindow()
-        {
-            InitializeComponent();
-        }
-
-        private void LoadPlugin_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new OpenFileDialog();
-            dialog.Filter = "Plugin DLLs|*.dll";
-            dialog.Title = "Load a Capture Plugin";
-			 
-
-            if (dialog.ShowDialog() ?? false)
-            {
-                try
-                {
-					//Framework loading the components
-                    testFramework = new Core();
-					var cwd=System.IO.Directory.GetCurrentDirectory();
-					string fullPath = (cwd.ToString() + "BasicConfig.json").ToString();
-					testFramework.LoadConfigFile(fullPath);
-					testFramework.LoadPlugin(dialog.FileName, "GenericCaptureCardPlugin.Plugin");
-					testFramework.LoadToolbox(dialog.FileName, "DisplayConfiguration.Toolbox");
-					testFramework.LoadDisplayManager(dialog.FileName, "DisplayControl.DisplayEngine");
-					
-				}
-                catch (Exception)
-                {
-
-                }
-            }
-        }
-
-		//sets the tool from the selected item in the ComboBox
-		private void availableTools_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{	
-			ComboBoxItem cbi = (ComboBoxItem)availableTools.SelectedItem;	
-			string? selected = cbi.Content.ToString();
-			switch (selected)
-			{
-				case "Event Log":
-					setTool = "EventLog";
-					break;
-
-				case "Supported Features":
-					setTool = "SuppFeat";
-					break;
-
-				case "":
-					setTool = "LoadFromDisk";
-					break;
-
-			}
+		{
+			InitializeComponent();
 		}
 
-		//sets the current tool for the add button
-		private void addButtonClick(object sender, RoutedEventArgs e)
+		
+		//Loading the plugin framework
+		private async void loadFramework(object sender, RoutedEventArgs e)
 		{
-			currentTool = setTool;
-			 
-		} 
-
-		//getting predicted frames to frame comparison
-		private async void displayPredictedFrames(Core testFramework)
-		{
-			await Task.Run(() =>
+			var dialog = new OpenFileDialog(); //file picker
+			dialog.Title = "Load a Capture Plugin";
+			if (dialog.ShowDialog() == true)
 			{
-				string fullPath = "C:\\Users\\lumulinga\\source\\repos\\DisplayHardwareHLK\\hwhlk\\Tests\\PredFrameConfig.json";
-				testFramework.LoadConfigFile(fullPath);
-				var displayEngine = testFramework.GetDisplayEngine();
-				var predictedFrame = displayEngine.GetPrediction();
-
-				/*var dispMan = DisplayManager.Create(DisplayManagerOptions.None);
-				var connectedTargets = dispMan.GetCurrentTargets();
-				//substitute with setting up the config file testing system 
-				var target = connectedTargets.FirstOrDefault();  //should get the last but one monitor
-				displayEngine.InitializeForDisplayTarget(target);
-
-				var caps = displayEngine.GetCapabilities();
-				var modes = caps.GetSupportedModes();
-				var bestmode = DisplayModeInfo.FromAbi(IntPtr.Zero);
-				double bestModeDiff = Single.PositiveInfinity;
-				foreach (var mode in modes)
+				try
 				{
-					if (mode.SourcePixelFormat==DirectXPixelFormat.R8G8B8A8UIntNormalized &&
-					mode.IsInterlaced==false && mode.TargetResolution.Height==1080 && mode.SourceResolution.Height == 1080)
+					
+					var configFile = System.IO.Path.GetFileName(dialog.FileName);
+					await Task.Run(() =>
 					{
-						var vSync = mode.PresentationRate.VerticalSyncRate;
-						var vSyncDouble = (double)vSync.Numerator/vSync.Denominator;
-						double modeDiff = Math.Abs(vSyncDouble - 60);
-						if (modeDiff < bestModeDiff)
+						testFramework.LoadConfigFile(configFile);
+					});
+					MessageBox.Show("Capture card plugin done loading");
+				}
+				catch (Exception) { }
+
+			}
+			else { MessageBox.Show("Dialog Box trouble loading"); }
+		}
+
+		//Converting buffer to image source
+		private static System.Windows.Media.Imaging.BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer)
+		{
+			System.Windows.Media.Imaging.BitmapSource imgSource;
+			unsafe
+			{
+				byte[] bytes = new byte[pixelBuffer.Capacity];
+				fixed (byte* bytesAccess = bytes)
+				{
+					byte* ptr;
+					uint capacity;
+					var ByteAccess = pixelBuffer.As<IMemoryBufferByteAccess>();
+					ByteAccess.GetBuffer(out ptr, out capacity);
+
+					// copy the raw memory out to the byte array
+					Unsafe.CopyBlockUnaligned(
+						ref bytesAccess[0], ref ptr[0], capacity);
+
+				}
+				var pixCap = pixelBuffer.Capacity;
+				imgSource = System.Windows.Media.Imaging.BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
+			}
+
+			imgSource.Freeze();
+			return imgSource;
+		}
+
+		// Apply tools to the framework's display engine
+		private void ApplyToolsToEngine(IDisplayEngine displayEngine)
+		{
+		
+			var tools = this.testFramework.GetLoadedTools();
+			foreach (var tool in tools)
+			{
+				if (userInput)
+				{ 
+				var suppConfig = tool.GetSupportedConfigurations();
+				foreach (var config in suppConfig)
+				{					
+					if (cbi_ref.SelectedItem != null)
+					{
+						ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
+						string? sel = cbi.Content.ToString();
+						if (sel == config)
 						{
-							bestmode = mode;
-							bestModeDiff = modeDiff;	
+							tool.SetConfiguration(config);
+						}
+
+					}
+					if (cbi_res.SelectedItem != null)
+					{
+						ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
+						string? sel = cbi.Content.ToString();
+						if (sel == config)
+						{
+							tool.SetConfiguration(config);
+						}
+					}
+
+					if (cbi_col.SelectedItem != null)
+					{
+						ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
+						string? sel = cbi.Content.ToString();
+						if (sel == config)
+						{
+							tool.SetConfiguration(config);
 						}
 					}
 				}
-				var prop = displayEngine.GetProperties();
-				prop.ActiveMode = bestmode;
-				var render = displayEngine.StartRender();*/
-
-				var predImgBmp = predictedFrame.GetBitmap();
-				predImgBmp = SoftwareBitmap.Convert(predImgBmp, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-				ImageSourceConverter c = new ImageSourceConverter();
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-				ImageSource pSource = (ImageSource)c.ConvertFrom(predImgBmp);
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
-				this.Dispatcher.Invoke(
-				new Action(() =>
-				{
-					PredictedImage.Source = pSource;
-				}
-				));
-				Thread.Sleep(1000);
-			});
+			}
+				tool.Apply(displayEngine);
+			}
 		}
 
-		//run the frame debugger depending on the set tool
-		private async void runAndCompareButtonClick(object sender, RoutedEventArgs e)
+
+		//Displaying frames & properties from the plugin
+		private async void displayProperties(object sender, RoutedEventArgs e)
 		{
-			// Eventually the config file should be sourced from a file picker like you have below here in comments.
-			/*var dialog = new OpenFileDialog(); //file picker
-			dialog.Filter = "Plugin DLLs|*.dll";
-			dialog.Title = "Load a Capture Plugin";*/
-			string fP = "TestConfig.json";
-			
-			switch (currentTool)
-			{
-				case (null or "LoadFromDisk"):
-					await Task.Run(() =>
-					{
-						//testFramework.LoadConfigFile(fP);
-					});
-
-					MessageBox.Show("Capture card plugin done loading");
-
-					break;
-
-				case "EventLog":
-					//TODO: Query event logs from the capture card plugin
-					break;
-
-				case "SuppFeat":
-					testFramework.GetLoadedTools();
-					break;
-			}
-
-			BitmapSource bSource;
-			
-			//capturing frames 
+			//Display & Capture of frames 
 			await Task.Run(() =>
 			{
-				testFramework.LoadConfigFile(fP);
-				var genericCapture = testFramework.GetCaptureCard();
+				//Captured frames from the tanager board 
+				var genericCapture = this.testFramework.GetCaptureCard();
+				var displayEngine = this.testFramework.GetDisplayEngine();
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
-				var displayEngine = testFramework.GetDisplayEngine();
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 
-				//Reset the display manager to the correct one
 				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
 
-				// Get the list of tools, iterate through it and call 'apply' without changing the default setting
-				var tools = testFramework.GetLoadedTools();
-				foreach (var tool in tools)
-					tool.Apply(displayEngine);
+				ApplyToolsToEngine(displayEngine);
 
 				var renderer = displayEngine.StartRender();
-
 				Thread.Sleep(5000);
-
+				
 				var capturedFrame = captureInput.CaptureFrame();
+				var capPixelBuffer = capturedFrame.GetRawPixelData();
+				var capSrc = BufferToImgConv(capPixelBuffer);
+
+				//Get the framework's properties
+				var prop = displayEngine.GetProperties();
+				var mode = prop.ActiveMode;
+				var resolution = prop.Resolution;
+				var refreshRate = prop.RefreshRate;
 
 				renderer.Dispose();
-
 				var prediction = displayEngine.GetPrediction();
-				var pixelBuffer = capturedFrame.GetRawPixelData();
+				var bitmap = prediction.GetBitmap();
+
+				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
+				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
+				var predSrc = BufferToImgConv(predPixelBuffer);
 				
-				// This needs to be inside of an unsafe block because we are manipulating bytes directly
-				unsafe
-				{
-					
-					byte[] bytes = new byte[pixelBuffer.Capacity];
-					fixed (byte* bytesAccess = bytes)
-					{
-						byte* ptr;
-						uint capacity;
-						var ByteAccess = pixelBuffer.As<IMemoryBufferByteAccess>();
-						ByteAccess.GetBuffer(out ptr, out capacity);
+				//Updating the UI by queuing up an operation on the UI thread
+				this.Dispatcher.Invoke(
+						new Action(() =>
+						{
+							CaptImage.Source = capSrc;
+							PredImage.Source = predSrc;
+							TextBlock.Text = "Refresh Rate: " + refreshRate.ToString() + "\r\n";
+							TextBlock.Text += "Resolution: " + resolution.Height.ToString() + "x" + resolution.Width.ToString() + "\r\n";							
+							TextBlock.Text += "Source pixel format: " + mode.SourcePixelFormat.ToString() + "\r\n";
 
-						// copy the raw memory out to the byte array
-						Unsafe.CopyBlockUnaligned(
-							ref bytesAccess[0], ref ptr[0], capacity);
-						
-					}
-					var pixCap = pixelBuffer.Capacity;
+						}
+						));
 
-					bSource = BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
-					
-				}
-
-				//
-				bSource.Freeze();
-			// You can't update UI elements from a background thread (here in the Await Task.Run). So we update the UI by queuing up an operation on the UI thread
-			this.Dispatcher.Invoke(
-					new Action(() => 
-					{
-						ActualImage.Source = bSource;	
-					}
-					));
-				
-				Thread.Sleep(1000);
-					
+				Thread.Sleep(5000);
 				
 			});
-			//displayPredictedFrames(testFramework);
+		}
 
-
-
+		//dialog to filename string
+		private string dialogToFilename()
+		{
+			var filename = "";
+			var dialog = new OpenFileDialog();
+			dialog.Title = "Select file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					filename = dialog.FileName.ToString();
+				}
+				catch (Exception) { }
+			}
+			return filename;
 
 		}
-    }}
+
+		private void compareFrames_Click(object sender, RoutedEventArgs e)
+		{
+			var genericCapture = this.testFramework.GetCaptureCard();
+			var captureInputs = genericCapture.EnumerateDisplayInputs();
+			var displayEngine = this.testFramework.GetDisplayEngine();
+			var captureInput = captureInputs[0];
+			var capturedFrame = captureInput.CaptureFrame();
+			var prediction = displayEngine.GetPrediction();
+			capturedFrame.CompareCaptureToPrediction("Basic Test", prediction);
+		}
+
+		//Loading Display Manager file
+		private async void DispMan_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new OpenFileDialog(); //file picker
+			dialog.Title = "Load Display Manager file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var DispMan_filename = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadDisplayManager(DispMan_filename);
+					});
+					MessageBox.Show("Display Manager file loaded");
+				}
+				catch (Exception) { }
+
+			}
+			else { MessageBox.Show("Display Manager trouble loading"); }
+		}
+
+		//Loading Capture Plugin file
+		private async void CapPlgn_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new OpenFileDialog();
+			dialog.Title = "Load Capture Plugin file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var plugin_filename = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadCapturePlugin(plugin_filename);
+					});
+					MessageBox.Show("Plugin file loaded");
+				}
+				catch (Exception) { }
+
+			}
+			else { MessageBox.Show("Capture Plugin trouble loading"); }
+		}
+
+		//Loading Toolbox file
+		private async void Tlbx_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new OpenFileDialog();
+			dialog.Title = "Load Toolbox file";
+			if (dialog.ShowDialog() == true)
+			{
+				try
+				{
+					var tlbx_filename = dialog.FileName.ToString();
+					await Task.Run(() =>
+					{
+						testFramework.LoadToolbox(tlbx_filename);
+					});
+					MessageBox.Show("Toolbox file loaded");
+				}
+				catch (Exception) { }
+			}
+			else { MessageBox.Show("Toolbox trouble loading"); }
+		}
+
+		private void configurations(object sender, SelectionChangedEventArgs e)
+		{
+			userInput = true;
+
+		}
+		
+	}
+}
