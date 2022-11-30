@@ -46,7 +46,7 @@ namespace CaptureCardViewer
 			private set { m_refreshRate = value; OnPropertyChanged(); }
 		}
 
-		public ImageSource FrameSource
+		public ImageSource? FrameSource
 		{
 			get
 			{

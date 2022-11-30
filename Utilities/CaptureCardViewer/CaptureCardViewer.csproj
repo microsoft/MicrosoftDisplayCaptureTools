@@ -32,21 +32,8 @@
 		<PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
 		<PackageReference Include="Microsoft.Windows.CsWinRT" Version="1.6.1" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<ProjectReference Include="..\..\BasicDisplayControl\BasicDisplayControl.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
-		<ProjectReference Include="..\..\CapturePlugins\GenericCaptureCardPlugin\GenericCaptureCardPlugin.vcxproj">
-		</ProjectReference>
-		<ProjectReference Include="..\..\CapturePlugins\TanagerPlugin\TanagerPlugin.vcxproj" />
-		<ProjectReference Include="..\..\BasicDisplayConfiguration\BasicDisplayConfiguration.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
-		<ProjectReference Include="..\..\Core\Core.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
-
+	  <ProjectReference Include="..\..\Core\Core.vcxproj" />
 	</ItemGroup>
 
 	<ItemGroup>

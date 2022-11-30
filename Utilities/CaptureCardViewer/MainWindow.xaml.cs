@@ -121,49 +121,53 @@ namespace CaptureCardViewer
 		}
 
 		// Apply tools to the framework's display engine
-		private void ApplyToolsToEngine(IDisplayEngine displayEngine)
+		private void ApplyToolsToEngine(IDisplayOutput displayOutput)
 		{
-		
-			var tools = this.testFramework.GetLoadedTools();
-			foreach (var tool in tools)
-			{
-				if (userInput)
-				{ 
-				var suppConfig = tool.GetSupportedConfigurations();
-				foreach (var config in suppConfig)
-				{					
-					if (cbi_ref.SelectedItem != null)
-					{
-						ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
-						string? sel = cbi.Content.ToString();
-						if (sel == config)
-						{
-							tool.SetConfiguration(config);
-						}
+			foreach (var toolbox in this.testFramework.GetConfigurationToolboxes())
+			{ 
+				foreach (var toolName in toolbox.GetSupportedTools())
+				{
+					var tool = toolbox.GetTool(toolName);
 
-					}
-					if (cbi_res.SelectedItem != null)
+					if (userInput)
 					{
-						ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
-						string? sel = cbi.Content.ToString();
-						if (sel == config)
+						var suppConfig = tool.GetSupportedConfigurations();
+						foreach (var config in suppConfig)
 						{
-							tool.SetConfiguration(config);
+							if (cbi_ref.SelectedItem != null)
+							{
+								ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
+								string? sel = cbi.Content.ToString();
+								if (sel == config)
+								{
+									tool.SetConfiguration(config);
+								}
+
+							}
+							if (cbi_res.SelectedItem != null)
+							{
+								ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
+								string? sel = cbi.Content.ToString();
+								if (sel == config)
+								{
+									tool.SetConfiguration(config);
+								}
+							}
+
+							if (cbi_col.SelectedItem != null)
+							{
+								ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
+								string? sel = cbi.Content.ToString();
+								if (sel == config)
+								{
+									tool.SetConfiguration(config);
+								}
+							}
 						}
 					}
 
-					if (cbi_col.SelectedItem != null)
-					{
-						ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
-						string? sel = cbi.Content.ToString();
-						if (sel == config)
-						{
-							tool.SetConfiguration(config);
-						}
-					}
+					tool.Apply(displayOutput);
 				}
-			}
-				tool.Apply(displayEngine);
 			}
 		}
 
@@ -175,17 +179,17 @@ namespace CaptureCardViewer
 			await Task.Run(() =>
 			{
 				//Captured frames from the tanager board 
-				var genericCapture = this.testFramework.GetCaptureCard();
-				var displayEngine = this.testFramework.GetDisplayEngine();
+				var genericCapture = this.testFramework.GetCaptureCards()[0];
+				var displayEngine = this.testFramework.GetDisplayEngines()[0];
 				var captureInputs = genericCapture.EnumerateDisplayInputs();
 				var captureInput = captureInputs[0];
 				captureInput.FinalizeDisplayState();
 
-				displayEngine.InitializeForStableMonitorId("DEL41846VTHZ13_1E_07E4_EC");
+				var displayOutput = displayEngine.InitializeOutput("DEL41846VTHZ13_1E_07E4_EC");
 
-				ApplyToolsToEngine(displayEngine);
+				ApplyToolsToEngine(displayOutput);
 
-				var renderer = displayEngine.StartRender();
+				var renderer = displayOutput.StartRender();
 				Thread.Sleep(5000);
 				
 				var capturedFrame = captureInput.CaptureFrame();
@@ -193,13 +197,13 @@ namespace CaptureCardViewer
 				var capSrc = BufferToImgConv(capPixelBuffer);
 
 				//Get the framework's properties
-				var prop = displayEngine.GetProperties();
+				var prop = displayOutput.GetProperties();
 				var mode = prop.ActiveMode;
 				var resolution = prop.Resolution;
 				var refreshRate = prop.RefreshRate;
 
 				renderer.Dispose();
-				var prediction = displayEngine.GetPrediction();
+				var prediction = displayOutput.GetPrediction();
 				var bitmap = prediction.GetBitmap();
 
 				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
@@ -244,16 +248,17 @@ namespace CaptureCardViewer
 
 		private void compareFrames_Click(object sender, RoutedEventArgs e)
 		{
-			var genericCapture = this.testFramework.GetCaptureCard();
+			var genericCapture = this.testFramework.GetCaptureCards()[0];
 			var captureInputs = genericCapture.EnumerateDisplayInputs();
-			var displayEngine = this.testFramework.GetDisplayEngine();
+			var displayEngine = this.testFramework.GetDisplayEngines()[0];
 			var captureInput = captureInputs[0];
 			var capturedFrame = captureInput.CaptureFrame();
-			var prediction = displayEngine.GetPrediction();
+			var displayOutput = displayEngine.InitializeOutput("DEL41846VTHZ13_1E_07E4_EC");
+			var prediction = displayOutput.GetPrediction();
 			capturedFrame.CompareCaptureToPrediction("Basic Test", prediction);
 		}
 
-		//Loading Display Manager file
+		// Loading Display Manager file
 		private async void DispMan_Click(object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog(); //file picker
@@ -265,7 +270,7 @@ namespace CaptureCardViewer
 					var DispMan_filename = dialog.FileName.ToString();
 					await Task.Run(() =>
 					{
-						testFramework.LoadDisplayManager(DispMan_filename);
+						testFramework.LoadDisplayEngine(DispMan_filename);
 					});
 					MessageBox.Show("Display Manager file loaded");
 				}
@@ -275,7 +280,7 @@ namespace CaptureCardViewer
 			else { MessageBox.Show("Display Manager trouble loading"); }
 		}
 
-		//Loading Capture Plugin file
+		// Loading Capture Plugin file
 		private async void CapPlgn_Click(object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog();
@@ -297,7 +302,7 @@ namespace CaptureCardViewer
 			else { MessageBox.Show("Capture Plugin trouble loading"); }
 		}
 
-		//Loading Toolbox file
+		// Loading Toolbox file
 		private async void Tlbx_Click(object sender, RoutedEventArgs e)
 		{
 			var dialog = new OpenFileDialog();
