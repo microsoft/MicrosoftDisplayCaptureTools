@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
@@ -28,9 +28,9 @@
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Taef" Version="10.68.220224001" />
+		<PackageReference Include="Microsoft.Taef" Version="10.74.221122001" />
 		<PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
-		<PackageReference Include="Microsoft.Windows.CsWinRT" Version="1.6.1" />
+		<PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
