@@ -1,46 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
+using MicrosoftDisplayCaptureTools.Display;
+using MicrosoftDisplayCaptureTools.Framework;
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Microsoft.Win32;
-using MicrosoftDisplayCaptureTools.Framework;
-using Windows.ApplicationModel.VoiceCommands;
 using Windows.Foundation;
-using MicrosoftDisplayCaptureTools;
-using Windows.Devices.Display;
-using Windows.Devices.Display.Core;
 using Windows.Graphics.Imaging;
-using Windows.Data.Json;
-using Windows.Media.Capture;
-using System.Threading;
-using System.Drawing;
-using System.IO;
 using WinRT;
-using ABI.Windows.Foundation;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Runtime.CompilerServices;
-using Windows.Storage.Streams;
-using MicrosoftDisplayCaptureTools.Display;
-using Windows.UI.Core;
-using Windows.Graphics.DirectX;
-using System.Net.Http.Headers;
-using MicrosoftDisplayCaptureTools.CaptureCard;
-using System.Diagnostics;
-using System.Security.Cryptography;
-using System.ComponentModel;
-//using Microsoft.UI.Xaml.Media.Imaging;
-//using Microsoft.UI.Xaml.Media;
 
 namespace CaptureCardViewer
 {
@@ -61,14 +33,18 @@ namespace CaptureCardViewer
 	{
 		public string? setTool;
 		public string? currentTool;
-		Core testFramework = new Core();
+		Core testFramework;
 		bool userInput = false;
+
+		public RichTextLogger Logger { get; } = new RichTextLogger();
 
 		public MainWindow()
 		{
 			InitializeComponent();
-		}
+			this.DataContext = this;
 
+			testFramework = new Core(Logger);			
+		}
 		
 		//Loading the plugin framework
 		private async void loadFramework(object sender, RoutedEventArgs e)
@@ -239,7 +215,6 @@ namespace CaptureCardViewer
 				catch (Exception) { }
 			}
 			return filename;
-
 		}
 
 		private void compareFrames_Click(object sender, RoutedEventArgs e)

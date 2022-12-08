@@ -7,14 +7,15 @@
 		<UseWPF>true</UseWPF>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>AnyCPU;x64;ARM64</Platforms>
-	</PropertyGroup>
+    <StartupObject>CaptureCardViewer.App</StartupObject>
+  </PropertyGroup>
 
 	<!-- Generates a C# projection of WinRT types (see https://docs.microsoft.com/en-us/windows/uwp/csharp-winrt/net-projection-from-cppwinrt-component)-->
 	<PropertyGroup>
 		<CsWinRTIncludes>MicrosoftDisplayCaptureTools</CsWinRTIncludes>
 		<CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
-		<StartupObject>CaptureCardViewer.App</StartupObject>
 	</PropertyGroup>
+  
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
@@ -28,9 +29,15 @@
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Taef" Version="10.74.221122001" />
 		<PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
+		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.2.162-beta">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.1" />
+		<PackageReference Include="ModernWpfUI" Version="0.9.6" />
 	</ItemGroup>
 
 	<ItemGroup>
