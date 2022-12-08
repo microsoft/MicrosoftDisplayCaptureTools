@@ -610,6 +610,9 @@ namespace winrt::DisplayControl::implementation
         case DirectXPixelFormat::R8G8B8A8UIntNormalized:
             pixelSize = 4;
             break;
+        case DirectXPixelFormat::R10G10B10A2UIntNormalized:
+            pixelSize = 4;
+            break;
         default:
             throw winrt::hresult_not_implemented();
         }
@@ -621,8 +624,8 @@ namespace winrt::DisplayControl::implementation
         for (uint32_t i = 0; i < threadCount; i++)
         {
             startingIndex = i * threadSectionSize;
-            threads.push_back(std::thread([&](uint32_t index, uint32_t sectionSize)
-                {
+            threads.push_back(std::thread(
+                [&](uint32_t index, uint32_t sectionSize) {
                     switch (format)
                     {
                     case DirectXPixelFormat::R8G8B8A8UIntNormalized:
@@ -632,7 +635,7 @@ namespace winrt::DisplayControl::implementation
                             uint8_t r, g, b, a;
                         };
 
-                        PixelStruct* pixelStruct = reinterpret_cast<PixelStruct*>(buffer.data()+index);
+                        PixelStruct* pixelStruct = reinterpret_cast<PixelStruct*>(buffer.data() + index);
 
                         for (UINT i = index; i < (index + sectionSize) && i < buffer.Capacity(); i += sizeof(PixelStruct))
                         {
@@ -645,8 +648,33 @@ namespace winrt::DisplayControl::implementation
                         }
                     }
                     break;
+                    case DirectXPixelFormat::R10G10B10A2UIntNormalized:
+                    {
+                        struct PixelStruct
+                        {
+                            uint32_t r : 10;
+                            uint32_t g : 10;
+                            uint32_t b : 10;
+                            uint32_t a : 2;
+                        };
+
+                        PixelStruct* pixelStruct = reinterpret_cast<PixelStruct*>(buffer.data() + index);
+
+                        for (UINT i = index; i < (index + sectionSize) && i < buffer.Capacity(); i += sizeof(PixelStruct))
+                        {
+                            pixelStruct->r = static_cast<uint32_t>(floorf(clearColor.ChannelA * 1023.f + 0.5f));
+                            pixelStruct->g = static_cast<uint32_t>(floorf(clearColor.ChannelB * 1023.f + 0.5f));
+                            pixelStruct->b = static_cast<uint32_t>(floorf(clearColor.ChannelC * 1023.f + 0.5f));
+                            pixelStruct->a = 3;
+
+                            pixelStruct++;
+                        }
                     }
-                }, startingIndex, threadSectionSize));
+                    break;
+                    }
+                },
+                startingIndex,
+                threadSectionSize));
         }
 
         for (auto&& thread : threads)
