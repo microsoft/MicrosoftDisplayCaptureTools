@@ -1,5 +1,6 @@
 {
-  "Version": "0.1",
+	"$schema": "./../../schemas/configuration-schema.json",
+	"Version": "0.1",
 	"Components": {
 		"CapturePlugin": {
 			"Path": "TanagerPlugin.dll",
@@ -19,12 +20,12 @@
 			}
 		]
 	},
-  "TestSystem": {
-	"DisplayInputMapping": [
-		{
-			"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
-			"PluginInputName": "HDMI"
-		}
-	]
-  }
+	"TestSystem": {
+		"DisplayInputMapping": [
+			{
+				"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+				"PluginInputName": "HDMI"
+			}
+		]
+	}
 }

@@ -93,6 +93,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		MicrosoftDisplayCaptureTools.win10.targets = MicrosoftDisplayCaptureTools.win10.targets
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schemas", "Schemas", "{55634F59-DDCC-4A52-8823-7F0BB88131C3}"
+	ProjectSection(SolutionItems) = preProject
+		Schemas\configuration-schema.json = Schemas\configuration-schema.json
+		Schemas\test-case-schema.json = Schemas\test-case-schema.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -154,6 +160,7 @@ Global
 		{3C498EAA-E7F0-4DFC-8CB4-19A6E45FF155}.Release|x86.ActiveCfg = Release|Win32
 		{3C498EAA-E7F0-4DFC-8CB4-19A6E45FF155}.Release|x86.Build.0 = Release|Win32
 		{1295B443-F9A9-4EF2-AC03-648365CBA598}.Debug|x64.ActiveCfg = Debug|x64
+		{1295B443-F9A9-4EF2-AC03-648365CBA598}.Debug|x64.Build.0 = Debug|x64
 		{1295B443-F9A9-4EF2-AC03-648365CBA598}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{1295B443-F9A9-4EF2-AC03-648365CBA598}.Release|x64.ActiveCfg = Release|x64
 		{1295B443-F9A9-4EF2-AC03-648365CBA598}.Release|x86.ActiveCfg = Release|Any CPU
@@ -179,6 +186,7 @@ Global
 		{3C498EAA-E7F0-4DFC-8CB4-19A6E45FF155} = {F8E17D8F-00F5-4693-AFAB-42163AED0821}
 		{1295B443-F9A9-4EF2-AC03-648365CBA598} = {F76BF6A1-2F2C-4037-B47A-69440C789E35}
 		{C2EA574E-B9CE-47EF-909B-40425A7E31BC} = {BD85639F-E3D8-4335-BFFD-214229CC303E}
+		{55634F59-DDCC-4A52-8823-7F0BB88131C3} = {899FC13F-08CF-4C8E-8035-A9AA49DC0F6B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {586F889A-04F1-4A85-9B2D-7BEBEAAED003}

@@ -1,0 +1,12 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"$id": "http://raw.githubusercontent.com/microsoft/display-capture-tools/main/schemas/test-case-schema.json",
+	"type": "object",
+	"default": {},
+	"title": "Root Schema",
+	"required": [
+		"Version"
+	],
+	"properties": {
+	}
+}

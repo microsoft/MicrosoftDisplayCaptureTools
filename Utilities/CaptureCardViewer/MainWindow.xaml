@@ -47,6 +47,7 @@
             Grid.Column="0"
             Margin="10"
             Orientation="Vertical">
+
             <Label
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
@@ -134,6 +135,12 @@
                 VerticalAlignment="Top"
                 Content="Actual Image" />
 
+            <ui:CommandBarToolBar>
+                <ui:AppBarButton Icon="Camera" Label="Single Frame" />
+                <ui:AppBarButton Icon="Play" Label="Start" />
+                <ui:AppBarButton Icon="Pause" Label="Pause" />
+            </ui:CommandBarToolBar>
+
             <Image
                 x:Name="CaptImage"
                 MinHeight="200"
@@ -163,10 +170,18 @@
             VerticalAlignment="Stretch">
             <TabItem Header="Log">
                 <DockPanel LastChildFill="True">
-                    <ui:CommandBar DockPanel.Dock="Top">
-                        <ui:AppBarButton Command="{Binding Path=Logger.SaveLogCommand}" Icon="Save" />
-                        <ui:AppBarButton Command="{Binding Path=Logger.ClearLogCommand}" Icon="Clear" />
-                    </ui:CommandBar>
+                    <ui:CommandBarToolBar DockPanel.Dock="Top">
+                        <ui:AppBarButton
+                            Command="{Binding Path=Logger.SaveLogCommand}"
+                            Icon="Save"
+                            IsCompact="True"
+                            Label="Save" />
+                        <ui:AppBarButton
+                            Command="{Binding Path=Logger.ClearLogCommand}"
+                            Icon="Clear"
+                            IsCompact="True"
+                            Label="Clear" />
+                    </ui:CommandBarToolBar>
                     <FlowDocumentScrollViewer Document="{Binding Logger.Document}" />
                 </DockPanel>
             </TabItem>
