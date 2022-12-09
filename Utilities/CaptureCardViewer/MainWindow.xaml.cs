@@ -186,7 +186,7 @@ namespace CaptureCardViewer
 				this.Dispatcher.Invoke(
 						new Action(() =>
 						{
-							CaptImage.Source = capSrc;
+							CaptImage.ImageSource = capSrc;
 							PredImage.Source = predSrc;
 							TextBlock.Text = "Refresh Rate: " + refreshRate.ToString() + "\r\n";
 							TextBlock.Text += "Resolution: " + resolution.Height.ToString() + "x" + resolution.Width.ToString() + "\r\n";							

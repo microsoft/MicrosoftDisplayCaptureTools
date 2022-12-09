@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:CaptureCardViewer"
+    xmlns:localcontrols="clr-namespace:CaptureCardViewer.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.modernwpf.com/2019"
     Title="Frame Debugger"
@@ -48,79 +49,83 @@
             Margin="10"
             Orientation="Vertical">
 
-            <Label
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Content="Predicted Image" />
-            <Image
-                x:Name="PredImage"
-                MinHeight="200"
-                Stretch="Uniform" />
-            <Button
-                x:Name="lF"
-                Margin="0,26"
-                Click="loadFramework"
-                Content="Load Framework" />
+            <GroupBox Header="Predicted Image">
+                <StackPanel Orientation="Vertical">
 
-            <Label Content="CONFIGURATIONS" />
+                    <Image
+                        x:Name="PredImage"
+                        MinHeight="200"
+                        Stretch="Uniform" />
+                    <Button
+                        x:Name="lF"
+                        Margin="0,26"
+                        Click="loadFramework"
+                        Content="Load Framework" />
 
-            <Grid>
-                <Grid.Resources>
-                    <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
-                        <Setter Property="VerticalAlignment" Value="Center" />
-                        <Setter Property="HorizontalAlignment" Value="Left" />
-                        <Setter Property="Margin" Value="3" />
-                    </Style>
-                    <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
-                        <Setter Property="VerticalAlignment" Value="Center" />
-                        <Setter Property="HorizontalAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="3" />
-                    </Style>
-                </Grid.Resources>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
+                </StackPanel>
+            </GroupBox>
 
-                <Label Content="Refresh rate" />
-                <Label Grid.Row="1" Content="Resolution Rate" />
-                <Label Grid.Row="2" Content="Color" />
-                <ComboBox
-                    x:Name="cbi_ref"
-                    Grid.Column="1"
-                    SelectionChanged="configurations">
-                    <ComboBoxItem Content="60hz" />
-                    <ComboBoxItem Content="75hz" />
-                </ComboBox>
+            <GroupBox Header="Configuration">
+
+                <Grid>
+                    <Grid.Resources>
+                        <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Left" />
+                            <Setter Property="Margin" Value="3" />
+                        </Style>
+                        <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter Property="Margin" Value="3" />
+                        </Style>
+                    </Grid.Resources>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <Label Content="Refresh rate" />
+                    <Label Grid.Row="1" Content="Resolution Rate" />
+                    <Label Grid.Row="2" Content="Color" />
+                    <ComboBox
+                        x:Name="cbi_ref"
+                        Grid.Column="1"
+                        SelectionChanged="configurations">
+                        <ComboBoxItem Content="60hz" />
+                        <ComboBoxItem Content="75hz" />
+                    </ComboBox>
 
 
-                <ComboBox
-                    x:Name="cbi_res"
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    SelectionChanged="configurations">
-                    <ComboBoxItem Content="1920x1080" />
-                    <ComboBoxItem Content="720x800" />
-                </ComboBox>
+                    <ComboBox
+                        x:Name="cbi_res"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        SelectionChanged="configurations">
+                        <ComboBoxItem Content="1920x1080" />
+                        <ComboBoxItem Content="720x800" />
+                    </ComboBox>
 
-                <ComboBox
-                    x:Name="cbi_col"
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    SelectionChanged="configurations">
-                    <ComboBoxItem Content="Blue" />
-                    <ComboBoxItem Content="Black" />
-                    <ComboBoxItem Content="Green" />
-                    <ComboBoxItem Content="Red" />
-                    <ComboBoxItem Content="Black" />
-                </ComboBox>
+                    <ComboBox
+                        x:Name="cbi_col"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        SelectionChanged="configurations">
+                        <ComboBoxItem Content="Blue" />
+                        <ComboBoxItem Content="Black" />
+                        <ComboBoxItem Content="Green" />
+                        <ComboBoxItem Content="Red" />
+                        <ComboBoxItem Content="Black" />
+                    </ComboBox>
 
-            </Grid>
+                </Grid>
+
+            </GroupBox>
 
         </StackPanel>
 
@@ -130,37 +135,35 @@
             Margin="10"
             Orientation="Vertical">
 
-            <Label
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Content="Actual Image" />
+            <GroupBox Header="Actual Image">
+                <StackPanel>
 
-            <ui:CommandBarToolBar>
-                <ui:AppBarButton Icon="Camera" Label="Single Frame" />
-                <ui:AppBarButton Icon="Play" Label="Start" />
-                <ui:AppBarButton Icon="Pause" Label="Pause" />
-            </ui:CommandBarToolBar>
+                    <ui:CommandBarToolBar>
+                        <ui:AppBarButton Icon="Camera" Label="Single Frame" />
+                        <ui:AppBarButton Icon="Play" Label="Start" />
+                        <ui:AppBarButton Icon="Pause" Label="Pause" />
+                    </ui:CommandBarToolBar>
 
-            <Image
-                x:Name="CaptImage"
-                MinHeight="200"
-                Stretch="Uniform" />
+                    <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
 
-            <Button
-                x:Name="dP"
-                Margin="0,26"
-                Click="displayProperties"
-                Content="Display Properties" />
+                    <Button
+                        x:Name="dP"
+                        Margin="0,26"
+                        Click="displayProperties"
+                        Content="Display Properties" />
 
-            <StackPanel Orientation="Horizontal">
-                <Menu>
-                    <MenuItem Header="Load Framework Components">
-                        <MenuItem Click="Tlbx_Click" Header="Toolbox" />
-                        <MenuItem Click="CapPlgn_Click" Header="Capture Plugin" />
-                        <MenuItem Click="DispMan_Click" Header="Display Manager" />
-                    </MenuItem>
-                </Menu>
-            </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Menu>
+                            <MenuItem Header="Load Framework Components">
+                                <MenuItem Click="Tlbx_Click" Header="Toolbox" />
+                                <MenuItem Click="CapPlgn_Click" Header="Capture Plugin" />
+                                <MenuItem Click="DispMan_Click" Header="Display Manager" />
+                            </MenuItem>
+                        </Menu>
+                    </StackPanel>
+
+                </StackPanel>
+            </GroupBox>
         </StackPanel>
 
         <TabControl
