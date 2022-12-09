@@ -81,13 +81,26 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TanagerPlugin", "CapturePlu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{893F8111-A827-4191-B800-D2526D28BDDA}"
 	ProjectSection(SolutionItems) = preProject
+		TestDescription.schema.json = TestDescription.schema.json
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicrosoftDisplayCaptureTools", "Core\MicrosoftDisplayCaptureTools.vcxproj", "{D007AA97-B58A-47D6-9FD3-F1B24757F53B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework NuGet", "Framework NuGet", "{541BBBB3-36F8-40CE-8EB9-BE11932C053E}"
+	ProjectSection(SolutionItems) = preProject
 		MicrosoftDisplayCaptureTools.common.targets = MicrosoftDisplayCaptureTools.common.targets
 		MicrosoftDisplayCaptureTools.native.targets = MicrosoftDisplayCaptureTools.native.targets
 		MicrosoftDisplayCaptureTools.nuspec = MicrosoftDisplayCaptureTools.nuspec
 		MicrosoftDisplayCaptureTools.win10.targets = MicrosoftDisplayCaptureTools.win10.targets
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicrosoftDisplayCaptureTools", "Core\MicrosoftDisplayCaptureTools.vcxproj", "{D007AA97-B58A-47D6-9FD3-F1B24757F53B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CaptureCardViewer NuGet", "CaptureCardViewer NuGet", "{88F5A7C8-5119-45BF-A8B5-040203DDD094}"
+	ProjectSection(SolutionItems) = preProject
+		MicrosoftDisplayCaptureTools.FrameDebugger.common.targets = MicrosoftDisplayCaptureTools.FrameDebugger.common.targets
+		MicrosoftDisplayCaptureTools.FrameDebugger.native.targets = MicrosoftDisplayCaptureTools.FrameDebugger.native.targets
+		MicrosoftDisplayCaptureTools.FrameDebugger.nuspec = MicrosoftDisplayCaptureTools.FrameDebugger.nuspec
+		MicrosoftDisplayCaptureTools.FrameDebugger.win10.targets = MicrosoftDisplayCaptureTools.FrameDebugger.win10.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -251,6 +264,8 @@ Global
 		{71CD8C9F-245A-4B1C-AA52-1B90EBE97479} = {BD85639F-E3D8-4335-BFFD-214229CC303E}
 		{1295B443-F9A9-4EF2-AC03-648365CBA598} = {F76BF6A1-2F2C-4037-B47A-69440C789E35}
 		{C2EA574E-B9CE-47EF-909B-40425A7E31BC} = {BD85639F-E3D8-4335-BFFD-214229CC303E}
+		{541BBBB3-36F8-40CE-8EB9-BE11932C053E} = {893F8111-A827-4191-B800-D2526D28BDDA}
+		{88F5A7C8-5119-45BF-A8B5-040203DDD094} = {893F8111-A827-4191-B800-D2526D28BDDA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {586F889A-04F1-4A85-9B2D-7BEBEAAED003}
