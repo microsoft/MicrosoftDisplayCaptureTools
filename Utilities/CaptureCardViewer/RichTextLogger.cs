@@ -28,6 +28,15 @@ namespace CaptureCardViewer
 		FlowDocument document;
 		Dispatcher dispatcher;
 		Channel<LogEntry> entriesChannel;
+		ILoggerMode loggingMode = new RichTextLoggerMode();
+
+		private class RichTextLoggerMode : ILoggerMode
+		{
+			public bool HasErrored()
+			{
+				return true;
+			}
+		}
 
 		record LogEntry(string Message, Color Color, DateTime Time);
 
@@ -124,6 +133,11 @@ namespace CaptureCardViewer
 		public void LogWarning(string warning)
 		{
 			SubmitEntry(new LogEntry(warning, Colors.Yellow, DateTime.Now));
+		}
+
+		public ILoggerMode LogErrorsAsWarnings()
+		{
+			return loggingMode;
 		}
 	}
 }
