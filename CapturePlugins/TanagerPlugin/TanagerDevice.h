@@ -29,7 +29,7 @@ namespace winrt::TanagerPlugin::implementation
         winrt::Windows::Foundation::IAsyncAction UpdateFirmwareAsync() override;
         MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() override;
 
-        IteIt68051Plugin::VideoTiming getVideoTiming();
+        IteIt68051Plugin::VideoTiming GetVideoTiming();
 
     private:
         winrt::hstring m_deviceId;

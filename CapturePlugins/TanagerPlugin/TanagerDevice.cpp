@@ -90,7 +90,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 		return m_fpga.GetFirmwareVersionInfo();
 	}
 
-    IteIt68051Plugin::VideoTiming TanagerDevice::getVideoTiming()
+    IteIt68051Plugin::VideoTiming TanagerDevice::GetVideoTiming()
     {
         return hdmiChip.GetVideoTiming();
     }
@@ -194,7 +194,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         // put video capture logic back in reset
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
         // query resolution
-        auto timing = parent->getVideoTiming();
+        auto timing = parent->GetVideoTiming();
         // compute size of buffer
         uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
         // FX3 requires the read size to be a multiple of 1024 DWORDs
