@@ -4,18 +4,25 @@
 		"CapturePlugin": {
 			"Path": "CaptureCards\\TanagerPlugin.dll",
 			"Class": "TanagerPlugin.ControllerFactory",
+			"Version": "0.1",
 			"Settings": null
 		},
 		"DisplayEngine": {
 			"Path": "DisplayEngines\\BasicDisplayControl.dll",
 			"Class": "BasicDisplayControl.DisplayEngineFactory",
+			"Version": "0.1",
 			"Settings": null
 		},
 		"ConfigurationToolboxes": [
 			{
 				"Path": "Toolboxes\\BasicDisplayConfiguration.dll",
 				"Class": "BasicDisplayConfiguration.ToolboxFactory",
-				"Settings": null
+				"Version":  "0.1",
+				"Settings": [
+					{ "Resolution": "1920x1080" },
+					{ "RefreshRate": "60hz" },
+					{ "Pattern": "green" }
+				]
 			}
 		]
 	}

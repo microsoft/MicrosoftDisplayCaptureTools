@@ -1,44 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Microsoft.Win32;
-using MicrosoftDisplayCaptureTools.Framework;
-using Windows.ApplicationModel.VoiceCommands;
-using Windows.Foundation;
-using MicrosoftDisplayCaptureTools;
-using Windows.Devices.Display;
-using Windows.Devices.Display.Core;
-using Windows.Graphics.Imaging;
-using Windows.Data.Json;
-using Windows.Media.Capture;
 using System.Threading;
-using System.Drawing;
-using System.IO;
-using WinRT;
-using ABI.Windows.Foundation;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.CompilerServices;
-using Windows.Storage.Streams;
-using MicrosoftDisplayCaptureTools.Display;
-using Windows.UI.Core;
-using Windows.Graphics.DirectX;
-using System.Net.Http.Headers;
-using MicrosoftDisplayCaptureTools.CaptureCard;
-using System.Diagnostics;
-using System.Security.Cryptography;
-using System.ComponentModel;
+using Windows.Foundation;
+using Windows.Graphics.Imaging;
+using WinRT;
+using MicrosoftDisplayCaptureTools.Framework;
 //using Microsoft.UI.Xaml.Media.Imaging;
 //using Microsoft.UI.Xaml.Media;
 
@@ -61,7 +33,7 @@ namespace CaptureCardViewer
 	{
 		public string? setTool;
 		public string? currentTool;
-		Core testFramework = new Core();
+		Core? testFramework;
 		bool userInput = false;
 
 		public MainWindow()
@@ -73,17 +45,17 @@ namespace CaptureCardViewer
 		//Loading the plugin framework
 		private async void loadFramework(object sender, RoutedEventArgs e)
 		{
+			testFramework = new Core();
+
 			var dialog = new OpenFileDialog(); //file picker
 			dialog.Title = "Load a Capture Plugin";
 			if (dialog.ShowDialog() == true)
 			{
 				try
 				{
-					
-					var configFile = System.IO.Path.GetFileName(dialog.FileName);
 					await Task.Run(() =>
 					{
-						testFramework.LoadConfigFile(configFile);
+						testFramework.LoadConfigFile(dialog.FileName);
 					});
 					MessageBox.Show("Capture card plugin done loading");
 				}
@@ -121,7 +93,7 @@ namespace CaptureCardViewer
 		}
 
 		// Apply tools to the framework's display engine
-		private void ApplyToolsToEngine(IDisplayOutput displayOutput)
+		private void ApplyToolsToEngine(MicrosoftDisplayCaptureTools.Display.IDisplayOutput displayOutput)
 		{
 			foreach (var toolbox in this.testFramework.GetConfigurationToolboxes())
 			{ 

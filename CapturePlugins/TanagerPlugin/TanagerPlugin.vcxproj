@@ -332,7 +332,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <Midl Include="TanagerPlugin.idl" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\Core.vcxproj">
+    <ProjectReference Include="..\..\Core\MicrosoftDisplayCaptureTools.vcxproj">
       <Project>{d007aa97-b58a-47d6-9fd3-f1b24757f53b}</Project>
     </ProjectReference>
   </ItemGroup>

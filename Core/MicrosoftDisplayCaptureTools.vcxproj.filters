@@ -24,7 +24,7 @@
     <ClInclude Include="EDIDDescriptor.h" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="Core.idl" />
+    <Midl Include="MicrosoftDisplayCaptureTools.idl" />
     <Midl Include="..\Shared\IDL\Framework.idl">
       <Filter>SharedIDLs</Filter>
     </Midl>
@@ -39,7 +39,7 @@
     </Midl>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Core.def" />
+    <None Include="MicrosoftDisplayCaptureTools.def" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
