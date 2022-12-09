@@ -52,9 +52,13 @@ namespace winrt::TanagerPlugin::implementation
     struct TanagerDisplayInput : implements<TanagerDisplayInput, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
     {
     public:
-        TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port);
+        TanagerDisplayInput(
+            std::weak_ptr<TanagerDevice> parent,
+            TanagerDisplayInputPort port,
+            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+
         hstring Name();
-        void SetDescriptor(MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor);
+        void SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor);
         MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger GetCaptureTrigger();
         MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities GetCapabilities();
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame();
@@ -64,6 +68,7 @@ namespace winrt::TanagerPlugin::implementation
     private:
         std::weak_ptr<TanagerDevice> m_parent;
         TanagerDisplayInputPort m_port;
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct CaptureTrigger : implements<CaptureTrigger, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger>
@@ -73,6 +78,8 @@ namespace winrt::TanagerPlugin::implementation
             winrt::MicrosoftDisplayCaptureTools::CaptureCard::CaptureTriggerType::Immediate};
 
         uint32_t m_time{0};
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
 
     public:
         CaptureTrigger() = default;
@@ -98,15 +105,21 @@ namespace winrt::TanagerPlugin::implementation
 
     struct TanagerDisplayCapture : implements<TanagerDisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
-        TanagerDisplayCapture(std::vector<byte> pixels, uint16_t horizontalResolution, uint16_t verticalResolution);
+        TanagerDisplayCapture(
+            std::vector<byte> pixels,
+            uint16_t horizontalResolution,
+            uint16_t verticalResolution,
+            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        void CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
 
     private:
         winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
         uint16_t m_horizontalResolution;
         uint16_t m_verticalResolution;
+
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct TanagerCaptureCapabilities : implements<TanagerCaptureCapabilities, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities>

@@ -75,7 +75,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		throw winrt::hresult_invalid_argument();
 	}
 
-	void ResolutionTool::Apply(IDisplayEngine reference)
+	void ResolutionTool::Apply(IDisplayOutput reference)
 	{
 		auto displayProperties = reference.GetProperties();
 

@@ -3,10 +3,6 @@
 #include "Controller.g.cpp"
 #include "ControllerFactory.g.cpp"
 
-#include "winrt\MicrosoftDisplayCaptureTools.Display.h"
-
-#include <format>
-
 namespace winrt
 {
     using namespace Windows::Foundation;
@@ -54,11 +50,23 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     com_array<IDisplayInput> Controller::EnumerateDisplayInputs()
     {
-        m_displayInput = *make_self<DisplayInput>(m_deviceId, m_logger);
+        // Only try and get the input specified by config file
+        if (m_usbIdFromConfigFile != L"")
+        {
+            m_displayInputs.push_back(*make_self<DisplayInput>(m_usbIdFromConfigFile, m_logger));
+        }
+        else // Attempt to get all possible inputs
+        {
+            hstring cameraId;
+            auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
+            for (auto&& captureDevice : captureDevices)
+            {
+                m_displayInputs.push_back(*make_self<DisplayInput>(captureDevice.Id(), m_logger));
+            }
+        }
 
-        std::vector<IDisplayInput> inputs;
-        inputs.push_back(m_displayInput);
-        return com_array<IDisplayInput>(inputs);
+
+        return com_array<IDisplayInput>(m_displayInputs);
     }
 
     void Controller::SetConfigData(winrt::IJsonValue data)
@@ -66,15 +74,22 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // The JSON object returned here is the "settings" sub-object for this plugin. It's definition is capture card plugin-specific.
         if (!data || data.ValueType() == winrt::JsonValueType::Null)
         {
-            // We don't have anything that can identify the capture device
-            // TODO: log this case - potentially we can fall back to using the first camera device?
-            throw winrt::hresult_invalid_argument();
+            return;
         }
 
-        auto jsonObject = data.GetObjectW();
-        m_deviceId = jsonObject.GetNamedString(L"UsbId");
+        try
+        {
+            auto jsonObject = data.GetObjectW();
+            m_usbIdFromConfigFile = jsonObject.GetNamedString(L"UsbId");
 
-        // TODO: log that the device ID has been read
+            // Make sure we only get the capture device specified if going this route
+            m_displayInputs.clear();
+
+        }
+        catch (winrt::hresult_error const& ex)
+        {
+            m_logger.LogError(Name() + L" was provided configuration data, but was unable to parse it. Error: " + ex.message());
+        }
     }
 
     bool CaptureCapabilities::CanReturnRawFramesToHost()
@@ -142,23 +157,13 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
         for (auto&& captureDevice : captureDevices)
         {
-            std::wstring_view name = captureDevice.Id();
-            if (name.find(m_deviceId) != std::wstring::npos)
+            if (deviceId == captureDevice.Id())
             {
                 // Capture Camera Found!
-                cameraId = captureDevice.Id();
+                m_deviceFriendlyName = captureDevice.Name();
                 break;
             }
         }
-
-        MediaCaptureInitializationSettings mediaCaptureInitSettings;
-        mediaCaptureInitSettings.VideoDeviceId(cameraId);
-        mediaCaptureInitSettings.StreamingCaptureMode(StreamingCaptureMode::Video);
-
-        m_mediaCapture = MediaCapture();
-
-        // Initialize the capture object and block until complete
-        m_mediaCapture.InitializeAsync(mediaCaptureInitSettings).get();
 
         m_captureCapabilities = make_self<CaptureCapabilities>();
         m_captureTrigger = make_self<CaptureTrigger>();
@@ -166,12 +171,19 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     hstring DisplayInput::Name()
     {
-        hstring ret = L"Input 1";
-        return ret;
+        return m_deviceFriendlyName;
     }
 
     void DisplayInput::FinalizeDisplayState()
     {
+        MediaCaptureInitializationSettings mediaCaptureInitSettings;
+        mediaCaptureInitSettings.VideoDeviceId(m_deviceId);
+        mediaCaptureInitSettings.StreamingCaptureMode(StreamingCaptureMode::Video);
+
+        m_mediaCapture = MediaCapture();
+
+        // Initialize the capture object and block until complete
+        m_mediaCapture.InitializeAsync(mediaCaptureInitSettings).get();
     }
 
     ICaptureCapabilities DisplayInput::GetCapabilities()
@@ -186,10 +198,19 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     IDisplayCapture DisplayInput::CaptureFrame()
     {
-        auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
-        auto photo = cap.get().CaptureAsync().get();
+        try
+        {
+            auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
+            auto photo = cap.get().CaptureAsync().get();
+            m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger);
+        }
+        catch (...)
+        {
+            m_logger.LogError(L"Unable to get pixels for input: " + Name());
+            m_capture = nullptr;
+            return nullptr;
+        }
 
-        m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger);
         return *m_capture;
     }
 
@@ -199,7 +220,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // Mirror the pixel data over to this object's storage. 
         if (!frame.CanRead())
         {
-            m_logger.LogError(L"Cannot read pixel data fram frame.");
+            m_logger.LogError(L"Cannot read pixel data from frame.");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -207,29 +228,44 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
     }
 
-    void DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         
+        auto capturedR = captureBuffer.data()[0];
+        auto capturedG = captureBuffer.data()[1];
+        auto capturedB = captureBuffer.data()[2];
+
+        // Convert limited range to full range
+        capturedR = capturedR < 16 ? 0 : capturedR > 235 ? 235 : (uint8_t)((float)(capturedR - 16) * 1.164f);
+        capturedG = capturedG < 16 ? 0 : capturedG > 235 ? 235 : (uint8_t)((float)(capturedG - 16) * 1.164f);
+        capturedB = capturedB < 16 ? 0 : capturedB > 235 ? 235 : (uint8_t)((float)(capturedB - 16) * 1.164f);
+
+        m_logger.LogNote(std::format(
+            L"Captured pixel ({},{},{}) - Expected ({},{},{})",
+            capturedR,
+            capturedG,
+            capturedB,
+            predictBuffer.data()[0],
+            predictBuffer.data()[1],
+            predictBuffer.data()[2]));
+
         //
         // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
         // plugin only RGB8 is supported.
-        // 
-        // TODO: this needs to handle multiple formats 
-        // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
-        // TODO: allow saving the diff
         //
-        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[0] - (float)predictBuffer.data()[0])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[1] - (float)predictBuffer.data()[1])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)captureBuffer.data()[2] - (float)predictBuffer.data()[2])))
+        // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
+        //
+        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedR - (float)predictBuffer.data()[0])) ||
+            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedG - (float)predictBuffer.data()[1])) ||
+            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedB - (float)predictBuffer.data()[2])))
         {
-            m_logger.LogError(std::format(L"Captured pixel ({},{},{}) - Expected ({},{},{})",
-                captureBuffer.data()[0], captureBuffer.data()[1], captureBuffer.data()[2],
-                predictBuffer.data()[0], predictBuffer.data()[1], predictBuffer.data()[2]));
-
-            throw winrt::hresult_error();
+            m_logger.LogError(L"Image comparison failed.");
+            return false;
         }
+
+        return true;
     }
 
     IMemoryBufferReference DisplayCapture::GetRawPixelData()

@@ -20,7 +20,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		winrt::hstring GetDefaultConfiguration();
         winrt::hstring GetConfiguration();
 		void SetConfiguration(winrt::hstring configuration);
-		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEngine reference);
+		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput reference);
 
 	private:
 		PatternToolConfigurations m_currentConfig;

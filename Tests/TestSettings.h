@@ -6,3 +6,5 @@ namespace MicrosoftDisplayCaptureTools::Tests {
 } // namespace MicrosoftDisplayCaptureTools::Tests
 
 extern winrt::MicrosoftDisplayCaptureTools::Framework::Core g_framework;
+extern winrt::MicrosoftDisplayCaptureTools::Framework::ILogger g_logger;
+extern winrt::Windows::Foundation::Collections::IVector<winrt::MicrosoftDisplayCaptureTools::Framework::ISourceToSinkMapping> g_displayMap;

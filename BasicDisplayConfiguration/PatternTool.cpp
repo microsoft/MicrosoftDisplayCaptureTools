@@ -78,7 +78,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		throw winrt::hresult_invalid_argument();
 	}
 
-	void PatternTool::Apply(IDisplayEngine reference)
+	void PatternTool::Apply(IDisplayOutput reference)
 	{
 		auto displayProperties = reference.GetProperties();
 		auto planeProperties = displayProperties.GetPlaneProperties()[0];

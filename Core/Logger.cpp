@@ -1,92 +1,89 @@
 #include "pch.h"
 #include "Logger.h"
+#include <chrono>
 
-#include <Wex.Common.h>
-#include <WexLogTrace.h>
-#include <Wex.Logger.h>
-#include <WexTypes.h>
-#include <LogController.h>
-#include <Log.h>
-#include <iostream>
+#define TIMESTAMPLENGTH
 
-using namespace WEX::Logging;
-using namespace WEX::Common;
+using std::chrono::system_clock;
 
-namespace winrt::MicrosoftDisplayCaptureTools::Framework
+namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities
 {
-    // callback function called if there is an issue with the logging backend.
-    static void __stdcall LoggingErrorCallback(const unsigned short* pszMessage, HRESULT hr)
+    // Default constructor just outputs to standard out.
+    Logger::Logger()
     {
-        std::cout << "The logging system ran into an error: " << pszMessage << std::endl;
-        std::cout << "Error Code: " << hr << std::endl;
+        m_output.reset(&std::wcout);
     }
 
-    WEXLogger::WEXLogger() : m_selfInitialized(!LogController::IsInitialized())
+    // Optionally provide an output stream to use instead of standard
+    Logger::Logger(std::wostream outStream)
     {
-        // Do we need to initialize the process log controller
-        if (m_selfInitialized)
+        m_output.reset(&outStream);
+    }
+
+    Logger::~Logger()
+    {
+        if (m_fb.is_open())
         {
-            // Attempt to create a log file
-            BOOL success = 0;
-            DWORD error = 0;
-            wchar_t procName[MAX_PATH] = L"";
-            DWORD procNameLength = MAX_PATH;
-            auto proc = GetCurrentProcess();
-            success = QueryFullProcessImageName(proc, 0, procName, &procNameLength);
-
-            if (success != 0)
-            {
-                auto path = std::filesystem::path(procName);
-                auto envVar = path.stem() + winrt::hstring(L"_CMD");
-                success = SetEnvironmentVariable(envVar.c_str(), L"/enablewttlogging");
-            }
-
-            if (success != 0)
-            {
-                error = GetLastError();
-            }
-
-            LogController::InitializeLogging(LoggingErrorCallback);
-
-            // If we are not able to create a log file for the test run, log a warning before we start.
-            if (success == 0)
-            {
-                Log::Warning(String().Format(L"Unable to create log file. Error code: %d", error));
-            }
+            m_fb.close();
         }
     }
 
-    WEXLogger::~WEXLogger()
+    void Logger::LogNote(hstring const& note)
     {
-        // Do we need to uninitialize the process log controller
-        if (m_selfInitialized)
+        auto lock = std::scoped_lock(m_mutex);
+        *m_output << GetTimeStamp().c_str() << L"Note: " << note.c_str() << std::endl;
+    }
+
+    void Logger::LogWarning(hstring const& warning)
+    {
+        auto lock = std::scoped_lock(m_mutex);
+        *m_output << GetTimeStamp() << L"Warning: " << warning.c_str() << std::endl;
+    }
+
+    void Logger::LogError(hstring const& error)
+    {
+        auto lock = std::scoped_lock(m_mutex);
+        if (m_logErrorsAsWarnings)
         {
-            LogController::FinalizeLogging();
+            m_loggedErrorsAsWarnings++;
+            LogWarning(error);
+        }
+        else
+        {
+            *m_output << GetTimeStamp() << L"Error: " << error.c_str() << std::endl;
         }
     }
 
-    void WEXLogger::LogNote(hstring const& note)
+    void Logger::LogAssert(hstring const& assert)
     {
-        Log::Comment(note.c_str());
+        
+        auto lock = std::scoped_lock(m_mutex);
+        *m_output << GetTimeStamp() << L"Assert: " << assert.c_str() << std::endl;
     }
 
-    void WEXLogger::LogWarning(hstring const& warning)
+    void Logger::LogConfig(hstring const& config)
     {
-        Log::Warning(warning.c_str());
+        auto lock = std::scoped_lock(m_mutex);
+        *m_output << GetTimeStamp() << L"Config: " << config.c_str() << std::endl;
     }
 
-    void WEXLogger::LogError(hstring const& error)
+    winrt::MicrosoftDisplayCaptureTools::Framework::ILoggerMode Logger::LogErrorsAsWarnings()
     {
-        Log::Error(error.c_str());
+        return winrt::make<LoggerAltMode>(m_logErrorsAsWarnings, m_loggedErrorsAsWarnings);
     }
-
-    void WEXLogger::LogAssert(hstring const& assert)
+    
+    // Retrieve the current time to be printed at the start of log entries.
+    static std::wstring GetTimeStamp()
     {
-        Log::Assert(assert.c_str());
-    }
+        auto time = system_clock::to_time_t(system_clock::now());
+        tm timeBuf;
+        char timeStampBuf[23] = {0};
 
-    void WEXLogger::LogConfig(hstring const& config)
-    {
-        Log::Comment(config.c_str());
+        winrt::check_win32(localtime_s(&timeBuf, &time));
+
+        std::strftime(timeStampBuf, sizeof(timeStampBuf), "[%Y:%m:%d::%H:%M:%S] ", &timeBuf);
+
+        auto str = std::string(timeStampBuf);
+        return std::wstring(str.begin(), str.end());
     }
 }
