@@ -9,6 +9,7 @@ namespace winrt
     using namespace winrt::Windows::Devices::Display::Core;
     using namespace winrt::Windows::Storage;
     using namespace winrt::Windows::Storage::Streams;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 }
 using namespace IteIt68051Plugin;
 
@@ -16,7 +17,7 @@ namespace winrt::TanagerPlugin::implementation
 {
 const unsigned char it68051i2cAddress = 0x48;
 
-TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
+TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger const& logger) :
     m_logger(logger),
     m_usbDevice(nullptr),
     m_deviceId(deviceId),
@@ -50,14 +51,14 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 	{
 		return std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
 		{
-			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::hdmi),
-			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::displayPort),
+			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::hdmi, m_logger),
+			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::displayPort, m_logger),
 		};
 	}
 
 	void TanagerDevice::TriggerHdmiCapture()
 	{
-		throw winrt::hresult_not_implemented();
+        m_logger.LogAssert(L"TriggerHdmiCapture not currently implemented.");
 	}
 
 	void TanagerDevice::FpgaWrite(unsigned short address, std::vector<byte> data)
@@ -90,7 +91,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 		return m_fpga.GetFirmwareVersionInfo();
 	}
 
-    IteIt68051Plugin::VideoTiming TanagerDevice::getVideoTiming()
+    IteIt68051Plugin::VideoTiming TanagerDevice::GetVideoTiming()
     {
         return hdmiChip.GetVideoTiming();
     }
@@ -121,11 +122,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         }
     }
 
-	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port)
-		: m_parent(parent),
-		  m_port(port)
-	{
-	}
+	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port, winrt::ILogger const& logger) :
+        m_parent(parent), m_port(port), m_logger(logger)
+    {
+    }
 
 	hstring TanagerDisplayInput::Name()
 	{
@@ -135,25 +135,25 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 			return L"HDMI";
 		case TanagerDisplayInputPort::displayPort:
 			return L"DisplayPort";
+        default: 
+            m_logger.LogAssert(L"Invalid port chosen.");
+            return L"";
 		}
-
-        throw winrt::hresult_invalid_argument();
     }
 
-    void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Display::IMonitorDescriptor descriptor)
+    void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
     {
         switch (m_port)
         {
         case TanagerDisplayInputPort::hdmi:
         {
-            if (descriptor.GetType() != MicrosoftDisplayCaptureTools::Display::MonitorDescriptorType::EDID)
+            if (descriptor.Type() != MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType::EDID)
             {
-                throw winrt::hresult_invalid_argument();
+                m_logger.LogAssert(L"Only EDID descriptors are currently supported.");
             }
 
-            auto edidMemoryReference = descriptor.GetData();
-            auto edidBuffer = edidMemoryReference.data();
-            std::vector<byte> edid(edidBuffer, edidBuffer + edidMemoryReference.Capacity());
+            auto edidDataView = descriptor.Data();
+            std::vector<byte> edid(edidDataView.begin(), edidDataView.end());
 
             SetEdid(edid);
             break;
@@ -161,7 +161,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         case TanagerDisplayInputPort::displayPort:
         default:
         {
-            throw winrt::hresult_not_implemented();
+            m_logger.LogAssert(L"DisplayPort input does not currently support setting descriptors.");
         }
         }
     }
@@ -182,7 +182,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         auto parent = m_parent.lock();
         if (!parent)
         {
-            throw winrt::hresult_error();
+            m_logger.LogAssert(L"Cannot obtain reference to Tanager device.");
         }
 
         // Capture frame in DRAM
@@ -194,7 +194,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         // put video capture logic back in reset
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
         // query resolution
-        auto timing = parent->getVideoTiming();
+        auto timing = parent->GetVideoTiming();
         // compute size of buffer
         uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
         // FX3 requires the read size to be a multiple of 1024 DWORDs
@@ -221,26 +221,18 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         // turn off read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
-        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive);
+        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive, m_logger);
     }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
     {
-        SetEdid({0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x10, 0xac, 0x84, 0x41, 0x4c, 0x34, 0x45, 0x42, 0x1e, 0x1e, 0x01,
-                 0x04, 0xa5, 0x3c, 0x22, 0x78, 0x3a, 0x48, 0x15, 0xa7, 0x56, 0x52, 0x9c, 0x27, 0x0f, 0x50, 0x54, 0xa5, 0x4b, 0x00,
-                 0x71, 0x4f, 0x81, 0x80, 0xa9, 0xc0, 0xd1, 0xc0, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x3a, 0x80,
-                 0x18, 0x71, 0x38, 0x2d, 0x40, 0x58, 0x2c, 0x45, 0x00, 0x56, 0x50, 0x21, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0xff,
-                 0x00, 0x36, 0x56, 0x54, 0x48, 0x5a, 0x31, 0x33, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc, 0x00,
-                 0x44, 0x45, 0x4c, 0x4c, 0x20, 0x50, 0x32, 0x37, 0x31, 0x39, 0x48, 0x0a, 0x20, 0x00, 0x00, 0x00, 0xfd, 0x00, 0x38,
-                 0x4c, 0x1e, 0x53, 0x11, 0x01, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0xec});
-
         if (auto parent = m_parent.lock())
         {
             parent->FpgaWrite(0x4, std::vector<byte>({0x34})); // HPD high
         }
         else
         {
-            throw winrt::hresult_error();
+            m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
 
         Sleep(5000);
@@ -257,7 +249,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
                 break;
             default:
             case TanagerDisplayInputPort::displayPort:
-                throw winrt::hresult_error();
+                m_logger.LogAssert(L"DisplayPort input of Tanager does not currently support setting EDIDs.");
+                return;
         }
 
         if (auto parent = m_parent.lock())
@@ -266,7 +259,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         }
         else
         {
-            throw winrt::hresult_error();
+            m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
     }
 
@@ -288,7 +281,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 
     bool TanagerCaptureCapabilities::CanHotPlug()
     {
-        return false;
+        return true;
     }
 
     bool TanagerCaptureCapabilities::CanConfigureEDID()
@@ -321,10 +314,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 		}
     }
 
-    TanagerDisplayCapture::TanagerDisplayCapture(std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution) :
-        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution)
+    TanagerDisplayCapture::TanagerDisplayCapture(
+        std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution, winrt::ILogger const& logger) :
+        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution), m_logger(logger)
     {
-        if (rawCaptureData.size() == 0) 
+        if (rawCaptureData.size() == 0)
         {
             throw hresult_invalid_argument();
         }
@@ -370,7 +364,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
 
-        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger 
+        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger
         if (ref.Capacity() < (pixels.size() - 4096))
         {
             throw hresult_invalid_argument();
@@ -379,10 +373,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
         RtlCopyMemory(ref.data(), pixels.data(), ref.Capacity());
     }
 
-    void TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
+        auto predictedBitmap = prediction.GetBitmap();
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
-        auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+        auto predictBuffer = predictedBitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
 
         //
         // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
@@ -393,9 +388,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
 
         if (captureBuffer.Capacity() != predictBuffer.Capacity())
         {
-            printf("Capture Sizes don't match!  Captured=%d, Predicted=%d\n\n",
-                captureBuffer.Capacity(),
-                predictBuffer.Capacity());
+            m_logger.LogError(
+                winrt::hstring(L"Capture Sizes don't match!  Captured=") + std::to_wstring(captureBuffer.Capacity()) +
+                L", Predicted=" + std::to_wstring(predictBuffer.Capacity()));
         }
         else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), captureBuffer.Capacity()))
         {
@@ -440,7 +435,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
                 auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
                 auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
-                encoder.SetSoftwareBitmap(prediction.GetBitmap());
+                encoder.SetSoftwareBitmap(predictedBitmap);
 
                 encoder.FlushAsync().get();
             }
@@ -448,10 +443,15 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::MicrosoftDis
             float diff = (float)differenceCount / (float)pixelCount;
             if (diff > 0.10f)
             {
-                printf("\n\tMatch = %2.2f\n\n", diff);
-                throw winrt::hresult_error();
+                std::wstring msg;
+                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
+                m_logger.LogError(msg);
+
+                return false;
             }
         }
+
+        return true;
     }
 
     winrt::Windows::Foundation::IMemoryBufferReference TanagerDisplayCapture::GetRawPixelData()

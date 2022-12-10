@@ -75,7 +75,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		throw winrt::hresult_invalid_argument();
 	}
 
-	void RefreshRateTool::Apply(IDisplayEngine reference)
+	void RefreshRateTool::Apply(IDisplayOutput reference)
 	{
 		auto displayProperties = reference.GetProperties();
 

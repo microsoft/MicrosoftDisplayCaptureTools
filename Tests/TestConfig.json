@@ -1,30 +1,36 @@
 {
-	"Version": "0.1",
+	"Version": 0.1,
 	"Components": {
 		"CapturePlugin": {
-			"Path": "TanagerPlugin\\TanagerPlugin.dll",
+			"Path": "CaptureCards\\TanagerPlugin.dll",
 			"Class": "TanagerPlugin.ControllerFactory",
+			"Version": 0.1,
 			"Settings": null
 		},
 		"DisplayEngine": {
-			"Path": "BasicDisplayControl\\BasicDisplayControl.dll",
-			"Class": "DisplayControl.DisplayEngineFactory",
+			"Path": "DisplayEngines\\BasicDisplayControl.dll",
+			"Class": "BasicDisplayControl.DisplayEngineFactory",
+			"Version": 0.1,
 			"Settings": null
 		},
 		"ConfigurationToolboxes": [
 			{
-				"Path": "BasicDisplayConfiguration\\BasicDisplayConfiguration.dll",
+				"Path": "Toolboxes\\BasicDisplayConfiguration.dll",
 				"Class": "BasicDisplayConfiguration.ToolboxFactory",
+				"Version": 0.1,
 				"Settings": null
 			}
 		]
 	},
-	"TestSystem": {
-		"DisplayInputMapping": [
-			{
-				"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
-				"PluginInputName": "HDMI"
-			}
-		]
+	"TestCase": {
+		"Tools": [
+			{ "Resolution": "1920x1080" },
+			{ "RefreshRate": "60hz" },
+			{ "Pattern": "green" }
+		],
+		"ComparisonTolerance": {
+			"PerPixel": true,
+			"PercentageError": 2.5
+		}
 	}
 }

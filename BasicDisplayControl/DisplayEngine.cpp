@@ -99,7 +99,7 @@ namespace winrt
     };
 }
 
-namespace winrt::DisplayControl::implementation
+namespace winrt::BasicDisplayControl::implementation
 {
     winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
     {
@@ -120,18 +120,48 @@ namespace winrt::DisplayControl::implementation
 
     DisplayEngine::~DisplayEngine()
     {
-
     }
 
-    hstring DisplayEngine::Name()
+    void DisplayEngine::SetConfigData(IJsonValue data)
     {
-        return L"BasicDisplayControl";
     }
 
-    void DisplayEngine::InitializeForDisplayTarget(winrt::DisplayTarget const& target)
+    IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
     {
-        // Reset the currently tracked target to the supplied one
-        m_displayTarget = target;
+        auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+
+        return output;
+    }
+
+    IDisplayOutput DisplayEngine::InitializeOutput(winrt::hstring target)
+    {
+        // Translate the target string to a DisplayTarget and call 'InitializeForDisplayTarget'
+        winrt::DisplayTarget chosenTarget{ nullptr };
+        auto allDisplayTargets = m_displayManager.GetCurrentTargets();
+        for (auto&& displayTarget : allDisplayTargets)
+        {
+            if (displayTarget.StableMonitorId() == target)
+            {
+                chosenTarget = displayTarget;
+                break;
+            }
+        }
+
+        if (!chosenTarget)
+        {
+            // The chosen target was not found - was the config file generated for this machine?
+            m_logger.LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
+            throw winrt::hresult_invalid_argument();
+        }
+
+        return InitializeOutput(chosenTarget);
+    }
+
+    // DisplayOutput
+    DisplayOutput::DisplayOutput(ILogger const& logger, DisplayTarget const& target, DisplayManager const& manager) :
+        m_logger(logger), m_displayTarget(target), m_displayManager(manager)
+    {
+        // Refresh the display target
         RefreshTarget();
 
         if (!target)
@@ -141,11 +171,12 @@ namespace winrt::DisplayControl::implementation
             throw winrt::hresult_invalid_argument();
         }
 
-        // Remove the targeted display from composition.
-        m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
-            MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()),
-            m_displayTarget.AdapterRelativeId(),
-            m_logger);
+        // If needed, remove the targeted display from composition.
+        if (m_displayTarget.UsageKind() != winrt::DisplayMonitorUsageKind::SpecialPurpose)
+        {
+            m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
+                MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
+        }
 
         ConnectTarget();
 
@@ -167,65 +198,44 @@ namespace winrt::DisplayControl::implementation
         m_propertySet->m_planeProperties[0]->Active(true);
     }
 
-    void DisplayEngine::InitializeForStableMonitorId(winrt::hstring target)
+    DisplayOutput::~DisplayOutput()
     {
-        // Translate the target string to a DisplayTarget and call 'InitializeForDisplayTarget'
-        winrt::DisplayTarget chosenTarget{ nullptr };
-        auto allDisplayTargets = m_displayManager.GetCurrentTargets();
-        for (auto&& displayTarget : allDisplayTargets)
+        if (m_displayTarget && m_displayState)
         {
-            if (displayTarget.StableMonitorId() == target)
-            {
-                chosenTarget = displayTarget;
-                break;
-            }
+            m_displayState.DisconnectTarget(m_displayTarget);
         }
-
-        if (!chosenTarget)
-        {
-            // The chosen target was not found - was the config file generated for this machine?
-            m_logger.LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
-            throw winrt::hresult_invalid_argument();
-        }
-
-        InitializeForDisplayTarget(chosenTarget);
     }
 
-    winrt::DisplayTarget DisplayEngine::GetTarget()
+    winrt::DisplayTarget DisplayOutput::Target()
     {
         return m_displayTarget;
     }
 
-    winrt::IDisplayEngineCapabilities DisplayEngine::GetCapabilities()
+    winrt::IDisplayEngineCapabilities DisplayOutput::GetCapabilities()
     {
         return *m_capabilities;
     }
 
-    winrt::IDisplayEnginePropertySet DisplayEngine::GetProperties()
+    winrt::IDisplayEnginePropertySet DisplayOutput::GetProperties()
     {
         return *m_propertySet;
     }
 
-    winrt::IDisplayEnginePrediction DisplayEngine::GetPrediction()
+    winrt::IDisplayEnginePrediction DisplayOutput::GetPrediction()
     {
         auto prediction = make_self<DisplayEnginePrediction>(m_propertySet.get(), m_logger);
 
         return *prediction;
     }
 
-    void DisplayEngine::SetConfigData(IJsonValue data)
-    {
-
-    }
-
-    winrt::IClosable DisplayEngine::StartRender()
+    winrt::IClosable DisplayOutput::StartRender()
     {
         // Re-connect the target
         ConnectTarget();
 
         auto renderer = make_self<Renderer>(m_logger);
 
-        renderer->displayDevice = m_displayDevice;
+        renderer->displayDevice  = m_displayDevice;
         renderer->displayManager = m_displayManager;
         renderer->displayTarget  = m_displayTarget;
         renderer->displayState   = m_displayState;
@@ -235,7 +245,7 @@ namespace winrt::DisplayControl::implementation
         return renderer.as<IClosable>();
     }
 
-    void DisplayEngine::RefreshTarget()
+    void DisplayOutput::RefreshTarget()
     {
         if (m_displayManager && m_displayTarget && m_displayTarget.IsStale())
         {
@@ -255,7 +265,7 @@ namespace winrt::DisplayControl::implementation
         }
     }
 
-    void DisplayEngine::ConnectTarget()
+    void DisplayOutput::ConnectTarget()
     {
         // Disconnect if already connected
         if (m_displayPath && m_displayState && m_displayTarget)
@@ -293,7 +303,7 @@ namespace winrt::DisplayControl::implementation
         m_displayDevice = m_displayManager.CreateDisplayDevice(m_displayTarget.Adapter());
     }
 
-    void DisplayEngine::PopulateCapabilities()
+    void DisplayOutput::PopulateCapabilities()
     {
         // Create the capabilities objects for the base plane (the only plane supported by this implementation)
         auto basePlaneCapabilities = winrt::make_self<DisplayEnginePlaneCapabilities>(m_logger);
@@ -577,20 +587,29 @@ namespace winrt::DisplayControl::implementation
                 
                 if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
                     mode.TargetResolution().Height == m_properties->Resolution().Height &&
-                    mode.TargetResolution().Width == m_properties->Resolution().Width)
+                    mode.TargetResolution().Width == m_properties->Resolution().Width &&
+                    mode.SourceResolution().Height == m_properties->Resolution().Height &&
+                    mode.SourceResolution().Width == m_properties->Resolution().Width)
                 {
 
                     if (delta < sc_refreshRateEpsilon)
                     {
+                        std::wstringstream buf{};
+                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height <<
+                                   L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
+
                         // we have a mode matching the requirements.
+                        m_logger.LogNote(buf.str());
+
                         m_properties->ActiveMode(mode);
                         return;
                     }
                 }
             }
             
-            // No mode fit the set tools
-            m_logger.LogError(L"No display mode fit the selected options");
+            // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
+            // to auto-configure. So log a warning instead of an error to assist the user.
+            m_logger.LogWarning(L"No display mode fit the selected options");
             throw winrt::hresult_invalid_argument();
         }
     }

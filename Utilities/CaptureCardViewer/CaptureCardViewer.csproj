@@ -5,6 +5,7 @@
 		<TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
+		<PublishReadyToRun>true</PublishReadyToRun>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>AnyCPU;x64;ARM64</Platforms>
     <StartupObject>CaptureCardViewer.App</StartupObject>
@@ -14,6 +15,9 @@
 	<PropertyGroup>
 		<CsWinRTIncludes>MicrosoftDisplayCaptureTools</CsWinRTIncludes>
 		<CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<Description>A UI wrapping the capabilities of the Microsoft Display Capture Tools project.</Description>
+		<Title>Microsoft Display Capture Tools Utilities</Title>
 	</PropertyGroup>
   
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -41,9 +45,8 @@
 		<PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.1" />
 		<PackageReference Include="ModernWpfUI" Version="0.9.6" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<ProjectReference Include="..\..\BasicDisplayControl\BasicDisplayControl.vcxproj">
+		<!--<ProjectReference Include="..\..\BasicDisplayControl\BasicDisplayControl.vcxproj">
 			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
 		</ProjectReference>
 		<ProjectReference Include="..\..\CapturePlugins\GenericCaptureCardPlugin\GenericCaptureCardPlugin.vcxproj">
@@ -54,8 +57,8 @@
 		</ProjectReference>
 		<ProjectReference Include="..\..\Core\Core.vcxproj">
 			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
-
+		</ProjectReference>-->
+    <ProjectReference Include="..\..\Core\MicrosoftDisplayCaptureTools.vcxproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package  xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>    
+    <id>MicrosoftDisplayCaptureTools.FrameDebugger</id>
+    <version>0.0.1</version>
+    <authors>Microsoft</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A GUI tool for visualizing and debugging tests using the MicrosoftDisplayCaptureTools project</description>
+    <dependencies>
+		<dependency id="MicrosoftDisplayCaptureTools" version="0.0.1"/>
+    </dependencies>
+	<tags>display testing capture MicrosoftDisplayCaptureTools</tags>
+  </metadata>
+  <files>
+	<file src="MicrosoftDisplayCaptureTools.FrameDebugger.native.targets" target="build\native\MicrosoftDisplayCaptureTools.FrameDebugger.targets"/>
+	<file src="MicrosoftDisplayCaptureTools.FrameDebugger.win10.targets" target="build\win10\MicrosoftDisplayCaptureTools.FrameDebugger.targets"/>
+	<file src="MicrosoftDisplayCaptureTools.FrameDebugger.common.targets" target="build\MicrosoftDisplayCaptureTools.FrameDebugger.common.targets"/>
+
+    <file src="Utilities\CaptureCardViewer\bin\x64\Debug\publish\CaptureCardViewer.*" target="runtimes\win10-x64\native" />
+    <file src="Utilities\CaptureCardViewer\bin\x64\Debug\publish\WinRT.*" target="runtimes\win10-x64\native" />
+  </files>
+</package>
