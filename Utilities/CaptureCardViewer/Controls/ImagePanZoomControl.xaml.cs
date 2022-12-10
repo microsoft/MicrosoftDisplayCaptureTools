@@ -83,5 +83,15 @@ namespace CaptureCardViewer.Controls
 				}
 			}
 		}
-	}
+
+		private void OnMouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			if (Keyboard.Modifiers == ModifierKeys.Control)
+			{
+				ZoomFactor += e.Delta / 1000.0;
+				e.Handled = true;
+			}
+
+		}
+    }
 }

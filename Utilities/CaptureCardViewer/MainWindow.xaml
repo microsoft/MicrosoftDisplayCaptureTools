@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:CaptureCardViewer"
     xmlns:localcontrols="clr-namespace:CaptureCardViewer.Controls"
+    xmlns:localvm="clr-namespace:CaptureCardViewer.ViewModels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.modernwpf.com/2019"
     Title="Frame Debugger"
@@ -27,7 +28,7 @@
         <Menu Grid.Row="0" Grid.ColumnSpan="3">
             <MenuItem Header="_File">
                 <MenuItem Header="_Clear configuration" />
-                <MenuItem Header="_Open device configuration..." />
+                <MenuItem Command="{Binding ViewModel.LoadFromConfigFileCommand}" Header="_Open device configuration..." />
                 <MenuItem Header="_Save configuration" />
                 <Separator />
                 <MenuItem Header="Open test case..." />
@@ -59,29 +60,135 @@
 
                                     <ui:CommandBarToolBar DockPanel.Dock="Top">
                                         <ui:AppBarButton
-                                            Command="{Binding Path=Logger.SaveLogCommand}"
                                             Icon="OpenFile"
                                             IsCompact="True"
                                             Label="Load Plugin">
-                                            <ui:ContextFlyoutService.ContextFlyout>
-                                                <ui:CommandBarFlyout>
-                                                    <ui:AppBarButton Label="Generic Video Device" />
-                                                    <ui:AppBarButton Label="Tanager Device" />
-                                                </ui:CommandBarFlyout>
-                                            </ui:ContextFlyoutService.ContextFlyout>
+                                            <ui:AppBarButton.Flyout>
+                                                <ui:MenuFlyout Placement="Bottom">
+                                                    <MenuItem Header="Generic Video Device" />
+                                                    <MenuItem Header="Tanager Device" />
+                                                    <Separator />
+                                                    <MenuItem Command="{Binding ViewModel.LoadCaptureCardFromFileCommand}" Header="Load from file..." />
+                                                </ui:MenuFlyout>
+                                            </ui:AppBarButton.Flyout>
                                         </ui:AppBarButton>
                                         <ui:AppBarButton
-                                            Command="{Binding Path=Logger.ClearLogCommand}"
                                             Icon="Clear"
                                             IsCompact="True"
                                             Label="Clear" />
                                     </ui:CommandBarToolBar>
 
-                                    <TreeView />
+                                    <Border>
+                                        <Border.Resources>
+                                            <HierarchicalDataTemplate DataType="{x:Type localvm:CaptureCardViewModel}" ItemsSource="{Binding Inputs}">
+                                                <TextBlock>
+                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                    <Run Foreground="Gray" Text="{Binding Version, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </HierarchicalDataTemplate>
+                                            <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
+                                                <TextBlock>
+                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </Border.Resources>
+                                        <TreeView ItemsSource="{Binding ViewModel.CaptureCards}" />
+                                    </Border>
 
                                 </DockPanel>
 
                             </LayoutAnchorable>
+
+                            <!--  Toolboxes pane  -->
+                            <LayoutAnchorable
+                                Title="Toolboxes"
+                                AutoHideMinWidth="200"
+                                AutoHideWidth="300"
+                                CanClose="False"
+                                FloatingWidth="300">
+
+                                <DockPanel LastChildFill="True">
+
+                                    <ui:CommandBarToolBar DockPanel.Dock="Top">
+                                        <ui:AppBarButton
+                                            Icon="OpenFile"
+                                            IsCompact="True"
+                                            Label="Load Plugin">
+                                            <ui:AppBarButton.Flyout>
+                                                <ui:MenuFlyout Placement="Bottom">
+                                                    <MenuItem Header="Default Toolbox" />
+                                                    <MenuItem Header="Private API Toolbox" />
+                                                    <Separator />
+                                                    <MenuItem Command="{Binding ViewModel.LoadToolboxFromFileCommand}" Header="Load from file..." />
+                                                </ui:MenuFlyout>
+                                            </ui:AppBarButton.Flyout>
+                                        </ui:AppBarButton>
+                                        <ui:AppBarButton
+                                            Icon="Clear"
+                                            IsCompact="True"
+                                            Label="Clear" />
+                                    </ui:CommandBarToolBar>
+
+                                    <Border>
+                                        <Border.Resources>
+                                            <HierarchicalDataTemplate DataType="{x:Type localvm:ToolboxViewModel}" ItemsSource="{Binding SupportedTools}">
+                                                <TextBlock>
+                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                    <Run Foreground="Gray" Text="{Binding Version, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </HierarchicalDataTemplate>
+                                        </Border.Resources>
+                                        <TreeView ItemsSource="{Binding ViewModel.Toolboxes}" />
+                                    </Border>
+                                </DockPanel>
+
+                            </LayoutAnchorable>
+
+                            <!--  Render Engines pane  -->
+                            <LayoutAnchorable
+                                Title="Render Engines"
+                                AutoHideMinWidth="200"
+                                AutoHideWidth="300"
+                                CanClose="False"
+                                FloatingWidth="300">
+
+                                <DockPanel LastChildFill="True">
+
+                                    <ui:CommandBarToolBar DockPanel.Dock="Top">
+                                        <ui:AppBarButton
+                                            Icon="OpenFile"
+                                            IsCompact="True"
+                                            Label="Load Plugin">
+                                            <ui:AppBarButton.Flyout>
+                                                <ui:MenuFlyout Placement="Bottom">
+                                                    <MenuItem Header="Default Engine" />
+                                                    <Separator />
+                                                    <MenuItem Command="{Binding ViewModel.LoadDisplayEngineFromFileCommand}" Header="Load from file..." />
+                                                </ui:MenuFlyout>
+                                            </ui:AppBarButton.Flyout>
+                                        </ui:AppBarButton>
+                                        <ui:AppBarButton
+                                            Icon="Clear"
+                                            IsCompact="True"
+                                            Label="Clear" />
+                                    </ui:CommandBarToolBar>
+
+                                    <Border>
+                                        <Border.Resources>
+                                            <DataTemplate DataType="{x:Type localvm:DisplayEngineViewModel}">
+                                                <TextBlock>
+                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                    <Run Foreground="Gray" Text="{Binding Version, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </Border.Resources>
+                                        <TreeView ItemsSource="{Binding ViewModel.DisplayEngines}" />
+                                    </Border>
+
+                                </DockPanel>
+
+                            </LayoutAnchorable>
+
 
                         </LayoutAnchorGroup>
                     </LayoutAnchorSide>
@@ -98,17 +205,17 @@
                                 <DockPanel LastChildFill="True">
                                     <ui:CommandBarToolBar DockPanel.Dock="Top">
                                         <ui:AppBarButton
-                                            Command="{Binding Path=Logger.SaveLogCommand}"
+                                            Command="{Binding ViewModel.Logger.SaveLogCommand}"
                                             Icon="Save"
                                             IsCompact="True"
                                             Label="Save" />
                                         <ui:AppBarButton
-                                            Command="{Binding Path=Logger.ClearLogCommand}"
+                                            Command="{Binding ViewModel.Logger.ClearLogCommand}"
                                             Icon="Clear"
                                             IsCompact="True"
                                             Label="Clear" />
                                     </ui:CommandBarToolBar>
-                                    <FlowDocumentScrollViewer Document="{Binding Logger.Document}" />
+                                    <FlowDocumentScrollViewer Document="{Binding ViewModel.Logger.Document}" />
                                 </DockPanel>
                             </LayoutAnchorable>
                         </LayoutAnchorGroup>
@@ -136,74 +243,53 @@
                                                 <StackPanel Orientation="Vertical">
 
                                                     <localcontrols:ImagePanZoomControl x:Name="PredImage" MinHeight="200" />
-                                                    <Button
-                                                        x:Name="lF"
-                                                        Margin="0,26"
-                                                        Click="loadFramework"
-                                                        Content="Load Framework" />
 
                                                 </StackPanel>
                                             </GroupBox>
 
                                             <GroupBox Header="Configuration">
 
-                                                <Grid>
-                                                    <Grid.Resources>
-                                                        <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
-                                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                                            <Setter Property="HorizontalAlignment" Value="Left" />
-                                                            <Setter Property="Margin" Value="3" />
-                                                        </Style>
-                                                        <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
-                                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                                            <Setter Property="Margin" Value="3" />
-                                                        </Style>
-                                                    </Grid.Resources>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition />
-                                                        <ColumnDefinition />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition />
-                                                        <RowDefinition />
-                                                        <RowDefinition />
-                                                    </Grid.RowDefinitions>
+                                                <ui:ItemsRepeater ItemsSource="{Binding ViewModel.Toolboxes}">
+                                                    <ui:ItemsRepeater.ItemTemplate>
+                                                        <DataTemplate DataType="localvm:ToolboxViewModel">
+                                                            <Expander Header="{Binding Name}" IsExpanded="True">
+                                                                <ui:ItemsRepeater ItemsSource="{Binding SupportedTools}">
+                                                                    <ui:ItemsRepeater.ItemTemplate>
+                                                                        <DataTemplate DataType="localvm:ToolViewModel">
+                                                                            <Grid>
+                                                                                <Grid.Resources>
+                                                                                    <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
+                                                                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                                                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                                                                        <Setter Property="Margin" Value="3" />
+                                                                                    </Style>
+                                                                                    <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
+                                                                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                                                                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                                                        <Setter Property="Margin" Value="3" />
+                                                                                    </Style>
+                                                                                </Grid.Resources>
 
-                                                    <Label Content="Refresh rate" />
-                                                    <Label Grid.Row="1" Content="Resolution Rate" />
-                                                    <Label Grid.Row="2" Content="Color" />
-                                                    <ComboBox
-                                                        x:Name="cbi_ref"
-                                                        Grid.Column="1"
-                                                        SelectionChanged="configurations">
-                                                        <ComboBoxItem Content="60hz" />
-                                                        <ComboBoxItem Content="75hz" />
-                                                    </ComboBox>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition />
+                                                                                    <ColumnDefinition />
+                                                                                </Grid.ColumnDefinitions>
 
+                                                                                <Label Content="{Binding Name, Mode=OneWay}" />
 
-                                                    <ComboBox
-                                                        x:Name="cbi_res"
-                                                        Grid.Row="1"
-                                                        Grid.Column="1"
-                                                        SelectionChanged="configurations">
-                                                        <ComboBoxItem Content="1920x1080" />
-                                                        <ComboBoxItem Content="720x800" />
-                                                    </ComboBox>
+                                                                                <ComboBox
+                                                                                    Grid.Column="1"
+                                                                                    ItemsSource="{Binding AvailableValues, Mode=OneWay}"
+                                                                                    SelectedItem="{Binding Value}" />
 
-                                                    <ComboBox
-                                                        x:Name="cbi_col"
-                                                        Grid.Row="2"
-                                                        Grid.Column="1"
-                                                        SelectionChanged="configurations">
-                                                        <ComboBoxItem Content="Blue" />
-                                                        <ComboBoxItem Content="Black" />
-                                                        <ComboBoxItem Content="Green" />
-                                                        <ComboBoxItem Content="Red" />
-                                                        <ComboBoxItem Content="Black" />
-                                                    </ComboBox>
-
-                                                </Grid>
+                                                                            </Grid>
+                                                                        </DataTemplate>
+                                                                    </ui:ItemsRepeater.ItemTemplate>
+                                                                </ui:ItemsRepeater>
+                                                            </Expander>
+                                                        </DataTemplate>
+                                                    </ui:ItemsRepeater.ItemTemplate>
+                                                </ui:ItemsRepeater>
 
                                             </GroupBox>
 
@@ -218,28 +304,15 @@
                                                 <StackPanel>
 
                                                     <ui:CommandBarToolBar>
-                                                        <ui:AppBarButton Icon="Camera" Label="Single Frame" />
+                                                        <ui:AppBarButton
+                                                            Command="{Binding ViewModel.CaptureSingleFrameCommand}"
+                                                            Icon="Camera"
+                                                            Label="Single Frame" />
                                                         <ui:AppBarButton Icon="Play" Label="Start" />
                                                         <ui:AppBarButton Icon="Pause" Label="Pause" />
                                                     </ui:CommandBarToolBar>
 
                                                     <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
-
-                                                    <Button
-                                                        x:Name="dP"
-                                                        Margin="0,26"
-                                                        Click="displayProperties"
-                                                        Content="Display Properties" />
-
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Menu>
-                                                            <MenuItem Header="Load Framework Components">
-                                                                <MenuItem Click="Tlbx_Click" Header="Toolbox" />
-                                                                <MenuItem Click="CapPlgn_Click" Header="Capture Plugin" />
-                                                                <MenuItem Click="DispMan_Click" Header="Display Manager" />
-                                                            </MenuItem>
-                                                        </Menu>
-                                                    </StackPanel>
 
                                                     <TextBlock x:Name="capturedImageProperties" />
 
@@ -260,6 +333,7 @@
         <ui:ContentDialog
             x:Name="aboutDialog"
             Grid.RowSpan="2"
+            CloseButtonText="Close"
             DefaultButton="Close">
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="Microsoft Display Capture Tools" />

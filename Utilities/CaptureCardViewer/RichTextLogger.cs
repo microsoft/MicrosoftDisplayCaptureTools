@@ -54,7 +54,7 @@ namespace CaptureCardViewer
 
 		public FlowDocument Document => document;
 
-		[RelayCommand]
+		[ICommand]
 		public void SaveLog()
 		{
 			var saveDialog = new SaveFileDialog();
@@ -77,7 +77,7 @@ namespace CaptureCardViewer
 			}
 		}
 
-		[RelayCommand]
+		[ICommand]
 		public void ClearLog()
 		{
 			document.Blocks.Clear();
