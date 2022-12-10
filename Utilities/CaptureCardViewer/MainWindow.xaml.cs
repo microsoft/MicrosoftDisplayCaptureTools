@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using MicrosoftDisplayCaptureTools.Framework;
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -16,17 +17,6 @@ using WinRT;
 
 namespace CaptureCardViewer
 {
-	//
-	// Add the interface so that we can access the raw pixel data.
-	//
-	[ComImport]
-	[Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
-	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	unsafe interface IMemoryBufferByteAccess
-	{
-		void GetBuffer(out byte* buffer, out uint capacity);
-	}
-
 	public partial class MainWindow : Window
 	{
 		public string? setTool;
@@ -40,16 +30,20 @@ namespace CaptureCardViewer
 			InitializeComponent();
 		}
 
-		private void configurations(object sender, SelectionChangedEventArgs e)
+		[ICommand]
+		async void ShowAbout()
 		{
-			userInput = true;
-
+			await aboutDialog.ShowAsync();
 		}
 
 		[ICommand]
-		async void About()
+		void ShowDocumentation()
 		{
-			await aboutDialog.ShowAsync();
+			try
+			{
+				Process.Start(new ProcessStartInfo("https://learn.microsoft.com/windows-hardware/") { UseShellExecute = true });
+			}
+			catch { }
 		}
 	}
 }

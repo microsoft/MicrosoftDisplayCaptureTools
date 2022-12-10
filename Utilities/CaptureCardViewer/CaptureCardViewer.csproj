@@ -10,8 +10,8 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>AnyCPU;x64;ARM64</Platforms>
     <StartupObject>CaptureCardViewer.App</StartupObject>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>obj\SourceGenerated</CompilerGeneratedFilesOutputPath>
+    <!--<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>obj\SourceGenerated</CompilerGeneratedFilesOutputPath>-->
   </PropertyGroup>
 
 	<!-- Generates a C# projection of WinRT types (see https://docs.microsoft.com/en-us/windows/uwp/csharp-winrt/net-projection-from-cppwinrt-component)-->

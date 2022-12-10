@@ -34,6 +34,31 @@
                             Margin="10"
                             Orientation="Vertical">
 
+                            <WrapPanel Orientation="Horizontal">
+                                <TextBlock Margin="5" VerticalAlignment="Center">
+                                    <Run Text="Connected to: " />
+                                    <Run Text="{Binding SelectedEngineOutputName, Mode=OneWay}" />
+                                </TextBlock>
+                                <ui:DropDownButton Content="Connect to">
+                                    <ui:DropDownButton.Flyout>
+                                        <ui:MenuFlyout>
+                                            <ui:MenuFlyout.MenuFlyoutPresenterStyle>
+                                                <Style TargetType="ui:MenuFlyoutPresenter">
+                                                    <Setter Property="ItemTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <MenuItem Command="{Binding ConnectCommand}" Header="{Binding Name, Mode=OneWay}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="ItemsSource" Value="{Binding AvailableEngineOutputs, Mode=OneWay}" />
+                                                </Style>
+                                            </ui:MenuFlyout.MenuFlyoutPresenterStyle>
+                                        </ui:MenuFlyout>
+                                    </ui:DropDownButton.Flyout>
+                                </ui:DropDownButton>
+                            </WrapPanel>
+
                             <GroupBox Header="Predicted Image">
                                 <StackPanel Orientation="Vertical">
 
@@ -48,32 +73,30 @@
                                     <ui:ItemsRepeater.ItemTemplate>
                                         <DataTemplate DataType="localvm:ToolboxViewModel">
                                             <Expander Header="{Binding Name}" IsExpanded="True">
-                                                <ui:ItemsRepeater ItemsSource="{Binding SupportedTools}">
+                                                <ui:ItemsRepeater ItemsSource="{Binding ActiveTools}">
                                                     <ui:ItemsRepeater.ItemTemplate>
                                                         <DataTemplate DataType="localvm:ToolViewModel">
                                                             <Grid>
-                                                                <Grid.Resources>
-                                                                    <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
-                                                                        <Setter Property="VerticalAlignment" Value="Center" />
-                                                                        <Setter Property="HorizontalAlignment" Value="Left" />
-                                                                        <Setter Property="Margin" Value="3" />
-                                                                    </Style>
-                                                                    <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
-                                                                        <Setter Property="VerticalAlignment" Value="Center" />
-                                                                        <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                                                        <Setter Property="Margin" Value="3" />
-                                                                    </Style>
-                                                                </Grid.Resources>
-
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition />
                                                                     <ColumnDefinition />
                                                                 </Grid.ColumnDefinitions>
 
-                                                                <Label Content="{Binding Name, Mode=OneWay}" />
+                                                                <Label
+                                                                    Margin="3"
+                                                                    HorizontalAlignment="Right"
+                                                                    VerticalAlignment="Center">
+                                                                    <TextBlock>
+                                                                        <Run Text="{Binding Name, Mode=OneWay}" />
+                                                                        <Run Text=":" />
+                                                                    </TextBlock>
+                                                                </Label>
 
                                                                 <ComboBox
                                                                     Grid.Column="1"
+                                                                    Margin="3"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    VerticalAlignment="Center"
                                                                     ItemsSource="{Binding AvailableValues, Mode=OneWay}"
                                                                     SelectedItem="{Binding Value}" />
 
@@ -94,6 +117,13 @@
                             Grid.Column="1"
                             Margin="10"
                             Orientation="Vertical">
+
+                            <WrapPanel Orientation="Horizontal">
+                                <TextBlock>
+                                    Connected to:<Run Text="{Binding CaptureInput.Name}" />
+                                    on<Run Text="{Binding CaptureCard.Name}" />
+                                </TextBlock>
+                            </WrapPanel>
 
                             <GroupBox Header="Captured Image">
                                 <StackPanel>
@@ -151,8 +181,8 @@
                 <MenuItem Header="Open test case..." />
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem Header="_Documentation" />
-                <MenuItem Command="{Binding AboutCommand}" Header="_About" />
+                <MenuItem Command="{Binding ShowDocumentationCommand}" Header="_Documentation" />
+                <MenuItem Command="{Binding ShowAboutCommand}" Header="_About" />
             </MenuItem>
         </Menu>
 
@@ -200,22 +230,49 @@
                                             Label="Clear" />
                                     </ui:CommandBarToolBar>
 
-                                    <Border>
-                                        <Border.Resources>
-                                            <HierarchicalDataTemplate DataType="{x:Type localvm:CaptureCardViewModel}" ItemsSource="{Binding Inputs}">
-                                                <TextBlock>
-                                                    <Run Text="{Binding Name, Mode=OneWay}" />
-                                                    <Run Foreground="Gray" Text="{Binding Version, Mode=OneWay}" />
-                                                </TextBlock>
-                                            </HierarchicalDataTemplate>
-                                            <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
-                                                <TextBlock>
-                                                    <Run Text="{Binding Name, Mode=OneWay}" />
-                                                </TextBlock>
-                                            </DataTemplate>
-                                        </Border.Resources>
-                                        <TreeView ItemsSource="{Binding ViewModel.CaptureCards}" />
-                                    </Border>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition Height="4" />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+
+                                        <Border Grid.Row="0">
+                                            <Border.Resources>
+                                                <HierarchicalDataTemplate DataType="{x:Type localvm:CaptureCardViewModel}" ItemsSource="{Binding Inputs}">
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Name, Mode=OneWay}" />
+                                                        <Run Foreground="Gray" Text="{Binding Version, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </HierarchicalDataTemplate>
+                                                <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Name, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </DataTemplate>
+                                            </Border.Resources>
+                                            <TreeView x:Name="captureTree" ItemsSource="{Binding ViewModel.CaptureCards}" />
+                                        </Border>
+
+                                        <GridSplitter
+                                            Grid.Row="1"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            ResizeBehavior="PreviousAndNext"
+                                            ResizeDirection="Rows" />
+
+                                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                                            <ScrollViewer.Resources>
+                                                <DataTemplate DataType="{x:Type localvm:CaptureCardViewModel}">
+                                                    <TextBlock Text="This is a capture card" />
+                                                </DataTemplate>
+                                                <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
+                                                    <TextBlock Text="This is an input" />
+                                                </DataTemplate>
+                                            </ScrollViewer.Resources>
+                                            <ContentControl Content="{Binding ElementName=captureTree, Path=SelectedItem}" />
+                                        </ScrollViewer>
+                                    </Grid>
 
                                 </DockPanel>
 
@@ -359,8 +416,8 @@
             CloseButtonText="Close"
             DefaultButton="Close">
             <StackPanel Orientation="Vertical">
-                <TextBlock Text="Microsoft Display Capture Tools" />
-                <TextBlock Text="Frame Debugger" />
+                <TextBlock FontSize="15" Text="Microsoft Display Capture Tools" />
+                <TextBlock Margin="0,0,0,10" Text="Frame Debugger" />
                 <TextBlock Text="Copyright ©️ Microsoft Corporation" />
             </StackPanel>
         </ui:ContentDialog>

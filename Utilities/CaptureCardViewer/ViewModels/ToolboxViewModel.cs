@@ -2,6 +2,7 @@
 using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,8 +19,13 @@ namespace CaptureCardViewer.ViewModels
 		{
 			Toolbox = toolbox;
 			SupportedTools = toolbox.GetSupportedTools();
+
+			foreach (var tool in SupportedTools)
+				ActiveTools.Add(new ToolViewModel(Toolbox.GetTool(tool)));
 		}
 
 		public string[] SupportedTools { get; }
+
+		public ObservableCollection<ToolViewModel> ActiveTools { get; } = new();
 	}
 }

@@ -11,7 +11,7 @@ namespace CaptureCardViewer.ViewModels
 	/// <summary>
 	/// Represents an instance of a tool in the UI.
 	/// </summary>
-	internal class ToolViewModel : ObservableObject
+	public partial class ToolViewModel : ObservableObject
 	{
 		public IConfigurationTool Tool { get; }
 		public string Name => Tool.Name;
