@@ -31,11 +31,16 @@ namespace CaptureCardViewer.ViewModels
 
 		public RichTextLogger Logger { get; } = new RichTextLogger();
 
+		public ObservableCollection<object> Documents { get; } = new();
+
 		public WorkspaceViewModel()
 		{
 			testFramework = new Core(Logger);
 			dispatcher = Dispatcher.CurrentDispatcher;
 			var command = this.LoadFromConfigFileCommand;
+
+			Documents.Add(this);
+			Documents.Add(new CaptureSessionViewModel(this, null));
 		}
 
 		[ICommand]

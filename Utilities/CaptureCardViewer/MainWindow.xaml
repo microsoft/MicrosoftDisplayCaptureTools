@@ -19,6 +19,123 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.Resources>
+            <DataTemplate DataType="{x:Type localvm:CaptureSessionViewModel}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel
+                            x:Name="SPanel"
+                            Grid.Column="0"
+                            Margin="10"
+                            Orientation="Vertical">
+
+                            <GroupBox Header="Predicted Image">
+                                <StackPanel Orientation="Vertical">
+
+                                    <localcontrols:ImagePanZoomControl x:Name="PredImage" MinHeight="200" />
+
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="Configuration">
+
+                                <ui:ItemsRepeater ItemsSource="{Binding Workspace.Toolboxes}">
+                                    <ui:ItemsRepeater.ItemTemplate>
+                                        <DataTemplate DataType="localvm:ToolboxViewModel">
+                                            <Expander Header="{Binding Name}" IsExpanded="True">
+                                                <ui:ItemsRepeater ItemsSource="{Binding SupportedTools}">
+                                                    <ui:ItemsRepeater.ItemTemplate>
+                                                        <DataTemplate DataType="localvm:ToolViewModel">
+                                                            <Grid>
+                                                                <Grid.Resources>
+                                                                    <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
+                                                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                                                        <Setter Property="Margin" Value="3" />
+                                                                    </Style>
+                                                                    <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
+                                                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                                                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                                        <Setter Property="Margin" Value="3" />
+                                                                    </Style>
+                                                                </Grid.Resources>
+
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition />
+                                                                    <ColumnDefinition />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <Label Content="{Binding Name, Mode=OneWay}" />
+
+                                                                <ComboBox
+                                                                    Grid.Column="1"
+                                                                    ItemsSource="{Binding AvailableValues, Mode=OneWay}"
+                                                                    SelectedItem="{Binding Value}" />
+
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ui:ItemsRepeater.ItemTemplate>
+                                                </ui:ItemsRepeater>
+                                            </Expander>
+                                        </DataTemplate>
+                                    </ui:ItemsRepeater.ItemTemplate>
+                                </ui:ItemsRepeater>
+
+                            </GroupBox>
+
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="10"
+                            Orientation="Vertical">
+
+                            <GroupBox Header="Captured Image">
+                                <StackPanel>
+
+                                    <ui:CommandBarToolBar>
+                                        <ui:AppBarButton
+                                            Command="{Binding ViewModel.CaptureSingleFrameCommand}"
+                                            Icon="Camera"
+                                            Label="Single Frame" />
+                                        <ui:AppBarButton Icon="Play" Label="Start" />
+                                        <ui:AppBarButton Icon="Pause" Label="Pause" />
+                                    </ui:CommandBarToolBar>
+
+                                    <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
+
+                                    <TextBlock x:Name="capturedImageProperties" />
+
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+
+                    </Grid>
+                </ScrollViewer>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type localvm:WorkspaceViewModel}">
+                <localcontrols:WelcomePage />
+            </DataTemplate>
+
+            <local:DocumentTemplateSelector x:Key="DocumentTitleSelector">
+                <local:DocumentTemplateSelector.CaptureSessionTemplate>
+                    <DataTemplate>
+                        <TextBlock>Frame Capture</TextBlock>
+                    </DataTemplate>
+                </local:DocumentTemplateSelector.CaptureSessionTemplate>
+                <local:DocumentTemplateSelector.WelcomeTemplate>
+                    <DataTemplate>
+                        <TextBlock>Welcome</TextBlock>
+                    </DataTemplate>
+                </local:DocumentTemplateSelector.WelcomeTemplate>
+            </local:DocumentTemplateSelector>
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
@@ -39,7 +156,12 @@
             </MenuItem>
         </Menu>
 
-        <DockingManager x:Name="dockManager" Grid.Row="1">
+        <DockingManager
+            x:Name="dockManager"
+            Grid.Row="1"
+            DocumentHeaderTemplateSelector="{StaticResource DocumentTitleSelector}"
+            DocumentTitleTemplateSelector="{StaticResource DocumentTitleSelector}"
+            DocumentsSource="{Binding ViewModel.Documents}">
             <DockingManager.Theme>
                 <Vs2013DarkTheme />
             </DockingManager.Theme>
@@ -224,106 +346,7 @@
 
                 <LayoutPanel Orientation="Horizontal">
                     <LayoutDocumentPaneGroup>
-                        <LayoutDocumentPane>
-                            <LayoutDocument Title="Frame Capture" CanClose="False">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition />
-                                            <ColumnDefinition />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel
-                                            x:Name="SPanel"
-                                            Grid.Column="0"
-                                            Margin="10"
-                                            Orientation="Vertical">
-
-                                            <GroupBox Header="Predicted Image">
-                                                <StackPanel Orientation="Vertical">
-
-                                                    <localcontrols:ImagePanZoomControl x:Name="PredImage" MinHeight="200" />
-
-                                                </StackPanel>
-                                            </GroupBox>
-
-                                            <GroupBox Header="Configuration">
-
-                                                <ui:ItemsRepeater ItemsSource="{Binding ViewModel.Toolboxes}">
-                                                    <ui:ItemsRepeater.ItemTemplate>
-                                                        <DataTemplate DataType="localvm:ToolboxViewModel">
-                                                            <Expander Header="{Binding Name}" IsExpanded="True">
-                                                                <ui:ItemsRepeater ItemsSource="{Binding SupportedTools}">
-                                                                    <ui:ItemsRepeater.ItemTemplate>
-                                                                        <DataTemplate DataType="localvm:ToolViewModel">
-                                                                            <Grid>
-                                                                                <Grid.Resources>
-                                                                                    <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
-                                                                                        <Setter Property="VerticalAlignment" Value="Center" />
-                                                                                        <Setter Property="HorizontalAlignment" Value="Left" />
-                                                                                        <Setter Property="Margin" Value="3" />
-                                                                                    </Style>
-                                                                                    <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
-                                                                                        <Setter Property="VerticalAlignment" Value="Center" />
-                                                                                        <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                                                                        <Setter Property="Margin" Value="3" />
-                                                                                    </Style>
-                                                                                </Grid.Resources>
-
-                                                                                <Grid.ColumnDefinitions>
-                                                                                    <ColumnDefinition />
-                                                                                    <ColumnDefinition />
-                                                                                </Grid.ColumnDefinitions>
-
-                                                                                <Label Content="{Binding Name, Mode=OneWay}" />
-
-                                                                                <ComboBox
-                                                                                    Grid.Column="1"
-                                                                                    ItemsSource="{Binding AvailableValues, Mode=OneWay}"
-                                                                                    SelectedItem="{Binding Value}" />
-
-                                                                            </Grid>
-                                                                        </DataTemplate>
-                                                                    </ui:ItemsRepeater.ItemTemplate>
-                                                                </ui:ItemsRepeater>
-                                                            </Expander>
-                                                        </DataTemplate>
-                                                    </ui:ItemsRepeater.ItemTemplate>
-                                                </ui:ItemsRepeater>
-
-                                            </GroupBox>
-
-                                        </StackPanel>
-
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            Margin="10"
-                                            Orientation="Vertical">
-
-                                            <GroupBox Header="Captured Image">
-                                                <StackPanel>
-
-                                                    <ui:CommandBarToolBar>
-                                                        <ui:AppBarButton
-                                                            Command="{Binding ViewModel.CaptureSingleFrameCommand}"
-                                                            Icon="Camera"
-                                                            Label="Single Frame" />
-                                                        <ui:AppBarButton Icon="Play" Label="Start" />
-                                                        <ui:AppBarButton Icon="Pause" Label="Pause" />
-                                                    </ui:CommandBarToolBar>
-
-                                                    <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
-
-                                                    <TextBlock x:Name="capturedImageProperties" />
-
-                                                </StackPanel>
-                                            </GroupBox>
-                                        </StackPanel>
-
-                                    </Grid>
-                                </ScrollViewer>
-                            </LayoutDocument>
-                        </LayoutDocumentPane>
+                        <LayoutDocumentPane />
                     </LayoutDocumentPaneGroup>
                 </LayoutPanel>
             </LayoutRoot>
