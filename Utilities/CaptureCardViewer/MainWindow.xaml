@@ -10,6 +10,7 @@
     Title="Frame Debugger"
     Width="1200"
     Height="600"
+    local:TitlebarCustomizations.DarkModeTitlebar="True"
     ui:ThemeManager.IsThemeAware="True"
     Background="{DynamicResource SystemControlPageBackgroundAltHighBrush}"
     DataContext="{Binding RelativeSource={RelativeSource Self}}"
@@ -17,11 +18,6 @@
     mc:Ignorable="d">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
@@ -38,174 +34,239 @@
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_Documentation" />
-                <MenuItem Header="_About" />
+                <MenuItem Command="{Binding AboutCommand}" Header="_About" />
             </MenuItem>
         </Menu>
 
-        <StackPanel
-            x:Name="SPanel"
-            Grid.Row="1"
-            Grid.Column="0"
-            Margin="10"
-            Orientation="Vertical">
+        <DockingManager x:Name="dockManager" Grid.Row="1">
+            <DockingManager.Theme>
+                <Vs2013DarkTheme />
+            </DockingManager.Theme>
+            <LayoutRoot>
+                <LayoutRoot.LeftSide>
+                    <LayoutAnchorSide>
+                        <LayoutAnchorGroup>
 
-            <GroupBox Header="Predicted Image">
-                <StackPanel Orientation="Vertical">
+                            <!--  Capture Inputs pane  -->
+                            <LayoutAnchorable
+                                Title="Capture Inputs"
+                                AutoHideMinWidth="200"
+                                AutoHideWidth="300"
+                                CanClose="False"
+                                FloatingWidth="300">
 
-                    <Image
-                        x:Name="PredImage"
-                        MinHeight="200"
-                        Stretch="Uniform" />
-                    <Button
-                        x:Name="lF"
-                        Margin="0,26"
-                        Click="loadFramework"
-                        Content="Load Framework" />
+                                <DockPanel LastChildFill="True">
 
-                </StackPanel>
-            </GroupBox>
+                                    <ui:CommandBarToolBar DockPanel.Dock="Top">
+                                        <ui:AppBarButton
+                                            Command="{Binding Path=Logger.SaveLogCommand}"
+                                            Icon="OpenFile"
+                                            IsCompact="True"
+                                            Label="Load Plugin">
+                                            <ui:ContextFlyoutService.ContextFlyout>
+                                                <ui:CommandBarFlyout>
+                                                    <ui:AppBarButton Label="Generic Video Device" />
+                                                    <ui:AppBarButton Label="Tanager Device" />
+                                                </ui:CommandBarFlyout>
+                                            </ui:ContextFlyoutService.ContextFlyout>
+                                        </ui:AppBarButton>
+                                        <ui:AppBarButton
+                                            Command="{Binding Path=Logger.ClearLogCommand}"
+                                            Icon="Clear"
+                                            IsCompact="True"
+                                            Label="Clear" />
+                                    </ui:CommandBarToolBar>
 
-            <GroupBox Header="Configuration">
+                                    <TreeView />
 
-                <Grid>
-                    <Grid.Resources>
-                        <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                            <Setter Property="HorizontalAlignment" Value="Left" />
-                            <Setter Property="Margin" Value="3" />
-                        </Style>
-                        <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                            <Setter Property="HorizontalAlignment" Value="Stretch" />
-                            <Setter Property="Margin" Value="3" />
-                        </Style>
-                    </Grid.Resources>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
+                                </DockPanel>
 
-                    <Label Content="Refresh rate" />
-                    <Label Grid.Row="1" Content="Resolution Rate" />
-                    <Label Grid.Row="2" Content="Color" />
-                    <ComboBox
-                        x:Name="cbi_ref"
-                        Grid.Column="1"
-                        SelectionChanged="configurations">
-                        <ComboBoxItem Content="60hz" />
-                        <ComboBoxItem Content="75hz" />
-                    </ComboBox>
+                            </LayoutAnchorable>
+
+                        </LayoutAnchorGroup>
+                    </LayoutAnchorSide>
+                </LayoutRoot.LeftSide>
+                <LayoutRoot.BottomSide>
+                    <LayoutAnchorSide>
+                        <LayoutAnchorGroup>
+
+                            <!--  Log Output pane  -->
+                            <LayoutAnchorable
+                                Title="Log Output"
+                                AutoHideHeight="200"
+                                CanClose="False">
+                                <DockPanel LastChildFill="True">
+                                    <ui:CommandBarToolBar DockPanel.Dock="Top">
+                                        <ui:AppBarButton
+                                            Command="{Binding Path=Logger.SaveLogCommand}"
+                                            Icon="Save"
+                                            IsCompact="True"
+                                            Label="Save" />
+                                        <ui:AppBarButton
+                                            Command="{Binding Path=Logger.ClearLogCommand}"
+                                            Icon="Clear"
+                                            IsCompact="True"
+                                            Label="Clear" />
+                                    </ui:CommandBarToolBar>
+                                    <FlowDocumentScrollViewer Document="{Binding Logger.Document}" />
+                                </DockPanel>
+                            </LayoutAnchorable>
+                        </LayoutAnchorGroup>
+                    </LayoutAnchorSide>
+                </LayoutRoot.BottomSide>
+
+                <LayoutPanel Orientation="Horizontal">
+                    <LayoutDocumentPaneGroup>
+                        <LayoutDocumentPane>
+                            <LayoutDocument Title="Frame Capture" CanClose="False">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel
+                                            x:Name="SPanel"
+                                            Grid.Column="0"
+                                            Margin="10"
+                                            Orientation="Vertical">
+
+                                            <GroupBox Header="Predicted Image">
+                                                <StackPanel Orientation="Vertical">
+
+                                                    <localcontrols:ImagePanZoomControl x:Name="PredImage" MinHeight="200" />
+                                                    <Button
+                                                        x:Name="lF"
+                                                        Margin="0,26"
+                                                        Click="loadFramework"
+                                                        Content="Load Framework" />
+
+                                                </StackPanel>
+                                            </GroupBox>
+
+                                            <GroupBox Header="Configuration">
+
+                                                <Grid>
+                                                    <Grid.Resources>
+                                                        <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="Label">
+                                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                                            <Setter Property="HorizontalAlignment" Value="Left" />
+                                                            <Setter Property="Margin" Value="3" />
+                                                        </Style>
+                                                        <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
+                                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                            <Setter Property="Margin" Value="3" />
+                                                        </Style>
+                                                    </Grid.Resources>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition />
+                                                        <RowDefinition />
+                                                        <RowDefinition />
+                                                    </Grid.RowDefinitions>
+
+                                                    <Label Content="Refresh rate" />
+                                                    <Label Grid.Row="1" Content="Resolution Rate" />
+                                                    <Label Grid.Row="2" Content="Color" />
+                                                    <ComboBox
+                                                        x:Name="cbi_ref"
+                                                        Grid.Column="1"
+                                                        SelectionChanged="configurations">
+                                                        <ComboBoxItem Content="60hz" />
+                                                        <ComboBoxItem Content="75hz" />
+                                                    </ComboBox>
 
 
-                    <ComboBox
-                        x:Name="cbi_res"
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        SelectionChanged="configurations">
-                        <ComboBoxItem Content="1920x1080" />
-                        <ComboBoxItem Content="720x800" />
-                    </ComboBox>
+                                                    <ComboBox
+                                                        x:Name="cbi_res"
+                                                        Grid.Row="1"
+                                                        Grid.Column="1"
+                                                        SelectionChanged="configurations">
+                                                        <ComboBoxItem Content="1920x1080" />
+                                                        <ComboBoxItem Content="720x800" />
+                                                    </ComboBox>
 
-                    <ComboBox
-                        x:Name="cbi_col"
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        SelectionChanged="configurations">
-                        <ComboBoxItem Content="Blue" />
-                        <ComboBoxItem Content="Black" />
-                        <ComboBoxItem Content="Green" />
-                        <ComboBoxItem Content="Red" />
-                        <ComboBoxItem Content="Black" />
-                    </ComboBox>
+                                                    <ComboBox
+                                                        x:Name="cbi_col"
+                                                        Grid.Row="2"
+                                                        Grid.Column="1"
+                                                        SelectionChanged="configurations">
+                                                        <ComboBoxItem Content="Blue" />
+                                                        <ComboBoxItem Content="Black" />
+                                                        <ComboBoxItem Content="Green" />
+                                                        <ComboBoxItem Content="Red" />
+                                                        <ComboBoxItem Content="Black" />
+                                                    </ComboBox>
 
-                </Grid>
+                                                </Grid>
 
-            </GroupBox>
+                                            </GroupBox>
 
-        </StackPanel>
+                                        </StackPanel>
 
-        <StackPanel
-            Grid.Row="1"
-            Grid.Column="1"
-            Margin="10"
-            Orientation="Vertical">
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Margin="10"
+                                            Orientation="Vertical">
 
-            <GroupBox Header="Actual Image">
-                <StackPanel>
+                                            <GroupBox Header="Captured Image">
+                                                <StackPanel>
 
-                    <ui:CommandBarToolBar>
-                        <ui:AppBarButton Icon="Camera" Label="Single Frame" />
-                        <ui:AppBarButton Icon="Play" Label="Start" />
-                        <ui:AppBarButton Icon="Pause" Label="Pause" />
-                    </ui:CommandBarToolBar>
+                                                    <ui:CommandBarToolBar>
+                                                        <ui:AppBarButton Icon="Camera" Label="Single Frame" />
+                                                        <ui:AppBarButton Icon="Play" Label="Start" />
+                                                        <ui:AppBarButton Icon="Pause" Label="Pause" />
+                                                    </ui:CommandBarToolBar>
 
-                    <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
+                                                    <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
 
-                    <Button
-                        x:Name="dP"
-                        Margin="0,26"
-                        Click="displayProperties"
-                        Content="Display Properties" />
+                                                    <Button
+                                                        x:Name="dP"
+                                                        Margin="0,26"
+                                                        Click="displayProperties"
+                                                        Content="Display Properties" />
 
-                    <StackPanel Orientation="Horizontal">
-                        <Menu>
-                            <MenuItem Header="Load Framework Components">
-                                <MenuItem Click="Tlbx_Click" Header="Toolbox" />
-                                <MenuItem Click="CapPlgn_Click" Header="Capture Plugin" />
-                                <MenuItem Click="DispMan_Click" Header="Display Manager" />
-                            </MenuItem>
-                        </Menu>
-                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Menu>
+                                                            <MenuItem Header="Load Framework Components">
+                                                                <MenuItem Click="Tlbx_Click" Header="Toolbox" />
+                                                                <MenuItem Click="CapPlgn_Click" Header="Capture Plugin" />
+                                                                <MenuItem Click="DispMan_Click" Header="Display Manager" />
+                                                            </MenuItem>
+                                                        </Menu>
+                                                    </StackPanel>
 
-                </StackPanel>
-            </GroupBox>
-        </StackPanel>
+                                                    <TextBlock x:Name="capturedImageProperties" />
 
-        <TabControl
-            Grid.Row="1"
-            Grid.Column="2"
-            Margin="10"
-            VerticalAlignment="Stretch">
-            <TabItem Header="Log">
-                <DockPanel LastChildFill="True">
-                    <ui:CommandBarToolBar DockPanel.Dock="Top">
-                        <ui:AppBarButton
-                            Command="{Binding Path=Logger.SaveLogCommand}"
-                            Icon="Save"
-                            IsCompact="True"
-                            Label="Save" />
-                        <ui:AppBarButton
-                            Command="{Binding Path=Logger.ClearLogCommand}"
-                            Icon="Clear"
-                            IsCompact="True"
-                            Label="Clear" />
-                    </ui:CommandBarToolBar>
-                    <FlowDocumentScrollViewer Document="{Binding Logger.Document}" />
-                </DockPanel>
-            </TabItem>
-            <TabItem Header="Frame Properties">
-                <StackPanel Orientation="Vertical">
-                    <Label
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Content="Properties" />
-                    <TextBox
-                        x:Name="TextBlock"
-                        Height="200"
-                        MinHeight="200" />
-                    <Button
-                        x:Name="cF"
-                        Margin="0,26"
-                        Click="compareFrames_Click"
-                        Content="Compare Frames" />
-                </StackPanel>
-            </TabItem>
-        </TabControl>
+                                                </StackPanel>
+                                            </GroupBox>
+                                        </StackPanel>
+
+                                    </Grid>
+                                </ScrollViewer>
+                            </LayoutDocument>
+                        </LayoutDocumentPane>
+                    </LayoutDocumentPaneGroup>
+                </LayoutPanel>
+            </LayoutRoot>
+        </DockingManager>
+
+
+        <ui:ContentDialog
+            x:Name="aboutDialog"
+            Grid.RowSpan="2"
+            DefaultButton="Close">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Microsoft Display Capture Tools" />
+                <TextBlock Text="Frame Debugger" />
+                <TextBlock Text="Copyright ©️ Microsoft Corporation" />
+            </StackPanel>
+        </ui:ContentDialog>
 
     </Grid>
 </Window>

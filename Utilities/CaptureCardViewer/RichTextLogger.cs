@@ -37,6 +37,7 @@ namespace CaptureCardViewer
 			document = new FlowDocument()
 			{
 				FontFamily = new FontFamily("Consolas"),
+				FontSize = 14,
 				TextAlignment = System.Windows.TextAlignment.Left
 			};
 			entriesChannel = Channel.CreateUnbounded<LogEntry>();

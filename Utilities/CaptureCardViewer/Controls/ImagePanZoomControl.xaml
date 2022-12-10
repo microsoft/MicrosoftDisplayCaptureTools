@@ -12,7 +12,10 @@
     mc:Ignorable="d">
     <Grid>
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <Image Source="{Binding ImageSource}" Stretch="Uniform">
+            <Image
+                x:Name="imageView"
+                Source="{Binding ImageSource}"
+                Stretch="Uniform">
                 <Image.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding ZoomFactor}" ScaleY="{Binding ZoomFactor}" />
                 </Image.LayoutTransform>
@@ -20,51 +23,26 @@
         </ScrollViewer>
 
         <!--  Floating toolbar  -->
-        <ToolBar
+        <ui:CommandBar
             Name="hoverToolbar"
             Margin="15"
             HorizontalAlignment="Right"
-            VerticalAlignment="Top"
-            Opacity="0.1">
-            <Button>
-                <ui:SymbolIcon Symbol="FullScreen" />
-            </Button>
-            <Button>
-                <ui:SymbolIcon Symbol="ZoomOut" />
-            </Button>
-            <Button>
-                <ui:SymbolIcon Symbol="Save" />
-            </Button>
-            <VisualStateManager.VisualStateGroups>
-                <VisualStateGroup Name="MouseStates">
-                    <VisualState Name="MouseOver">
-                        <Storyboard>
-                            <DoubleAnimation
-                                Storyboard.TargetName="hoverToolbar"
-                                Storyboard.TargetProperty="Opacity"
-                                To="1" />
-                        </Storyboard>
-                    </VisualState>
-                    <VisualState Name="MouseLeave">
-                        <!--<Storyboard>
-                            <DoubleAnimation
-                                Storyboard.TargetName="hoverToolbar"
-                                Storyboard.TargetProperty="Opacity"
-                                To="0" />
-                        </Storyboard>-->
-                    </VisualState>
-                    <VisualStateGroup.Transitions>
-                        <VisualTransition GeneratedDuration="00:00:00.5" To="MouseLeave" />
-
-                        <VisualTransition GeneratedDuration="00:00:00.5" To="MouseEnter">
-                            <VisualTransition.GeneratedEasingFunction>
-                                <ExponentialEase EasingMode="EaseOut" Exponent="10" />
-                            </VisualTransition.GeneratedEasingFunction>
-                        </VisualTransition>
-
-                    </VisualStateGroup.Transitions>
-                </VisualStateGroup>
-            </VisualStateManager.VisualStateGroups>
-        </ToolBar>
+            VerticalAlignment="Top">
+            <ui:AppBarButton
+                Click="ZoomToActual_Click"
+                Icon="Fullscreen"
+                Label="Actual Size"
+                LabelPosition="Collapsed" />
+            <ui:AppBarButton
+                Click="ZoomToFit_Click"
+                Icon="ZoomOut"
+                Label="Zoom Out"
+                LabelPosition="Collapsed" />
+            <ui:AppBarButton
+                Click="SaveImage_Click"
+                Icon="Save"
+                Label="Save Image"
+                LabelPosition="Collapsed" />
+        </ui:CommandBar>
     </Grid>
 </UserControl>

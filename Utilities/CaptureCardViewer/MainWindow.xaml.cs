@@ -187,10 +187,10 @@ namespace CaptureCardViewer
 						new Action(() =>
 						{
 							CaptImage.ImageSource = capSrc;
-							PredImage.Source = predSrc;
-							TextBlock.Text = "Refresh Rate: " + refreshRate.ToString() + "\r\n";
-							TextBlock.Text += "Resolution: " + resolution.Height.ToString() + "x" + resolution.Width.ToString() + "\r\n";							
-							TextBlock.Text += "Source pixel format: " + mode.SourcePixelFormat.ToString() + "\r\n";
+							PredImage.ImageSource = predSrc;
+							capturedImageProperties.Text = "Refresh Rate: " + refreshRate.ToString() + "\r\n";
+							capturedImageProperties.Text += "Resolution: " + resolution.Height.ToString() + "x" + resolution.Width.ToString() + "\r\n";
+							capturedImageProperties.Text += "Source pixel format: " + mode.SourcePixelFormat.ToString() + "\r\n";
 
 						}
 						));
@@ -298,6 +298,11 @@ namespace CaptureCardViewer
 			userInput = true;
 
 		}
-		
+
+		[RelayCommand]
+		async void About()
+		{
+			await aboutDialog.ShowAsync();
+		}
 	}
 }
