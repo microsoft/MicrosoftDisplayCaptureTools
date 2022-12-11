@@ -33,17 +33,20 @@
                 Click="ZoomToActual_Click"
                 Icon="Fullscreen"
                 Label="Actual Size"
-                LabelPosition="Collapsed" />
+                LabelPosition="Collapsed"
+                ToolTip="Actual Size" />
             <ui:AppBarButton
                 Click="ZoomToFit_Click"
                 Icon="ZoomOut"
                 Label="Zoom Out"
-                LabelPosition="Collapsed" />
+                LabelPosition="Collapsed"
+                ToolTip="Zoom Out" />
             <ui:AppBarButton
                 Click="SaveImage_Click"
                 Icon="Save"
                 Label="Save Image"
-                LabelPosition="Collapsed" />
+                LabelPosition="Collapsed"
+                ToolTip="Save Image" />
         </ui:CommandBar>
     </Grid>
 </UserControl>

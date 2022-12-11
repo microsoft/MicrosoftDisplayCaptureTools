@@ -14,6 +14,7 @@ using System.Windows;
 using System.Windows.Media;
 using Windows.Devices.Display;
 using Windows.Devices.Display.Core;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using WinRT;
@@ -24,27 +25,61 @@ namespace CaptureCardViewer.ViewModels
 	{
 		public WorkspaceViewModel Workspace { get; }
 
+		/// <summary>
+		/// The capture card used for capturing on the other side of the output.
+		/// </summary>
 		public CaptureCardViewModel CaptureCard { get; }
+				
+		/// <summary>
+		/// The specific input on the capture card that is being captured.
+		/// </summary>
 		public IDisplayInput CaptureInput { get; }
+		public string CaptureInputName => CaptureInput?.Name ?? "None";
+
+		/// <summary>
+		/// The engine used for rendering to the output.
+		/// </summary>
 		public IDisplayEngine Engine { get; }
 
-		[ObservableProperty, AlsoNotifyChangeFor(nameof(SelectedEngineOutputName))]
+		[ObservableProperty]
+		[AlsoNotifyChangeFor(nameof(SelectedEngineOutputName))]
 		IDisplayOutput? selectedEngineOutput;
 		public string SelectedEngineOutputName => SelectedEngineOutput?.Target.StableMonitorId ?? "None";
-		public string Name => CaptureInput.Name;
 
-		public partial class AvailableEngineOutput
+		/// <summary>
+		/// Represents a possible DisplayTarget that can be rendered to.
+		/// </summary>
+		public partial class AvailableEngineOutput : ObservableObject
 		{
 			CaptureSessionViewModel parent;
+			
 			public DisplayMonitor Monitor { get; }
 			public DisplayTarget Target { get; }
-			public string Name => $"{Monitor?.DisplayName} ({Target.StableMonitorId})";
+
+			[ObservableProperty]
+			[AlsoNotifyChangeFor(nameof(Name))]
+			string adapterFriendlyName = "";
+
+			public string Name => $"{Monitor?.DisplayName ?? Target.StableMonitorId} ({Monitor?.PhysicalConnector} port on {AdapterFriendlyName})";
 
 			public AvailableEngineOutput(CaptureSessionViewModel parent, DisplayTarget target)
 			{
 				this.parent = parent;
 				Target = target;
 				Monitor = target.TryGetMonitor();
+
+				InitAsync();
+			}
+
+			async void InitAsync()
+			{
+				var adapterInterface = await DeviceInformation.CreateFromIdAsync(Target.Adapter.DeviceInterfacePath, new[] { "System.Devices.DeviceInstanceId" });
+				var adapterDeviceId = adapterInterface?.Properties["System.Devices.DeviceInstanceId"] as string;
+				if (adapterDeviceId != null)
+				{
+					var adapterDevice = await DeviceInformation.CreateFromIdAsync(adapterDeviceId, new string[] { }, DeviceInformationKind.Device);
+					AdapterFriendlyName = adapterDevice?.Name ?? "";
+				}
 			}
 
 			[ICommand]
@@ -59,7 +94,20 @@ namespace CaptureCardViewer.ViewModels
 
 		ObservableCollection<AvailableEngineOutput> availableEngineOutputs = new();
 		public ReadOnlyObservableCollection<AvailableEngineOutput> AvailableEngineOutputs { get; }
+
+		[ObservableProperty]
+		int framesCaptured = 0;
 		
+		[ObservableProperty]
+		[AlsoNotifyChangeFor(nameof(CanStartLiveCapture))]
+		[AlsoNotifyChangeFor(nameof(CanStopLiveCapture))]
+		[AlsoNotifyChangeFor(nameof(CanSingleFrameCapture))]
+		bool isRunningLiveCapture = false;
+		public bool CanStartLiveCapture => CaptureInput != null && !isRunningLiveCapture;
+		[ObservableProperty]
+		bool canStopLiveCapture = false;
+		public bool CanSingleFrameCapture => CanStartLiveCapture;
+
 		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, CaptureCardViewModel captureCard, IDisplayInput input)
 		{
 			Workspace = workspace;
@@ -84,17 +132,18 @@ namespace CaptureCardViewer.ViewModels
 		[ICommand]
 		async void CaptureSingleFrame()
 		{
+			// TODO: Encapsulate the active tools into a sub-property of this CaptureSessionViewModel
 			//var activeTools = new List<Tool>();
 			//Workspace.Toolboxes.
-			
+
+			var displayOutput = SelectedEngineOutput;
+
 			//Display & Capture of frames 
 			await Task.Run(() =>
 			{
-				//Captured frames from the tanager board 
+				// Captured frames from the tanager board
 				var captureInput = CaptureInput;
 				captureInput.FinalizeDisplayState();
-
-				var displayOutput = Engine.InitializeOutput("DEL41846VTHZ13_1E_07E4_EC");
 
 				//ApplyToolsToEngine(displayOutput);
 
@@ -132,6 +181,18 @@ namespace CaptureCardViewer.ViewModels
 						}
 						));*/
 			});
+		}
+
+		[ICommand]
+		async void StartLiveCapture()
+		{
+			FramesCaptured = 0;
+		}
+
+		[ICommand]
+		async void StopLiveCapture()
+		{
+			
 		}
 
 		private void compareFrames_Click(object sender, RoutedEventArgs e)

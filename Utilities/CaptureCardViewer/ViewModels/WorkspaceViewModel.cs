@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CaptureCardViewer.Mocks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using MicrosoftDisplayCaptureTools.CaptureCard;
@@ -25,6 +26,9 @@ namespace CaptureCardViewer.ViewModels
 		Core testFramework;
 		Dispatcher dispatcher;
 
+		[ObservableProperty]
+		object activeContent;
+
 		public ObservableCollection<ToolboxViewModel> Toolboxes { get; } = new();
 		public ObservableCollection<CaptureCardViewModel> CaptureCards { get; } = new();
 		public ObservableCollection<DisplayEngineViewModel> DisplayEngines { get; } = new();
@@ -40,14 +44,17 @@ namespace CaptureCardViewer.ViewModels
 			var command = this.LoadFromConfigFileCommand;
 
 			Documents.Add(this);
-			Documents.Add(new CaptureSessionViewModel(this, null, null, null));
+
+#if DEBUG
+			CaptureCards.Add(new CaptureCardViewModel(this, new MockController()));
+#endif
 		}
 
 		[ICommand]
 		async void LoadFromConfigFile()
 		{
 			var dialog = new OpenFileDialog(); //file picker
-			dialog.Title = "Load a Capture Plugin";
+			dialog.Title = "Load a Configuration";
 			if (dialog.ShowDialog() == true)
 			{
 				try
@@ -60,24 +67,29 @@ namespace CaptureCardViewer.ViewModels
 
 						// Now that the configuration was successfully loaded, update the view models
 						testFramework = newInstance;
-						CaptureCards.Clear();
-						Toolboxes.Clear();
-
-						testFramework.GetCaptureCards()
-							.Select((card) => new CaptureCardViewModel(card))
-							.ToList()
-							.ForEach((card) => CaptureCards.Add(card));
-
-						testFramework.GetConfigurationToolboxes()
-							.Select((toolbox) => new ToolboxViewModel(toolbox))
-							.ToList()
-							.ForEach((toolbox) => Toolboxes.Add(toolbox));
-
-						testFramework.GetDisplayEngines()
-							.Select((engine) => new DisplayEngineViewModel(engine))
-							.ToList()
-							.ForEach((engine) => DisplayEngines.Add(engine));
 					});
+
+					CaptureCards.Clear();
+					Toolboxes.Clear();
+
+					// For each type of plugin, intialize the view models on a background thread and
+					// then add them to the ObservableCollections on the UI thread
+					
+					(await Task.Run(() => testFramework.GetCaptureCards()
+						.Select((card) => new CaptureCardViewModel(this, card))
+						.ToList()))
+						.ForEach((card) => CaptureCards.Add(card));
+
+					(await Task.Run(() => testFramework.GetConfigurationToolboxes()
+						.Select((toolbox) => new ToolboxViewModel(toolbox))
+						.ToList()))
+						.ForEach((toolbox) => Toolboxes.Add(toolbox));
+
+					(await Task.Run(() => testFramework.GetDisplayEngines()
+						.Select((engine) => new DisplayEngineViewModel(engine))
+						.ToList()))
+						.ForEach((engine) => DisplayEngines.Add(engine));
+
 				}
 				catch (Exception ex)
 				{
@@ -123,10 +135,10 @@ namespace CaptureCardViewer.ViewModels
 				{
 					var filename = dialog.FileName.ToString();
 					CaptureCardViewModel controller = null;
-					
+
 					await Task.Run(() =>
 					{
-						controller = new CaptureCardViewModel(testFramework.LoadCapturePlugin(filename));
+						controller = new CaptureCardViewModel(this, testFramework.LoadCapturePlugin(filename));
 					});
 
 					CaptureCards.Add(controller!);
@@ -213,7 +225,7 @@ namespace CaptureCardViewer.ViewModels
 					tool.Apply(displayOutput);
 				}
 			}
-		}	
+		}
 
 	}
 }

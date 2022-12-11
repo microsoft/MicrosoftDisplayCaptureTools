@@ -20,6 +20,8 @@
 
     <Grid>
         <Grid.Resources>
+            <local:FirmwareUpdateStatusConverter x:Key="FirmwareUpdateStatusConverter" />
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <DataTemplate DataType="{x:Type localvm:CaptureSessionViewModel}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid>
@@ -34,21 +36,34 @@
                             Margin="10"
                             Orientation="Vertical">
 
-                            <WrapPanel Orientation="Horizontal">
-                                <TextBlock Margin="5" VerticalAlignment="Center">
-                                    <Run Text="Connected to: " />
+                            <DockPanel>
+                                <TextBlock
+                                    Margin="5"
+                                    VerticalAlignment="Center"
+                                    DockPanel.Dock="Left">
+                                    <Run Text="Rendering to GPU output: " />
                                     <Run Text="{Binding SelectedEngineOutputName, Mode=OneWay}" />
                                 </TextBlock>
-                                <ui:DropDownButton Content="Connect to">
+                                <ui:DropDownButton
+                                    Margin="20,5"
+                                    Content="Render to..."
+                                    DockPanel.Dock="Right">
                                     <ui:DropDownButton.Flyout>
-                                        <ui:MenuFlyout>
+                                        <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
                                             <ui:MenuFlyout.MenuFlyoutPresenterStyle>
                                                 <Style TargetType="ui:MenuFlyoutPresenter">
                                                     <Setter Property="ItemTemplate">
                                                         <Setter.Value>
                                                             <DataTemplate>
-                                                                <MenuItem Command="{Binding ConnectCommand}" Header="{Binding Name, Mode=OneWay}" />
+                                                                <TextBlock Margin="5" Text="{Binding Name, Mode=OneWay}" />
                                                             </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="ItemContainerStyle">
+                                                        <Setter.Value>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="Command" Value="{Binding ConnectCommand}" />
+                                                            </Style>
                                                         </Setter.Value>
                                                     </Setter>
                                                     <Setter Property="ItemsSource" Value="{Binding AvailableEngineOutputs, Mode=OneWay}" />
@@ -57,12 +72,12 @@
                                         </ui:MenuFlyout>
                                     </ui:DropDownButton.Flyout>
                                 </ui:DropDownButton>
-                            </WrapPanel>
+                            </DockPanel>
 
                             <GroupBox Header="Predicted Image">
                                 <StackPanel Orientation="Vertical">
 
-                                    <localcontrols:ImagePanZoomControl x:Name="PredImage" MinHeight="200" />
+                                    <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding PredictionSource}" />
 
                                 </StackPanel>
                             </GroupBox>
@@ -120,8 +135,10 @@
 
                             <WrapPanel Orientation="Horizontal">
                                 <TextBlock>
-                                    Connected to:<Run Text="{Binding CaptureInput.Name}" />
-                                    on<Run Text="{Binding CaptureCard.Name}" />
+                                    <Run Text="Connected to capture input: " />
+                                    <Run Text="{Binding CaptureInputName, Mode=OneWay}" />
+                                    <Run Text=" on " />
+                                    <Run Text="{Binding CaptureCard.Name, Mode=OneWay}" />
                                 </TextBlock>
                             </WrapPanel>
 
@@ -130,16 +147,25 @@
 
                                     <ui:CommandBarToolBar>
                                         <ui:AppBarButton
-                                            Command="{Binding ViewModel.CaptureSingleFrameCommand}"
+                                            Command="{Binding CaptureSingleFrameCommand}"
                                             Icon="Camera"
+                                            IsEnabled="{Binding CanSingleFrameCapture}"
                                             Label="Single Frame" />
-                                        <ui:AppBarButton Icon="Play" Label="Start" />
-                                        <ui:AppBarButton Icon="Pause" Label="Pause" />
+                                        <ui:AppBarButton
+                                            Command="{Binding StartLiveCaptureCommand}"
+                                            Icon="Play"
+                                            IsEnabled="{Binding CanStartLiveCapture}"
+                                            Label="Start" />
+                                        <ui:AppBarButton
+                                            Command="{Binding StopLiveCaptureCommand}"
+                                            Icon="Pause"
+                                            IsEnabled="{Binding CanStopLiveCapture}"
+                                            Label="Pause" />
                                     </ui:CommandBarToolBar>
 
-                                    <localcontrols:ImagePanZoomControl x:Name="CaptImage" MinHeight="200" />
+                                    <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding CaptureSource}" />
 
-                                    <TextBlock x:Name="capturedImageProperties" />
+                                    <TextBlock Text="{Binding CaptureSourceProperties}" />
 
                                 </StackPanel>
                             </GroupBox>
@@ -189,12 +215,16 @@
         <DockingManager
             x:Name="dockManager"
             Grid.Row="1"
+            ActiveContent="{Binding ActiveContent, Mode=TwoWay}"
             DocumentHeaderTemplateSelector="{StaticResource DocumentTitleSelector}"
             DocumentTitleTemplateSelector="{StaticResource DocumentTitleSelector}"
             DocumentsSource="{Binding ViewModel.Documents}">
             <DockingManager.Theme>
                 <Vs2013DarkTheme />
             </DockingManager.Theme>
+            <DockingManager.LayoutUpdateStrategy>
+                <local:CustomLayoutUpdateStrategy />
+            </DockingManager.LayoutUpdateStrategy>
             <LayoutRoot>
                 <LayoutRoot.LeftSide>
                     <LayoutAnchorSide>
@@ -264,10 +294,58 @@
                                         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                                             <ScrollViewer.Resources>
                                                 <DataTemplate DataType="{x:Type localvm:CaptureCardViewModel}">
-                                                    <TextBlock Text="This is a capture card" />
+                                                    <StackPanel Orientation="Vertical">
+                                                        <TextBlock Margin="5" TextWrapping="Wrap">
+                                                            <Run Text="Name: " />
+                                                            <Run Text="{Binding Name, Mode=OneWay}" />
+                                                            <LineBreak />
+                                                            <Run Text="Plug-in Version: " />
+                                                            <Run Text="{Binding Version, Mode=OneWay}" />
+                                                            <LineBreak />
+                                                            <Run Text="Firmware Version: " />
+                                                            <Run Text="{Binding FirmwareVersion, Mode=OneWay}" />
+                                                            <InlineUIContainer BaselineAlignment="Center">
+                                                                <ui:SymbolIcon
+                                                                    Margin="5,0"
+                                                                    VerticalAlignment="Center"
+                                                                    Foreground="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}"
+                                                                    Symbol="Refresh"
+                                                                    ToolTip="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}"
+                                                                    Visibility="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}" />
+                                                            </InlineUIContainer>
+                                                        </TextBlock>
+                                                        <WrapPanel Orientation="Horizontal">
+                                                            <Button
+                                                                Margin="5"
+                                                                Command="{Binding UpdateFirmwareCommand}"
+                                                                Content="Update Firmware"
+                                                                IsEnabled="{Binding CanUpdateFirmware}"
+                                                                Visibility="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}" />
+                                                            <ui:ProgressRing
+                                                                Width="16"
+                                                                Height="16"
+                                                                Margin="5"
+                                                                IsActive="{Binding IsUpdatingFirmware}" />
+                                                        </WrapPanel>
+                                                    </StackPanel>
                                                 </DataTemplate>
                                                 <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
-                                                    <TextBlock Text="This is an input" />
+                                                    <StackPanel>
+                                                        <TextBlock Margin="5" TextWrapping="Wrap">
+                                                            <Run Text="Name: " />
+                                                            <Run Text="{Binding Name, Mode=OneWay}" />
+                                                            <LineBreak />
+                                                            <Run Text="Max Descriptor Size: " />
+                                                            <Run Text="{Binding MaxDescriptorSize, Mode=OneWay}" />
+                                                            <LineBreak />
+                                                            <Run Text="Capabilities: " />
+                                                            <Run Text="{Binding CapabilitiesString, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                        <Button
+                                                            Margin="5"
+                                                            Command="{Binding CreateCaptureSessionCommand}"
+                                                            Content="Start Capture Session" />
+                                                    </StackPanel>
                                                 </DataTemplate>
                                             </ScrollViewer.Resources>
                                             <ContentControl Content="{Binding ElementName=captureTree, Path=SelectedItem}" />
