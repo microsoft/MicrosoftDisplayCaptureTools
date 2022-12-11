@@ -3,17 +3,12 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using MicrosoftDisplayCaptureTools.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Windows.Media.Converters;
 using System.Windows.Threading;
 
 namespace CaptureCardViewer

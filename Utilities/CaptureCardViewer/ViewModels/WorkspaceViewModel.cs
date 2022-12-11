@@ -2,22 +2,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using MicrosoftDisplayCaptureTools.CaptureCard;
 using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
 using MicrosoftDisplayCaptureTools.Framework;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Threading;
-using Windows.Foundation;
-using Windows.Graphics.Imaging;
-using WinRT;
 
 namespace CaptureCardViewer.ViewModels
 {

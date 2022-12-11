@@ -1,18 +1,14 @@
 ﻿using MicrosoftDisplayCaptureTools.CaptureCard;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
 namespace CaptureCardViewer
 {
-    public class FirmwareUpdateStatusConverter : TypeConverter, IValueConverter
+	public class FirmwareUpdateStatusConverter : TypeConverter, IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
