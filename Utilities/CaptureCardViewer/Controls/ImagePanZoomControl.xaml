@@ -8,14 +8,13 @@
     xmlns:ui="http://schemas.modernwpf.com/2019"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    DataContext="{Binding RelativeSource={RelativeSource Self}}"
     MouseWheel="OnMouseWheel"
     mc:Ignorable="d">
-    <Grid>
+    <Grid DataContext="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:ImagePanZoomControl}}">
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <Image
                 x:Name="imageView"
-                Source="{Binding ImageSource}"
+                Source="{Binding ImageSource, Mode=OneWay}"
                 Stretch="Uniform">
                 <Image.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding ZoomFactor}" ScaleY="{Binding ZoomFactor}" />

@@ -38,6 +38,10 @@ namespace CaptureCardViewer
 			}
 		}
 
+		/// <summary>
+		/// Represents a single log entry for passing to the UI thread to be processed into
+		/// the FlowDocument blocks.
+		/// </summary>
 		record LogEntry(string Message, Color Color, DateTime Time);
 
 		public RichTextLogger()
@@ -52,6 +56,9 @@ namespace CaptureCardViewer
 			entriesChannel = Channel.CreateUnbounded<LogEntry>();
 		}
 
+		/// <summary>
+		/// The log's FlowDocument which is bound to the UI.
+		/// </summary>
 		public FlowDocument Document => document;
 
 		[ICommand]
@@ -100,6 +107,11 @@ namespace CaptureCardViewer
 			}
 			else
 			{
+				// In theory, dispatcher.BeginInvoke should work like a queue, but the ordering may
+				// not be a strict guarantee. To ensure this won't ever be a problem, we use a Channel
+				// to pass the entry to the UI thread and then the UI thread processes Channel entries
+				// in guaranteed sequence.
+
 				entriesChannel.Writer.TryWrite(entry);
 				dispatcher.BeginInvoke(new Action(() =>
 				{
@@ -113,17 +125,17 @@ namespace CaptureCardViewer
 
 		public void LogAssert(string error)
 		{
-			SubmitEntry(new LogEntry("ASSERT: " + error, Colors.OrangeRed, DateTime.Now));
+			SubmitEntry(new LogEntry("ASSERT: " + error, FluentBrushes.PeachBorderActiveColor, DateTime.Now));
 		}
-		
+
 		public void LogConfig(string config)
 		{
-			SubmitEntry(new LogEntry(config, Colors.Blue, DateTime.Now));
+			SubmitEntry(new LogEntry(config, FluentBrushes.BlueBorderActiveColor, DateTime.Now));
 		}
 
 		public void LogError(string error)
 		{
-			SubmitEntry(new LogEntry(error, Colors.Red, DateTime.Now));
+			SubmitEntry(new LogEntry(error, FluentBrushes.CranberryActiveColor, DateTime.Now));
 		}
 
 		public void LogNote(string note)
@@ -133,7 +145,7 @@ namespace CaptureCardViewer
 
 		public void LogWarning(string warning)
 		{
-			SubmitEntry(new LogEntry(warning, Colors.Yellow, DateTime.Now));
+			SubmitEntry(new LogEntry(warning, FluentBrushes.YellowForegroundColor, DateTime.Now));
 		}
 
 		public ILoggerMode LogErrorsAsWarnings()

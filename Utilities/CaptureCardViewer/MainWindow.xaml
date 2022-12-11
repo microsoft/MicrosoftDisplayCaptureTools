@@ -77,7 +77,7 @@
                             <GroupBox Header="Predicted Image">
                                 <StackPanel Orientation="Vertical">
 
-                                    <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding PredictionSource}" />
+                                    <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding PredictionSource, Mode=OneWay}" />
 
                                 </StackPanel>
                             </GroupBox>
@@ -146,6 +146,10 @@
                                 <StackPanel>
 
                                     <ui:CommandBarToolBar>
+                                        <TextBlock Margin="10" VerticalAlignment="Center">
+                                            <Run Text="{Binding FramesCaptured, Mode=OneWay}" />
+                                            <Run Text="frames captured" />
+                                        </TextBlock>
                                         <ui:AppBarButton
                                             Command="{Binding CaptureSingleFrameCommand}"
                                             Icon="Camera"
@@ -163,7 +167,7 @@
                                             Label="Pause" />
                                     </ui:CommandBarToolBar>
 
-                                    <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding CaptureSource}" />
+                                    <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding CaptureSource, Mode=OneWay}" />
 
                                     <TextBlock Text="{Binding CaptureSourceProperties}" />
 

@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Windows.Devices.Display;
 using Windows.Devices.Display.Core;
 using Windows.Devices.Enumeration;
@@ -89,8 +90,10 @@ namespace CaptureCardViewer.ViewModels
 			}
 		}
 
-		public ImageSource? PredictionSource { get; }
-		public ImageSource? CaptureSource { get; }
+		[ObservableProperty]
+		ImageSource? predictionSource;
+		[ObservableProperty]
+		ImageSource? captureSource;
 
 		ObservableCollection<AvailableEngineOutput> availableEngineOutputs = new();
 		public ReadOnlyObservableCollection<AvailableEngineOutput> AvailableEngineOutputs { get; }
@@ -98,11 +101,15 @@ namespace CaptureCardViewer.ViewModels
 		[ObservableProperty]
 		int framesCaptured = 0;
 		
+		/// <summary>
+		/// The live capture async task sets this to trigger the UI to update.
+		/// </summary>
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanStartLiveCapture))]
 		[AlsoNotifyChangeFor(nameof(CanStopLiveCapture))]
 		[AlsoNotifyChangeFor(nameof(CanSingleFrameCapture))]
 		bool isRunningLiveCapture = false;
+
 		public bool CanStartLiveCapture => CaptureInput != null && !isRunningLiveCapture;
 		[ObservableProperty]
 		bool canStopLiveCapture = false;
@@ -138,6 +145,8 @@ namespace CaptureCardViewer.ViewModels
 
 			var displayOutput = SelectedEngineOutput;
 
+			BitmapSource? capturedBitmap = null;
+
 			//Display & Capture of frames 
 			await Task.Run(() =>
 			{
@@ -145,28 +154,9 @@ namespace CaptureCardViewer.ViewModels
 				var captureInput = CaptureInput;
 				captureInput.FinalizeDisplayState();
 
-				//ApplyToolsToEngine(displayOutput);
-
-				var renderer = displayOutput.StartRender();
-				Thread.Sleep(5000);
-
 				var capturedFrame = captureInput.CaptureFrame();
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
-				var capSrc = BufferToImgConv(capPixelBuffer);
-
-				//Get the framework's properties
-				var prop = displayOutput.GetProperties();
-				var mode = prop.ActiveMode;
-				var resolution = prop.Resolution;
-				var refreshRate = prop.RefreshRate;
-
-				renderer.Dispose();
-				var prediction = displayOutput.GetPrediction();
-				var bitmap = prediction.GetBitmap();
-
-				var bmpBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
-				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
-				var predSrc = BufferToImgConv(predPixelBuffer);
+				capturedBitmap = BufferToImgConv(capPixelBuffer);
 
 				//Updating the UI by queuing up an operation on the UI thread
 				/*this.dispatcher.Invoke(
@@ -181,6 +171,9 @@ namespace CaptureCardViewer.ViewModels
 						}
 						));*/
 			});
+
+			CaptureSource = capturedBitmap;
+			FramesCaptured += 1;
 		}
 
 		[ICommand]
@@ -192,7 +185,31 @@ namespace CaptureCardViewer.ViewModels
 		[ICommand]
 		async void StopLiveCapture()
 		{
+			IsRunningLiveCapture = false;
+		}
+
+		async void RenderToOutput()
+		{
+			var displayOutput = SelectedEngineOutput;
 			
+			//ApplyToolsToEngine(displayOutput);
+
+			using (var renderer = displayOutput.StartRender())
+			{
+				//Get the framework's properties
+				var prop = displayOutput.GetProperties();
+				var mode = prop.ActiveMode;
+				var resolution = prop.Resolution;
+				var refreshRate = prop.RefreshRate;
+
+				var prediction = displayOutput.GetPrediction();
+				var predictionBitmap = prediction.GetBitmap();
+
+				var bmpBuffer = predictionBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
+				IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference();
+				var predSrc = BufferToImgConv(predPixelBuffer);
+
+			}
 		}
 
 		private void compareFrames_Click(object sender, RoutedEventArgs e)
