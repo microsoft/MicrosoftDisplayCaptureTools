@@ -57,7 +57,7 @@ namespace CaptureCardViewer.Controls
 			if (bitmap != null)
 			{
 				var saveDialog = new SaveFileDialog();
-				saveDialog.Filter = "PNG Files (*.png)";
+				saveDialog.Filter = "PNG Files (*.png)|*.png";
 				if (saveDialog.ShowDialog() ?? false)
 				{
 					try
