@@ -137,7 +137,7 @@
                                 <TextBlock>
                                     <Run Text="Connected to capture input: " />
                                     <Run Text="{Binding CaptureInputName, Mode=OneWay}" />
-                                    <Run Text=" on " />
+                                    <Run Text="on" />
                                     <Run Text="{Binding CaptureCard.Name, Mode=OneWay}" />
                                 </TextBlock>
                             </WrapPanel>
@@ -349,6 +349,20 @@
                                                             Margin="5"
                                                             Command="{Binding CreateCaptureSessionCommand}"
                                                             Content="Start Capture Session" />
+                                                        <ui:DropDownButton
+                                                            Margin="5"
+                                                            Content="Load Descriptor"
+                                                            Visibility="{Binding CanConfigureEDID, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                            <ui:DropDownButton.Flyout>
+                                                                <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                                                    <MenuItem Command="{Binding SetDescriptorFromFileCommand}" Header="From file...">
+                                                                        <MenuItem.Icon>
+                                                                            <ui:SymbolIcon Symbol="OpenFile" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                </ui:MenuFlyout>
+                                                            </ui:DropDownButton.Flyout>
+                                                        </ui:DropDownButton>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ScrollViewer.Resources>
@@ -499,7 +513,10 @@
             DefaultButton="Close">
             <StackPanel Orientation="Vertical">
                 <TextBlock FontSize="15" Text="Microsoft Display Capture Tools" />
-                <TextBlock Margin="0,0,0,10" Text="Frame Debugger" />
+                <TextBlock Margin="0,0,0,10">
+                    <Run Text="Frame Debugger" />
+                    <Run Text="{Binding ViewModel.AppVersion, Mode=OneWay}" />
+                </TextBlock>
                 <TextBlock Text="Copyright ©️ Microsoft Corporation" />
             </StackPanel>
         </ui:ContentDialog>

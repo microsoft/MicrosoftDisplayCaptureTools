@@ -4,6 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using System.Windows;
+using Microsoft.Win32;
+using MicrosoftDisplayCaptureTools.Framework;
+using System;
+using System.IO;
+using System.Text;
 
 namespace CaptureCardViewer.ViewModels
 {
@@ -59,6 +64,56 @@ namespace CaptureCardViewer.ViewModels
 			// TODO: Allow selecting a specific render engine
 			var newSession = new CaptureSessionViewModel(Workspace, Workspace.DisplayEngines.First().Engine, CaptureCard, Input);
 			Workspace.Documents.Add(newSession);
+		}
+
+		[ICommand]
+		void SetDescriptorFromFile()
+		{
+			var openDialog = new OpenFileDialog();
+			openDialog.Filter = "ASCII Hex Files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
+			if (openDialog.ShowDialog() == true)
+			{
+				try
+				{
+					byte[] descriptorData;
+					
+					if (openDialog.FilterIndex == 0)
+					{
+						// ASCII Hex
+						var text = new StringBuilder(File.ReadAllText(openDialog.FileName));
+						text.Replace("0x", null);
+						text.Replace("0X", null);
+						text.Replace(" ", null);
+						text.Replace(",", null);
+						text.Replace("\r", null);
+						text.Replace("\n", null);
+
+						if (text.Length % 2 != 0)
+							throw new FormatException("The text file may contain only hex numbers and optionally commas, spaces, and 0x prefixes");
+						
+						List<byte> bytes = new();
+						foreach (var byteChars in text.ToString().Chunk(2))
+						{
+							bytes.Add(byte.Parse(byteChars, System.Globalization.NumberStyles.HexNumber));
+						}
+						descriptorData = bytes.ToArray();
+					}
+					else
+					{
+						// Binary
+						descriptorData = File.ReadAllBytes(openDialog.FileName);
+					}
+					
+					//IMonitorDescriptor descriptor;
+					//Input.SetDescriptor(descriptor);
+
+					throw new Exception("This feature isn't implemented yet. We need a constructible RuntimeClass for IMonitorDescriptor.");
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show("Failed to load monitor descriptor.\r\n" + ex.Message);
+				}
+			}
 		}
 	}
 }

@@ -8,6 +8,7 @@ using MicrosoftDisplayCaptureTools.Framework;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -21,6 +22,9 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		object activeContent;
+
+		public Core Framework => testFramework;
+		public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version!.ToString();
 
 		public ObservableCollection<ToolboxViewModel> Toolboxes { get; } = new();
 		public ObservableCollection<CaptureCardViewModel> CaptureCards { get; } = new();
@@ -38,9 +42,54 @@ namespace CaptureCardViewer.ViewModels
 
 			Documents.Add(this);
 
+			// Start the discovery async
+			DiscoverInstalledPlugins();
+		}
+
+		public async Task DiscoverInstalledPlugins()
+		{
+			await Task.Run(() =>
+			{
+				testFramework.DiscoverInstalledPlugins();
+			});
+
+			try
+			{
+				await RefreshAllPlugins();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show("Failed to load discovered plugins.\r\n" + ex.Message);
+			}
+			
 #if DEBUG
+			// Add a mock controller for UI testing
 			CaptureCards.Add(new CaptureCardViewModel(this, new MockController()));
 #endif
+		}
+
+		private async Task RefreshAllPlugins()
+		{
+			CaptureCards.Clear();
+			Toolboxes.Clear();
+
+			// For each type of plugin, intialize the view models on a background thread and
+			// then add them to the ObservableCollections on the UI thread
+
+			(await Task.Run(() => testFramework.GetCaptureCards()?
+				.Select((card) => new CaptureCardViewModel(this, card))?
+				.ToList()))?
+				.ForEach((card) => CaptureCards.Add(card));
+
+			(await Task.Run(() => testFramework.GetConfigurationToolboxes()?
+				.Select((toolbox) => new ToolboxViewModel(toolbox))?
+				.ToList()))?
+				.ForEach((toolbox) => Toolboxes.Add(toolbox));
+
+			(await Task.Run(() => testFramework.GetDisplayEngines()?
+				.Select((engine) => new DisplayEngineViewModel(engine))?
+				.ToList()))?
+				.ForEach((engine) => DisplayEngines.Add(engine));
 		}
 
 		[ICommand]
@@ -62,27 +111,7 @@ namespace CaptureCardViewer.ViewModels
 						testFramework = newInstance;
 					});
 
-					CaptureCards.Clear();
-					Toolboxes.Clear();
-
-					// For each type of plugin, intialize the view models on a background thread and
-					// then add them to the ObservableCollections on the UI thread
-					
-					(await Task.Run(() => testFramework.GetCaptureCards()
-						.Select((card) => new CaptureCardViewModel(this, card))
-						.ToList()))
-						.ForEach((card) => CaptureCards.Add(card));
-
-					(await Task.Run(() => testFramework.GetConfigurationToolboxes()
-						.Select((toolbox) => new ToolboxViewModel(toolbox))
-						.ToList()))
-						.ForEach((toolbox) => Toolboxes.Add(toolbox));
-
-					(await Task.Run(() => testFramework.GetDisplayEngines()
-						.Select((engine) => new DisplayEngineViewModel(engine))
-						.ToList()))
-						.ForEach((engine) => DisplayEngines.Add(engine));
-
+					await RefreshAllPlugins();
 				}
 				catch (Exception ex)
 				{
@@ -93,7 +122,7 @@ namespace CaptureCardViewer.ViewModels
 
 		// Loading Display Manager file
 		[ICommand]
-		async void LoadDisplayEngineFromFile()
+		async Task LoadDisplayEngineFromFile()
 		{
 			var dialog = new OpenFileDialog(); //file picker
 			dialog.Title = "Load Display Engine file";
@@ -118,7 +147,7 @@ namespace CaptureCardViewer.ViewModels
 
 		// Loading Capture Plugin file
 		[ICommand]
-		async void LoadCaptureCardFromFile()
+		async Task LoadCaptureCardFromFile()
 		{
 			var dialog = new OpenFileDialog();
 			dialog.Title = "Load Capture Plugin file";
@@ -146,7 +175,7 @@ namespace CaptureCardViewer.ViewModels
 
 		// Loading Toolbox file
 		[ICommand]
-		async void LoadToolboxFromFile()
+		async Task LoadToolboxFromFile()
 		{
 			var dialog = new OpenFileDialog();
 			dialog.Title = "Load Toolbox file";
