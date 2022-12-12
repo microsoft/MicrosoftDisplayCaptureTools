@@ -19,6 +19,7 @@
 
     <DockPanel LastChildFill="True">
 
+        <!--  Toolbar at the top of the pane  -->
         <ui:CommandBarToolBar DockPanel.Dock="Top">
             <ui:AppBarButton
                 Icon="OpenFile"
@@ -39,6 +40,7 @@
                 Label="Clear" />
         </ui:CommandBarToolBar>
 
+        <!--  Split the main part of the pane into two halves separated by a GridSplitter  -->
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition />
@@ -46,6 +48,7 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
 
+            <!--  TreeView and its data templates  -->
             <Border Grid.Row="0">
                 <Border.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type localvm:CaptureCardViewModel}" ItemsSource="{Binding Inputs}">
@@ -72,6 +75,8 @@
 
             <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                 <ScrollViewer.Resources>
+
+                    <!--  Template for IController capture cards  -->
                     <DataTemplate DataType="{x:Type localvm:CaptureCardViewModel}">
                         <StackPanel Orientation="Vertical">
                             <TextBlock Margin="5" TextWrapping="Wrap">
@@ -108,6 +113,8 @@
                             </WrapPanel>
                         </StackPanel>
                     </DataTemplate>
+
+                    <!--  Template for individual IDisplayInputs  -->
                     <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
                         <StackPanel>
                             <TextBlock Margin="5" TextWrapping="Wrap">
@@ -141,6 +148,8 @@
                         </StackPanel>
                     </DataTemplate>
                 </ScrollViewer.Resources>
+
+                <!--  Automatically picks the template above based on the TreeView selection  -->
                 <ContentControl Content="{Binding ElementName=captureTree, Path=SelectedItem}" />
             </ScrollViewer>
         </Grid>

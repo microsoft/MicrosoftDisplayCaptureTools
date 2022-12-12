@@ -65,6 +65,7 @@
             </MenuItem>
         </Menu>
 
+        <!--  The DockingManager handles the layout of documents, docked and anchored panels, etc.  -->
         <DockingManager
             x:Name="dockManager"
             Grid.Row="1"
@@ -160,7 +161,7 @@
             </LayoutRoot>
         </DockingManager>
 
-
+        <!--  About box  -->
         <ui:ContentDialog
             x:Name="aboutDialog"
             Grid.RowSpan="2"
