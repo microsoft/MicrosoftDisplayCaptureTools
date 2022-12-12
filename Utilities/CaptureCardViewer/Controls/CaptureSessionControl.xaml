@@ -1,0 +1,171 @@
+﻿<UserControl
+    x:Class="CaptureCardViewer.Controls.CaptureSessionControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:CaptureCardViewer"
+    xmlns:localcontrols="clr-namespace:CaptureCardViewer.Controls"
+    xmlns:localvm="clr-namespace:CaptureCardViewer.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <UserControl.Resources />
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel
+                x:Name="SPanel"
+                Grid.Column="0"
+                Margin="10"
+                Orientation="Vertical">
+
+                <DockPanel>
+                    <TextBlock
+                        Margin="5"
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left">
+                        <Run Text="Rendering to GPU output: " />
+                        <Run Text="{Binding SelectedEngineOutputName, Mode=OneWay}" />
+                    </TextBlock>
+                    <ui:DropDownButton
+                        Margin="20,5"
+                        Content="Render to..."
+                        DockPanel.Dock="Right">
+                        <ui:DropDownButton.Flyout>
+                            <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <ui:MenuFlyout.MenuFlyoutPresenterStyle>
+                                    <Style TargetType="ui:MenuFlyoutPresenter">
+                                        <Setter Property="ItemTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate>
+                                                    <TextBlock Margin="5" Text="{Binding Name, Mode=OneWay}" />
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="ItemContainerStyle">
+                                            <Setter.Value>
+                                                <Style TargetType="MenuItem">
+                                                    <Setter Property="Command" Value="{Binding ConnectCommand}" />
+                                                </Style>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="ItemsSource" Value="{Binding AvailableEngineOutputs, Mode=OneWay}" />
+                                    </Style>
+                                </ui:MenuFlyout.MenuFlyoutPresenterStyle>
+                            </ui:MenuFlyout>
+                        </ui:DropDownButton.Flyout>
+                    </ui:DropDownButton>
+                </DockPanel>
+
+                <GroupBox Header="Predicted Image">
+                    <StackPanel Orientation="Vertical">
+
+                        <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding PredictionSource, Mode=OneWay}" />
+
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Configuration">
+
+                    <ui:ItemsRepeater ItemsSource="{Binding Workspace.Toolboxes}">
+                        <ui:ItemsRepeater.ItemTemplate>
+                            <DataTemplate DataType="localvm:ToolboxViewModel">
+                                <Expander Header="{Binding Name}" IsExpanded="True">
+                                    <ui:ItemsRepeater ItemsSource="{Binding ActiveTools}">
+                                        <ui:ItemsRepeater.ItemTemplate>
+                                            <DataTemplate DataType="localvm:ToolViewModel">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Label
+                                                        Margin="3"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center">
+                                                        <TextBlock>
+                                                            <Run Text="{Binding Name, Mode=OneWay}" />
+                                                            <Run Text=":" />
+                                                        </TextBlock>
+                                                    </Label>
+
+                                                    <ComboBox
+                                                        Grid.Column="1"
+                                                        Margin="3"
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Center"
+                                                        ItemsSource="{Binding AvailableValues, Mode=OneWay}"
+                                                        SelectedItem="{Binding Value}" />
+
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ui:ItemsRepeater.ItemTemplate>
+                                    </ui:ItemsRepeater>
+                                </Expander>
+                            </DataTemplate>
+                        </ui:ItemsRepeater.ItemTemplate>
+                    </ui:ItemsRepeater>
+
+                </GroupBox>
+
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="1"
+                Margin="10"
+                Orientation="Vertical">
+
+                <WrapPanel Orientation="Horizontal">
+                    <TextBlock>
+                        <Run Text="Connected to capture input: " />
+                        <Run Text="{Binding CaptureInputName, Mode=OneWay}" />
+                        <Run Text="on" />
+                        <Run Text="{Binding CaptureCard.Name, Mode=OneWay}" />
+                    </TextBlock>
+                </WrapPanel>
+
+                <GroupBox Header="Captured Image">
+                    <StackPanel>
+
+                        <ui:CommandBarToolBar>
+                            <TextBlock Margin="10" VerticalAlignment="Center">
+                                <Run Text="{Binding FramesCaptured, Mode=OneWay}" />
+                                <Run Text="frames captured" />
+                            </TextBlock>
+                            <ui:AppBarButton
+                                Command="{Binding CaptureSingleFrameCommand}"
+                                Icon="Camera"
+                                IsEnabled="{Binding CanSingleFrameCapture}"
+                                Label="Single Frame" />
+                            <ui:AppBarButton
+                                Command="{Binding StartLiveCaptureCommand}"
+                                Icon="Play"
+                                IsEnabled="{Binding CanStartLiveCapture}"
+                                Label="Start" />
+                            <ui:AppBarButton
+                                Command="{Binding StopLiveCaptureCommand}"
+                                Icon="Pause"
+                                IsEnabled="{Binding CanStopLiveCapture}"
+                                Label="Pause" />
+                        </ui:CommandBarToolBar>
+
+                        <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding CaptureSource, Mode=OneWay}" />
+
+                        <TextBlock Text="{Binding CaptureSourceProperties}" />
+
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+
+        </Grid>
+    </ScrollViewer>
+</UserControl>
