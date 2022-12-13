@@ -12,61 +12,80 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <UserControl.Resources />
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <DockPanel
+                Grid.Row="0"
+                Grid.Column="0"
+                Margin="10,5"
+                VerticalAlignment="Center">
+                <TextBlock
+                    Margin="5"
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Left">
+                    <Run Text="Rendering to GPU output: " />
+                    <Run Text="{Binding SelectedEngineOutputName, Mode=OneWay}" />
+                </TextBlock>
+                <ui:DropDownButton
+                    Margin="20,5"
+                    Content="Render to..."
+                    DockPanel.Dock="Right">
+                    <ui:DropDownButton.Flyout>
+                        <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
+                            <ui:MenuFlyout.MenuFlyoutPresenterStyle>
+                                <Style TargetType="ui:MenuFlyoutPresenter">
+                                    <Setter Property="ItemTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Margin="5" Text="{Binding Name, Mode=OneWay}" />
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="ItemContainerStyle">
+                                        <Setter.Value>
+                                            <Style TargetType="MenuItem">
+                                                <Setter Property="Command" Value="{Binding ConnectCommand}" />
+                                            </Style>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="ItemsSource" Value="{Binding AvailableEngineOutputs, Mode=OneWay}" />
+                                </Style>
+                            </ui:MenuFlyout.MenuFlyoutPresenterStyle>
+                        </ui:MenuFlyout>
+                    </ui:DropDownButton.Flyout>
+                </ui:DropDownButton>
+            </DockPanel>
 
             <StackPanel
                 x:Name="SPanel"
+                Grid.Row="1"
                 Grid.Column="0"
                 Margin="10"
                 Orientation="Vertical">
 
-                <DockPanel>
-                    <TextBlock
-                        Margin="5"
-                        VerticalAlignment="Center"
-                        DockPanel.Dock="Left">
-                        <Run Text="Rendering to GPU output: " />
-                        <Run Text="{Binding SelectedEngineOutputName, Mode=OneWay}" />
-                    </TextBlock>
-                    <ui:DropDownButton
-                        Margin="20,5"
-                        Content="Render to..."
-                        DockPanel.Dock="Right">
-                        <ui:DropDownButton.Flyout>
-                            <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
-                                <ui:MenuFlyout.MenuFlyoutPresenterStyle>
-                                    <Style TargetType="ui:MenuFlyoutPresenter">
-                                        <Setter Property="ItemTemplate">
-                                            <Setter.Value>
-                                                <DataTemplate>
-                                                    <TextBlock Margin="5" Text="{Binding Name, Mode=OneWay}" />
-                                                </DataTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Setter Property="ItemContainerStyle">
-                                            <Setter.Value>
-                                                <Style TargetType="MenuItem">
-                                                    <Setter Property="Command" Value="{Binding ConnectCommand}" />
-                                                </Style>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Setter Property="ItemsSource" Value="{Binding AvailableEngineOutputs, Mode=OneWay}" />
-                                    </Style>
-                                </ui:MenuFlyout.MenuFlyoutPresenterStyle>
-                            </ui:MenuFlyout>
-                        </ui:DropDownButton.Flyout>
-                    </ui:DropDownButton>
-                </DockPanel>
-
                 <GroupBox Header="Predicted Image">
                     <StackPanel Orientation="Vertical">
+
+                        <ui:CommandBarToolBar>
+                            <ui:AppBarButton
+                                Command="{Binding RenderToOutputCommand}"
+                                Icon="SetLockScreen"
+                                Label="Render" />
+                        </ui:CommandBarToolBar>
 
                         <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding PredictionSource, Mode=OneWay}" />
 
@@ -119,19 +138,80 @@
 
             </StackPanel>
 
+            <!--  Compare frames (center column)  -->
             <StackPanel
+                Grid.Row="1"
                 Grid.Column="1"
-                Margin="10"
+                Margin="0,100,0,0"
                 Orientation="Vertical">
 
-                <WrapPanel Orientation="Horizontal">
-                    <TextBlock>
-                        <Run Text="Connected to capture input: " />
-                        <Run Text="{Binding CaptureInputName, Mode=OneWay}" />
-                        <Run Text="on" />
-                        <Run Text="{Binding CaptureCard.Name, Mode=OneWay}" />
-                    </TextBlock>
-                </WrapPanel>
+                <Button
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    Command="{Binding CompareCaptureCommand}"
+                    IsEnabled="{Binding CanCompare}">
+                    <StackPanel Orientation="Vertical">
+                        <ui:SymbolIcon Margin="3" Symbol="Switch" />
+                        <TextBlock Text="Compare" />
+                    </StackPanel>
+                </Button>
+
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Visibility="{Binding IsComparisonPassed, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:SymbolIcon
+                        Margin="5"
+                        Foreground="{x:Static local:FluentBrushes.LightGreenForeground1}"
+                        Symbol="Accept" />
+                    <TextBlock
+                        Margin="5"
+                        VerticalAlignment="Center"
+                        Foreground="{x:Static local:FluentBrushes.LightGreenForeground1}"
+                        Text="Pass" />
+                </StackPanel>
+
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Visibility="{Binding IsComparisonFailed, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:SymbolIcon
+                        Margin="5"
+                        Foreground="{x:Static local:FluentBrushes.CranberryActive}"
+                        Symbol="Cancel" />
+                    <TextBlock
+                        Margin="5"
+                        VerticalAlignment="Center"
+                        Foreground="{x:Static local:FluentBrushes.CranberryActive}"
+                        Text="Fail" />
+                </StackPanel>
+
+                <ui:HyperlinkButton
+                    HorizontalAlignment="Center"
+                    Content="More details"
+                    Visibility="{Binding IsComparisonDetailsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
+
+            <WrapPanel
+                Grid.Row="0"
+                Grid.Column="2"
+                Margin="10,5"
+                VerticalAlignment="Center"
+                Orientation="Horizontal">
+                <TextBlock>
+                    <Run Text="Connected to capture input: " />
+                    <Run Text="{Binding CaptureInputName, Mode=OneWay}" />
+                    <Run Text="on" />
+                    <Run Text="{Binding CaptureCard.Name, Mode=OneWay}" />
+                </TextBlock>
+            </WrapPanel>
+
+            <!--  Captured image (right hand side)  -->
+            <StackPanel
+                Grid.Row="1"
+                Grid.Column="2"
+                Margin="10"
+                Orientation="Vertical">
 
                 <GroupBox Header="Captured Image">
                     <StackPanel>
