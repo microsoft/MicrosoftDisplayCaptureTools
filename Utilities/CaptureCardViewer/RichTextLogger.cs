@@ -74,7 +74,7 @@ namespace CaptureCardViewer
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Failed to save log file:\r\n" + ex.Message);
+					ModernWpf.MessageBox.Show("Failed to save log file:\r\n" + ex.Message);
 				}
 			}
 		}

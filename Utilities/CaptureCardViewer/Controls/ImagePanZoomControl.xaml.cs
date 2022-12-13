@@ -70,7 +70,7 @@ namespace CaptureCardViewer.Controls
 					}
 					catch (Exception ex)
 					{
-						MessageBox.Show("Failed to save image.\r\n" + ex.Message);
+						ModernWpf.MessageBox.Show("Failed to save image.\r\n" + ex.Message);
 					}
 				}
 			}

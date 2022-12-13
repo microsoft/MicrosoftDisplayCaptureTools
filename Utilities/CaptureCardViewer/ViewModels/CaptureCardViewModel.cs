@@ -81,7 +81,7 @@ namespace CaptureCardViewer.ViewModels
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show("Failed to update firmware.\r\n" + ex.Message);
+				ModernWpf.MessageBox.Show("Failed to update firmware.\r\n" + ex.Message);
 			}
 
 			IsUpdatingFirmware = false;

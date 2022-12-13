@@ -57,7 +57,7 @@ namespace CaptureCardViewer.ViewModels
 		{
 			if (Workspace.DisplayEngines.Count == 0)
 			{
-				MessageBox.Show("You must load at least one Render Engine before creating a capture session.");
+				ModernWpf.MessageBox.Show("You must load at least one Render Engine before creating a capture session.");
 				return;
 			}
 
@@ -111,7 +111,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Failed to load monitor descriptor.\r\n" + ex.Message);
+					ModernWpf.MessageBox.Show("Failed to load monitor descriptor.\r\n" + ex.Message);
 				}
 			}
 		}

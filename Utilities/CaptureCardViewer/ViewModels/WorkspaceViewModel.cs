@@ -59,7 +59,7 @@ namespace CaptureCardViewer.ViewModels
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show("Failed to load discovered plugins.\r\n" + ex.Message);
+				ModernWpf.MessageBox.Show("Failed to load discovered plugins.\r\n" + ex.Message);
 			}
 			
 #if DEBUG
@@ -115,7 +115,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Failed to load configuration.\r\n" + ex.Message);
+					ModernWpf.MessageBox.Show("Failed to load configuration.\r\n" + ex.Message);
 				}
 			}
 		}
@@ -140,7 +140,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Failed to load the display engine.\r\n" + ex.Message);
+					ModernWpf.MessageBox.Show("Failed to load the display engine.\r\n" + ex.Message);
 				}
 			}
 		}
@@ -167,7 +167,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Failed to load the capture plugin.\r\n" + ex.Message);
+					ModernWpf.MessageBox.Show("Failed to load the capture plugin.\r\n" + ex.Message);
 				}
 
 			}
@@ -193,7 +193,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Failed to load the toolbox.\r\n" + ex.Message);
+					ModernWpf.MessageBox.Show("Failed to load the toolbox.\r\n" + ex.Message);
 				}
 			}
 		}
