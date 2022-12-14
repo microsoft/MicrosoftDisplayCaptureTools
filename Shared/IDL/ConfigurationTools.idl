@@ -107,7 +107,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //      target
         //          This identifies the Windows display path for the target output.
         //
-        void Apply(MicrosoftDisplayCaptureTools.Display.IDisplayEngine reference);
+        void Apply(MicrosoftDisplayCaptureTools.Display.IDisplayOutput reference);
     }
 
     //

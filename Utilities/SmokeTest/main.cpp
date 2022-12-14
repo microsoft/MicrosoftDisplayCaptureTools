@@ -26,8 +26,7 @@ int main()
     winrt::init_apartment();
 
     // Load the framework
-    auto core = winrt::Libraries::LoadInterfaceFromPath<winrt::Framework::ICore>(
-        L"Core\\Core.dll", L"MicrosoftDisplayCaptureTools.Framework.Core");
+    auto core = winrt::Framework::Core();
 
     switch (currentScenario)
     {
@@ -39,14 +38,14 @@ int main()
             // Specify the capture card plugin
             auto capturePlugin = winrt::JsonObject::JsonObject();
             capturePlugin.Insert(L"Path", winrt::JsonValue::CreateStringValue(L"GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll"));
-            capturePlugin.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"GenericCaptureCardPlugin.Plugin"));
+            capturePlugin.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"GenericCaptureCardPlugin.ControllerFactory"));
             capturePlugin.Insert(L"Settings", winrt::JsonValue::CreateNullValue());
             testComponents.Insert(L"CapturePlugin", capturePlugin);
 
             // Specify the DisplayEngine to load
             auto displayEngine = winrt::JsonObject::JsonObject();
             displayEngine.Insert(L"Path", winrt::JsonValue::CreateStringValue(L"BasicDisplayControl\\BasicDisplayControl.dll"));
-            displayEngine.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"DisplayControl.DisplayEngine"));
+            displayEngine.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"DisplayControl.DisplayEngineFactory"));
             displayEngine.Insert(L"Settings", winrt::JsonValue::CreateNullValue());
             testComponents.Insert(L"DisplayEngine", displayEngine);
 
@@ -54,7 +53,7 @@ int main()
             auto configToolboxArray = winrt::JsonArray::JsonArray();
             auto configToolbox = winrt::JsonObject::JsonObject();
             configToolbox.Insert(L"Path", winrt::JsonValue::CreateStringValue(L"BasicDisplayConfiguration\\BasicDisplayConfiguration.dll"));
-            configToolbox.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"DisplayConfiguration.Toolbox"));
+            configToolbox.Insert(L"Class", winrt::JsonValue::CreateStringValue(L"DisplayConfiguration.ToolboxFactory"));
             configToolbox.Insert(L"Settings", winrt::JsonValue::CreateNullValue());
             configToolboxArray.Append(configToolbox);
             testComponents.Insert(L"ConfigurationToolboxes", configToolboxArray);
@@ -76,68 +75,23 @@ int main()
     case Scenario::DirectSet: // Directly specify to the framework the components to use.
         {
             // Tell the framework to load the components.
-            core.LoadPlugin(L"GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll", L"GenericCaptureCardPlugin.Plugin");
-            core.LoadToolbox(L"BasicDisplayConfiguration\\BasicDisplayConfiguration.dll", L"DisplayConfiguration.Toolbox");
-            core.LoadDisplayManager(L"BasicDisplayControl\\BasicDisplayControl.dll", L"DisplayControl.DisplayEngine");
+            core.LoadCapturePlugin(L"GenericCaptureCardPlugin\\GenericCaptureCardPlugin.dll", L"GenericCaptureCardPlugin.ControllerFactory");
+            core.LoadToolbox(L"BasicDisplayConfiguration\\BasicDisplayConfiguration.dll", L"BasicDisplayConfiguration.ToolboxFactory");
+            core.LoadDisplayManager(L"BasicDisplayControl\\BasicDisplayControl.dll", L"DisplayControl.DisplayEngineFactory");
         }
         break;
     }
 
-    // Set up the capture card and get the first input from it.
-    auto genericCapture = core.GetCaptureCard();
-
-    // In this 'smoketest' project, we expect the first enumerated input to match the one indicated by the config file.
-    auto captureInput = genericCapture.EnumerateDisplayInputs()[0];
+    // If the engine does not already have a display target (loaded from the config file), ask
+    // the user to specify one
+    auto mappings = core.GetSourceToSinkMappings(true);
+    winrt::Framework::ISourceToSinkMapping displayMapping = mappings.Size() > 0 ? mappings.GetAt(0) :nullptr;
 
     // Tell the capture card to finalize any state on this input. After this call returns the display should be
     // visible to windows and ready for output.
-    captureInput.FinalizeDisplayState();
+    displayMapping.GetSink().FinalizeDisplayState();
 
-    // If the engine does not already have a display target (loaded from the config file), ask
-    // the user to specify one
-    auto displayEngine = core.GetDisplayEngine();
-    if (!displayEngine.GetTarget())
-    {
-        // Ask the user to indicate the display to use.
-        std::wcout << "Connected Displays:\n";
-        int index = 0;
-        auto manager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
-        auto allTargets = manager.GetCurrentTargets();
-        auto connectedTargets = winrt::single_threaded_map<int32_t, winrt::DisplayTarget>();
-
-        for (auto&& target : allTargets)
-        {
-            if (target.IsConnected())
-            {
-                connectedTargets.Insert(index++, target);
-            }
-        }
-
-        for (auto&& target : connectedTargets)
-        {
-            std::wcout << L"\t" << target.Key() + 1 << L". " << target.Value().StableMonitorId().c_str() << std::endl;
-        }
-
-        int selection = -1;
-        while (1)
-        {
-            std::wcout << L"\n Enter a display selection: ";
-            std::cin >> selection;
-            (void)getchar(); // eat the newline
-
-            if (connectedTargets.HasKey(selection - 1)) break;
-            else
-            {
-                std::wcout << L"\nInvalid choice: " << selection << std::endl;
-            }
-        }
-
-        std::wcout << "\nChosen Display: " << connectedTargets.Lookup(selection - 1).StableMonitorId().c_str() << std::endl;
-
-        displayEngine.InitializeForDisplayTarget(connectedTargets.Lookup(selection - 1));
-    }
-
-    auto caps = displayEngine.GetCapabilities();
+    auto caps = displayMapping.GetSource().GetCapabilities();
     auto modes = caps.GetSupportedModes();
 
     winrt::DisplayModeInfo bestMode{ nullptr };
@@ -163,15 +117,15 @@ int main()
 
     if (!bestMode) throw winrt::hresult_error();
 
-    displayEngine.GetProperties().ActiveMode(bestMode);
-    displayEngine.GetProperties().GetPlaneProperties()[0].ClearColor({ 1.0f,0.0f,0.0f });
+    displayMapping.GetSource().GetProperties().ActiveMode(bestMode);
+    displayMapping.GetSource().GetProperties().GetPlaneProperties()[0].ClearColor({1.0f, 0.0f, 0.0f});
 
-    auto render = displayEngine.StartRender();
+    auto render = displayMapping.GetSource().StartRender();
 
     // Actually capture a frame
-    auto capturedFrame = captureInput.CaptureFrame();
+    auto capturedFrame = displayMapping.GetSink().CaptureFrame();
 
-    auto prediction = displayEngine.GetPrediction();
+    auto prediction = displayMapping.GetSource().GetPrediction();
 
     capturedFrame.CompareCaptureToPrediction(L"BasicTest", prediction);
 

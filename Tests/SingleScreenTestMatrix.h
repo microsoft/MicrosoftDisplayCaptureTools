@@ -1,11 +1,10 @@
 #pragma once
 
-#include <WexTestClass.h>
 #include "CaptureFrameworkTestBase.h"
 
-class PictTests : public CaptureFrameworkTestBase
+class SingleScreenTestMatrix : public CaptureFrameworkTestBase
 {
-	TEST_CLASS(PictTests);
+	TEST_CLASS(SingleScreenTestMatrix);
 
 	TEST_CLASS_SETUP(Setup);
     TEST_CLASS_CLEANUP(Cleanup);

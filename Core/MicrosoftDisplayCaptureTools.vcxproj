@@ -94,6 +94,18 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -109,7 +121,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
-      <ModuleDefinitionFile>Core.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>MicrosoftDisplayCaptureTools.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -175,19 +187,21 @@
     </Midl>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="EDIDDescriptor.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Core.h">
-      <DependentUpon>Core.idl</DependentUpon>
+    <ClInclude Include="MicrosoftDisplayCaptureTools.h">
+      <DependentUpon>MicrosoftDisplayCaptureTools.idl</DependentUpon>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="EDIDDescriptor.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Core.cpp">
-      <DependentUpon>Core.idl</DependentUpon>
+    <ClCompile Include="MicrosoftDisplayCaptureTools.cpp">
+      <DependentUpon>MicrosoftDisplayCaptureTools.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
@@ -196,10 +210,10 @@
     <Midl Include="..\Shared\IDL\ConfigurationTools.idl" />
     <Midl Include="..\Shared\IDL\DisplayManager.idl" />
     <Midl Include="..\Shared\IDL\Framework.idl" />
-    <Midl Include="Core.idl" />
+    <Midl Include="MicrosoftDisplayCaptureTools.idl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Core.def" />
+    <None Include="MicrosoftDisplayCaptureTools.def" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -214,7 +228,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
-    <Import Project="..\packages\Microsoft.Taef.10.68.220224001\build\Microsoft.Taef.targets" Condition="Exists('..\packages\Microsoft.Taef.10.68.220224001\build\Microsoft.Taef.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -222,6 +235,5 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Taef.10.68.220224001\build\Microsoft.Taef.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Taef.10.68.220224001\build\Microsoft.Taef.targets'))" />
   </Target>
 </Project>

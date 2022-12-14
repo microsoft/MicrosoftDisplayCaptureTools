@@ -1,4 +1,4 @@
-namespace DisplayControl
+namespace BasicDisplayControl
 {
     [default_interface]
     runtimeclass DisplayEngine : MicrosoftDisplayCaptureTools.Display.IDisplayEngine
