@@ -167,7 +167,7 @@ namespace winrt::BasicDisplayControl::implementation
         if (!target)
         {
             // The chosen target was not found - was the config file generated for this machine?
-            m_logger.LogError(L"Attempted to initialize with a null display targer.");
+            m_logger.LogError(L"Attempted to initialize with a null display target.");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -176,6 +176,25 @@ namespace winrt::BasicDisplayControl::implementation
         {
             m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
                 MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
+
+            // If we change the UsageKind for the displayTarget, make sure to go refresh the target 
+            DisplayTarget refreshedTarget = nullptr;
+            for (auto&& currTarget : m_displayManager.GetCurrentTargets())
+            {
+                if (m_displayTarget.IsSame(currTarget))
+                {
+                    refreshedTarget = currTarget;
+                    break;
+                }
+            }
+
+            if (!refreshedTarget)
+            {
+                m_logger.LogError(L"Unable to locate the target display after marking it as 'Specialized'");
+                throw winrt::hresult_changed_state();
+            }
+
+            m_displayTarget = refreshedTarget;
         }
 
         ConnectTarget();
