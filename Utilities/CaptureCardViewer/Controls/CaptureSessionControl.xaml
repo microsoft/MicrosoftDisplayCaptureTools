@@ -246,6 +246,33 @@
 
                         <TextBlock Text="{Binding CaptureSourceProperties}" />
 
+                        <!--  List of extended metadata properties  -->
+                        <Expander Header="Extended properties" IsExpanded="False">
+                            <ui:ItemsRepeater ItemsSource="{Binding LastCapturedFrameMetadata}">
+                                <ui:ItemsRepeater.ItemTemplate>
+                                    <DataTemplate DataType="localvm:MetadataViewModel">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Label
+                                                Margin="3"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Content="{Binding Name, Mode=OneWay}" />
+                                            <TextBox
+                                                Grid.Column="1"
+                                                Margin="3"
+                                                IsReadOnly="True"
+                                                Text="{Binding Value, Mode=OneWay}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ui:ItemsRepeater.ItemTemplate>
+                            </ui:ItemsRepeater>
+                        </Expander>
+
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

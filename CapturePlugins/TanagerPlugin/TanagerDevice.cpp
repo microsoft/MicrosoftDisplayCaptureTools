@@ -2,6 +2,8 @@
 
 namespace winrt 
 {
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Devices::Enumeration;
     using namespace winrt::Windows::Devices::Usb;
     using namespace winrt::Windows::Graphics::Imaging;
@@ -221,7 +223,21 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         // turn off read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
-        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive, m_logger);
+        // Add any extended properties that aren't directly exposable in the IDisplayCapture* interfaces yet
+        auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
+        extendedProps.Insert(L"pixelClock", winrt::box_value(timing.pixelClock));
+        extendedProps.Insert(L"hActive", winrt::box_value(timing.hActive));
+        extendedProps.Insert(L"hTotal", winrt::box_value(timing.hTotal));
+        extendedProps.Insert(L"hFrontPorch", winrt::box_value(timing.hFrontPorch));
+        extendedProps.Insert(L"hSyncWidth", winrt::box_value(timing.hSyncWidth));
+        extendedProps.Insert(L"hBackPorch", winrt::box_value(timing.hBackPorch));
+        extendedProps.Insert(L"vActive", winrt::box_value(timing.vActive));
+        extendedProps.Insert(L"vTotal", winrt::box_value(timing.vTotal));
+        extendedProps.Insert(L"vFrontPorch", winrt::box_value(timing.vFrontPorch));
+        extendedProps.Insert(L"vSyncWidth", winrt::box_value(timing.vSyncWidth));
+        extendedProps.Insert(L"vBackPorch", winrt::box_value(timing.vBackPorch));
+        
+        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive, extendedProps, m_logger);
     }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
@@ -315,8 +331,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     }
 
     TanagerDisplayCapture::TanagerDisplayCapture(
-        std::vector<byte> rawCaptureData, uint16_t horizontalResolution, uint16_t verticalResolution, winrt::ILogger const& logger) :
-        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution), m_logger(logger)
+        std::vector<byte> rawCaptureData,
+        uint16_t horizontalResolution,
+        uint16_t verticalResolution,
+        winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps,
+        winrt::ILogger const& logger) :
+        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution), m_extendedProps(extendedProps), m_logger(logger)
     {
         if (rawCaptureData.size() == 0)
         {
@@ -458,6 +478,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     {
         auto buffer = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Read);
         return buffer.CreateReference();
+    }
+
+    winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> TanagerDisplayCapture::ExtendedProperties()
+    {
+        return m_extendedProps.GetView();
     }
 
 } // namespace winrt::TanagerPlugin::implementation

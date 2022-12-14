@@ -106,6 +106,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         // TODO: Need to work out a proper way to express possible pixel data arrangements - i.e. padding, packing, stride,
         //       subsampling, etc.  DirectX formats isn't a very good match, maybe borrow from DXGI's list?
 
+        Windows.Foundation.Collections.IMapView<String, Object> ExtendedProperties{ get; };
     }
 
     // 

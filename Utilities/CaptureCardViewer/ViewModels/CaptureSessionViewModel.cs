@@ -50,6 +50,9 @@ namespace CaptureCardViewer.ViewModels
 		IDisplayCapture lastCapturedFrame;
 
 		[ObservableProperty]
+		ObservableCollection<MetadataViewModel> lastCapturedFrameMetadata = new ObservableCollection<MetadataViewModel>();
+
+		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
 		IDisplayEnginePrediction lastPredictedFrame;
 
@@ -158,7 +161,7 @@ namespace CaptureCardViewer.ViewModels
 			var displayOutput = SelectedEngineOutput;
 
 			//Display & Capture of frames 
-			(var capturedFrame, var capturedBitmap) =
+			(var capturedFrame, var capturedBitmap, var capturedMetadata) =
 				await Task.Run(() =>
 			{
 				// Captured frames from the tanager board
@@ -169,7 +172,7 @@ namespace CaptureCardViewer.ViewModels
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
 				var capturedBitmap = BufferToImgConv(capPixelBuffer);
 
-				return (capturedFrame, capturedBitmap);
+				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
 
 				//Updating the UI by queuing up an operation on the UI thread
 				/*this.dispatcher.Invoke(
@@ -187,6 +190,8 @@ namespace CaptureCardViewer.ViewModels
 
 			CaptureSource = capturedBitmap;
 			LastCapturedFrame = capturedFrame;
+			LastCapturedFrameMetadata = new ObservableCollection<MetadataViewModel>(
+				capturedMetadata.Select(kvp => new MetadataViewModel(kvp.Key, kvp.Value)));
 			FramesCaptured += 1;
 		}
 
