@@ -41,13 +41,15 @@ namespace CaptureCardViewer.Controls
 		{
 			if (ImageSource != null)
 			{
-				ZoomFactor = ImageSource.Width / imageView.RenderSize.Width;
+				imageView.Stretch = Stretch.None;
+				ZoomFactor = 1;
 			}
 		}
 
 		private void ZoomToFit_Click(object sender, RoutedEventArgs e)
 		{
 			ZoomFactor = 1;
+			imageView.Stretch = Stretch.Uniform;
 		}
 
 		private void SaveImage_Click(object sender, RoutedEventArgs e)
@@ -83,7 +85,35 @@ namespace CaptureCardViewer.Controls
 				ZoomFactor += e.Delta / 1000.0;
 				e.Handled = true;
 			}
-
 		}
-    }
+
+		Point? mouseDragStartPoint;
+		Point mouseDragInitialOffset;
+
+		private void OnImageMouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (e.LeftButton == MouseButtonState.Pressed)
+			{
+				mouseDragStartPoint = e.GetPosition(this);
+				mouseDragInitialOffset = new Point(imageScrollViewer.HorizontalOffset, imageScrollViewer.VerticalOffset);
+				((FrameworkElement)sender).CaptureMouse();
+			}
+		}
+
+		private void OnImageMouseMove(object sender, MouseEventArgs e)
+		{
+			if (e.LeftButton == MouseButtonState.Pressed && mouseDragStartPoint.HasValue)
+			{
+				var newPoint = e.GetPosition(this);
+				imageScrollViewer.ScrollToHorizontalOffset(mouseDragStartPoint.Value.X - newPoint.X + mouseDragInitialOffset.X);
+				imageScrollViewer.ScrollToVerticalOffset(mouseDragStartPoint.Value.Y - newPoint.Y + mouseDragInitialOffset.Y);
+			}
+		}
+
+		private void OnImageMouseUp(object sender, MouseButtonEventArgs e)
+		{
+			mouseDragStartPoint = null;
+			((FrameworkElement)sender).ReleaseMouseCapture();
+		}
+	}
 }

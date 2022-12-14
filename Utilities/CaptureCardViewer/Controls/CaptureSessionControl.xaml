@@ -87,7 +87,9 @@
                                 Label="Render" />
                         </ui:CommandBarToolBar>
 
-                        <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding PredictionSource, Mode=OneWay}" />
+                        <Border BorderBrush="White" BorderThickness="2">
+                            <localcontrols:ImagePanZoomControl Height="300" ImageSource="{Binding PredictionSource, Mode=OneWay}" />
+                        </Border>
 
                     </StackPanel>
                 </GroupBox>
@@ -238,7 +240,9 @@
                                 Label="Pause" />
                         </ui:CommandBarToolBar>
 
-                        <localcontrols:ImagePanZoomControl MinHeight="200" ImageSource="{Binding CaptureSource, Mode=OneWay}" />
+                        <Border BorderBrush="White" BorderThickness="2">
+                            <localcontrols:ImagePanZoomControl Height="300" ImageSource="{Binding CaptureSource, Mode=OneWay}" />
+                        </Border>
 
                         <TextBlock Text="{Binding CaptureSourceProperties}" />
 

@@ -197,57 +197,5 @@ namespace CaptureCardViewer.ViewModels
 				}
 			}
 		}
-
-		// Apply tools to the framework's display engine
-		private void ApplyToolsToEngine(MicrosoftDisplayCaptureTools.Display.IDisplayOutput displayOutput)
-		{
-			foreach (var toolbox in this.testFramework.GetConfigurationToolboxes())
-			{
-				foreach (var toolName in toolbox.GetSupportedTools())
-				{
-					var tool = toolbox.GetTool(toolName);
-
-					/*if (userInput)
-					{
-						var suppConfig = tool.GetSupportedConfigurations();
-						foreach (var config in suppConfig)
-						{
-							if (cbi_ref.SelectedItem != null)
-							{
-								ComboBoxItem cbi = (ComboBoxItem)cbi_ref.SelectedItem;
-								string? sel = cbi.Content.ToString();
-								if (sel == config)
-								{
-									tool.SetConfiguration(config);
-								}
-
-							}
-							if (cbi_res.SelectedItem != null)
-							{
-								ComboBoxItem cbi = (ComboBoxItem)cbi_res.SelectedItem;
-								string? sel = cbi.Content.ToString();
-								if (sel == config)
-								{
-									tool.SetConfiguration(config);
-								}
-							}
-
-							if (cbi_col.SelectedItem != null)
-							{
-								ComboBoxItem cbi = (ComboBoxItem)cbi_col.SelectedItem;
-								string? sel = cbi.Content.ToString();
-								if (sel == config)
-								{
-									tool.SetConfiguration(config);
-								}
-							}
-						}
-					}*/
-
-					tool.Apply(displayOutput);
-				}
-			}
-		}
-
 	}
 }
