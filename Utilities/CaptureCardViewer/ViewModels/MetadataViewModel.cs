@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Navigation;
 
 namespace CaptureCardViewer.ViewModels
 {
@@ -17,7 +18,14 @@ namespace CaptureCardViewer.ViewModels
 		public MetadataViewModel(string name, object value)
 		{
 			Name = name;
-			Value = value?.ToString() ?? "null";
+			if (value is IReadOnlyList<byte> bytes)
+			{
+				Value = string.Join(" ", bytes.Select(b => b.ToString("X2")));
+			}
+			else
+			{
+				Value = value?.ToString() ?? "null";
+			}
 		}
 	}
 }
