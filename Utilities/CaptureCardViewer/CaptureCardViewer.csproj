@@ -51,19 +51,7 @@
 		<PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
 	</ItemGroup>
 	<ItemGroup>
-		<!--<ProjectReference Include="..\..\BasicDisplayControl\BasicDisplayControl.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
-		<ProjectReference Include="..\..\CapturePlugins\GenericCaptureCardPlugin\GenericCaptureCardPlugin.vcxproj">
-		</ProjectReference>
-		<ProjectReference Include="..\..\CapturePlugins\TanagerPlugin\TanagerPlugin.vcxproj" />
-		<ProjectReference Include="..\..\BasicDisplayConfiguration\BasicDisplayConfiguration.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>
-		<ProjectReference Include="..\..\Core\Core.vcxproj">
-			<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-		</ProjectReference>-->
-    <ProjectReference Include="..\..\Core\MicrosoftDisplayCaptureTools.vcxproj" />
+	  <ProjectReference Include="..\..\Core\MicrosoftDisplayCaptureTools.vcxproj" />
 	</ItemGroup>
 
 	<ItemGroup>
