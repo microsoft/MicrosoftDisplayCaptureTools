@@ -45,7 +45,7 @@ namespace CaptureCardViewer.Mocks
 		private class MockDisplayInputCaps : ICaptureCapabilities
 		{
 			public bool CanCaptureFrameSeries() => true;
-			
+
 			public bool CanConfigureDisplayID() => true;
 
 			public bool CanConfigureEDID() => true;

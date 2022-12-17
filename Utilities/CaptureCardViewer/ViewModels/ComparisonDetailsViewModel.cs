@@ -1,9 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CaptureCardViewer.ViewModels
 {
@@ -12,6 +7,6 @@ namespace CaptureCardViewer.ViewModels
 	/// </summary>
 	public partial class ComparisonDetailsViewModel : ObservableObject
 	{
-		
+
 	}
 }

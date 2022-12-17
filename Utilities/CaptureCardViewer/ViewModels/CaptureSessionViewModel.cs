@@ -1,14 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MicrosoftDisplayCaptureTools.CaptureCard;
-using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Devices.Display;
@@ -242,7 +240,7 @@ namespace CaptureCardViewer.ViewModels
 
 					var prediction = displayOutput.GetPrediction();
 					var predictionBitmap = prediction.GetBitmap();
-					
+
 					var bmpBuffer = predictionBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
 					using (IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference())
 						return (prediction, BufferToImgConv(predPixelBuffer));

@@ -6,10 +6,10 @@ namespace CaptureCardViewer.Controls
 	/// Interaction logic for WelcomePage.xaml
 	/// </summary>
 	public partial class WelcomePage : UserControl
-    {
-        public WelcomePage()
-        {
-            InitializeComponent();
-        }
-    }
+	{
+		public WelcomePage()
+		{
+			InitializeComponent();
+		}
+	}
 }

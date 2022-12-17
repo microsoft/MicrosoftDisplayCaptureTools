@@ -13,8 +13,8 @@ namespace CaptureCardViewer
 	{
 		void GetBuffer(out byte* buffer, out uint capacity);
 	}
-	
+
 	class ImageUtils
-    {
-    }
+	{
+	}
 }

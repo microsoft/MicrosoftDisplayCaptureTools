@@ -10,7 +10,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Threading;
 
 namespace CaptureCardViewer.ViewModels
@@ -61,7 +60,7 @@ namespace CaptureCardViewer.ViewModels
 			{
 				ModernWpf.MessageBox.Show("Failed to load discovered plugins.\r\n" + ex.Message);
 			}
-			
+
 #if DEBUG
 			// Add a mock controller for UI testing
 			CaptureCards.Add(new CaptureCardViewModel(this, new MockController()));

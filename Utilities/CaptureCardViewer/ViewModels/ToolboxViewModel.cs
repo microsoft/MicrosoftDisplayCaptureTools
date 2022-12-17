@@ -9,7 +9,7 @@ namespace CaptureCardViewer.ViewModels
 		public IConfigurationToolbox Toolbox { get; }
 		public string Name => Toolbox.Name;
 		public string Version => Toolbox.Version;
-		
+
 		public ToolboxViewModel(IConfigurationToolbox toolbox)
 		{
 			Toolbox = toolbox;

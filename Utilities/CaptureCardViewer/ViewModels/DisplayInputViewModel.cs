@@ -1,13 +1,11 @@
-﻿using MicrosoftDisplayCaptureTools.CaptureCard;
-using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.Generic;
-using System.Linq;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Windows;
 using Microsoft.Win32;
-using MicrosoftDisplayCaptureTools.Framework;
+using MicrosoftDisplayCaptureTools.CaptureCard;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace CaptureCardViewer.ViewModels
@@ -18,7 +16,7 @@ namespace CaptureCardViewer.ViewModels
 		public CaptureCardViewModel CaptureCard { get; }
 		public IDisplayInput Input { get; }
 		public ICaptureCapabilities Capabilities { get; }
-		
+
 		public string Name => Input.Name;
 		public bool CanReturnRawFramesToHost => Capabilities.CanReturnRawFramesToHost();
 		public bool CanReturnFramesToHost => Capabilities.CanReturnFramesToHost();
@@ -76,7 +74,7 @@ namespace CaptureCardViewer.ViewModels
 				try
 				{
 					byte[] descriptorData;
-					
+
 					if (openDialog.FilterIndex == 0)
 					{
 						// ASCII Hex
@@ -90,7 +88,7 @@ namespace CaptureCardViewer.ViewModels
 
 						if (text.Length % 2 != 0)
 							throw new FormatException("The text file may contain only hex numbers and optionally commas, spaces, and 0x prefixes");
-						
+
 						List<byte> bytes = new();
 						foreach (var byteChars in text.ToString().Chunk(2))
 						{
@@ -103,7 +101,7 @@ namespace CaptureCardViewer.ViewModels
 						// Binary
 						descriptorData = File.ReadAllBytes(openDialog.FileName);
 					}
-					
+
 					//IMonitorDescriptor descriptor;
 					//Input.SetDescriptor(descriptor);
 
