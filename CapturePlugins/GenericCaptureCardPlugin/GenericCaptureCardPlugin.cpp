@@ -278,6 +278,18 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
         return buffer.CreateReference();
     }
+
+    winrt::Windows::Graphics::SizeInt32 DisplayCapture::Resolution()
+    {
+        return { m_bitmap.PixelWidth(), m_bitmap.PixelHeight() };
+    }
+
+    winrt::Windows::Graphics::DirectX::DirectXPixelFormat DisplayCapture::PixelFormat()
+    {
+        // The BitmapPixelFormat enum type is intentionally compatible with DirectXPixelFormats
+        return static_cast<winrt::Windows::Graphics::DirectX::DirectXPixelFormat>(m_bitmap.BitmapPixelFormat());
+    }
+
     winrt::IMapView<winrt::hstring, winrt::IInspectable> DisplayCapture::ExtendedProperties()
     {
         return m_extendedProps.GetView();

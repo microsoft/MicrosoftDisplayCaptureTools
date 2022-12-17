@@ -17,6 +17,8 @@ struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptur
 
     bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
     winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
+    winrt::Windows::Graphics::SizeInt32 Resolution();
+    winrt::Windows::Graphics::DirectX::DirectXPixelFormat PixelFormat();
     winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
 
 private:
