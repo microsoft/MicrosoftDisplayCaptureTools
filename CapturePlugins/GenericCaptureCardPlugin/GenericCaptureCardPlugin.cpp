@@ -202,7 +202,12 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         {
             auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
             auto photo = cap.get().CaptureAsync().get();
-            m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger);
+            
+            // Add any extended properties that aren't directly exposed through the IDisplayCapture* interfaces
+            auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
+            extendedProps.Insert(L"Timestamp", winrt::box_value(winrt::DateTime(winrt::clock::now())));
+
+            m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger, extendedProps);
         }
         catch (...)
         {
@@ -214,10 +219,10 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         return *m_capture;
     }
 
-    DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::ILogger const& logger) :
-        m_logger(logger)
-    {                
-        // Mirror the pixel data over to this object's storage. 
+    DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::ILogger const& logger, winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
+        m_logger(logger), m_extendedProps(extendedProps)
+    {
+        // Mirror the pixel data over to this object's storage.
         if (!frame.CanRead())
         {
             m_logger.LogError(L"Cannot read pixel data from frame.");
@@ -272,5 +277,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     {
         auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
         return buffer.CreateReference();
+    }
+    winrt::IMapView<winrt::hstring, winrt::IInspectable> DisplayCapture::ExtendedProperties()
+    {
+        return m_extendedProps.GetView();
     }
 }
