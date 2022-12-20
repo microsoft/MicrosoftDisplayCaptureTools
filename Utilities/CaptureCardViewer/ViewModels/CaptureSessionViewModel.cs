@@ -4,9 +4,11 @@ using MicrosoftDisplayCaptureTools.CaptureCard;
 using MicrosoftDisplayCaptureTools.Display;
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Devices.Display;
@@ -18,6 +20,7 @@ using WinRT;
 
 namespace CaptureCardViewer.ViewModels
 {
+
 	public partial class CaptureSessionViewModel : ObservableObject
 	{
 		public WorkspaceViewModel Workspace { get; }
@@ -40,19 +43,22 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(SelectedEngineOutputName))]
+		[AlsoNotifyChangeFor(nameof(CanStartOutputRender))]
 		IDisplayOutput? selectedEngineOutput;
 		public string SelectedEngineOutputName => SelectedEngineOutput?.Target.StableMonitorId ?? "None";
 
+		IDisposable? selectedEngineOutputRenderer;
+
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayCapture lastCapturedFrame;
+		IDisplayCapture? lastCapturedFrame;
 
 		[ObservableProperty]
 		ObservableCollection<MetadataViewModel> lastCapturedFrameMetadata = new ObservableCollection<MetadataViewModel>();
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayEnginePrediction lastPredictedFrame;
+		IDisplayEnginePrediction? lastPredictedFrame;
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]
@@ -132,6 +138,21 @@ namespace CaptureCardViewer.ViewModels
 		bool canStopLiveCapture = false;
 		public bool CanSingleFrameCapture => CanStartLiveCapture;
 
+		/// <summary>
+		/// The output render task uses this to reflect the buttons
+		/// </summary>
+		[ObservableProperty]
+		[AlsoNotifyChangeFor(nameof(CanStopOutputRender))]
+		[AlsoNotifyChangeFor(nameof(CanStartOutputRender))]
+		[AlsoNotifyChangeFor(nameof(IsNotRendering))]
+		bool isRenderingOutput = false;
+
+		public bool IsNotRendering => !isRenderingOutput;
+
+		public bool CanStartOutputRender => selectedEngineOutput != null && !isRenderingOutput;
+		public bool CanStopOutputRender => isRenderingOutput;
+
+
 		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, CaptureCardViewModel captureCard, IDisplayInput input)
 		{
 			Workspace = workspace;
@@ -158,7 +179,7 @@ namespace CaptureCardViewer.ViewModels
 		{
 			var displayOutput = SelectedEngineOutput;
 
-			//Display & Capture of frames 
+			// Display & Capture of frames 
 			(var capturedFrame, var capturedBitmap, var capturedMetadata) =
 				await Task.Run(() =>
 			{
@@ -171,19 +192,6 @@ namespace CaptureCardViewer.ViewModels
 				var capturedBitmap = BufferToImgConv(capPixelBuffer);
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
-
-				//Updating the UI by queuing up an operation on the UI thread
-				/*this.dispatcher.Invoke(
-						new Action(() =>
-						{
-							CaptImage.ImageSource = capSrc;
-							PredImage.ImageSource = predSrc;
-							capturedImageProperties.Text = "Refresh Rate: " + refreshRate.ToString() + "\r\n";
-							capturedImageProperties.Text += "Resolution: " + resolution.Height.ToString() + "x" + resolution.Width.ToString() + "\r\n";
-							capturedImageProperties.Text += "Source pixel format: " + mode.SourcePixelFormat.ToString() + "\r\n";
-
-						}
-						));*/
 			});
 
 			CaptureSource = capturedBitmap;
@@ -206,7 +214,50 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		[ICommand]
-		async void RenderToOutput()
+		async void StartOutputRender()
+		{
+			await Task.Run(() =>
+			{
+				// Start the render
+				if (selectedEngineOutput != null)
+				{
+					var activeTools =
+						this.Workspace.Toolboxes
+						.SelectMany((toolbox) => toolbox.ActiveTools
+							.Select((tool) => tool.Tool))
+						.ToList();
+
+					// Apply all tools to the display
+					foreach (var tool in activeTools)
+					{
+						tool.Apply(selectedEngineOutput);
+					}
+
+					selectedEngineOutputRenderer = selectedEngineOutput.StartRender();
+				}
+
+				IsRenderingOutput = true;
+			});
+		}
+
+		[ICommand]
+		async void StopOutputRender()
+		{
+			await Task.Run(() =>
+			{
+				// Stop the render
+				if (selectedEngineOutputRenderer != null)
+				{
+					selectedEngineOutputRenderer.Dispose();
+					selectedEngineOutputRenderer = null;
+				}
+
+				IsRenderingOutput = false;
+			});
+		}
+
+		[ICommand]
+		async void RenderPrediction()
 		{
 			var displayOutput = SelectedEngineOutput;
 
@@ -230,7 +281,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 
 				// Perform the render
-				using (var renderer = displayOutput.StartRender())
+				//using (var renderer = displayOutput.StartRender())
 				{
 					// Get the output's properties
 					var prop = displayOutput.GetProperties();

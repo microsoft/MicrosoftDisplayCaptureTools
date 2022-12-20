@@ -82,9 +82,9 @@
 
                         <ui:CommandBarToolBar>
                             <ui:AppBarButton
-                                Command="{Binding RenderToOutputCommand}"
+                                Command="{Binding RenderPredictionCommand}"
                                 Icon="SetLockScreen"
-                                Label="Render" />
+                                Label="Generate Prediction" />
                         </ui:CommandBarToolBar>
 
                         <Border BorderBrush="White" BorderThickness="2">
@@ -138,6 +138,35 @@
 
                 </GroupBox>
 
+            </StackPanel>
+
+            <StackPanel
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="0,0,0,0"
+                Orientation="Vertical">
+                <Button
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    Command="{Binding StartOutputRenderCommand}"
+                    IsEnabled="{Binding IsNotRenderingOutput}"
+                    Visibility="{Binding CanStartOutputRender, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Vertical">
+                        <ui:SymbolIcon Margin="3" Symbol="Play" />
+                        <TextBlock Text="Start Render" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    Command="{Binding StopOutputRenderCommand}"
+                    IsEnabled="{Binding IsRenderingOutput}"
+                    Visibility="{Binding CanStopOutputRender, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Vertical">
+                        <ui:SymbolIcon Margin="3" Symbol="Stop" />
+                        <TextBlock Text="Stop Render" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <!--  Compare frames (center column)  -->
