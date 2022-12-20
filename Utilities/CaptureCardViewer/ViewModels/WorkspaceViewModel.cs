@@ -130,7 +130,7 @@ namespace CaptureCardViewer.ViewModels
 				try
 				{
 					var filename = dialog.FileName.ToString();
-					IDisplayEngine engine = null;
+					IDisplayEngine? engine = null;
 					await Task.Run(() =>
 					{
 						engine = testFramework.LoadDisplayEngine(filename);
@@ -155,7 +155,7 @@ namespace CaptureCardViewer.ViewModels
 				try
 				{
 					var filename = dialog.FileName.ToString();
-					CaptureCardViewModel controller = null;
+					CaptureCardViewModel? controller = null;
 
 					await Task.Run(() =>
 					{
@@ -183,7 +183,7 @@ namespace CaptureCardViewer.ViewModels
 				try
 				{
 					var filename = dialog.FileName.ToString();
-					IConfigurationToolbox toolbox = null;
+					IConfigurationToolbox? toolbox = null;
 					await Task.Run(() =>
 					{
 						toolbox = testFramework.LoadToolbox(filename);

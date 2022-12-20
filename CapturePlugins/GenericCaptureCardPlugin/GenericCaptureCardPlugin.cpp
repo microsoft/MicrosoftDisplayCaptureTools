@@ -203,6 +203,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
             auto photo = cap.get().CaptureAsync().get();
             
+
+
             // Add any extended properties that aren't directly exposed through the IDisplayCapture* interfaces
             auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
             extendedProps.Insert(L"Timestamp", winrt::box_value(winrt::DateTime(winrt::clock::now())));

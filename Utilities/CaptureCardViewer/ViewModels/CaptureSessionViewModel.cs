@@ -20,7 +20,6 @@ using WinRT;
 
 namespace CaptureCardViewer.ViewModels
 {
-
 	public partial class CaptureSessionViewModel : ObservableObject
 	{
 		public WorkspaceViewModel Workspace { get; }
@@ -189,7 +188,7 @@ namespace CaptureCardViewer.ViewModels
 
 				var capturedFrame = captureInput.CaptureFrame();
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
-				var capturedBitmap = BufferToImgConv(capPixelBuffer);
+				var capturedBitmap = BufferToImgConv(capPixelBuffer, capturedFrame.Resolution);
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
 			});
@@ -208,7 +207,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		[ICommand]
-		void StopLiveCapture()
+		async void StopLiveCapture()
 		{
 			IsRunningLiveCapture = false;
 		}
@@ -271,8 +270,7 @@ namespace CaptureCardViewer.ViewModels
 					.Select((tool) => tool.Tool))
 				.ToList();
 
-			(var prediction, var predictedBitmap) =
-				await Task.Run(() =>
+			(var prediction, var predictedBitmap) = await Task.Run(() =>
 			{
 				// Apply all tools to the display
 				foreach (var tool in activeTools)
@@ -280,22 +278,17 @@ namespace CaptureCardViewer.ViewModels
 					tool.Apply(displayOutput);
 				}
 
-				// Perform the render
-				//using (var renderer = displayOutput.StartRender())
-				{
-					// Get the output's properties
-					var prop = displayOutput.GetProperties();
-					var mode = prop.ActiveMode;
-					var resolution = prop.Resolution;
-					var refreshRate = prop.RefreshRate;
+				// Get the output's properties
+				var prop = displayOutput.GetProperties();
+				var mode = prop.ActiveMode;
+				var refreshRate = prop.RefreshRate;
 
-					var prediction = displayOutput.GetPrediction();
-					var predictionBitmap = prediction.GetBitmap();
+				var prediction = displayOutput.GetPrediction();
+				var predictionBitmap = prediction.GetBitmap();
 
-					var bmpBuffer = predictionBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
-					using (IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference())
-						return (prediction, BufferToImgConv(predPixelBuffer));
-				}
+				var bmpBuffer = predictionBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
+				using (IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference())
+					return (prediction, BufferToImgConv(predPixelBuffer, prop.Resolution));
 			});
 
 			LastPredictedFrame = prediction;
@@ -319,7 +312,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Converting buffer to image source
-		private static BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer)
+		private static BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer, Windows.Graphics.SizeInt32 resolution)
 		{
 			BitmapSource imgSource;
 			unsafe
@@ -338,7 +331,8 @@ namespace CaptureCardViewer.ViewModels
 
 				}
 				var pixCap = pixelBuffer.Capacity;
-				imgSource = BitmapSource.Create(800, 600, 96, 96, PixelFormats.Bgr32, null, bytes, (800 * PixelFormats.Bgr32.BitsPerPixel + 7) / 8);
+				var stride = (resolution.Width * PixelFormats.Bgr32.BitsPerPixel + 7) / 8;
+				imgSource = BitmapSource.Create(resolution.Width, resolution.Height, 96, 96, PixelFormats.Bgr32, null, bytes, stride);
 			}
 
 			imgSource.Freeze();
