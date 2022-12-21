@@ -725,7 +725,6 @@ namespace winrt::BasicDisplayControl::implementation
         m_logger(logger)
     {
         m_logger.LogNote(L"Creating Prediction object from properties.");
-
         auto mode = properties->ActiveMode();
 
         BitmapPixelFormat bitmapFormat;

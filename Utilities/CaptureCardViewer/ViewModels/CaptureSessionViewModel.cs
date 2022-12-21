@@ -330,6 +330,7 @@ namespace CaptureCardViewer.ViewModels
 						ref bytesAccess[0], ref ptr[0], capacity);
 
 				}
+
 				var pixCap = pixelBuffer.Capacity;
 				var stride = (resolution.Width * PixelFormats.Bgr32.BitsPerPixel + 7) / 8;
 				imgSource = BitmapSource.Create(resolution.Width, resolution.Height, 96, 96, PixelFormats.Bgr32, null, bytes, stride);
