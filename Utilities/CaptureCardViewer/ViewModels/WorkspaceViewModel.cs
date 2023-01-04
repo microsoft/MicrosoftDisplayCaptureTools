@@ -130,12 +130,12 @@ namespace CaptureCardViewer.ViewModels
 				try
 				{
 					var filename = dialog.FileName.ToString();
-					IDisplayEngine? engine = null;
-					await Task.Run(() =>
-					{
-						engine = testFramework.LoadDisplayEngine(filename);
-					});
-					DisplayEngines.Add(new DisplayEngineViewModel(engine!));
+					IDisplayEngine engine = await Task.Run(() =>
+						{
+							return testFramework.LoadDisplayEngine(filename);
+						});
+
+					DisplayEngines.Add(new DisplayEngineViewModel(engine));
 				}
 				catch (Exception ex)
 				{

@@ -188,7 +188,7 @@ namespace CaptureCardViewer.ViewModels
 
 				var capturedFrame = captureInput.CaptureFrame();
 				var capPixelBuffer = capturedFrame.GetRawPixelData();
-				var capturedBitmap = BufferToImgConv(capPixelBuffer, capturedFrame.Resolution);
+				var capturedBitmap = BufferToImgConv(capPixelBuffer, capturedFrame.Resolution, (int)capturedFrame.Stride);
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
 			});
@@ -287,8 +287,9 @@ namespace CaptureCardViewer.ViewModels
 				var predictionBitmap = prediction.GetBitmap();
 
 				var bmpBuffer = predictionBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
+				var stride = bmpBuffer.GetPlaneDescription(0).Stride;
 				using (IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference())
-					return (prediction, BufferToImgConv(predPixelBuffer, prop.Resolution));
+					return (prediction, BufferToImgConv(predPixelBuffer, prop.Resolution, stride));
 			});
 
 			LastPredictedFrame = prediction;
@@ -312,7 +313,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Converting buffer to image source
-		private static BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer, Windows.Graphics.SizeInt32 resolution)
+		private static BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer, Windows.Graphics.SizeInt32 resolution, int stride)
 		{
 			BitmapSource imgSource;
 			unsafe
@@ -332,7 +333,6 @@ namespace CaptureCardViewer.ViewModels
 				}
 
 				var pixCap = pixelBuffer.Capacity;
-				var stride = (resolution.Width * PixelFormats.Bgr32.BitsPerPixel + 7) / 8;
 				imgSource = BitmapSource.Create(resolution.Width, resolution.Height, 96, 96, PixelFormats.Bgr32, null, bytes, stride);
 			}
 

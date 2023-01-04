@@ -110,6 +110,13 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         //
         Windows.Graphics.SizeInt32 Resolution { get; };
 
+        // Stride
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes: 
+        //      The stride for the pixels in the capture (line length in bytes)
+        //
+        UInt32 Stride { get; };
+
         // PixelFormat
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

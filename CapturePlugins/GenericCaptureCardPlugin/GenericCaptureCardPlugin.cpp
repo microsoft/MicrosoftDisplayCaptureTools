@@ -233,6 +233,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
         auto bitmap = frame.SoftwareBitmap();
         m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
+
+        auto bitmapBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
+        m_bitmapDesc = bitmapBuffer.GetPlaneDescription(0);
     }
 
     bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
@@ -283,7 +286,12 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     winrt::Windows::Graphics::SizeInt32 DisplayCapture::Resolution()
     {
-        return { m_bitmap.PixelWidth(), m_bitmap.PixelHeight() };
+        return { m_bitmapDesc.Width, m_bitmapDesc.Height };
+    }
+
+    uint32_t DisplayCapture::Stride()
+    {
+        return m_bitmapDesc.Stride;
     }
 
     winrt::Windows::Graphics::DirectX::DirectXPixelFormat DisplayCapture::PixelFormat()

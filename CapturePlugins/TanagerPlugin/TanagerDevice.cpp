@@ -343,7 +343,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         winrt::Windows::Graphics::SizeInt32 resolution,
         winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps,
         winrt::ILogger const& logger) :
-        m_resolution(resolution), m_extendedProps(extendedProps), m_logger(logger)
+        m_extendedProps(extendedProps), m_logger(logger)
     {
         if (rawCaptureData.size() == 0)
         {
@@ -386,10 +386,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
 
         m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Rgba8, m_resolution.Width, m_resolution.Height, winrt::BitmapAlphaMode::Ignore);
+            winrt::BitmapPixelFormat::Rgba8, resolution.Width, resolution.Height, winrt::BitmapAlphaMode::Ignore);
 
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
+
+        m_bitmapDesc = buff.GetPlaneDescription(0);
 
         // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger
         if (ref.Capacity() < (pixels.size() - 4096))
@@ -433,7 +435,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
             // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
             const int samples = 10000;
-            const int pixelCount = m_resolution.Width * m_resolution.Height;
+            const int pixelCount = m_bitmapDesc.Width * m_bitmapDesc.Height;
             for (auto i = 0; i < samples; i++)
             {
                 auto index = rand() % pixelCount;
@@ -483,7 +485,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     winrt::Windows::Graphics::SizeInt32 TanagerDisplayCapture::Resolution()
     {
-        return m_resolution;
+        return {m_bitmapDesc.Width, m_bitmapDesc.Height};
+    }
+
+    uint32_t TanagerDisplayCapture::Stride()
+    {
+        return m_bitmapDesc.Stride;
     }
 
     winrt::Windows::Graphics::DirectX::DirectXPixelFormat TanagerDisplayCapture::PixelFormat()
