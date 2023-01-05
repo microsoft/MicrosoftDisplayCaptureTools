@@ -107,19 +107,20 @@ namespace winrt::TanagerPlugin::implementation
     {
         TanagerDisplayCapture(
             std::vector<byte> pixels,
-            uint16_t horizontalResolution,
-            uint16_t verticalResolution,
+            winrt::Windows::Graphics::SizeInt32 resolution,
             winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps,
             winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
         winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
+        winrt::Windows::Graphics::SizeInt32 Resolution();
+        uint32_t Stride();
+        winrt::Windows::Graphics::DirectX::DirectXPixelFormat PixelFormat();
         winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
 
     private:
         winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
-        uint16_t m_horizontalResolution;
-        uint16_t m_verticalResolution;
+        winrt::Windows::Graphics::Imaging::BitmapPlaneDescription m_bitmapDesc{0};
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_extendedProps{nullptr};
 
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};

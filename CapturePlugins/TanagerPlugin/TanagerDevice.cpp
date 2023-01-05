@@ -195,15 +195,19 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
         // put video capture logic back in reset
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
+
         // query resolution
         auto timing = parent->GetVideoTiming();
+
         // compute size of buffer
         uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
+
         // FX3 requires the read size to be a multiple of 1024 DWORDs
         if(bufferSizeInDWords % 1024)
         {
             bufferSizeInDWords += 1024 - (bufferSizeInDWords % 1024);
         }
+
         // specify number of dwords to read
         // This is bufferSizeInDWords but in big-endian order in a vector<byte>
         parent->FpgaWrite(
@@ -216,28 +220,32 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
         // prepare for reading
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
+
         // initiate read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({2}));
+
         // read frame
         auto frameData = parent->ReadEndPointData(bufferSizeInDWords * 4);
+
         // turn off read sequencer
         parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
         // Add any extended properties that aren't directly exposable in the IDisplayCapture* interfaces yet
         auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
-        extendedProps.Insert(L"pixelClock", winrt::box_value(timing.pixelClock));
-        extendedProps.Insert(L"hActive", winrt::box_value(timing.hActive));
-        extendedProps.Insert(L"hTotal", winrt::box_value(timing.hTotal));
+        extendedProps.Insert(L"pixelClock",  winrt::box_value(timing.pixelClock));
+        extendedProps.Insert(L"hTotal",      winrt::box_value(timing.hTotal));
         extendedProps.Insert(L"hFrontPorch", winrt::box_value(timing.hFrontPorch));
-        extendedProps.Insert(L"hSyncWidth", winrt::box_value(timing.hSyncWidth));
-        extendedProps.Insert(L"hBackPorch", winrt::box_value(timing.hBackPorch));
-        extendedProps.Insert(L"vActive", winrt::box_value(timing.vActive));
-        extendedProps.Insert(L"vTotal", winrt::box_value(timing.vTotal));
+        extendedProps.Insert(L"hSyncWidth",  winrt::box_value(timing.hSyncWidth));
+        extendedProps.Insert(L"hBackPorch",  winrt::box_value(timing.hBackPorch));
+        extendedProps.Insert(L"vTotal",      winrt::box_value(timing.vTotal));
         extendedProps.Insert(L"vFrontPorch", winrt::box_value(timing.vFrontPorch));
-        extendedProps.Insert(L"vSyncWidth", winrt::box_value(timing.vSyncWidth));
-        extendedProps.Insert(L"vBackPorch", winrt::box_value(timing.vBackPorch));
+        extendedProps.Insert(L"vSyncWidth",  winrt::box_value(timing.vSyncWidth));
+        extendedProps.Insert(L"vBackPorch",  winrt::box_value(timing.vBackPorch));
         
-        return winrt::make<TanagerDisplayCapture>(frameData, timing.hActive, timing.vActive, extendedProps, m_logger);
+        auto resolution = winrt::Windows::Graphics::SizeInt32();
+        resolution = { timing.hActive, timing.vActive };
+
+        return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps, m_logger);
     }
 
 	void TanagerDisplayInput::FinalizeDisplayState()
@@ -332,11 +340,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     TanagerDisplayCapture::TanagerDisplayCapture(
         std::vector<byte> rawCaptureData,
-        uint16_t horizontalResolution,
-        uint16_t verticalResolution,
+        winrt::Windows::Graphics::SizeInt32 resolution,
         winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps,
         winrt::ILogger const& logger) :
-        m_horizontalResolution(horizontalResolution), m_verticalResolution(verticalResolution), m_extendedProps(extendedProps), m_logger(logger)
+        m_extendedProps(extendedProps), m_logger(logger)
     {
         if (rawCaptureData.size() == 0)
         {
@@ -379,10 +386,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
 
         m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Rgba8, m_horizontalResolution, m_verticalResolution, winrt::BitmapAlphaMode::Ignore);
+            winrt::BitmapPixelFormat::Rgba8, resolution.Width, resolution.Height, winrt::BitmapAlphaMode::Ignore);
 
         auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
         auto ref = buff.CreateReference();
+
+        m_bitmapDesc = buff.GetPlaneDescription(0);
 
         // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger
         if (ref.Capacity() < (pixels.size() - 4096))
@@ -426,7 +435,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
             // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
             const int samples = 10000;
-            const int pixelCount = m_horizontalResolution * m_verticalResolution;
+            const int pixelCount = m_bitmapDesc.Width * m_bitmapDesc.Height;
             for (auto i = 0; i < samples; i++)
             {
                 auto index = rand() % pixelCount;
@@ -472,6 +481,22 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
 
         return true;
+    }
+
+    winrt::Windows::Graphics::SizeInt32 TanagerDisplayCapture::Resolution()
+    {
+        return {m_bitmapDesc.Width, m_bitmapDesc.Height};
+    }
+
+    uint32_t TanagerDisplayCapture::Stride()
+    {
+        return m_bitmapDesc.Stride;
+    }
+
+    winrt::Windows::Graphics::DirectX::DirectXPixelFormat TanagerDisplayCapture::PixelFormat()
+    {
+        // The BitmapPixelFormat enum type is intentionally compatible with DirectXPixelFormats
+        return static_cast<winrt::Windows::Graphics::DirectX::DirectXPixelFormat>(m_bitmap.BitmapPixelFormat());
     }
 
     winrt::Windows::Foundation::IMemoryBufferReference TanagerDisplayCapture::GetRawPixelData()

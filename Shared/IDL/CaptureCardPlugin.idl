@@ -103,10 +103,35 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         //
         Windows.Foundation.IMemoryBufferReference GetRawPixelData();
 
-        // TODO: Need to work out a proper way to express possible pixel data arrangements - i.e. padding, packing, stride,
-        //       subsampling, etc.  DirectX formats isn't a very good match, maybe borrow from DXGI's list?
+        // Resolution
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      The resolution in pixels of the capture
+        //
+        Windows.Graphics.SizeInt32 Resolution { get; };
 
-        Windows.Foundation.Collections.IMapView<String, Object> ExtendedProperties{ get; };
+        // Stride
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes: 
+        //      The stride for the pixels in the capture (line length in bytes)
+        //
+        UInt32 Stride { get; };
+
+        // PixelFormat
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      The pixel format of the capture. Use 'Unknown' if the pixel format does not match one of the options in 
+        //      this enum.
+        //
+        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat { get; };
+
+        // ExtendedProperties
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      A map of properties describing the display capture. These are not required for function, but may assist
+        //      tools in interpreting this data.
+        //
+        Windows.Foundation.Collections.IMapView<String, Object> ExtendedProperties { get; };
     }
 
     // 

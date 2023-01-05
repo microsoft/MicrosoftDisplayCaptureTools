@@ -203,6 +203,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
             auto photo = cap.get().CaptureAsync().get();
             
+
+
             // Add any extended properties that aren't directly exposed through the IDisplayCapture* interfaces
             auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
             extendedProps.Insert(L"Timestamp", winrt::box_value(winrt::DateTime(winrt::clock::now())));
@@ -231,6 +233,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
         auto bitmap = frame.SoftwareBitmap();
         m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
+
+        auto bitmapBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
+        m_bitmapDesc = bitmapBuffer.GetPlaneDescription(0);
     }
 
     bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
@@ -278,6 +283,23 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
         return buffer.CreateReference();
     }
+
+    winrt::Windows::Graphics::SizeInt32 DisplayCapture::Resolution()
+    {
+        return { m_bitmapDesc.Width, m_bitmapDesc.Height };
+    }
+
+    uint32_t DisplayCapture::Stride()
+    {
+        return m_bitmapDesc.Stride;
+    }
+
+    winrt::Windows::Graphics::DirectX::DirectXPixelFormat DisplayCapture::PixelFormat()
+    {
+        // The BitmapPixelFormat enum type is intentionally compatible with DirectXPixelFormats
+        return static_cast<winrt::Windows::Graphics::DirectX::DirectXPixelFormat>(m_bitmap.BitmapPixelFormat());
+    }
+
     winrt::IMapView<winrt::hstring, winrt::IInspectable> DisplayCapture::ExtendedProperties()
     {
         return m_extendedProps.GetView();
