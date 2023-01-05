@@ -27,11 +27,8 @@ namespace MicrosoftDisplayCaptureTools.Display
         // The format of this plane
         Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
 
-        // The bitmap to be rendered (optional)
+        // The bitmap to be rendered - this represents the "base" for the output
         Windows.Graphics.Imaging.SoftwareBitmap SourceBitmap{ get; set; };
-
-        // The color to initialize this plane with
-        MicrosoftDisplayCaptureTools.Display.PixelColor ClearColor{ get; set; };
     };
 
     // Represents the capabilities of this MPO plane

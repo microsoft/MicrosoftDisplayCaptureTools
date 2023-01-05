@@ -17,7 +17,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         // This tool prepares the OS to draw pixels to the screen. Examples include creation of MPO planes or changing mode
         RenderSetup,
 
-        // This tool actively modifies the output pixels directly. Examples drawing a specific pattern or 
+        // This tool actively modifies the output pixels directly. An example would be rendering a base pattern for each plane.
         Render,
     };
 
