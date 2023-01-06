@@ -32,11 +32,8 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::Imaging::SoftwareBitmap SourceBitmap();
         void SourceBitmap(Windows::Graphics::Imaging::SoftwareBitmap bitmap);
 
-        MicrosoftDisplayCaptureTools::Display::PixelColor ClearColor();
-        void ClearColor(MicrosoftDisplayCaptureTools::Display::PixelColor pixelColor);
-
         bool m_active = false;
-        MicrosoftDisplayCaptureTools::Display::PixelColor m_color{0};
+        Windows::Graphics::Imaging::SoftwareBitmap m_sourceBitmap{nullptr};
 
     private:
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};

@@ -443,21 +443,12 @@ namespace winrt::BasicDisplayControl::implementation
 
     winrt::SoftwareBitmap DisplayEnginePlanePropertySet::SourceBitmap()
     {
-        return nullptr;
+        return m_sourceBitmap;
     }
 
     void DisplayEnginePlanePropertySet::SourceBitmap(winrt::SoftwareBitmap bitmap)
     {
-    }
-
-    PixelColor DisplayEnginePlanePropertySet::ClearColor()
-    {
-        return m_color;
-    }
-
-    void DisplayEnginePlanePropertySet::ClearColor(PixelColor clearColor)
-    {
-        m_color = clearColor;
+        m_sourceBitmap = bitmap;
     }
 
     // Renderer
@@ -527,7 +518,7 @@ namespace winrt::BasicDisplayControl::implementation
         multisampleDesc.Count = 1;
 
         // Create a surface format description for the primaries
-        winrt::DisplayPrimaryDescription primaryDesc{
+        winrt::DisplayPrimaryDescription primaryDesc {
             static_cast<uint32_t>(sourceResolution.Width), static_cast<uint32_t>(sourceResolution.Height),
             displayPath.SourcePixelFormat(), winrt::DirectXColorSpace::RgbFullG22NoneP709,
             false,
@@ -565,16 +556,20 @@ namespace winrt::BasicDisplayControl::implementation
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
 
-        // Get the rendering properties (in this sample just the base plane clear color)
-        auto basePlaneClearColor = m_properties->m_planeProperties[0]->ClearColor();
+        auto bitmapBuffer = m_properties->m_planeProperties[0]->SourceBitmap().LockBuffer(BitmapBufferAccessMode::Read);
+        auto bitmapBufferReference = bitmapBuffer.CreateReference();
+
+        // Temporary hack to make sure data is getting around.
+        float basePlaneClearColor[4] = {
+            bitmapBufferReference.data()[0] / 255.f,
+            bitmapBufferReference.data()[1] / 255.f,
+            bitmapBufferReference.data()[2] / 255.f,
+            1.0f};
 
         // Render and present until termination is signalled
         while (m_valid)
         {
-            {
-                float clearColor[4] = { basePlaneClearColor.ChannelA, basePlaneClearColor.ChannelB, basePlaneClearColor.ChannelC, 1 };
-                m_d3dContext->ClearRenderTargetView(m_d3dRenderTarget.get(), clearColor);
-            }
+            m_d3dContext->ClearRenderTargetView(m_d3dRenderTarget.get(), basePlaneClearColor);
 
             auto d3dContext4 = m_d3dContext.as<ID3D11DeviceContext4>();
             d3dContext4->Signal(m_d3dFence.get(), ++m_d3dFenceValue);
@@ -738,11 +733,15 @@ namespace winrt::BasicDisplayControl::implementation
             throw winrt::hresult_not_implemented();
         }
 
+        /*
         m_bitmap = SoftwareBitmap(bitmapFormat, mode.TargetResolution().Width, mode.TargetResolution().Height, BitmapAlphaMode::Ignore);
         auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Write);
         auto bufferReference = buffer.CreateReference();
 
         ClearPixelBuffer(bufferReference, properties->GetPlaneProperties()[0].ClearColor(), mode.SourcePixelFormat());
+        */
+
+        m_bitmap = SoftwareBitmap::Copy(properties->GetPlaneProperties()[0].SourceBitmap());
     }
 
     SoftwareBitmap DisplayEnginePrediction::GetBitmap()
