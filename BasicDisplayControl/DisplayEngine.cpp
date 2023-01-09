@@ -9,6 +9,9 @@ namespace winrt
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Foundation::Collections;
 
+    // Windows data streams
+    using namespace winrt::Windows::Storage::Streams;
+
     // JSON Parser
     using namespace winrt::Windows::Data::Json;
 
@@ -425,11 +428,12 @@ namespace winrt::BasicDisplayControl::implementation
 
     winrt::BitmapBounds DisplayEnginePlanePropertySet::Rect()
     {
-        return winrt::BitmapBounds();
+        return m_rect;
     }
 
     void DisplayEnginePlanePropertySet::Rect(winrt::BitmapBounds bounds)
     {
+        m_rect = bounds;
     }
 
     winrt::DirectXPixelFormat DisplayEnginePlanePropertySet::Format()
@@ -441,14 +445,9 @@ namespace winrt::BasicDisplayControl::implementation
     {
     }
 
-    winrt::SoftwareBitmap DisplayEnginePlanePropertySet::SourceBitmap()
+    winrt::IDisplayEnginePlaneBaseImage DisplayEnginePlanePropertySet::BaseImage()
     {
-        return m_sourceBitmap;
-    }
-
-    void DisplayEnginePlanePropertySet::SourceBitmap(winrt::SoftwareBitmap bitmap)
-    {
-        m_sourceBitmap = bitmap;
+        return m_baseImage;
     }
 
     // Renderer
@@ -556,15 +555,18 @@ namespace winrt::BasicDisplayControl::implementation
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
 
-        auto bitmapBuffer = m_properties->m_planeProperties[0]->SourceBitmap().LockBuffer(BitmapBufferAccessMode::Read);
-        auto bitmapBufferReference = bitmapBuffer.CreateReference();
+        float basePlaneClearColor[4] = { 0 };
+        
+        {
+            auto bitmapBuffer = m_properties->m_planeProperties[0]->BaseImage().Pixels();
+            auto dataReader = Windows::Storage::Streams::DataReader::FromBuffer(bitmapBuffer);
 
-        // Temporary hack to make sure data is getting around.
-        float basePlaneClearColor[4] = {
-            bitmapBufferReference.data()[0] / 255.f,
-            bitmapBufferReference.data()[1] / 255.f,
-            bitmapBufferReference.data()[2] / 255.f,
-            1.0f};
+            // Temporary hack to make sure data is getting around.
+            basePlaneClearColor[0] = dataReader.ReadByte() / 255.f;
+            basePlaneClearColor[1] = dataReader.ReadByte() / 255.f;
+            basePlaneClearColor[2] = dataReader.ReadByte() / 255.f;
+            basePlaneClearColor[3] = 1.f;
+        }
 
         // Render and present until termination is signalled
         while (m_valid)
@@ -633,6 +635,7 @@ namespace winrt::BasicDisplayControl::implementation
     // 
     // Note: right now this operates in byte-sized increments, it can't currently handle pixel sizes not byte-aligned.
     //
+    /*
     static void ClearPixelBuffer(IMemoryBufferReference buffer, PixelColor clearColor, DirectXPixelFormat format, uint32_t threadCount = 4)
     {
         // Ensure that the format is known and determine the slice size
@@ -714,7 +717,7 @@ namespace winrt::BasicDisplayControl::implementation
         {
             thread.join();
         }
-    }
+    }*/
 
     DisplayEnginePrediction::DisplayEnginePrediction(DisplayEnginePropertySet* properties, winrt::ILogger const& logger) : 
         m_logger(logger)
@@ -741,7 +744,10 @@ namespace winrt::BasicDisplayControl::implementation
         ClearPixelBuffer(bufferReference, properties->GetPlaneProperties()[0].ClearColor(), mode.SourcePixelFormat());
         */
 
-        m_bitmap = SoftwareBitmap::Copy(properties->GetPlaneProperties()[0].SourceBitmap());
+        m_bitmap = SoftwareBitmap(bitmapFormat, mode.TargetResolution().Width, mode.TargetResolution().Height, BitmapAlphaMode::Ignore);
+        m_bitmap.CopyFromBuffer(properties->GetPlaneProperties()[0].BaseImage().Pixels());
+
+        // m_bitmap = SoftwareBitmap::Copy(properties->GetPlaneProperties()[0].SourceBitmap());
     }
 
     SoftwareBitmap DisplayEnginePrediction::GetBitmap()

@@ -9,6 +9,7 @@
         <dependencies>
 			<dependency id="Microsoft.Taef" version="10.68.220224001"/>
 			<dependency id="Microsoft.VCRTForwarders.140" version="1.0.7"/>
+			<dependency id="Microsoft.Graphics.Win2D" version="1.0.4"/>
         </dependencies>
 		<tags>display testing capture</tags>
     </metadata>

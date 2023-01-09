@@ -2,18 +2,19 @@ import "Framework.idl";
 
 namespace MicrosoftDisplayCaptureTools.Display
 {
-    //
-    // Struct representing a 3-channel color
-    // 
-    // TODO: this is intended as a demonstrative for the time being, a more expressive version will replace this to
-    //       allow expressing other acceptable pixel formats.
-    //
-    struct PixelColor
+    // Struct used to represent an image to show as the 'base' of a scanout plane
+    interface IDisplayEnginePlaneBaseImage
     {
-        Single ChannelA;
-        Single ChannelB;
-        Single ChannelC;
+        // The actual pixel data, should be of exact size Resolution.Height * Resolution.Width * (Bytes per pixel).
+        Windows.Storage.Streams.IBuffer Pixels{ get; set; };
+
+        // The pixel format of these pixels. If the actual plane format is not supported, R16G16B16A16Float will be used.
+        Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
+
+        // The resolution of the plane.
+        Windows.Graphics.SizeInt32 Resolution{ get; set; };
     };
+
 
     // Used to set parameters for this particular MPO plane.
     interface IDisplayEnginePlanePropertySet
@@ -27,8 +28,8 @@ namespace MicrosoftDisplayCaptureTools.Display
         // The format of this plane
         Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
 
-        // The bitmap to be rendered - this represents the "base" for the output
-        Windows.Graphics.Imaging.SoftwareBitmap SourceBitmap{ get; set; };
+        // The base layer of the plane.
+        IDisplayEnginePlaneBaseImage BaseImage{ get; };
     };
 
     // Represents the capabilities of this MPO plane

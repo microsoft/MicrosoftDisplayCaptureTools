@@ -77,15 +77,21 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	void ResolutionTool::Apply(IDisplayOutput reference)
 	{
+		// Set the sizing for the main property set and the base plane.
 		auto displayProperties = reference.GetProperties();
+
+		// Set the base plane dimentions as well
+        auto planeProperties = reference.GetProperties().GetPlaneProperties()[0];
 
 		switch (m_currentConfig)
 		{
 		case ResolutionToolConfigurations::w1920h1080:
 			displayProperties.Resolution({ 1920, 1080 });
+            planeProperties.Rect({ 0, 0, 1920, 1080 });
 			break;
 		case ResolutionToolConfigurations::w800h600:
 			displayProperties.Resolution({ 800, 600 });
+            planeProperties.Rect({ 0, 0, 800, 600 });
 			break;
 		}
 

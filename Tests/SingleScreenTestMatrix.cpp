@@ -16,6 +16,7 @@ namespace winrt
     using namespace Windows::Graphics::Imaging;
     using namespace MicrosoftDisplayCaptureTools;
     using namespace MicrosoftDisplayCaptureTools::Framework;
+    using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
 }
 
 bool SingleScreenTestMatrix::Setup()
@@ -67,17 +68,27 @@ void SingleScreenTestMatrix::Test()
         }
     }
 
-    for (auto tool : tools)
-    {
-        String toolSetting;
-        if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
-        {
-            String output = L"";
+    // All tools need to be run in order of their category
+    constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
+        winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
 
-            // Setting the tool value
-            tool.SetConfiguration(winrt::hstring(toolSetting));
-            tool.Apply(displayOutput);
-            testName = testName + tool.GetConfiguration() + L"_";
+    for (auto& category : categoryOrder)
+    {
+        for (auto tool : tools)
+        {
+            if (tool.Category() != category)
+                continue;
+
+            String toolSetting;
+            if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
+            {
+                String output = L"";
+
+                // Setting the tool value
+                tool.SetConfiguration(winrt::hstring(toolSetting));
+                tool.Apply(displayOutput);
+                testName = testName + tool.GetConfiguration() + L"_";
+            }
         }
     }
 
