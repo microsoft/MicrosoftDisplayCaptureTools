@@ -130,7 +130,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
 			{
                 for (float y = indent ? PatternToolSquareSize : 0; y < displayProperties.Resolution().Height; y += 2 * PatternToolSquareSize)
 				{
-
                     drawingSession.FillRectangle(x, y, PatternToolSquareSize, PatternToolSquareSize, checkerColor);
 				}
 

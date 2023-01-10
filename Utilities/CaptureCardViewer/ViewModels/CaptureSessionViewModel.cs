@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MicrosoftDisplayCaptureTools.CaptureCard;
+using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
 using System;
 using System.Collections.ObjectModel;
@@ -226,10 +227,21 @@ namespace CaptureCardViewer.ViewModels
 							.Select((tool) => tool.Tool))
 						.ToList();
 
-					// Apply all tools to the display
-					foreach (var tool in activeTools)
+					// Apply all tools to the display, in categorical order
+					ConfigurationToolCategory[] toolOrder = { 
+						ConfigurationToolCategory.DisplaySetup, 
+						ConfigurationToolCategory.RenderSetup, 
+						ConfigurationToolCategory.Render };
+
+					foreach (var category in toolOrder)
 					{
-						tool.Apply(selectedEngineOutput);
+						foreach (var tool in activeTools)
+						{
+							if (tool.Category == category)
+							{
+								tool.Apply(selectedEngineOutput);
+							}
+						}
 					}
 
 					selectedEngineOutputRenderer = selectedEngineOutput.StartRender();
