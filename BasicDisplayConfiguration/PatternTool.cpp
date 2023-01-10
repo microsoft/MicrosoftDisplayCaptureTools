@@ -2,6 +2,7 @@
 #include "PatternTool.h"
 
 #include "winrt\Microsoft.Graphics.Canvas.h"
+#include "winrt\Windows.UI.h"
 
 namespace winrt
 {
@@ -11,6 +12,7 @@ namespace winrt
 	using namespace Windows::Storage::Streams;
 	using namespace Windows::Graphics::Imaging;
 	using namespace Microsoft::Graphics::Canvas;
+	using namespace Windows::UI;
 }
 
 
@@ -19,7 +21,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	std::map<PatternToolConfigurations, winrt::hstring> ConfigurationMap
 	{
-		{ PatternToolConfigurations::Black, L"Black" },
 		{ PatternToolConfigurations::White, L"White" },
 		{ PatternToolConfigurations::Red,   L"Red"   },
 		{ PatternToolConfigurations::Green, L"Green" },
@@ -104,29 +105,41 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
         {
             auto drawingSession = patternTarget.CreateDrawingSession();
-            winrt::Windows::Foundation::Numerics::float4 clearColor;
+            Color checkerColor;
 
             switch (m_currentConfig)
             {
-            case PatternToolConfigurations::Black:
-                clearColor = {0.f, 0.f, 0.f, 1.f};
-                break;
             case PatternToolConfigurations::White:
-                clearColor = {1.f, 1.f, 1.f, 1.f};
+                checkerColor = Colors::White();
                 break;
             case PatternToolConfigurations::Red:
-                clearColor = {1.f, 0.f, 0.f, 1.f};
+                checkerColor = Colors::Red();
                 break;
             case PatternToolConfigurations::Green:
-                clearColor = {0.f, 1.f, 0.f, 1.f};
+                checkerColor = Colors::Green();
                 break;
             case PatternToolConfigurations::Blue:
-                clearColor = {0.f, 0.f, 1.f, 1.f};
+                checkerColor = Colors::Blue();
                 break;
             }
 
-            drawingSession.Clear(clearColor);
+            drawingSession.Clear(Colors::Black());
+
+			bool indent = false;
+			for (float x = 0; x < displayProperties.Resolution().Width; x += PatternToolSquareSize)
+			{
+                for (float y = indent ? PatternToolSquareSize : 0; y < displayProperties.Resolution().Height; y += 2 * PatternToolSquareSize)
+				{
+
+                    drawingSession.FillRectangle(x, y, PatternToolSquareSize, PatternToolSquareSize, checkerColor);
+				}
+
+				indent = !indent;
+			}
+
+			drawingSession.Close();
         }
+
 
 		// TODO: update this bytes per pixel variable to match the actual format
 		auto bytesPerPixel = 4;

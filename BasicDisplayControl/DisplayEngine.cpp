@@ -764,18 +764,8 @@ namespace winrt::BasicDisplayControl::implementation
             throw winrt::hresult_not_implemented();
         }
 
-        /*
-        m_bitmap = SoftwareBitmap(bitmapFormat, mode.TargetResolution().Width, mode.TargetResolution().Height, BitmapAlphaMode::Ignore);
-        auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Write);
-        auto bufferReference = buffer.CreateReference();
-
-        ClearPixelBuffer(bufferReference, properties->GetPlaneProperties()[0].ClearColor(), mode.SourcePixelFormat());
-        */
-
         m_bitmap = SoftwareBitmap(bitmapFormat, mode.TargetResolution().Width, mode.TargetResolution().Height, BitmapAlphaMode::Ignore);
         m_bitmap.CopyFromBuffer(properties->GetPlaneProperties()[0].BaseImage().Pixels());
-
-        // m_bitmap = SoftwareBitmap::Copy(properties->GetPlaneProperties()[0].SourceBitmap());
     }
 
     SoftwareBitmap DisplayEnginePrediction::GetBitmap()

@@ -3,12 +3,13 @@ namespace winrt::BasicDisplayConfiguration::implementation
 {
 	enum class PatternToolConfigurations
 	{
-		Black,
 		White,
 		Red,
 		Green,
 		Blue
 	};
+
+	static const uint32_t PatternToolSquareSize = 100;
 
 	struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
