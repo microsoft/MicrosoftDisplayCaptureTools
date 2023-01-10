@@ -15,7 +15,6 @@ namespace MicrosoftDisplayCaptureTools.Display
         Windows.Graphics.SizeInt32 Resolution{ get; set; };
     };
 
-
     // Used to set parameters for this particular MPO plane.
     interface IDisplayEnginePlanePropertySet
     {

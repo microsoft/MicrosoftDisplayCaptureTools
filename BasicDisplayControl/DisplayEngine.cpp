@@ -503,7 +503,7 @@ namespace winrt::BasicDisplayControl::implementation
 
         D3D_FEATURE_LEVEL featureLevel;
         winrt::com_ptr<ID3D11Device> device;
-        winrt::check_hresult(D3D11CreateDevice(dxgiAdapter.get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, device.put(), &featureLevel, m_d3dContext.put()));
+        winrt::check_hresult(D3D11CreateDevice(dxgiAdapter.get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, nullptr, 0, D3D11_SDK_VERSION, device.put(), &featureLevel, m_d3dContext.put()));
         m_d3dDevice = device.as<ID3D11Device5>();
 
         m_d3dFence.capture(m_d3dDevice, &ID3D11Device5::CreateFence, 0, D3D11_FENCE_FLAG_SHARED);
@@ -555,23 +555,51 @@ namespace winrt::BasicDisplayControl::implementation
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
 
-        float basePlaneClearColor[4] = { 0 };
-        
+        // Dump the base plane pixels into a buffer on the target
+        auto dxgiSurface = m_d3dSurface.as<IDXGISurface>();
+        winrt::com_ptr<ID2D1Factory> d2dFactory;
+        winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
+        winrt::com_ptr<ID2D1RenderTarget> d2dTarget;
+        D2D1_RENDER_TARGET_PROPERTIES d2dRtProperties;
+        d2dRtProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        d2dRtProperties.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        d2dRtProperties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+        d2dRtProperties.minLevel = D2D1_FEATURE_LEVEL_10;
+        d2dRtProperties.dpiX = 96.f;
+        d2dRtProperties.dpiY = 96.f;
+        d2dRtProperties.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+
+        winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface.get(), d2dRtProperties, d2dTarget.put()));
+
+        winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
+        D2D1_BITMAP_PROPERTIES d2dBitmapProperties;
+        d2dBitmapProperties.pixelFormat.format = (DXGI_FORMAT)m_properties->m_planeProperties[0]->BaseImage().Format();
+        d2dBitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        d2dBitmapProperties.dpiX = 96.f;
+        d2dBitmapProperties.dpiY = 96.f;
+
+        D2D1_SIZE_U d2dBitmapSize;
+        d2dBitmapSize.height = m_properties->m_planeProperties[0]->BaseImage().Resolution().Height;
+        d2dBitmapSize.width = m_properties->m_planeProperties[0]->BaseImage().Resolution().Width;
+        auto d2dBitmapRect = D2D1::RectF(0, 0, d2dBitmapSize.width, d2dBitmapSize.height);
+
         {
             auto bitmapBuffer = m_properties->m_planeProperties[0]->BaseImage().Pixels();
-            auto dataReader = Windows::Storage::Streams::DataReader::FromBuffer(bitmapBuffer);
 
-            // Temporary hack to make sure data is getting around.
-            basePlaneClearColor[0] = dataReader.ReadByte() / 255.f;
-            basePlaneClearColor[1] = dataReader.ReadByte() / 255.f;
-            basePlaneClearColor[2] = dataReader.ReadByte() / 255.f;
-            basePlaneClearColor[3] = 1.f;
+            winrt::check_hresult(d2dTarget->CreateBitmap(
+                d2dBitmapSize, bitmapBuffer.data(), d2dBitmapSize.width * 4, d2dBitmapProperties, d2dBitmap.put()));
+
         }
+
+        d2dTarget->BeginDraw();
+        d2dTarget->DrawBitmap(d2dBitmap.get(), d2dBitmapRect, 1.f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, d2dBitmapRect);
+        winrt::check_hresult(d2dTarget->EndDraw());
+
 
         // Render and present until termination is signalled
         while (m_valid)
         {
-            m_d3dContext->ClearRenderTargetView(m_d3dRenderTarget.get(), basePlaneClearColor);
+            //m_d3dContext->ClearRenderTargetView(m_d3dRenderTarget.get(), basePlaneClearColor);
 
             auto d3dContext4 = m_d3dContext.as<ID3D11DeviceContext4>();
             d3dContext4->Signal(m_d3dFence.get(), ++m_d3dFenceValue);
