@@ -24,7 +24,13 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		{ PatternToolConfigurations::White, L"White" },
 		{ PatternToolConfigurations::Red,   L"Red"   },
 		{ PatternToolConfigurations::Green, L"Green" },
-		{ PatternToolConfigurations::Blue,  L"Blue"  }
+		{ PatternToolConfigurations::Blue,  L"Blue"  },
+		{ PatternToolConfigurations::Gray,  L"Gray"  }
+	};
+
+	std::map<Windows::Graphics::DirectX::DirectXPixelFormat, uint32_t> SupportedFormatsWithSizePerPixel
+	{
+        { Windows::Graphics::DirectX::DirectXPixelFormat::R8G8B8A8UIntNormalized, 4 }
 	};
 
 	PatternTool::PatternTool(winrt::ILogger const& logger) :
@@ -93,6 +99,11 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		auto displayProperties = reference.GetProperties();
 		auto planeProperties = displayProperties.GetPlaneProperties()[0];
 
+		if (SupportedFormatsWithSizePerPixel.find(planeProperties.Format()) == SupportedFormatsWithSizePerPixel.end())
+		{
+            m_logger.LogError(L"PatternTool does not support the plane pixel format.");
+            return;
+		}
 
 		auto canvasDevice = CanvasDevice::GetSharedDevice();
         auto patternTarget = CanvasRenderTarget(
@@ -121,6 +132,12 @@ namespace winrt::BasicDisplayConfiguration::implementation
             case PatternToolConfigurations::Blue:
                 checkerColor = Colors::Blue();
                 break;
+            case PatternToolConfigurations::Gray:
+                checkerColor.R = 128;
+                checkerColor.G = 128;
+                checkerColor.B = 128;
+                checkerColor.A = 255;
+                break;
             }
 
             drawingSession.Clear(Colors::Black());
@@ -139,9 +156,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 			drawingSession.Close();
         }
 
-
-		// TODO: update this bytes per pixel variable to match the actual format
-		auto bytesPerPixel = 4;
+        auto bytesPerPixel = SupportedFormatsWithSizePerPixel[planeProperties.Format()];
         auto bufferSize = patternTarget.SizeInPixels().Height * patternTarget.SizeInPixels().Width * bytesPerPixel;
         auto pixelBuffer = Buffer(bufferSize);
         patternTarget.GetPixelBytes(pixelBuffer, 0, 0, patternTarget.SizeInPixels().Width, patternTarget.SizeInPixels().Height);

@@ -6,7 +6,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		White,
 		Red,
 		Green,
-		Blue
+		Blue,
+		Gray
 	};
 
 	static const uint32_t PatternToolSquareSize = 100;
