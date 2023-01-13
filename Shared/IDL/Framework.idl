@@ -136,7 +136,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
 
         // Compute a delta image between this and another IPixelData implementation. This will fail if the image formats
         // do not match.
-        IPixelData GetImageDelta(IPixelData other);
+        IPixelDataExtension GetImageDelta(IPixelData other);
     };
 
     //

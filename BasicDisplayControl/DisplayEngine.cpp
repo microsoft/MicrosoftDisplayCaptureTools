@@ -581,7 +581,7 @@ namespace winrt::BasicDisplayControl::implementation
         D2D1_SIZE_U d2dBitmapSize;
         d2dBitmapSize.height = m_properties->m_planeProperties[0]->BaseImage().Resolution().Height;
         d2dBitmapSize.width = m_properties->m_planeProperties[0]->BaseImage().Resolution().Width;
-        auto d2dBitmapRect = D2D1::RectF(0, 0, d2dBitmapSize.width, d2dBitmapSize.height);
+        auto d2dBitmapRect = D2D1::RectF(0, 0, (FLOAT)d2dBitmapSize.width, (FLOAT)d2dBitmapSize.height);
 
         {
             auto bitmapBuffer = m_properties->m_planeProperties[0]->BaseImage().Pixels();
@@ -595,12 +595,9 @@ namespace winrt::BasicDisplayControl::implementation
         d2dTarget->DrawBitmap(d2dBitmap.get(), d2dBitmapRect, 1.f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, d2dBitmapRect);
         winrt::check_hresult(d2dTarget->EndDraw());
 
-
         // Render and present until termination is signalled
         while (m_valid)
         {
-            //m_d3dContext->ClearRenderTargetView(m_d3dRenderTarget.get(), basePlaneClearColor);
-
             auto d3dContext4 = m_d3dContext.as<ID3D11DeviceContext4>();
             d3dContext4->Signal(m_d3dFence.get(), ++m_d3dFenceValue);
 
@@ -685,6 +682,22 @@ namespace winrt::BasicDisplayControl::implementation
 
         return m_bitmap;
     }
-}
+
+    Windows::Graphics::Imaging::SoftwareBitmap PredictedImagePixelData::GetRenderableApproximation()
+    {
+        throw winrt::hresult_not_implemented();
+    }
+
+    com_array<byte> PredictedImagePixelData::GetSpecificPixel(uint32_t x, uint32_t y)
+    {
+        throw winrt::hresult_not_implemented();
+    }
+
+    MicrosoftDisplayCaptureTools::Framework::IPixelDataExtension PredictedImagePixelData::GetImageDelta(MicrosoftDisplayCaptureTools::Framework::IPixelData other)
+    {
+        throw winrt::hresult_not_implemented();
+    }
+
+} // namespace winrt::BasicDisplayControl::implementation
 
 #pragma warning(pop)

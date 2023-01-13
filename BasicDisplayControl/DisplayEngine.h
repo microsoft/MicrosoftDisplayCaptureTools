@@ -13,7 +13,7 @@ namespace winrt::BasicDisplayControl::implementation
 
     struct DisplayEnginePlaneBaseImage : implements<DisplayEnginePlaneBaseImage, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneBaseImage>
     {
-        DisplayEnginePlaneBaseImage() {};
+        DisplayEnginePlaneBaseImage() {}
 
         Windows::Storage::Streams::IBuffer Pixels() { return m_pixels; }
         void Pixels(Windows::Storage::Streams::IBuffer buffer) { m_pixels = buffer; }
@@ -30,10 +30,43 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::DirectX::DirectXPixelFormat m_format{Windows::Graphics::DirectX::DirectXPixelFormat::Unknown};
     };
 
+    struct PredictedImagePixelData : implements <PredictedImagePixelData, 
+        MicrosoftDisplayCaptureTools::Framework::IPixelData, MicrosoftDisplayCaptureTools::Framework::IPixelDataExtension>
+    {
+        PredictedImagePixelData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger){}
+
+        // --------------------------------------------Functions from IPixelData -----------------------------------------------------
+        Windows::Storage::Streams::IBuffer Pixels() { return m_pixels; }
+        void Pixels(Windows::Storage::Streams::IBuffer buffer) { m_pixels = buffer; }
+
+        Windows::Graphics::SizeInt32 Resolution() { return m_resolution; }
+        void Resolution(Windows::Graphics::SizeInt32 resolution) { m_resolution = resolution; }
+
+        MicrosoftDisplayCaptureTools::Framework::PixelDataDescription FormatDescription() { return m_description; }
+        void FormatDescription(MicrosoftDisplayCaptureTools::Framework::PixelDataDescription description) { m_description = description; }
+
+        // --------------------------------------------Functions from IPixelDataExtension --------------------------------------------
+        // Create a facsimile of this pixel data in a BGRA8 format, for ease of rendering/debugging.
+        Windows::Graphics::Imaging::SoftwareBitmap GetRenderableApproximation();
+
+        // Get a byte array representing a specific pixel. It is up to the caller to properly interpret this using the
+        // FormatDescription member.
+        com_array<byte> GetSpecificPixel(uint32_t x, uint32_t y);
+
+        // Return a new IPixelDataExtension object containing the delta between this object and other supplied image.
+        MicrosoftDisplayCaptureTools::Framework::IPixelDataExtension GetImageDelta(MicrosoftDisplayCaptureTools::Framework::IPixelData other);
+
+    private:
+        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        Windows::Storage::Streams::IBuffer m_pixels{nullptr};
+        Windows::Graphics::SizeInt32 m_resolution{0, 0};
+        MicrosoftDisplayCaptureTools::Framework::PixelDataDescription m_description{0};
+    };
+
     struct DisplayEnginePlanePropertySet : implements<DisplayEnginePlanePropertySet, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet>
     {
         DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
-            m_logger(logger), m_baseImage(make<DisplayEnginePlaneBaseImage>()){};
+            m_logger(logger), m_baseImage(make<DisplayEnginePlaneBaseImage>()){}
 
         ~DisplayEnginePlanePropertySet()
         {
@@ -61,7 +94,7 @@ namespace winrt::BasicDisplayControl::implementation
     struct DisplayEnginePlaneCapabilities : implements<DisplayEnginePlaneCapabilities, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneCapabilities>
     {
         DisplayEnginePlaneCapabilities(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-            m_logger(logger){};
+            m_logger(logger){}
 
         ~DisplayEnginePlaneCapabilities()
         {
@@ -143,7 +176,7 @@ namespace winrt::BasicDisplayControl::implementation
         ~Renderer()
         {
             Close();
-        };
+        }
         void Close();
 
     public: // Utility functions
