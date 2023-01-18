@@ -46,7 +46,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	ConfigurationToolCategory PatternTool::Category()
 	{
-		return ConfigurationToolCategory::Render;
+		return ConfigurationToolCategory::RenderSetup;
 	}
 
 	IConfigurationToolRequirements PatternTool::Requirements()
