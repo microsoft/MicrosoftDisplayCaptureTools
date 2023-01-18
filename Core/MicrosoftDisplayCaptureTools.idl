@@ -16,4 +16,11 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Core();
         Core(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
     }
+
+    [default_interface] 
+    runtimeclass PixelData : MicrosoftDisplayCaptureTools.Framework.IPixelData,
+        MicrosoftDisplayCaptureTools.Framework.IPixelDataExtension
+    {
+        PixelData();
+    }
 }

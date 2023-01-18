@@ -195,6 +195,7 @@
     <ClInclude Include="MicrosoftDisplayCaptureTools.h">
       <DependentUpon>MicrosoftDisplayCaptureTools.idl</DependentUpon>
     </ClInclude>
+    <ClInclude Include="PixelData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EDIDDescriptor.cpp" />
@@ -206,6 +207,7 @@
       <DependentUpon>MicrosoftDisplayCaptureTools.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="PixelData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="..\Shared\IDL\CaptureCardPlugin.idl" />
