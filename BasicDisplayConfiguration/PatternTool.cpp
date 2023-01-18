@@ -108,8 +108,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		auto canvasDevice = CanvasDevice::GetSharedDevice();
         auto patternTarget = CanvasRenderTarget(
 			canvasDevice,
-			displayProperties.Resolution().Width,
-			displayProperties.Resolution().Height,
+			(float)displayProperties.Resolution().Width,
+			(float)displayProperties.Resolution().Height,
 			96,
 			planeProperties.Format(),
 			CanvasAlphaMode::Ignore);
@@ -145,7 +145,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 			bool indent = false;
 			for (float x = 0; x < displayProperties.Resolution().Width; x += PatternToolSquareSize)
 			{
-                for (float y = indent ? PatternToolSquareSize : 0; y < displayProperties.Resolution().Height; y += 2 * PatternToolSquareSize)
+                for (float y = indent ? (float)PatternToolSquareSize : 0.f; y < displayProperties.Resolution().Height; y += 2 * PatternToolSquareSize)
 				{
                     drawingSession.FillRectangle(x, y, PatternToolSquareSize, PatternToolSquareSize, checkerColor);
 				}

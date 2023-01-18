@@ -72,6 +72,8 @@ namespace winrt::BasicDisplayControl::implementation
         {
         }
 
+        // Required plane properties
+
         bool Active();
         void Active(bool active);        
 
@@ -81,7 +83,11 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::DirectX::DirectXPixelFormat Format();
         void Format(Windows::Graphics::DirectX::DirectXPixelFormat format);
 
+        // The base image is another required property, but is not trivially constructed like the others, instead the object will be created
+        // when retrieved and the caller is expected to use the type members to modify it.
         MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneBaseImage BaseImage();
+
+        // TODO insert generic property bag.
 
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
