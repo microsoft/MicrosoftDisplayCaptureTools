@@ -202,19 +202,12 @@ namespace winrt::BasicDisplayControl::implementation
 
         ConnectTarget();
 
-        // Instantiate the Capabilities and Properties objects
-        m_capabilities = winrt::make_self<DisplayEngineCapabilities>(m_logger);
+        // Instantiate properties object
         m_propertySet = winrt::make_self<DisplayEnginePropertySet>(m_logger);
-
-        // Get the display capabilities
-        PopulateCapabilities();
-
-        // Ensure that there are the same number of planes on both the capabilities and property trees
-        for (auto planes : m_capabilities->m_planeCapabilities)
-        {
-            auto planeProperties = winrt::make_self<DisplayEnginePlanePropertySet>(m_logger);
-            m_propertySet->m_planeProperties.push_back(planeProperties);
-        }
+        
+        // This DisplayEngine implementation only supports 1 plane
+        auto planeProperties = winrt::make_self<DisplayEnginePlanePropertySet>(m_logger);
+        m_propertySet->m_planeProperties.push_back(planeProperties);
 
         // Mark the base plane as active
         m_propertySet->m_planeProperties[0]->Active(true);
@@ -232,12 +225,6 @@ namespace winrt::BasicDisplayControl::implementation
     {
         return m_displayTarget;
     }
-
-    winrt::IDisplayEngineCapabilities DisplayOutput::GetCapabilities()
-    {
-        return *m_capabilities;
-    }
-
     winrt::IDisplayEnginePropertySet DisplayOutput::GetProperties()
     {
         return *m_propertySet;
@@ -255,16 +242,44 @@ namespace winrt::BasicDisplayControl::implementation
         // Re-connect the target
         ConnectTarget();
 
-        auto renderer = make_self<Renderer>(m_logger);
+        // Create an object to stop the rendering when destroyed/closed.
+        auto renderWatchdog = make_self<RenderWatchdog>(this);
 
-        renderer->displayDevice  = m_displayDevice;
-        renderer->displayManager = m_displayManager;
-        renderer->displayTarget  = m_displayTarget;
-        renderer->displayState   = m_displayState;
-        renderer->displayPath    = m_displayPath;
+        // Start the rendering process - first this will determine elgible modes and then it will spin off a thread to run 
+        // a render loop. This function won't return until the thread has started.
+        PrepareRender();
 
-        renderer->StartRender(m_propertySet.get());
-        return renderer.as<IClosable>();
+        return renderWatchdog.as<IClosable>();
+    }
+
+    event_token DisplayOutput::DisplaySetupCallback(Windows::Foundation::EventHandler<IDisplayEnginePropertySet> const& handler)
+    {
+        return m_displaySetupCallback.add(handler);
+    }
+
+    void DisplayOutput::DisplaySetupCallback(event_token const& token) noexcept
+    {
+        m_displaySetupCallback.remove(token);
+    }
+
+    event_token DisplayOutput::RenderSetupCallback(Windows::Foundation::EventHandler<IDisplayEnginePropertySet> const& handler)
+    {
+        return m_renderSetupCallback.add(handler);
+    }
+
+    void DisplayOutput::RenderSetupCallback(event_token const& token) noexcept
+    {
+        m_renderSetupCallback.remove(token);
+    }
+
+    event_token DisplayOutput::RenderLoopCallback(Windows::Foundation::EventHandler<IDisplayEnginePropertySet> const& handler)
+    {
+        return m_renderLoopCallback.add(handler);
+    }
+
+    void DisplayOutput::RenderLoopCallback(event_token const& token) noexcept
+    {
+        m_renderLoopCallback.remove(token);
     }
 
     void DisplayOutput::RefreshTarget()
@@ -325,36 +340,240 @@ namespace winrt::BasicDisplayControl::implementation
         m_displayDevice = m_displayManager.CreateDisplayDevice(m_displayTarget.Adapter());
     }
 
-    void DisplayOutput::PopulateCapabilities()
+    // Rendering
+    void DisplayOutput::StopRender()
     {
-        // Create the capabilities objects for the base plane (the only plane supported by this implementation)
-        auto basePlaneCapabilities = winrt::make_self<DisplayEnginePlaneCapabilities>(m_logger);
-        m_capabilities->m_planeCapabilities.push_back(basePlaneCapabilities);
+        m_logger.LogNote(L"Stopping Renderer Thread");
 
-        // Populate the mode list
-        auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
-        m_capabilities->m_modes.assign(modeList.begin(), modeList.end());
-    }
-
-    // DisplayEngineCapabilities
-    DisplayEngineCapabilities::DisplayEngineCapabilities(winrt::ILogger const& logger) : 
-        m_logger(logger)
-    {
-    }
-
-    winrt::com_array<winrt::DisplayModeInfo> DisplayEngineCapabilities::GetSupportedModes()
-    {
-        return winrt::com_array<winrt::DisplayModeInfo>(m_modes);
-    }
-
-    winrt::com_array<winrt::IDisplayEnginePlaneCapabilities> DisplayEngineCapabilities::GetPlaneCapabilities()
-    {
-        std::vector<winrt::IDisplayEnginePlaneCapabilities> retVector;
-        for (auto plane : m_planeCapabilities)
+        if (m_valid)
         {
-            retVector.push_back(plane.as<winrt::IDisplayEnginePlaneCapabilities>());
+            m_valid = false;
+
+            if (m_renderThread.joinable())
+            {
+                m_renderThread.join();
+            }
         }
-        return winrt::com_array<winrt::IDisplayEnginePlaneCapabilities>(retVector);
+    }
+
+    void DisplayOutput::PrepareRender()
+    {
+        m_logger.LogNote(L"Preparing Renderer Thread");
+
+        m_presenting = false;
+
+        // Call back to any tools which need to apply settings before the mode is chosen and applied
+        m_displaySetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+
+        RefreshMode();
+
+        m_displayPath.ApplyPropertiesFromMode(m_propertySet->ActiveMode());
+        auto result = m_displayState.TryApply(winrt::DisplayStateApplyOptions::None);
+
+        m_renderThread = std::thread(&DisplayOutput::RenderLoop, this);
+
+        // don't return until the render thread has started presenting
+        while (!m_presenting)
+        {
+            std::this_thread::yield();
+        }
+    }
+
+    void DisplayOutput::RenderLoop()
+    {
+        winrt::init_apartment();
+
+        m_logger.LogNote(L"Starting Render");
+
+        // Initialize D3D objects
+        winrt::com_ptr<IDXGIFactory6> dxgiFactory;
+        winrt::com_ptr<ID3D11Device5> d3dDevice;
+        winrt::com_ptr<ID3D11DeviceContext> d3dContext;
+        winrt::com_ptr<ID3D11Fence> d3dFence;
+        uint64_t d3dFenceValue = 0;
+
+        dxgiFactory.capture(&CreateDXGIFactory2, 0);
+
+        winrt::com_ptr<IDXGIAdapter4> dxgiAdapter;
+        dxgiAdapter.capture(
+            dxgiFactory, &IDXGIFactory7::EnumAdapterByLuid, MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()));
+
+        D3D_FEATURE_LEVEL featureLevel;
+        winrt::com_ptr<ID3D11Device> device;
+        winrt::check_hresult(D3D11CreateDevice(
+            dxgiAdapter.get(),
+            D3D_DRIVER_TYPE_UNKNOWN,
+            nullptr,
+            D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+            nullptr,
+            0,
+            D3D11_SDK_VERSION,
+            device.put(),
+            &featureLevel,
+            d3dContext.put()));
+        d3dDevice = device.as<ID3D11Device5>();
+
+        d3dFence.capture(d3dDevice, &ID3D11Device5::CreateFence, 0, D3D11_FENCE_FLAG_SHARED);
+
+        // Initialize DDisplay sources and tasks
+        auto taskPool = m_displayDevice.CreateTaskPool();
+        auto source = m_displayDevice.CreateScanoutSource(m_displayTarget);
+
+        winrt::SizeInt32 sourceResolution = m_displayPath.SourceResolution().Value();
+        winrt::Direct3D11::Direct3DMultisampleDescription multisampleDesc = {};
+        multisampleDesc.Count = 1;
+
+        // Create a surface format description for the primaries
+        winrt::DisplayPrimaryDescription primaryDesc{
+            static_cast<uint32_t>(sourceResolution.Width),
+            static_cast<uint32_t>(sourceResolution.Height),
+            m_displayPath.SourcePixelFormat(),
+            winrt::DirectXColorSpace::RgbFullG22NoneP709,
+            false,
+            multisampleDesc};
+
+        winrt::DisplaySurface primarySurface{nullptr};
+        winrt::DisplayScanout primaryScanout{nullptr};
+
+        primarySurface = m_displayDevice.CreatePrimary(m_displayTarget, primaryDesc);
+        primaryScanout = m_displayDevice.CreateSimpleScanout(source, primarySurface, 0, 1);
+
+        auto interopDevice = m_displayDevice.as<IDisplayDeviceInterop>();
+        auto rawSurface = primarySurface.as<::IInspectable>();
+
+        winrt::handle primarySurfaceHandle;
+        winrt::check_hresult(
+            interopDevice->CreateSharedHandle(rawSurface.get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandle.put()));
+
+        winrt::com_ptr<ID3D11RenderTargetView> d3dRenderTarget;
+        winrt::com_ptr<ID3D11Texture2D> d3dSurface;
+
+        d3dSurface.capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandle.get());
+
+        D3D11_TEXTURE2D_DESC d3dTextureDesc{};
+        d3dSurface->GetDesc(&d3dTextureDesc);
+
+        D3D11_RENDER_TARGET_VIEW_DESC d3dRenderTargetViewDesc{};
+        d3dRenderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        d3dRenderTargetViewDesc.Texture2D.MipSlice = 0;
+        d3dRenderTargetViewDesc.Format = d3dTextureDesc.Format;
+
+        // Create the render target view
+        winrt::check_hresult(d3dDevice->CreateRenderTargetView(d3dSurface.get(), &d3dRenderTargetViewDesc, d3dRenderTarget.put()));
+
+        // Get a fence to wait for render work to complete
+        winrt::handle fenceHandle;
+        winrt::check_hresult(d3dFence->CreateSharedHandle(nullptr, GENERIC_ALL, nullptr, fenceHandle.put()));
+        winrt::com_ptr<::IInspectable> displayFenceIInspectable;
+        displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
+        winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
+
+        /*
+        // Dump the base plane pixels into a buffer on the target
+        auto dxgiSurface = d3dSurface.as<IDXGISurface>();
+        winrt::com_ptr<ID2D1Factory> d2dFactory;
+        winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
+        winrt::com_ptr<ID2D1RenderTarget> d2dTarget;
+        D2D1_RENDER_TARGET_PROPERTIES d2dRtProperties;
+        d2dRtProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        d2dRtProperties.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        d2dRtProperties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+        d2dRtProperties.minLevel = D2D1_FEATURE_LEVEL_10;
+        d2dRtProperties.dpiX = 96.f;
+        d2dRtProperties.dpiY = 96.f;
+        d2dRtProperties.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+
+        winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface.get(), d2dRtProperties, d2dTarget.put()));
+
+        winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
+        D2D1_BITMAP_PROPERTIES d2dBitmapProperties;
+        d2dBitmapProperties.pixelFormat.format = (DXGI_FORMAT)m_propertySet->m_planeProperties[0]->BaseImage().Format();
+        d2dBitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        d2dBitmapProperties.dpiX = 96.f;
+        d2dBitmapProperties.dpiY = 96.f;
+
+        D2D1_SIZE_U d2dBitmapSize;
+        d2dBitmapSize.height = m_propertySet->m_planeProperties[0]->BaseImage().Resolution().Height;
+        d2dBitmapSize.width = m_propertySet->m_planeProperties[0]->BaseImage().Resolution().Width;
+        auto d2dBitmapRect = D2D1::RectF(0, 0, (FLOAT)d2dBitmapSize.width, (FLOAT)d2dBitmapSize.height);
+
+        {
+            auto bitmapBuffer = m_propertySet->m_planeProperties[0]->BaseImage().Pixels();
+
+            winrt::check_hresult(d2dTarget->CreateBitmap(
+                d2dBitmapSize, bitmapBuffer.data(), d2dBitmapSize.width * 4, d2dBitmapProperties, d2dBitmap.put()));
+        }
+
+        d2dTarget->BeginDraw();
+        d2dTarget->DrawBitmap(d2dBitmap.get(), d2dBitmapRect, 1.f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, d2dBitmapRect);
+        winrt::check_hresult(d2dTarget->EndDraw());
+        */
+
+        // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
+        // actual scanning out.
+        m_renderSetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+
+        // Render and present until termination is signalled
+        while (m_valid)
+        {
+            auto d3dContext4 = d3dContext.as<ID3D11DeviceContext4>();
+            d3dContext4->Signal(d3dFence.get(), ++d3dFenceValue);
+
+            // Callback to any tools which need to perform per-scanout operations
+            m_renderLoopCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+
+            winrt::DisplayTask task = taskPool.CreateTask();
+            task.SetScanout(primaryScanout);
+            task.SetWait(fence, d3dFenceValue);
+            taskPool.ExecuteTask(task);
+            m_displayDevice.WaitForVBlank(source);
+
+            m_presenting = true;
+        }
+
+        m_logger.LogNote(L"Stopping Render");
+    }
+
+    void DisplayOutput::RefreshMode()
+    {
+        if (m_propertySet->RequeryMode())
+        {
+            auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
+
+            for (auto&& mode : modeList)
+            {
+                double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) /
+                                          static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
+
+                double delta = fabs(presentationRate - m_propertySet->RefreshRate());
+
+                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
+                    mode.TargetResolution().Height == m_propertySet->Resolution().Height &&
+                    mode.TargetResolution().Width == m_propertySet->Resolution().Width &&
+                    mode.SourceResolution().Height == m_propertySet->Resolution().Height &&
+                    mode.SourceResolution().Width == m_propertySet->Resolution().Width)
+                {
+
+                    if (delta < sc_refreshRateEpsilon)
+                    {
+                        std::wstringstream buf{};
+                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height
+                            << L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
+
+                        // we have a mode matching the requirements.
+                        m_logger.LogNote(buf.str());
+
+                        m_propertySet->ActiveMode(mode);
+                        return;
+                    }
+                }
+            }
+
+            // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
+            // to auto-configure. So log a warning instead of an error to assist the user.
+            m_logger.LogWarning(L"No display mode fit the selected options");
+            throw winrt::hresult_invalid_argument();
+        }
     }
 
     // DisplayEnginePropertySet
@@ -415,6 +634,13 @@ namespace winrt::BasicDisplayControl::implementation
         return m_requeryMode;
     }
 
+    DisplayEnginePlanePropertySet::DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
+        m_logger(logger),
+        m_baseImage(make<DisplayEnginePlaneBaseImage>()),
+        m_propertyBag(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
+    {
+    }
+
     // DisplayEnginePlanePropertySet
     bool DisplayEnginePlanePropertySet::Active()
     {
@@ -450,209 +676,9 @@ namespace winrt::BasicDisplayControl::implementation
         return m_baseImage;
     }
 
-    // Renderer
-    void Renderer::Close()
+    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::IInspectable> DisplayEnginePlanePropertySet::PropertyBag()
     {
-        m_logger.LogNote(L"Stopping Renderer Thread");
-
-        if (m_valid)
-        {
-            m_valid = false;
-
-            if (renderThread.joinable())
-            {
-                renderThread.join();
-            }
-        }
-    }
-
-    void Renderer::StartRender(DisplayEnginePropertySet* properties)
-    {
-        m_logger.LogNote(L"Preparing Renderer Thread");
-
-        m_presenting = false;
-
-        m_properties = properties;
-
-        RefreshMode();
-
-        displayPath.ApplyPropertiesFromMode(m_properties->ActiveMode());
-        auto result = displayState.TryApply(winrt::DisplayStateApplyOptions::None);
-
-        renderThread = std::thread(&Renderer::Render, this);
-
-        // don't return until the render thread has started presenting
-        while (!m_presenting)
-        {
-            std::this_thread::yield();
-        }
-    }
-
-    void Renderer::Render()
-    {
-        winrt::init_apartment();
-
-        m_logger.LogNote(L"Starting Render");
-
-        // Initialize D3D objects
-        winrt::com_ptr<IDXGIFactory6> dxgiFactory;
-        dxgiFactory.capture(&CreateDXGIFactory2, 0);
-
-        winrt::com_ptr<IDXGIAdapter4> dxgiAdapter;
-        dxgiAdapter.capture(dxgiFactory, &IDXGIFactory7::EnumAdapterByLuid, MonitorUtilities::LuidFromAdapterId(displayTarget.Adapter().Id()));
-
-        D3D_FEATURE_LEVEL featureLevel;
-        winrt::com_ptr<ID3D11Device> device;
-        winrt::check_hresult(D3D11CreateDevice(dxgiAdapter.get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, nullptr, 0, D3D11_SDK_VERSION, device.put(), &featureLevel, m_d3dContext.put()));
-        m_d3dDevice = device.as<ID3D11Device5>();
-
-        m_d3dFence.capture(m_d3dDevice, &ID3D11Device5::CreateFence, 0, D3D11_FENCE_FLAG_SHARED);
-
-        // Initialize DDisplay sources and tasks
-        auto taskPool = displayDevice.CreateTaskPool();
-        auto source = displayDevice.CreateScanoutSource(displayTarget);
-
-        winrt::SizeInt32 sourceResolution = displayPath.SourceResolution().Value();
-        winrt::Direct3D11::Direct3DMultisampleDescription multisampleDesc = {};
-        multisampleDesc.Count = 1;
-
-        // Create a surface format description for the primaries
-        winrt::DisplayPrimaryDescription primaryDesc {
-            static_cast<uint32_t>(sourceResolution.Width), static_cast<uint32_t>(sourceResolution.Height),
-            displayPath.SourcePixelFormat(), winrt::DirectXColorSpace::RgbFullG22NoneP709,
-            false,
-            multisampleDesc };
-
-        winrt::DisplaySurface primarySurface{ nullptr };
-        winrt::DisplayScanout primaryScanout{ nullptr };
-
-        primarySurface = displayDevice.CreatePrimary(displayTarget, primaryDesc);
-        primaryScanout = displayDevice.CreateSimpleScanout(source, primarySurface, 0, 1);
-
-        auto interopDevice = displayDevice.as<IDisplayDeviceInterop>();
-        auto rawSurface = primarySurface.as<::IInspectable>();
-
-        winrt::handle primarySurfaceHandle;
-        winrt::check_hresult(interopDevice->CreateSharedHandle(rawSurface.get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandle.put()));
-
-        m_d3dSurface.capture(m_d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandle.get());
-
-        D3D11_TEXTURE2D_DESC d3dTextureDesc{};
-        m_d3dSurface->GetDesc(&d3dTextureDesc);
-
-        D3D11_RENDER_TARGET_VIEW_DESC d3dRenderTargetViewDesc{};
-        d3dRenderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        d3dRenderTargetViewDesc.Texture2D.MipSlice = 0;
-        d3dRenderTargetViewDesc.Format = d3dTextureDesc.Format;
-
-        // Create the render target view
-        winrt::check_hresult(m_d3dDevice->CreateRenderTargetView(m_d3dSurface.get(), &d3dRenderTargetViewDesc, m_d3dRenderTarget.put()));
-
-        // Get a fence to wait for render work to complete
-        winrt::handle fenceHandle;
-        winrt::check_hresult(m_d3dFence->CreateSharedHandle(nullptr, GENERIC_ALL, nullptr, fenceHandle.put()));
-        winrt::com_ptr<::IInspectable> displayFenceIInspectable;
-        displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
-        winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
-
-        // Dump the base plane pixels into a buffer on the target
-        auto dxgiSurface = m_d3dSurface.as<IDXGISurface>();
-        winrt::com_ptr<ID2D1Factory> d2dFactory;
-        winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
-        winrt::com_ptr<ID2D1RenderTarget> d2dTarget;
-        D2D1_RENDER_TARGET_PROPERTIES d2dRtProperties;
-        d2dRtProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-        d2dRtProperties.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
-        d2dRtProperties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
-        d2dRtProperties.minLevel = D2D1_FEATURE_LEVEL_10;
-        d2dRtProperties.dpiX = 96.f;
-        d2dRtProperties.dpiY = 96.f;
-        d2dRtProperties.usage = D2D1_RENDER_TARGET_USAGE_NONE;
-
-        winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface.get(), d2dRtProperties, d2dTarget.put()));
-
-        winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-        D2D1_BITMAP_PROPERTIES d2dBitmapProperties;
-        d2dBitmapProperties.pixelFormat.format = (DXGI_FORMAT)m_properties->m_planeProperties[0]->BaseImage().Format();
-        d2dBitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-        d2dBitmapProperties.dpiX = 96.f;
-        d2dBitmapProperties.dpiY = 96.f;
-
-        D2D1_SIZE_U d2dBitmapSize;
-        d2dBitmapSize.height = m_properties->m_planeProperties[0]->BaseImage().Resolution().Height;
-        d2dBitmapSize.width = m_properties->m_planeProperties[0]->BaseImage().Resolution().Width;
-        auto d2dBitmapRect = D2D1::RectF(0, 0, (FLOAT)d2dBitmapSize.width, (FLOAT)d2dBitmapSize.height);
-
-        {
-            auto bitmapBuffer = m_properties->m_planeProperties[0]->BaseImage().Pixels();
-
-            winrt::check_hresult(d2dTarget->CreateBitmap(
-                d2dBitmapSize, bitmapBuffer.data(), d2dBitmapSize.width * 4, d2dBitmapProperties, d2dBitmap.put()));
-
-        }
-
-        d2dTarget->BeginDraw();
-        d2dTarget->DrawBitmap(d2dBitmap.get(), d2dBitmapRect, 1.f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, d2dBitmapRect);
-        winrt::check_hresult(d2dTarget->EndDraw());
-
-        // Render and present until termination is signalled
-        while (m_valid)
-        {
-            auto d3dContext4 = m_d3dContext.as<ID3D11DeviceContext4>();
-            d3dContext4->Signal(m_d3dFence.get(), ++m_d3dFenceValue);
-
-            winrt::DisplayTask task = taskPool.CreateTask();
-            task.SetScanout(primaryScanout);
-            task.SetWait(fence, m_d3dFenceValue);
-            taskPool.ExecuteTask(task);
-            displayDevice.WaitForVBlank(source);
-
-            m_presenting = true;
-        }
-
-        m_logger.LogNote(L"Stopping Render");
-    }
-
-    void Renderer::RefreshMode()
-    {
-        if (m_properties->RequeryMode())
-        {
-            auto modeList = displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
-
-            for (auto&& mode : modeList)
-            {
-                double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) / 
-                    static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
-
-                double delta = fabs(presentationRate - m_properties->RefreshRate());
-                
-                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
-                    mode.TargetResolution().Height == m_properties->Resolution().Height &&
-                    mode.TargetResolution().Width == m_properties->Resolution().Width &&
-                    mode.SourceResolution().Height == m_properties->Resolution().Height &&
-                    mode.SourceResolution().Width == m_properties->Resolution().Width)
-                {
-
-                    if (delta < sc_refreshRateEpsilon)
-                    {
-                        std::wstringstream buf{};
-                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height <<
-                                   L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
-
-                        // we have a mode matching the requirements.
-                        m_logger.LogNote(buf.str());
-
-                        m_properties->ActiveMode(mode);
-                        return;
-                    }
-                }
-            }
-            
-            // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
-            // to auto-configure. So log a warning instead of an error to assist the user.
-            m_logger.LogWarning(L"No display mode fit the selected options");
-            throw winrt::hresult_invalid_argument();
-        }
+        return m_propertyBag;
     }
 
     DisplayEnginePrediction::DisplayEnginePrediction(DisplayEnginePropertySet* properties, winrt::ILogger const& logger) : 
@@ -661,41 +687,41 @@ namespace winrt::BasicDisplayControl::implementation
         m_logger.LogNote(L"Creating Prediction object from properties.");
         auto mode = properties->ActiveMode();
 
-        BitmapPixelFormat bitmapFormat;
+        FrameDataDescription description;
+
         switch (mode.SourcePixelFormat())
         {
         case DirectXPixelFormat::R8G8B8A8UIntNormalized:
-            bitmapFormat = BitmapPixelFormat::Rgba8;
+            description.BitsPerPixel = 32;
             break;
         default:
             // Currently unhandled case - throw and log
             throw winrt::hresult_not_implemented();
         }
 
-        m_bitmap = SoftwareBitmap(bitmapFormat, mode.TargetResolution().Width, mode.TargetResolution().Height, BitmapAlphaMode::Ignore);
-        m_bitmap.CopyFromBuffer(properties->GetPlaneProperties()[0].BaseImage().Pixels());
+        description.Stride = properties->GetPlaneProperties()[0].BaseImage().Resolution().Width * description.BitsPerPixel;
+        description.PixelFormat = mode.SourcePixelFormat();
+
+        m_frameData = FrameData(m_logger);
+        m_frameData.FormatDescription(description);
+        m_frameData.Resolution(mode.TargetResolution());
+
+        auto buffer = Buffer(properties->GetPlaneProperties()[0].BaseImage().Pixels().Length());
+        
+        // copy the memory over to the new buffer
+        memcpy(
+            buffer.data(),
+            properties->GetPlaneProperties()[0].BaseImage().Pixels().data(),
+            properties->GetPlaneProperties()[0].BaseImage().Pixels().Length());
+
+        m_frameData.Data(buffer);
     }
 
-    SoftwareBitmap DisplayEnginePrediction::GetBitmap()
+    IFrameData DisplayEnginePrediction::GetFrameData()
     {
-        m_logger.LogNote(L"Fetching predicted bitmap.");
+        m_logger.LogNote(L"Fetching predicted frame data.");
 
-        return m_bitmap;
-    }
-
-    Windows::Graphics::Imaging::SoftwareBitmap PredictedImagePixelData::GetRenderableApproximation()
-    {
-        throw winrt::hresult_not_implemented();
-    }
-
-    com_array<byte> PredictedImagePixelData::GetSpecificPixel(uint32_t x, uint32_t y)
-    {
-        throw winrt::hresult_not_implemented();
-    }
-
-    MicrosoftDisplayCaptureTools::Framework::IPixelDataExtension PredictedImagePixelData::GetImageDelta(MicrosoftDisplayCaptureTools::Framework::IPixelData other)
-    {
-        throw winrt::hresult_not_implemented();
+        return m_frameData;
     }
 
 } // namespace winrt::BasicDisplayControl::implementation

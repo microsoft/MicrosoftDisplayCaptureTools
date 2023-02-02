@@ -93,16 +93,22 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Boolean HasErrored();
     };
 
-    struct PixelDataDescription
+    // IFrameData Implementations 
+
+    struct FrameDataDescription
     {
         // The number of bits to represent each pixel, regardless of subsampling mode.
         UInt32 BitsPerPixel;
 
-        // Pixel encoding mode - i.e. RGB444, YCC420
-        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding Encoding;
-
         // The number of bytes for one scanline of the image
         UInt32 Stride;
+
+        // The DirectX pixel format of the buffer - If the pixel structure cannot be expressed with this enum, use 'Unknown' and
+        // use PixelEncoding to specify. If this value is set to anything other than 'Unknown', this is used.
+        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat;
+
+        // Pixel encoding mode - i.e. RGB444, YCC420
+        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding PixelEncoding;
 
         // The transfer function of the pixels (essentially the gamma encoding)
         Windows.Devices.Display.Core.DisplayWireFormatEotf Eotf;
@@ -111,32 +117,29 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     // An interface representing formatted pixel data
     //
-    interface IPixelData
+    interface IFrameData
     {
-        // The actual pixel data
-        Windows.Storage.Streams.IBuffer Pixels{ get; set; };
+        // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).
+        Windows.Storage.Streams.IBuffer Data{ get; set; };
 
         // The resolution of the image
         Windows.Graphics.SizeInt32 Resolution{ get; set; };
 
         // A description of how the pixels are formatted
-        PixelDataDescription FormatDescription{ get; set; };
+        FrameDataDescription FormatDescription{ get; set; };
     };
 
     //
-    // An interface representing optional extended features on top of IPixelData to assist in tooling
+    // An interface representing optional extended features on top of IFrameData to assist in tooling
     //
-    interface IPixelDataExtension
+    interface IFrameDataComparisons
     {
         // Get an easily renderable approximation of the image data, in BGRA8 format
         Windows.Graphics.Imaging.SoftwareBitmap GetRenderableApproximation();
 
-        // Retrieve a specific pixel, must use the PixelDescription member to interpret
-        byte[] GetSpecificPixel(UInt32 x, UInt32 y);
-
-        // Compute a delta image between this and another IPixelData implementation. This will fail if the image formats
+        // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
         // do not match.
-        IPixelDataExtension GetImageDelta(IPixelData other);
+        IFrameDataComparisons GetImageDelta(IFrameData other);
     };
 
     //

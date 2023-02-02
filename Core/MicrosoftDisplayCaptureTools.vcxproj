@@ -133,6 +133,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(SolutionDir)Shared\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)Shared\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)Shared\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(SolutionDir)Shared\IDL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -195,7 +196,7 @@
     <ClInclude Include="MicrosoftDisplayCaptureTools.h">
       <DependentUpon>MicrosoftDisplayCaptureTools.idl</DependentUpon>
     </ClInclude>
-    <ClInclude Include="PixelData.h" />
+    <ClInclude Include="FrameData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EDIDDescriptor.cpp" />
@@ -207,7 +208,7 @@
       <DependentUpon>MicrosoftDisplayCaptureTools.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="PixelData.cpp" />
+    <ClCompile Include="FrameData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="..\Shared\IDL\CaptureCardPlugin.idl" />

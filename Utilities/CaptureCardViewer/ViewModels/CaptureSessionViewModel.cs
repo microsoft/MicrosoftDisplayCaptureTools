@@ -188,7 +188,7 @@ namespace CaptureCardViewer.ViewModels
 				captureInput.FinalizeDisplayState();
 
 				var capturedFrame = captureInput.CaptureFrame();
-				var capPixelBuffer = capturedFrame.GetRawPixelData();
+				var capPixelBuffer = capturedFrame.GetRawFrameData();
 				var capturedBitmap = BufferToImgConv(capPixelBuffer, capturedFrame.Resolution, (int)capturedFrame.Stride);
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);

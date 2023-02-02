@@ -12,6 +12,12 @@
 #include <winrt/Windows.Media.Capture.Core.h>
 #include <winrt/Windows.Media.MediaProperties.h>
 
+// Include the headers for various graphics APIs
+#include <winrt/Windows.Graphics.h>
+#include <winrt/Windows.Graphics.DirectX.h>
+#include <winrt/Windows.Devices.Display.h>
+#include <winrt/Windows.Devices.Display.Core.h>
+
 // Include the DeviceInformation APIs
 #include <winrt/Windows.Devices.Enumeration.h>
 

@@ -4,6 +4,9 @@
 #include "winrt\Microsoft.Graphics.Canvas.h"
 #include "winrt\Windows.UI.h"
 
+#include "..\Shared\Inc\DisplayToolComInterop.h"
+
+
 namespace winrt
 {
 	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;

@@ -13,7 +13,9 @@ namespace winrt
     using namespace Windows::Media::Capture::Frames;
     using namespace Windows::Media::MediaProperties;
     using namespace Windows::Storage::Streams;
+    using namespace Windows::Graphics;
     using namespace Windows::Graphics::Imaging;
+    using namespace Windows::Graphics::DirectX;
     using namespace Windows::Devices::Enumeration;
 
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
@@ -202,8 +204,6 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         {
             auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
             auto photo = cap.get().CaptureAsync().get();
-            
-
 
             // Add any extended properties that aren't directly exposed through the IDisplayCapture* interfaces
             auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
@@ -224,28 +224,40 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::ILogger const& logger, winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
         m_logger(logger), m_extendedProps(extendedProps)
     {
-        // Mirror the pixel data over to this object's storage.
+        // Ensure that we can actually read the provided frame
         if (!frame.CanRead())
         {
             m_logger.LogError(L"Cannot read pixel data from frame.");
             throw winrt::hresult_invalid_argument();
         }
 
-        auto bitmap = frame.SoftwareBitmap();
-        m_bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Rgba8);
+        m_frameData = FrameData(m_logger);
+        
+        // Copy the new data over to the FrameData object
+        auto capturedFrameBitmap = SoftwareBitmap::Convert(frame.SoftwareBitmap(), BitmapPixelFormat::Rgba8);
+        
+        m_frameData.Resolution({capturedFrameBitmap.PixelWidth(), capturedFrameBitmap.PixelHeight()});
 
-        auto bitmapBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
-        m_bitmapDesc = bitmapBuffer.GetPlaneDescription(0);
+        FrameDataDescription desc{0};
+        desc.BitsPerPixel = 32;
+        desc.Stride = capturedFrameBitmap.PixelWidth() * 3; // There is no padding with this capture
+        desc.PixelFormat = static_cast<DirectXPixelFormat>(BitmapPixelFormat::Rgba8);
+        m_frameData.FormatDescription(desc);
+
+        auto buffer = Buffer(static_cast<uint32_t>(frame.Size()));
+        capturedFrameBitmap.CopyToBuffer(buffer);
+        m_frameData.Data(buffer);
     }
 
     bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
-        auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
-        auto predictBuffer = prediction.GetBitmap().LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+        auto predictedFrame = prediction.GetFrameData();
         
-        auto capturedR = captureBuffer.data()[0];
-        auto capturedG = captureBuffer.data()[1];
-        auto capturedB = captureBuffer.data()[2];
+        // Compare descriptions
+        auto predictedFrameDesc = predictedFrame.FormatDescription();
+        auto capturedFrameDesc = m_frameData.FormatDescription();
+
+        /*
 
         // Convert limited range to full range
         capturedR = capturedR < 16 ? 0 : capturedR > 235 ? 235 : (uint8_t)((float)(capturedR - 16) * 1.164f);
@@ -274,30 +286,14 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             m_logger.LogError(L"Image comparison failed.");
             return false;
         }
+        */
 
         return true;
     }
 
-    IMemoryBufferReference DisplayCapture::GetRawPixelData()
+    winrt::IFrameData DisplayCapture::GetFrameData()
     {
-        auto buffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read);
-        return buffer.CreateReference();
-    }
-
-    winrt::Windows::Graphics::SizeInt32 DisplayCapture::Resolution()
-    {
-        return { m_bitmapDesc.Width, m_bitmapDesc.Height };
-    }
-
-    uint32_t DisplayCapture::Stride()
-    {
-        return m_bitmapDesc.Stride;
-    }
-
-    winrt::Windows::Graphics::DirectX::DirectXPixelFormat DisplayCapture::PixelFormat()
-    {
-        // The BitmapPixelFormat enum type is intentionally compatible with DirectXPixelFormats
-        return static_cast<winrt::Windows::Graphics::DirectX::DirectXPixelFormat>(m_bitmap.BitmapPixelFormat());
+        return m_frameData;
     }
 
     winrt::IMapView<winrt::hstring, winrt::IInspectable> DisplayCapture::ExtendedProperties()

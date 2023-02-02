@@ -65,10 +65,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         Core();
         Core(Framework::ILogger const& logger);
 
-        Core::~Core()
-        {
-        }
-
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath);
 

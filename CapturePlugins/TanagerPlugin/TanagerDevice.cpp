@@ -7,6 +7,7 @@ namespace winrt
     using namespace winrt::Windows::Devices::Enumeration;
     using namespace winrt::Windows::Devices::Usb;
     using namespace winrt::Windows::Graphics::Imaging;
+    using namespace winrt::Windows::Graphics::DirectX;
     using namespace winrt::Windows::Devices::Display;
     using namespace winrt::Windows::Devices::Display::Core;
     using namespace winrt::Windows::Storage;
@@ -350,6 +351,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             throw hresult_invalid_argument();
         }
 
+        m_frameData = FrameData(m_logger);
+
         typedef struct
         {
             uint64_t pad1 : 2;
@@ -367,44 +370,38 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             uint64_t rsvd : 4;
         } rgbDataType;
 
-        // Yes this is doing a double copy (triple to remove padding) at the moment - because the interfaces are dumb
-        // I want to pull the comparisons entirely away from using SoftwareBitmap as the solution here
-
-        std::vector<byte> pixels;
+        auto pixelDataWriter = DataWriter();
         rgbDataType* rgbData = (rgbDataType*)rawCaptureData.data();
-        for (int i = 0; i < rawCaptureData.size() / sizeof(rgbDataType); i++)
+        while ((void*)rgbData < (void*)(rawCaptureData.data() + rawCaptureData.size()))
         {
-            pixels.push_back(rgbData->red1);
-            pixels.push_back(rgbData->green1);
-            pixels.push_back(rgbData->blue1);
-            pixels.push_back(0); // alpha
-            pixels.push_back(rgbData->red2);
-            pixels.push_back(rgbData->green2);
-            pixels.push_back(rgbData->blue2);
-            pixels.push_back(0); // alpha
+            pixelDataWriter.WriteByte(rgbData->red1);
+            pixelDataWriter.WriteByte(rgbData->green1);
+            pixelDataWriter.WriteByte(rgbData->blue1);
+            pixelDataWriter.WriteByte(rgbData->red2);
+            pixelDataWriter.WriteByte(rgbData->green2);
+            pixelDataWriter.WriteByte(rgbData->blue2);
             rgbData++;
         }
 
-        m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Rgba8, resolution.Width, resolution.Height, winrt::BitmapAlphaMode::Ignore);
+        m_frameData.Data(pixelDataWriter.DetachBuffer());
+        m_frameData.Resolution(resolution);
 
-        auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
-        auto ref = buff.CreateReference();
+        // This is only supporting 8bpc RGB444 currently
+        FrameDataDescription desc{0};
+        desc.BitsPerPixel = 24;
+        desc.Stride = resolution.Width * 3; // There is no padding with this capture
+        desc.PixelFormat = DirectXPixelFormat::Unknown; // Specify that we don't have an exact match to the input DirectX formats
+        desc.PixelEncoding = DisplayWireFormatPixelEncoding::Rgb444;
+        desc.Eotf = DisplayWireFormatEotf::Sdr;
 
-        m_bitmapDesc = buff.GetPlaneDescription(0);
-
-        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger
-        if (ref.Capacity() < (pixels.size() - 4096))
-        {
-            throw hresult_invalid_argument();
-        }
-
-        RtlCopyMemory(ref.data(), pixels.data(), ref.Capacity());
+        m_frameData.FormatDescription(desc);
     }
 
     bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
     {
-        auto predictedBitmap = prediction.GetBitmap();
+        auto predictedFrameData = prediction.GetFrameData();
+
+        /*
         auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
         auto predictBuffer = predictedBitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
 
@@ -479,30 +476,14 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 return false;
             }
         }
+        */
 
         return true;
     }
 
-    winrt::Windows::Graphics::SizeInt32 TanagerDisplayCapture::Resolution()
+    winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData TanagerDisplayCapture::GetFrameData()
     {
-        return {m_bitmapDesc.Width, m_bitmapDesc.Height};
-    }
-
-    uint32_t TanagerDisplayCapture::Stride()
-    {
-        return m_bitmapDesc.Stride;
-    }
-
-    winrt::Windows::Graphics::DirectX::DirectXPixelFormat TanagerDisplayCapture::PixelFormat()
-    {
-        // The BitmapPixelFormat enum type is intentionally compatible with DirectXPixelFormats
-        return static_cast<winrt::Windows::Graphics::DirectX::DirectXPixelFormat>(m_bitmap.BitmapPixelFormat());
-    }
-
-    winrt::Windows::Foundation::IMemoryBufferReference TanagerDisplayCapture::GetRawPixelData()
-    {
-        auto buffer = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Read);
-        return buffer.CreateReference();
+        return m_frameData;
     }
 
     winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> TanagerDisplayCapture::ExtendedProperties()

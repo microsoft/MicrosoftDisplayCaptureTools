@@ -95,35 +95,13 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         //
         Boolean CompareCaptureToPrediction(String name, MicrosoftDisplayCaptureTools.Display.IDisplayEnginePrediction prediction);
 
-        // GetRawPixelData
+        // GetFrameData
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
         //      Returns a buffer reference to the raw pixel data of this capture. The framework will only call this method
         //      if the 'returnRawFramesToHost' capability is set.
         //
-        Windows.Foundation.IMemoryBufferReference GetRawPixelData();
-
-        // Resolution
-        // ----------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //      The resolution in pixels of the capture
-        //
-        Windows.Graphics.SizeInt32 Resolution { get; };
-
-        // Stride
-        // ----------------------------------------------------------------------------------------------------------------
-        // Notes: 
-        //      The stride for the pixels in the capture (line length in bytes)
-        //
-        UInt32 Stride { get; };
-
-        // PixelFormat
-        // ----------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //      The pixel format of the capture. Use 'Unknown' if the pixel format does not match one of the options in 
-        //      this enum.
-        //
-        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat { get; };
+        MicrosoftDisplayCaptureTools.Framework.IFrameData GetFrameData();
 
         // ExtendedProperties
         // ----------------------------------------------------------------------------------------------------------------

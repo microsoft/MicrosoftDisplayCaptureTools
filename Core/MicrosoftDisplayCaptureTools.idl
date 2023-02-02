@@ -18,9 +18,9 @@ namespace MicrosoftDisplayCaptureTools.Framework
     }
 
     [default_interface] 
-    runtimeclass PixelData : MicrosoftDisplayCaptureTools.Framework.IPixelData,
-        MicrosoftDisplayCaptureTools.Framework.IPixelDataExtension
+    runtimeclass FrameData : MicrosoftDisplayCaptureTools.Framework.IFrameData,
+        MicrosoftDisplayCaptureTools.Framework.IFrameDataComparisons
     {
-        PixelData();
+        FrameData(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
     }
 }
