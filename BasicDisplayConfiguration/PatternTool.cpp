@@ -97,17 +97,37 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	void PatternTool::Apply(IDisplayOutput reference)
     {
-        m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
+        m_drawCallbackToken = reference.RenderSetupCallback( 
+			[this](const auto&, IDisplayEnginePropertySet displayProperties) {
+            m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
 
-		auto displayProperties = reference.GetProperties();
-		auto planeProperties = displayProperties.GetPlaneProperties()[0];
+            auto planeProperties = displayProperties.GetPlaneProperties()[0];
 
-		if (SupportedFormatsWithSizePerPixel.find(planeProperties.Format()) == SupportedFormatsWithSizePerPixel.end())
-		{
-            m_logger.LogError(L"PatternTool does not support the plane pixel format.");
-            return;
-		}
+            if (SupportedFormatsWithSizePerPixel.find(planeProperties.Format()) == SupportedFormatsWithSizePerPixel.end())
+            {
+                m_logger.LogError(L"PatternTool does not support the plane pixel format.");
+                return;
+            }
 
+            auto dxgiSurface = winrt::MicrosoftDisplayCaptureTools::Libraries::GetMapEntry<IDXGISurface>(planeProperties, L"D3DSurface");
+            winrt::com_ptr<ID2D1Factory> d2dFactory;
+            winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
+            winrt::com_ptr<ID2D1RenderTarget> d2dTarget;
+            D2D1_RENDER_TARGET_PROPERTIES d2dRtProperties;
+            d2dRtProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+            d2dRtProperties.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+            d2dRtProperties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+            d2dRtProperties.minLevel = D2D1_FEATURE_LEVEL_10;
+            d2dRtProperties.dpiX = 96.f;
+            d2dRtProperties.dpiY = 96.f;
+            d2dRtProperties.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+
+            winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface, d2dRtProperties, d2dTarget.put()));
+
+            d2dTarget->Clear(D2D1::ColorF(D2D1::ColorF::Green, 1.0f));
+            d2dTarget->Flush();
+        });
+		/*
 		auto canvasDevice = CanvasDevice::GetSharedDevice();
         auto patternTarget = CanvasRenderTarget(
 			canvasDevice,
@@ -167,10 +187,12 @@ namespace winrt::BasicDisplayConfiguration::implementation
         auto resolution = Windows::Graphics::SizeInt32();
         resolution.Height = patternTarget.SizeInPixels().Height;
         resolution.Width = patternTarget.SizeInPixels().Width;
-
+		*/
+		/*
         auto planeImage = planeProperties.BaseImage();
         planeImage.Resolution(resolution);
         planeImage.Format(planeProperties.Format());
         planeImage.Pixels(pixelBuffer);
+		*/
 	}
 }

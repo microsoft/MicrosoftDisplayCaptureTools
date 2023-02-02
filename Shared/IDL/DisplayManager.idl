@@ -2,19 +2,6 @@ import "Framework.idl";
 
 namespace MicrosoftDisplayCaptureTools.Display
 {
-    // Struct used to represent an image to show as the 'base' of a scanout plane
-    interface IDisplayEnginePlaneBaseImage
-    {
-        // The actual pixel data, should be of exact size Resolution.Height * Resolution.Width * (Bytes per pixel).
-        Windows.Storage.Streams.IBuffer Pixels{ get; set; };
-
-        // The pixel format of these pixels. If the actual plane format is not supported, R16G16B16A16Float will be used.
-        Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
-
-        // The resolution of the plane.
-        Windows.Graphics.SizeInt32 Resolution{ get; set; };
-    };
-
     // Used to set parameters for this particular MPO plane.
     interface IDisplayEnginePlanePropertySet
     {
@@ -26,9 +13,6 @@ namespace MicrosoftDisplayCaptureTools.Display
 
         // The format of this plane
         Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
-
-        // The base layer of the plane.
-        IDisplayEnginePlaneBaseImage BaseImage{ get; };
 
         // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped 
         // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h). It is intended

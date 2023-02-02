@@ -11,25 +11,6 @@ namespace winrt::BasicDisplayControl::implementation
 {
     constexpr double sc_refreshRateEpsilon = 0.00000000001;
 
-    struct DisplayEnginePlaneBaseImage : implements<DisplayEnginePlaneBaseImage, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneBaseImage>
-    {
-        DisplayEnginePlaneBaseImage() {}
-
-        Windows::Storage::Streams::IBuffer Pixels() { return m_pixels; }
-        void Pixels(Windows::Storage::Streams::IBuffer buffer) { m_pixels = buffer; }
-
-        Windows::Graphics::SizeInt32 Resolution() { return m_resolution; }
-        void Resolution(Windows::Graphics::SizeInt32 resolution) { m_resolution = resolution; }
-
-        Windows::Graphics::DirectX::DirectXPixelFormat Format() { return m_format; }
-        void Format(Windows::Graphics::DirectX::DirectXPixelFormat format) { m_format = format; }
-
-    private:
-        Windows::Storage::Streams::IBuffer m_pixels{nullptr};
-        Windows::Graphics::SizeInt32 m_resolution{0, 0};
-        Windows::Graphics::DirectX::DirectXPixelFormat m_format{Windows::Graphics::DirectX::DirectXPixelFormat::Unknown};
-    };
-
     struct DisplayEnginePlanePropertySet : implements<DisplayEnginePlanePropertySet, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet>
     {
         DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
@@ -49,10 +30,6 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::DirectX::DirectXPixelFormat Format();
         void Format(Windows::Graphics::DirectX::DirectXPixelFormat format);
 
-        // The base image is another required property, but is not trivially constructed like the others, instead the object will be created
-        // when retrieved and the caller is expected to use the type members to modify it.
-        MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneBaseImage BaseImage();
-
         Windows::Foundation::Collections::IMap<hstring, IInspectable> PropertyBag();
 
     private:
@@ -60,7 +37,6 @@ namespace winrt::BasicDisplayControl::implementation
         bool m_active = false;
         Windows::Graphics::Imaging::BitmapBounds m_rect{0};
         Windows::Graphics::DirectX::DirectXPixelFormat m_format{ Windows::Graphics::DirectX::DirectXPixelFormat::Unknown };
-        MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneBaseImage m_baseImage;
         Windows::Foundation::Collections::IMap<hstring, IInspectable> m_propertyBag;
     };
 

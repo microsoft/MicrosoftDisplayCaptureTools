@@ -638,7 +638,6 @@ namespace winrt::BasicDisplayControl::implementation
 
     DisplayEnginePlanePropertySet::DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
         m_logger(logger),
-        m_baseImage(make<DisplayEnginePlaneBaseImage>()),
         m_propertyBag(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
     {
     }
@@ -673,11 +672,6 @@ namespace winrt::BasicDisplayControl::implementation
     {
     }
 
-    winrt::IDisplayEnginePlaneBaseImage DisplayEnginePlanePropertySet::BaseImage()
-    {
-        return m_baseImage;
-    }
-
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::IInspectable> DisplayEnginePlanePropertySet::PropertyBag()
     {
         return m_propertyBag;
@@ -701,6 +695,8 @@ namespace winrt::BasicDisplayControl::implementation
             throw winrt::hresult_not_implemented();
         }
 
+        // TODO: tool needs to draw into this....
+        /*
         description.Stride = properties->GetPlaneProperties()[0].BaseImage().Resolution().Width * description.BitsPerPixel;
         description.PixelFormat = mode.SourcePixelFormat();
 
@@ -717,6 +713,7 @@ namespace winrt::BasicDisplayControl::implementation
             properties->GetPlaneProperties()[0].BaseImage().Pixels().Length());
 
         m_frameData.Data(buffer);
+        */
     }
 
     IFrameData DisplayEnginePrediction::GetFrameData()

@@ -29,5 +29,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Green;
 
 		const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
+
+		winrt::event_token m_drawCallbackToken;
 	};
 }
