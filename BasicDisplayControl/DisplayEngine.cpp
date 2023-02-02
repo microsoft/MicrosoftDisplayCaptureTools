@@ -27,6 +27,7 @@ namespace winrt
     // Hardware HLK project
     using namespace winrt::MicrosoftDisplayCaptureTools::Display;
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Libraries;
 } // namespace winrt
 
 // Disable 'unreferenced formal parameter' errors
@@ -356,6 +357,48 @@ namespace winrt::BasicDisplayControl::implementation
         }
     }
 
+    void DisplayOutput::RefreshMode()
+    {
+        if (m_propertySet->RequeryMode())
+        {
+            auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
+
+            for (auto&& mode : modeList)
+            {
+                double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) /
+                                          static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
+
+                double delta = fabs(presentationRate - m_propertySet->RefreshRate());
+
+                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
+                    mode.TargetResolution().Height == m_propertySet->Resolution().Height &&
+                    mode.TargetResolution().Width == m_propertySet->Resolution().Width &&
+                    mode.SourceResolution().Height == m_propertySet->Resolution().Height &&
+                    mode.SourceResolution().Width == m_propertySet->Resolution().Width)
+                {
+
+                    if (delta < sc_refreshRateEpsilon)
+                    {
+                        std::wstringstream buf{};
+                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height
+                            << L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
+
+                        // we have a mode matching the requirements.
+                        m_logger.LogNote(buf.str());
+
+                        m_propertySet->ActiveMode(mode);
+                        return;
+                    }
+                }
+            }
+
+            // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
+            // to auto-configure. So log a warning instead of an error to assist the user.
+            m_logger.LogWarning(L"No display mode fit the selected options");
+            throw winrt::hresult_invalid_argument();
+        }
+    }
+
     void DisplayOutput::PrepareRender()
     {
         m_logger.LogNote(L"Preparing Renderer Thread");
@@ -363,7 +406,7 @@ namespace winrt::BasicDisplayControl::implementation
         m_presenting = false;
 
         // Call back to any tools which need to apply settings before the mode is chosen and applied
-        m_displaySetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+        if (m_displaySetupCallback) m_displaySetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
 
         RefreshMode();
 
@@ -510,8 +553,9 @@ namespace winrt::BasicDisplayControl::implementation
         */
 
         // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
-        // actual scanning out.
-        m_renderSetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+        // actual scan out starts.
+        m_propertySet->GetPlaneProperties()[0].PropertyBag().Insert(hstring(L"D3DSurface"), winrt::make<Wrapper>(d3dSurface.get()));
+        if (m_renderSetupCallback) m_renderSetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
 
         // Render and present until termination is signalled
         while (m_valid)
@@ -520,7 +564,7 @@ namespace winrt::BasicDisplayControl::implementation
             d3dContext4->Signal(d3dFence.get(), ++d3dFenceValue);
 
             // Callback to any tools which need to perform per-scanout operations
-            m_renderLoopCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+            if (m_renderLoopCallback) m_renderLoopCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
 
             winrt::DisplayTask task = taskPool.CreateTask();
             task.SetScanout(primaryScanout);
@@ -532,48 +576,6 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
         m_logger.LogNote(L"Stopping Render");
-    }
-
-    void DisplayOutput::RefreshMode()
-    {
-        if (m_propertySet->RequeryMode())
-        {
-            auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
-
-            for (auto&& mode : modeList)
-            {
-                double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) /
-                                          static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
-
-                double delta = fabs(presentationRate - m_propertySet->RefreshRate());
-
-                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
-                    mode.TargetResolution().Height == m_propertySet->Resolution().Height &&
-                    mode.TargetResolution().Width == m_propertySet->Resolution().Width &&
-                    mode.SourceResolution().Height == m_propertySet->Resolution().Height &&
-                    mode.SourceResolution().Width == m_propertySet->Resolution().Width)
-                {
-
-                    if (delta < sc_refreshRateEpsilon)
-                    {
-                        std::wstringstream buf{};
-                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height
-                            << L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
-
-                        // we have a mode matching the requirements.
-                        m_logger.LogNote(buf.str());
-
-                        m_propertySet->ActiveMode(mode);
-                        return;
-                    }
-                }
-            }
-
-            // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
-            // to auto-configure. So log a warning instead of an error to assist the user.
-            m_logger.LogWarning(L"No display mode fit the selected options");
-            throw winrt::hresult_invalid_argument();
-        }
     }
 
     // DisplayEnginePropertySet
