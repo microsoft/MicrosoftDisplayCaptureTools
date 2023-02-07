@@ -6,6 +6,8 @@
 
 #include "..\Shared\Inc\DisplayToolComInterop.h"
 
+#define PATTERN_SQUARE_SIZE 50.f
+
 
 namespace winrt
 {
@@ -124,9 +126,48 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
             winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface, d2dRtProperties, d2dTarget.put()));
 
-            d2dTarget->Clear(D2D1::ColorF(D2D1::ColorF::Green, 1.0f));
-            d2dTarget->Flush();
+            D2D1_COLOR_F checkerColor;
+            switch (m_currentConfig)
+            {
+            case PatternToolConfigurations::Green:
+                checkerColor = D2D1::ColorF(D2D1::ColorF::Green, 1.0f);
+                break;
+            case PatternToolConfigurations::White:
+                checkerColor = D2D1::ColorF(D2D1::ColorF::White, 1.0f);
+                break;
+            case PatternToolConfigurations::Red:
+                checkerColor = D2D1::ColorF(D2D1::ColorF::Red, 1.0f);
+                break;
+            case PatternToolConfigurations::Blue:
+                checkerColor = D2D1::ColorF(D2D1::ColorF::Blue, 1.0f);
+                break;
+            case PatternToolConfigurations::Gray:
+                checkerColor = D2D1::ColorF(D2D1::ColorF::Gray, 1.0f);
+                break;
+            }
+
+            winrt::com_ptr<ID2D1SolidColorBrush> checkerBrush;
+            winrt::check_hresult(d2dTarget->CreateSolidColorBrush(checkerColor, checkerBrush.put()));
+
+			d2dTarget->BeginDraw();
+            d2dTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black, 1.0f));
+
+            bool indent = false;
+            for (float x = 0; x < displayProperties.Resolution().Width; x += PATTERN_SQUARE_SIZE)
+            {
+                for (float y = indent ? (float)PATTERN_SQUARE_SIZE : 0.f; y < displayProperties.Resolution().Height; y += 2 * PATTERN_SQUARE_SIZE)
+                {
+                    d2dTarget->FillRectangle(D2D1::RectF(x, y, x + PATTERN_SQUARE_SIZE, y + PATTERN_SQUARE_SIZE), checkerBrush.get());
+                }
+
+                indent = !indent;
+            }
+
+            winrt::check_hresult(d2dTarget->EndDraw());
+            winrt::check_hresult(d2dTarget->Flush());
         });
+
+		// TODO: create the prediction
 		/*
 		auto canvasDevice = CanvasDevice::GetSharedDevice();
         auto patternTarget = CanvasRenderTarget(
