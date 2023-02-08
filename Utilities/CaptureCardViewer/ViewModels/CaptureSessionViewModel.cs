@@ -58,7 +58,7 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayEnginePrediction? lastPredictedFrame;
+		IDisplayPrediction? lastPredictedFrame;
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]

@@ -57,7 +57,7 @@ namespace winrt
 
             if (0 == getSpecialization.isSpecializationAvailableForSystem)
             {
-                m_logger.LogError(L"Monitor specialization is not available - have you enabled testsigning?");
+                m_logger.LogError(L"Monitor specialization is not available - have you enabled test signing?");
                 throw winrt::hresult_error();
             }
 
@@ -231,9 +231,9 @@ namespace winrt::BasicDisplayControl::implementation
         return *m_propertySet;
     }
 
-    winrt::IDisplayEnginePrediction DisplayOutput::GetPrediction()
+    winrt::IDisplayPrediction DisplayOutput::GetPrediction()
     {
-        auto prediction = make_self<DisplayEnginePrediction>(m_propertySet.get(), m_logger);
+        auto prediction = make_self<DisplayPrediction>(m_propertySet.get(), m_logger);
 
         return *prediction;
     }
@@ -246,7 +246,7 @@ namespace winrt::BasicDisplayControl::implementation
         // Create an object to stop the rendering when destroyed/closed.
         auto renderWatchdog = make_self<RenderWatchdog>(this);
 
-        // Start the rendering process - first this will determine elgible modes and then it will spin off a thread to run 
+        // Start the rendering process - first this will determine eligible modes and then it will spin off a thread to run 
         // a render loop. This function won't return until the thread has started.
         PrepareRender();
 
@@ -403,6 +403,9 @@ namespace winrt::BasicDisplayControl::implementation
     {
         m_logger.LogNote(L"Preparing Renderer Thread");
 
+        m_propertySet->RenderCallbackProperties(winrt::make<DisplayEngineRenderCallbackProperties>(m_logger));
+        m_propertySet->RenderCallbackProperties().FrameNumber(0);
+
         m_presenting = false;
 
         // Call back to any tools which need to apply settings before the mode is chosen and applied
@@ -511,53 +514,15 @@ namespace winrt::BasicDisplayControl::implementation
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
 
-        /*
-        // Dump the base plane pixels into a buffer on the target
-        auto dxgiSurface = d3dSurface.as<IDXGISurface>();
-        winrt::com_ptr<ID2D1Factory> d2dFactory;
-        winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
-        winrt::com_ptr<ID2D1RenderTarget> d2dTarget;
-        D2D1_RENDER_TARGET_PROPERTIES d2dRtProperties;
-        d2dRtProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-        d2dRtProperties.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
-        d2dRtProperties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
-        d2dRtProperties.minLevel = D2D1_FEATURE_LEVEL_10;
-        d2dRtProperties.dpiX = 96.f;
-        d2dRtProperties.dpiY = 96.f;
-        d2dRtProperties.usage = D2D1_RENDER_TARGET_USAGE_NONE;
-
-        winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface.get(), d2dRtProperties, d2dTarget.put()));
-
-        winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-        D2D1_BITMAP_PROPERTIES d2dBitmapProperties;
-        d2dBitmapProperties.pixelFormat.format = (DXGI_FORMAT)m_propertySet->m_planeProperties[0]->BaseImage().Format();
-        d2dBitmapProperties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-        d2dBitmapProperties.dpiX = 96.f;
-        d2dBitmapProperties.dpiY = 96.f;
-
-        D2D1_SIZE_U d2dBitmapSize;
-        d2dBitmapSize.height = m_propertySet->m_planeProperties[0]->BaseImage().Resolution().Height;
-        d2dBitmapSize.width = m_propertySet->m_planeProperties[0]->BaseImage().Resolution().Width;
-        auto d2dBitmapRect = D2D1::RectF(0, 0, (FLOAT)d2dBitmapSize.width, (FLOAT)d2dBitmapSize.height);
-
-        {
-            auto bitmapBuffer = m_propertySet->m_planeProperties[0]->BaseImage().Pixels();
-
-            winrt::check_hresult(d2dTarget->CreateBitmap(
-                d2dBitmapSize, bitmapBuffer.data(), d2dBitmapSize.width * 4, d2dBitmapProperties, d2dBitmap.put()));
-        }
-
-        d2dTarget->BeginDraw();
-        d2dTarget->DrawBitmap(d2dBitmap.get(), d2dBitmapRect, 1.f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, d2dBitmapRect);
-        winrt::check_hresult(d2dTarget->EndDraw());
-        */
+        // Insert the underlying surface to be modified
+        // TODO: this should be added to an interop header instead of dropped in the property bag like this.
+        m_propertySet->GetPlaneProperties()[0].PropertyBag().Insert(hstring(L"D3DSurface"), winrt::make<Wrapper>(d3dSurface.get()));
 
         // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
         // actual scan out starts.
-        m_propertySet->GetPlaneProperties()[0].PropertyBag().Insert(hstring(L"D3DSurface"), winrt::make<Wrapper>(d3dSurface.get()));
         if (m_renderSetupCallback) m_renderSetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
 
-        // Render and present until termination is signalled
+        // Render and present until termination is signaled
         while (m_valid)
         {
             auto d3dContext4 = d3dContext.as<ID3D11DeviceContext4>();
@@ -573,6 +538,9 @@ namespace winrt::BasicDisplayControl::implementation
             m_displayDevice.WaitForVBlank(source);
 
             m_presenting = true;
+
+            // Increment the frame counter
+            m_propertySet->RenderCallbackProperties().FrameNumber(m_propertySet->RenderCallbackProperties().FrameNumber() + 1);
         }
 
         m_logger.LogNote(L"Stopping Render");
@@ -584,7 +552,8 @@ namespace winrt::BasicDisplayControl::implementation
         m_refreshRate(0.),
         m_mode(nullptr),
         m_requeryMode(true), 
-        m_logger(logger)
+        m_logger(logger),
+        m_renderCallbackProperties(nullptr)
     {
     }
 
@@ -636,6 +605,16 @@ namespace winrt::BasicDisplayControl::implementation
         return m_requeryMode;
     }
 
+    MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties DisplayEnginePropertySet::RenderCallbackProperties()
+    {
+        return m_renderCallbackProperties;
+    }
+
+    void DisplayEnginePropertySet::RenderCallbackProperties(MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties renderCallbackProperties)
+    {
+        m_renderCallbackProperties = renderCallbackProperties;
+    }
+
     DisplayEnginePlanePropertySet::DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
         m_logger(logger),
         m_propertyBag(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
@@ -677,10 +656,12 @@ namespace winrt::BasicDisplayControl::implementation
         return m_propertyBag;
     }
 
-    DisplayEnginePrediction::DisplayEnginePrediction(DisplayEnginePropertySet* properties, winrt::ILogger const& logger) : 
+    DisplayPrediction::DisplayPrediction(DisplayEnginePropertySet* properties, winrt::ILogger const& logger) : 
         m_logger(logger)
     {
         m_logger.LogNote(L"Creating Prediction object from properties.");
+        m_properties = winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>();
+
         auto mode = properties->ActiveMode();
 
         FrameDataDescription description;
@@ -696,31 +677,18 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
         // TODO: tool needs to draw into this....
-        /*
-        description.Stride = properties->GetPlaneProperties()[0].BaseImage().Resolution().Width * description.BitsPerPixel;
-        description.PixelFormat = mode.SourcePixelFormat();
-
-        m_frameData = FrameData(m_logger);
-        m_frameData.FormatDescription(description);
-        m_frameData.Resolution(mode.TargetResolution());
-
-        auto buffer = Buffer(properties->GetPlaneProperties()[0].BaseImage().Pixels().Length());
-        
-        // copy the memory over to the new buffer
-        memcpy(
-            buffer.data(),
-            properties->GetPlaneProperties()[0].BaseImage().Pixels().data(),
-            properties->GetPlaneProperties()[0].BaseImage().Pixels().Length());
-
-        m_frameData.Data(buffer);
-        */
     }
 
-    IFrameData DisplayEnginePrediction::GetFrameData()
+    IFrameData DisplayPrediction::GetFrameData()
     {
         m_logger.LogNote(L"Fetching predicted frame data.");
 
         return m_frameData;
+    }
+
+    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayPrediction::Properties()
+    {
+        return m_properties;
     }
 
 } // namespace winrt::BasicDisplayControl::implementation

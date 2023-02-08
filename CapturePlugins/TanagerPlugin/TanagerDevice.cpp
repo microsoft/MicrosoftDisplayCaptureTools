@@ -397,7 +397,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         m_frameData.FormatDescription(desc);
     }
 
-    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction prediction)
     {
         auto predictedFrameData = prediction.GetFrameData();
 

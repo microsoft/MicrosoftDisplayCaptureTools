@@ -80,7 +80,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		// Set the sizing for the main property set and the base plane.
 		auto displayProperties = reference.GetProperties();
 
-		// Set the base plane dimentions as well
+		// Set the base plane dimensions as well
         auto planeProperties = reference.GetProperties().GetPlaneProperties()[0];
 
 		switch (m_currentConfig)

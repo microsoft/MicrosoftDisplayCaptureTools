@@ -20,6 +20,14 @@ namespace MicrosoftDisplayCaptureTools.Display
         Windows.Foundation.Collections.IMap<String, IInspectable> PropertyBag{ get; };
     };
 
+    // Used to relay information about the current rendering session to tools which have registered for callbacks during
+    // the render process.
+    interface IDisplayEngineRenderCallbackProperties
+    {
+        // Indicates the current frame number of the output - intended to be used by tools which change the output per-frame
+        UInt64 FrameNumber;
+    };
+
     // Used to set parameters to the selected display
     interface IDisplayEnginePropertySet
     {
@@ -35,10 +43,14 @@ namespace MicrosoftDisplayCaptureTools.Display
         // Get the per-plane property set for this display
         // The first entry of the returned array will always represent the base plane
         IDisplayEnginePlanePropertySet[] GetPlaneProperties();
+
+        // Any properties of the current rendering session, to be used by tools registering callbacks in IDisplayOutput
+        // to modify their behavior based on the current state
+        IDisplayEngineRenderCallbackProperties RenderCallbackProperties{ get; };
     };
 
     // Represents the predicted output for the current settings of the display engine that creates it
-    interface IDisplayEnginePrediction
+    interface IDisplayPrediction
     {
         // GetFrameData 
         // ------------------------------------------------------------------------------------------------------------
@@ -46,6 +58,9 @@ namespace MicrosoftDisplayCaptureTools.Display
         //     Gets an object representing the data corresponding to the predicted frame.
         //
         MicrosoftDisplayCaptureTools.Framework.IFrameData GetFrameData();
+
+        // A collection of properties to go alongside the frame itself
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties{ get; };
     };
 
     // Represents a particular display managed with this DisplayEngine
@@ -61,7 +76,7 @@ namespace MicrosoftDisplayCaptureTools.Display
         // ------------------------------------------------------------------------------------------------------------
         // Notes:
         //     Get the properties object for this IDisplayEngine implementation. ConfigurationTools will manipulate the
-        //     various members of this object to change how and what is rendered to both the phyiscal display and the 
+        //     various members of this object to change how and what is rendered to both the physical display and the 
         //     associated prediction.
         //
         IDisplayEnginePropertySet GetProperties();
@@ -72,7 +87,7 @@ namespace MicrosoftDisplayCaptureTools.Display
         //     Gets the prediction object for this IDisplayEngine implementation. This object will use the same 
         //     information used for physical rendering to create a software approximation.
         //
-        IDisplayEnginePrediction GetPrediction();
+        IDisplayPrediction GetPrediction();
 
         // StartRender 
         // ------------------------------------------------------------------------------------------------------------

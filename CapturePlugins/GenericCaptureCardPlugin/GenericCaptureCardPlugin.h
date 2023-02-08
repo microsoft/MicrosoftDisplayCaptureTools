@@ -15,7 +15,7 @@ struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptur
         winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps);
 
-    bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
+    bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction prediction);
     winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData GetFrameData();
     winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
 

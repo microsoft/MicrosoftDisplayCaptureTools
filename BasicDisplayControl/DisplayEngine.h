@@ -40,6 +40,19 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Foundation::Collections::IMap<hstring, IInspectable> m_propertyBag;
     };
 
+    struct DisplayEngineRenderCallbackProperties : implements<DisplayEngineRenderCallbackProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties>
+    {
+        DisplayEngineRenderCallbackProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
+            m_logger(logger){};
+
+        uint64_t FrameNumber() { return m_frameNumber; };
+        void FrameNumber(uint64_t frameNumber) { m_frameNumber = frameNumber; };
+
+    private:
+        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        uint64_t m_frameNumber = 0;
+    };
+
     struct DisplayEnginePropertySet : implements<DisplayEnginePropertySet, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet>
     {
         DisplayEnginePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
@@ -63,20 +76,27 @@ namespace winrt::BasicDisplayControl::implementation
         bool m_requeryMode;
         bool RequeryMode();
 
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties RenderCallbackProperties();
+        void RenderCallbackProperties(MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties renderCallbackProperties);
+
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties m_renderCallbackProperties{nullptr};
     };
 
-    struct DisplayEnginePrediction : implements<DisplayEnginePrediction, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction>
+    struct DisplayPrediction : implements<DisplayPrediction, MicrosoftDisplayCaptureTools::Display::IDisplayPrediction>
     {
-        DisplayEnginePrediction(DisplayEnginePropertySet* properties, MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        DisplayPrediction(DisplayEnginePropertySet* properties, MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         MicrosoftDisplayCaptureTools::Framework::IFrameData GetFrameData();
 
-    private:
-        MicrosoftDisplayCaptureTools::Framework::IFrameData m_frameData{nullptr};
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
 
+    private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        MicrosoftDisplayCaptureTools::Framework::IFrameData m_frameData{nullptr};
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_properties{nullptr};
+
     };
 
     //
@@ -95,7 +115,7 @@ namespace winrt::BasicDisplayControl::implementation
 
         Windows::Devices::Display::Core::DisplayTarget Target();
         MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet GetProperties();
-        MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction GetPrediction();
+        MicrosoftDisplayCaptureTools::Display::IDisplayPrediction GetPrediction();
 
         Windows::Foundation::IClosable StartRender();
         void StopRender();
