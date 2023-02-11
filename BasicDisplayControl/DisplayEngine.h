@@ -11,6 +11,44 @@ namespace winrt::BasicDisplayControl::implementation
 {
     constexpr double sc_refreshRateEpsilon = 0.00000000001;
 
+    struct DisplayPredictionData : implements<DisplayPredictionData, MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>
+    {
+        DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+
+        MicrosoftDisplayCaptureTools::Framework::IFrameData FrameData();
+
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
+
+    private:
+        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+
+        MicrosoftDisplayCaptureTools::Framework::IFrameData m_frameData{nullptr};
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_properties;
+    };
+
+    struct DisplayPrediction : implements<DisplayPrediction, MicrosoftDisplayCaptureTools::Display::IDisplayPrediction>
+    {
+        DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+
+        Windows::Foundation::IAsyncOperation<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> GeneratePredictionDataAsync();
+
+        event_token DisplaySetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler);
+        void DisplaySetupCallback(event_token const& token) noexcept;
+
+        event_token RenderSetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler);
+        void RenderSetupCallback(event_token const& token) noexcept;
+
+        event_token RenderLoopCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler);
+        void RenderLoopCallback(event_token const& token) noexcept;
+
+    private:
+        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+
+        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_displaySetupCallback;
+        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_renderSetupCallback;
+        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_renderLoopCallback;
+    };
+
     struct DisplayEnginePlanePropertySet : implements<DisplayEnginePlanePropertySet, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet>
     {
         DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
@@ -82,21 +120,6 @@ namespace winrt::BasicDisplayControl::implementation
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties m_renderCallbackProperties{nullptr};
-    };
-
-    struct DisplayPrediction : implements<DisplayPrediction, MicrosoftDisplayCaptureTools::Display::IDisplayPrediction>
-    {
-        DisplayPrediction(DisplayEnginePropertySet* properties, MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
-
-        MicrosoftDisplayCaptureTools::Framework::IFrameData GetFrameData();
-
-        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
-
-    private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-        MicrosoftDisplayCaptureTools::Framework::IFrameData m_frameData{nullptr};
-        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_properties{nullptr};
-
     };
 
     //
@@ -196,6 +219,9 @@ namespace winrt::BasicDisplayControl::implementation
 
         MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(Windows::Devices::Display::Core::DisplayTarget const& target);
         MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(hstring target);
+
+        MicrosoftDisplayCaptureTools::Display::IDisplayPrediction CreateDisplayPrediction();
+
         void SetConfigData(Windows::Data::Json::IJsonValue data);
 
     private:

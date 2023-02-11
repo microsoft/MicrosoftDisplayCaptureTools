@@ -97,9 +97,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		throw winrt::hresult_invalid_argument();
 	}
 
-	void PatternTool::Apply(IDisplayOutput reference)
+	void PatternTool::ApplyToOutput(IDisplayOutput displayOutput)
     {
-        m_drawCallbackToken = reference.RenderSetupCallback( 
+        m_drawCallbackToken = displayOutput.RenderSetupCallback( 
 			[this](const auto&, IDisplayEnginePropertySet displayProperties) {
             m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
 
@@ -164,76 +164,77 @@ namespace winrt::BasicDisplayConfiguration::implementation
             }
 
             winrt::check_hresult(d2dTarget->EndDraw());
-            winrt::check_hresult(d2dTarget->Flush());
         });
+	}
 
-		// TODO: create the prediction
-		/*
-		auto canvasDevice = CanvasDevice::GetSharedDevice();
-        auto patternTarget = CanvasRenderTarget(
-			canvasDevice,
-			(float)displayProperties.Resolution().Width,
-			(float)displayProperties.Resolution().Height,
-			96,
-			planeProperties.Format(),
-			CanvasAlphaMode::Ignore);
-
+    void PatternTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+    {
+        m_drawCallbackToken = displayPrediction.RenderSetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
         {
-            auto drawingSession = patternTarget.CreateDrawingSession();
-            Color checkerColor;
+            auto canvasDevice = CanvasDevice::GetSharedDevice();
+            auto patternTarget = CanvasRenderTarget(
+                canvasDevice,
+                (float)predictionData.FrameData().Resolution().Width,
+                (float)predictionData.FrameData().Resolution().Height,
+                96,
+                predictionData.FrameData().FormatDescription().PixelFormat,
+                CanvasAlphaMode::Ignore);
 
-            switch (m_currentConfig)
             {
-            case PatternToolConfigurations::White:
-                checkerColor = Colors::White();
-                break;
-            case PatternToolConfigurations::Red:
-                checkerColor = Colors::Red();
-                break;
-            case PatternToolConfigurations::Green:
-                checkerColor = Colors::Green();
-                break;
-            case PatternToolConfigurations::Blue:
-                checkerColor = Colors::Blue();
-                break;
-            case PatternToolConfigurations::Gray:
-                checkerColor.R = 128;
-                checkerColor.G = 128;
-                checkerColor.B = 128;
-                checkerColor.A = 255;
-                break;
+                auto drawingSession = patternTarget.CreateDrawingSession();
+                Color checkerColor;
+
+                switch (m_currentConfig)
+                {
+                case PatternToolConfigurations::White:
+                    checkerColor = Colors::White();
+                    break;
+                case PatternToolConfigurations::Red:
+                    checkerColor = Colors::Red();
+                    break;
+                case PatternToolConfigurations::Green:
+                    checkerColor = Colors::Green();
+                    break;
+                case PatternToolConfigurations::Blue:
+                    checkerColor = Colors::Blue();
+                    break;
+                case PatternToolConfigurations::Gray:
+                    checkerColor.R = 128;
+                    checkerColor.G = 128;
+                    checkerColor.B = 128;
+                    checkerColor.A = 255;
+                    break;
+                }
+
+                drawingSession.Clear(Colors::Black());
+
+                bool indent = false;
+                for (float x = 0; x < predictionData.FrameData().Resolution().Width; x += PATTERN_SQUARE_SIZE)
+                {
+                    for (float y = indent ? PATTERN_SQUARE_SIZE : 0.f; y < predictionData.FrameData().Resolution().Height;
+                         y += 2 * PATTERN_SQUARE_SIZE)
+                    {
+                        drawingSession.FillRectangle(x, y, PATTERN_SQUARE_SIZE, PATTERN_SQUARE_SIZE, checkerColor);
+                    }
+
+                    indent = !indent;
+                }
+
+                drawingSession.Close();
             }
 
-            drawingSession.Clear(Colors::Black());
+            auto bytesPerPixel = SupportedFormatsWithSizePerPixel[predictionData.FrameData().FormatDescription().PixelFormat];
+            
+            patternTarget.GetPixelBytes(
+                predictionData.FrameData().Data(), 
+                0, 
+                0, 
+                patternTarget.SizeInPixels().Width, 
+                patternTarget.SizeInPixels().Height);
 
-			bool indent = false;
-			for (float x = 0; x < displayProperties.Resolution().Width; x += PatternToolSquareSize)
-			{
-                for (float y = indent ? (float)PatternToolSquareSize : 0.f; y < displayProperties.Resolution().Height; y += 2 * PatternToolSquareSize)
-				{
-                    drawingSession.FillRectangle(x, y, PatternToolSquareSize, PatternToolSquareSize, checkerColor);
-				}
 
-				indent = !indent;
-			}
-
-			drawingSession.Close();
-        }
-
-        auto bytesPerPixel = SupportedFormatsWithSizePerPixel[planeProperties.Format()];
-        auto bufferSize = patternTarget.SizeInPixels().Height * patternTarget.SizeInPixels().Width * bytesPerPixel;
-        auto pixelBuffer = Buffer(bufferSize);
-        patternTarget.GetPixelBytes(pixelBuffer, 0, 0, patternTarget.SizeInPixels().Width, patternTarget.SizeInPixels().Height);
-
-        auto resolution = Windows::Graphics::SizeInt32();
-        resolution.Height = patternTarget.SizeInPixels().Height;
-        resolution.Width = patternTarget.SizeInPixels().Width;
-		*/
-		/*
-        auto planeImage = planeProperties.BaseImage();
-        planeImage.Resolution(resolution);
-        planeImage.Format(planeProperties.Format());
-        planeImage.Pixels(pixelBuffer);
-		*/
-	}
+                // TODO: what if we added a category which allowed tools to take control over memory allocation?
+        });
+        
+    }
 }

@@ -499,18 +499,20 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
                         // matches it, using default settings for the tools.
                         auto output = displayEngine.InitializeOutput(target);
+                        auto prediction = displayEngine.CreateDisplayPrediction();
                         for (auto&& tool : toolList)
                         {
                             tool.SetConfiguration(tool.GetDefaultConfiguration());
-                            tool.Apply(output);
+                            tool.ApplyToOutput(output);
+                            tool.ApplyToPrediction(prediction);
                         }
+
+                        // Start generating the prediction in the background
+                        auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
 
                         // Start outputting to the target with the current settings
                         auto renderer = output.StartRender();
                         std::this_thread::sleep_for(std::chrono::seconds(5));
-
-                        // Get the predicted frame
-                        auto prediction = output.GetPrediction();
 
                         // Iterate through the still unassigned inputs to find any matches
                         for (auto&& unassignedInput: unassignedInputs_NoEDID)
@@ -527,7 +529,9 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                     winrt::hstring(L"Comparing output of ") + monitor.DisplayName() + L" to input " +
                                     card.Name() + L"." + input.Name());
 
-                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction);
+                                // Make sure that we finished generating the prediction
+                                auto predictionData = predictionDataAsync.get();
+                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", predictionData);
 
                                 if (captureResult && !suppressErrors.HasErrored())
                                 {

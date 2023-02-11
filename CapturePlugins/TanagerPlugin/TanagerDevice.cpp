@@ -377,9 +377,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             pixelDataWriter.WriteByte(rgbData->red1);
             pixelDataWriter.WriteByte(rgbData->green1);
             pixelDataWriter.WriteByte(rgbData->blue1);
+            pixelDataWriter.WriteByte(0xFF); // Alpha padding
             pixelDataWriter.WriteByte(rgbData->red2);
             pixelDataWriter.WriteByte(rgbData->green2);
             pixelDataWriter.WriteByte(rgbData->blue2);
+            pixelDataWriter.WriteByte(0xFF); // Alpha padding
             rgbData++;
         }
 
@@ -397,13 +399,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         m_frameData.FormatDescription(desc);
     }
 
-    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction prediction)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction)
     {
-        auto predictedFrameData = prediction.GetFrameData();
+        auto predictedFrameData = prediction.FrameData();
 
-        /*
-        auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
-        auto predictBuffer = predictedBitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+        auto captureBuffer = m_frameData.Data();
+        auto predictBuffer = predictedFrameData.Data();
 
         //
         // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
@@ -412,14 +413,38 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         // TODO: this needs to handle multiple formats
         //
 
-        if (captureBuffer.Capacity() != predictBuffer.Capacity())
+        if (captureBuffer.Length() < predictBuffer.Length())
         {
             m_logger.LogError(
-                winrt::hstring(L"Capture Sizes don't match!  Captured=") + std::to_wstring(captureBuffer.Capacity()) +
-                L", Predicted=" + std::to_wstring(predictBuffer.Capacity()));
+                winrt::hstring(L"Capture should be at least as large as prediction") + std::to_wstring(captureBuffer.Length()) +
+                L", Predicted=" + std::to_wstring(predictBuffer.Length()));
         }
-        else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), captureBuffer.Capacity()))
+        else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), predictBuffer.Length()))
         {
+            m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+            {
+                auto filename = name + L"_Captured.bin";
+                auto folder = winrt::KnownFolders::PicturesLibrary();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                stream.WriteAsync(captureBuffer).get();
+                stream.FlushAsync().get();
+                stream.Close();
+
+                m_logger.LogNote(L"Dumping captured data here: " + filename);
+            }
+            {
+                auto filename = name + L"_Predicted.bin";
+                auto folder = winrt::KnownFolders::PicturesLibrary();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                stream.WriteAsync(predictBuffer).get();
+                stream.FlushAsync().get();
+                stream.Close();
+
+                m_logger.LogNote(L"Dumping captured data here: " + filename);
+            }
+
             struct PixelStruct
             {
                 uint8_t r, g, b, a;
@@ -432,7 +457,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
             // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
             const int samples = 10000;
-            const int pixelCount = m_bitmapDesc.Width * m_bitmapDesc.Height;
+            const int pixelCount = m_frameData.Resolution().Width * m_frameData.Resolution().Height;
             for (auto i = 0; i < samples; i++)
             {
                 auto index = rand() % pixelCount;
@@ -445,27 +470,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 }
             }
 
-            {
-                auto filename = name + L"_Captured.bmp";
-                auto folder = winrt::KnownFolders::PicturesLibrary();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
-                encoder.SetSoftwareBitmap(m_bitmap);
-
-                encoder.FlushAsync().get();
-            }
-            {
-                auto filename = name + L"_Predicted.bmp";
-                auto folder = winrt::KnownFolders::PicturesLibrary();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
-                encoder.SetSoftwareBitmap(predictedBitmap);
-
-                encoder.FlushAsync().get();
-            }
-
             float diff = (float)differenceCount / (float)pixelCount;
             if (diff > 0.10f)
             {
@@ -476,7 +480,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 return false;
             }
         }
-        */
 
         return true;
     }

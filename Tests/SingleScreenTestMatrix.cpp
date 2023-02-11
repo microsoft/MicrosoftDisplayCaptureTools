@@ -53,6 +53,7 @@ void SingleScreenTestMatrix::Test()
     auto displayEngine = displayEngines[0];
 
     auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
+    auto prediction = displayEngine.CreateDisplayPrediction();
     
     winrt::hstring testName = L"";
     auto toolboxes = g_framework.GetConfigurationToolboxes();
@@ -86,11 +87,15 @@ void SingleScreenTestMatrix::Test()
 
                 // Setting the tool value
                 tool.SetConfiguration(winrt::hstring(toolSetting));
-                tool.Apply(displayOutput);
+                tool.ApplyToOutput(displayOutput);
+                tool.ApplyToPrediction(prediction);
                 testName = testName + tool.GetConfiguration() + L"_";
             }
         }
     }
+
+    // Start generating the prediction at the same time as we start outputting.
+    auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
 
     // Make sure the capture card is ready
     displayInput.FinalizeDisplayState();
@@ -101,8 +106,7 @@ void SingleScreenTestMatrix::Test()
 
         // Capture the frame.
         auto capturedFrame = displayInput.CaptureFrame();
-        auto predictedFrame = displayOutput.GetPrediction();
 
-        capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
+        capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
     }
 }

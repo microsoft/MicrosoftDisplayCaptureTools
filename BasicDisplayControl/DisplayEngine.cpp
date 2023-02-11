@@ -161,6 +161,11 @@ namespace winrt::BasicDisplayControl::implementation
         return InitializeOutput(chosenTarget);
     }
 
+    MicrosoftDisplayCaptureTools::Display::IDisplayPrediction DisplayEngine::CreateDisplayPrediction()
+    {
+        return winrt::make<DisplayPrediction>(m_logger);
+    }
+
     // DisplayOutput
     DisplayOutput::DisplayOutput(ILogger const& logger, DisplayTarget const& target, DisplayManager const& manager) :
         m_logger(logger), m_displayTarget(target), m_displayManager(manager)
@@ -229,13 +234,6 @@ namespace winrt::BasicDisplayControl::implementation
     winrt::IDisplayEnginePropertySet DisplayOutput::GetProperties()
     {
         return *m_propertySet;
-    }
-
-    winrt::IDisplayPrediction DisplayOutput::GetPrediction()
-    {
-        auto prediction = make_self<DisplayPrediction>(m_propertySet.get(), m_logger);
-
-        return *prediction;
     }
 
     winrt::IClosable DisplayOutput::StartRender()
@@ -510,7 +508,7 @@ namespace winrt::BasicDisplayControl::implementation
         // Get a fence to wait for render work to complete
         winrt::handle fenceHandle;
         winrt::check_hresult(d3dFence->CreateSharedHandle(nullptr, GENERIC_ALL, nullptr, fenceHandle.put()));
-        winrt::com_ptr<::IInspectable> displayFenceIInspectable;
+        winrt::com_ptr<winrt::IInspectable> displayFenceIInspectable;
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
 
@@ -649,6 +647,7 @@ namespace winrt::BasicDisplayControl::implementation
 
     void DisplayEnginePlanePropertySet::Format(winrt::DirectXPixelFormat format) 
     {
+        // TODO: this needs to do something.
     }
 
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::IInspectable> DisplayEnginePlanePropertySet::PropertyBag()
@@ -656,39 +655,113 @@ namespace winrt::BasicDisplayControl::implementation
         return m_propertyBag;
     }
 
-    DisplayPrediction::DisplayPrediction(DisplayEnginePropertySet* properties, winrt::ILogger const& logger) : 
+    DisplayPredictionData::DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
         m_logger(logger)
     {
-        m_logger.LogNote(L"Creating Prediction object from properties.");
-        m_properties = winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>();
-
-        auto mode = properties->ActiveMode();
-
-        FrameDataDescription description;
-
-        switch (mode.SourcePixelFormat())
-        {
-        case DirectXPixelFormat::R8G8B8A8UIntNormalized:
-            description.BitsPerPixel = 32;
-            break;
-        default:
-            // Currently unhandled case - throw and log
-            throw winrt::hresult_not_implemented();
-        }
-
-        // TODO: tool needs to draw into this....
+        m_properties = winrt::single_threaded_map<hstring, IInspectable>();
+        m_frameData = MicrosoftDisplayCaptureTools::Framework::FrameData(m_logger);
     }
 
-    IFrameData DisplayPrediction::GetFrameData()
+    MicrosoftDisplayCaptureTools::Framework::IFrameData DisplayPredictionData::FrameData()
     {
-        m_logger.LogNote(L"Fetching predicted frame data.");
-
         return m_frameData;
     }
 
-    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayPrediction::Properties()
+    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayPredictionData::Properties()
     {
         return m_properties;
+    }
+
+    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
+        m_logger(logger)
+    {
+    }
+
+    IAsyncOperation<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> DisplayPrediction::GeneratePredictionDataAsync()
+    {
+        // This operation is expected to be heavyweight, as tools are moving a lot of memory. So 
+        // we return the thread control and resume this function on the thread pool.
+        co_await winrt::resume_background();
+      
+        // Create the prediction data object
+        auto predictionData = winrt::make<DisplayPredictionData>(m_logger);
+
+        // Invoke any tools registering as display setup (format, resolution, etc.)
+        if (m_displaySetupCallback)
+        {
+            m_displaySetupCallback(*this, predictionData);
+        }
+
+        // From the data set in the predictionData, allocate buffers
+        auto resolution = predictionData.FrameData().Resolution();
+        auto desc = predictionData.FrameData().FormatDescription();
+
+        if (resolution.Width == 0 || resolution.Height == 0)
+        {
+            std::wstringstream buf{};
+            buf << L"Resolution of (" << resolution.Width << L", " << resolution.Height << L") not valid!";
+
+            m_logger.LogError(buf.str());
+        }
+
+        if (desc.BitsPerPixel == 0 || desc.Stride == 0)
+        {
+            m_logger.LogError(L"BitsPerPixel and Stride must be defined sizes for us to reserve buffers!");
+        }
+
+        // reserve enough memory for the output frame.
+        // TODO: need a mechanism for tools to indicate their multi frame support
+        auto pixelBuffer = winrt::Buffer(resolution.Height * desc.Stride);
+
+        predictionData.FrameData().Data(pixelBuffer);
+
+        // Invoke any tools registering as render setup
+        if (m_renderSetupCallback)
+        {
+            m_renderSetupCallback(*this, predictionData);
+        }
+
+        // Invoke any tools registering as rendering
+        if (m_renderLoopCallback)
+        {
+            // TODO: tools that register frame limits can cause this to call with a frame counter
+            m_renderLoopCallback(*this, predictionData);
+        }
+
+        co_return predictionData.as<IDisplayPredictionData>();
+    }
+
+    event_token DisplayPrediction::DisplaySetupCallback(
+        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
+    {
+        return m_displaySetupCallback.add(handler);
+    }
+
+    void DisplayPrediction::DisplaySetupCallback(event_token const& token) noexcept
+    {
+        m_displaySetupCallback.remove(token);
+    }
+
+    event_token DisplayPrediction::RenderSetupCallback(
+        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
+    {
+        return m_renderSetupCallback.add(handler);
+    }
+
+    void DisplayPrediction::RenderSetupCallback(event_token const& token) noexcept
+    {
+        m_renderSetupCallback.remove(token);
+    }
+
+    event_token DisplayPrediction::RenderLoopCallback(
+        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
+    {
+        return m_renderLoopCallback.add(handler);
+    }
+
+    void DisplayPrediction::RenderLoopCallback(event_token const& token) noexcept
+    {
+        m_renderLoopCallback.remove(token);
     }
 
 } // namespace winrt::BasicDisplayControl::implementation

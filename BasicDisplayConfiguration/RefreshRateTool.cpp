@@ -75,9 +75,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		throw winrt::hresult_invalid_argument();
 	}
 
-	void RefreshRateTool::Apply(IDisplayOutput reference)
+	void RefreshRateTool::ApplyToOutput(IDisplayOutput displayOutput)
 	{
-		auto displayProperties = reference.GetProperties();
+        auto displayProperties = displayOutput.GetProperties();
 
 		switch (m_currentConfig)
 		{
@@ -89,6 +89,11 @@ namespace winrt::BasicDisplayConfiguration::implementation
 			break;
         }
 
-        m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
+        m_logger.LogNote(L"Applying " + Name() + L": " + ConfigurationMap[m_currentConfig] + L" to output.");
+	}
+
+	void RefreshRateTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+    {
+        // This tool doesn't currently matter to the output
 	}
 }

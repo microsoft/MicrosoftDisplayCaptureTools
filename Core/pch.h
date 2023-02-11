@@ -8,6 +8,7 @@
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.Devices.Display.h>
 #include <winrt/Windows.Devices.Display.Core.h>
+#include <winrt/Windows.Graphics.Imaging.h>
 
 // STD headers
 #include <mutex>

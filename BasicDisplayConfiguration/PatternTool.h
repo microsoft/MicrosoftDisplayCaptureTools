@@ -10,8 +10,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		Gray
 	};
 
-	static const uint32_t PatternToolSquareSize = 100;
-
 	struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 	{
         PatternTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
@@ -22,7 +20,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		winrt::hstring GetDefaultConfiguration();
         winrt::hstring GetConfiguration();
 		void SetConfiguration(winrt::hstring configuration);
-		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput reference);
+		void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
+        void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
 	private:
 		PatternToolConfigurations m_currentConfig;

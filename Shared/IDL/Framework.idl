@@ -4,6 +4,67 @@ import "DisplayManager.idl";
 
 namespace MicrosoftDisplayCaptureTools.Framework 
 {
+    // IFrameData Implementations
+
+    struct FrameDataDescription
+    {
+        // The number of bits to represent each pixel, regardless of subsampling mode.
+        UInt32 BitsPerPixel;
+
+        // The number of bytes for one scanline of the image
+        UInt32 Stride;
+
+        // The DirectX pixel format of the buffer - If the pixel structure cannot be expressed with this enum, use 'Unknown' and
+        // use PixelEncoding to specify. If this value is set to anything other than 'Unknown', this is used.
+        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat;
+
+        // Pixel encoding mode - i.e. RGB444, YCC420
+        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding PixelEncoding;
+
+        // The transfer function of the pixels (essentially the gamma encoding)
+        Windows.Devices.Display.Core.DisplayWireFormatEotf Eotf;
+    };
+
+    //
+    // An interface representing formatted pixel data
+    //
+    interface IFrameData
+    {
+        // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).
+        Windows.Storage.Streams.IBuffer Data
+        {
+            get;
+            set;
+        };
+
+        // The resolution of the image
+        Windows.Graphics.SizeInt32 Resolution
+        {
+            get;
+            set;
+        };
+
+        // A description of how the pixels are formatted
+        FrameDataDescription FormatDescription
+        {
+            get;
+            set;
+        };
+    };
+
+    //
+    // An interface representing optional extended features on top of IFrameData to assist in tooling
+    //
+    interface IFrameDataComparisons
+    {
+        // Get an easily renderable approximation of the image data, in BGRA8 format
+        Windows.Graphics.Imaging.SoftwareBitmap GetRenderableApproximation();
+
+        // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
+        // do not match.
+        IFrameDataComparisons GetImageDelta(IFrameData other);
+    };
+
     //
     // An abstracted Logger for the Hardware HLK project. A default implementation will be provided in this project, but
     // custom implementations may be created and passed to the Core framework object, which will be promulgated throughout
@@ -22,7 +83,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          The string holding the note to log
         //
         void LogNote(String note);
-        
+
         // LogWarning
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
@@ -58,7 +119,6 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         void LogAssert(String error);
 
-        
         // LogConfig
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
@@ -93,55 +153,6 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Boolean HasErrored();
     };
 
-    // IFrameData Implementations 
-
-    struct FrameDataDescription
-    {
-        // The number of bits to represent each pixel, regardless of subsampling mode.
-        UInt32 BitsPerPixel;
-
-        // The number of bytes for one scanline of the image
-        UInt32 Stride;
-
-        // The DirectX pixel format of the buffer - If the pixel structure cannot be expressed with this enum, use 'Unknown' and
-        // use PixelEncoding to specify. If this value is set to anything other than 'Unknown', this is used.
-        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat;
-
-        // Pixel encoding mode - i.e. RGB444, YCC420
-        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding PixelEncoding;
-
-        // The transfer function of the pixels (essentially the gamma encoding)
-        Windows.Devices.Display.Core.DisplayWireFormatEotf Eotf;
-    };
-
-    //
-    // An interface representing formatted pixel data
-    //
-    interface IFrameData
-    {
-        // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).
-        Windows.Storage.Streams.IBuffer Data{ get; set; };
-
-        // The resolution of the image
-        Windows.Graphics.SizeInt32 Resolution{ get; set; };
-
-        // A description of how the pixels are formatted
-        FrameDataDescription FormatDescription{ get; set; };
-    };
-
-    //
-    // An interface representing optional extended features on top of IFrameData to assist in tooling
-    //
-    interface IFrameDataComparisons
-    {
-        // Get an easily renderable approximation of the image data, in BGRA8 format
-        Windows.Graphics.Imaging.SoftwareBitmap GetRenderableApproximation();
-
-        // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
-        // do not match.
-        IFrameDataComparisons GetImageDelta(IFrameData other);
-    };
-
     //
     // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
     // descriptor from the framework - plugins are largely expected to only need the memory block.
@@ -164,14 +175,14 @@ namespace MicrosoftDisplayCaptureTools.Framework
             get;
         };
 
-        // The main data of the descriptor is returned in a read only vector to make 
+        // The main data of the descriptor is returned in a read only vector to make
         IVectorView<UInt8> Data
         {
             get;
         };
 
-        // Allow getting and setting the serial number from the descriptor. This is primarily used to identify synthetic displays. A 4-byte
-        // unsigned integer is used as the serial number fields for both EDID and DisplayID match this size.
+        // Allow getting and setting the serial number from the descriptor. This is primarily used to identify synthetic displays. A
+        // 4-byte unsigned integer is used as the serial number fields for both EDID and DisplayID match this size.
         UInt32 SerialNumber
         {
             get;
@@ -181,7 +192,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Boolean IsSame(IMonitorDescriptor other);
     };
 
-    // 
+    //
     // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection
     // for the test setup.
     //
@@ -208,7 +219,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     {
         // Get the version, in Major.Minor format
         String Version
-        { 
+        {
             get;
         };
 
@@ -226,11 +237,11 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         // Returns:
         //      The newly loaded capture card controller object
-        // 
+        //
         // Parameters:
         //      pluginPath
         //          This string represents a filepath from which a conformant plugin implementation is exposed.
-        // 
+        //
         //      className (optional)
         //          This string represents the namespace.classname of the class implementing the plugin interface
         //
@@ -238,14 +249,14 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          suffix, '.Controller'
         //          Example: pluginPath = ".\\GenericCaptureCard.dll"
         //                   className  = "GenericCaptureCard.Controller"
-        // 
+        //
         MicrosoftDisplayCaptureTools.CaptureCard.IController LoadCapturePlugin(String pluginPath, String className);
         MicrosoftDisplayCaptureTools.CaptureCard.IController LoadCapturePlugin(String pluginPath);
 
         // LoadToolbox
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Adds a Toolbox to the Core, any configuration tools exposed by the Toolbox opened here will now be 
+        //      Adds a Toolbox to the Core, any configuration tools exposed by the Toolbox opened here will now be
         //      available to the Core for test runs.
         //
         // Returns:
@@ -254,7 +265,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // Parameters:
         //      toolboxPath
         //          This string represents a filepath from which a conformant Toolbox implementation is exposed.
-        // 
+        //
         //      className
         //          This string represents the namespace.classname of the class implementing the toolbox interface.
         //
@@ -278,11 +289,11 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // Parameters:
         //      displayManagerPath
         //          This string represents a filepath from which a conformant DisplayManager implementation is exposed.
-        // 
+        //
         //      className
         //          This string represents the namespace.classname of the class implementing the displayEngine interface.
         //
-        //          If not provided, the className will be constructed from the displayManagerPath's name, followed by a 
+        //          If not provided, the className will be constructed from the displayManagerPath's name, followed by a
         //          standard '.DisplayManager' suffix.
         //          Example: pluginPath = ".\\BasicDisplayManager.dll"
         //                   className  = "BasicDisplayManager.DisplayManager"
@@ -315,7 +326,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // LockFramework
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      Locks the framework so that components can't be changed. The intention is that this should be used when 
+        //      Locks the framework so that components can't be changed. The intention is that this should be used when
         //      writing tests to prevent accidental changes that would be difficult to debug.
         //
         // Returns:
@@ -331,13 +342,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         // Parameters:
         //      regenerateMappings
-        //          If true, the framework will attempt to automatically generate a mapping of display sources to sinks 
+        //          If true, the framework will attempt to automatically generate a mapping of display sources to sinks
         //          using any currently loaded CaptureCardPlugins and DisplayEngines. If false the framework will provide
         //          only whichever mappings were provided by configuration file. If false and no mappings were provided via
         //          config files, an empty array will be returned.
         //      displayEngine (optional)
         //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false.
-        // 
+        //
         // Returns:
         //      An array of structs containing the source and sink references.
         //
@@ -349,7 +360,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //      Returns a collection of all configuration toolboxes loaded by the framework.
         //
         MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox[] GetConfigurationToolboxes();
-        
+
         // GetCaptureCard
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
@@ -364,4 +375,4 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //
         MicrosoftDisplayCaptureTools.Display.IDisplayEngine[] GetDisplayEngines();
     }
-}
+} // namespace MicrosoftDisplayCaptureTools. Framework

@@ -111,7 +111,7 @@ namespace winrt::TanagerPlugin::implementation
             winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps,
             winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction prediction);
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction);
         winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData GetFrameData();
         winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
 

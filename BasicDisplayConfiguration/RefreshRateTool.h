@@ -16,12 +16,15 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		winrt::com_array<winrt::hstring> GetSupportedConfigurations();
 		winrt::hstring GetDefaultConfiguration();
         winrt::hstring GetConfiguration();
-		void SetConfiguration(winrt::hstring configuration);
-		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput reference);
+        void SetConfiguration(winrt::hstring configuration);
+        void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
+        void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
 	private:
 		RefreshRateToolConfigurations m_currentConfig;
         static const RefreshRateToolConfigurations sc_defaultConfig = RefreshRateToolConfigurations::r60;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
+
+        winrt::event_token m_drawCallbackToken;
 	};
 }
