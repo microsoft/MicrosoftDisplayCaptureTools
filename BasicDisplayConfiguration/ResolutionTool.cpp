@@ -76,26 +76,28 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	}
 
 	void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
-	{
-		// Set the sizing for the main property set and the base plane.
-		auto displayProperties = displayOutput.GetProperties();
-
-		// Set the base plane dimensions as well
-        auto planeProperties = displayOutput.GetProperties().GetPlaneProperties()[0];
-
-		switch (m_currentConfig)
+    {
+        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
 		{
-		case ResolutionToolConfigurations::w1920h1080:
-			displayProperties.Resolution({ 1920, 1080 });
-            planeProperties.Rect({ 0, 0, 1920, 1080 });
-			break;
-		case ResolutionToolConfigurations::w800h600:
-			displayProperties.Resolution({ 800, 600 });
-            planeProperties.Rect({ 0, 0, 800, 600 });
-			break;
-		}
+            auto sourceRes = args.Mode().SourceResolution();
+            auto targetRes = args.Mode().TargetResolution();
 
-		m_logger.LogNote(L"Applying " + Name() + L": " + ConfigurationMap[m_currentConfig] + L" to output.");
+			switch (m_currentConfig)
+            {
+            case ResolutionToolConfigurations::w1920h1080:
+				args.IsModeCompatible(sourceRes.Height == 1080 && sourceRes.Width == 1920 && 
+					                  targetRes.Height == 1080 && targetRes.Width == 1920);
+                return;
+            case ResolutionToolConfigurations::w800h600:
+                args.IsModeCompatible(sourceRes.Height == 600 && sourceRes.Width == 800 &&
+				                      targetRes.Height == 600 && targetRes.Width == 800);
+                return;
+            default:
+                m_logger.LogError(Name() + L" was set to use an invalid configuration option.");
+            }
+        });
+
+        m_logger.LogNote(L"Registering " + Name() + L": " + ConfigurationMap[m_currentConfig] + L" to be applied.");
 	}
 
 	void ResolutionTool::ApplyToPrediction(IDisplayPrediction displayPrediction)

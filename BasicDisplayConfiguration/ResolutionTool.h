@@ -25,6 +25,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
         static const ResolutionToolConfigurations sc_defaultConfig = ResolutionToolConfigurations::w1920h1080;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
-        winrt::event_token m_drawCallbackToken;
+        winrt::event_token m_displaySetupEventToken, m_drawCallbackToken;
 	};
 }

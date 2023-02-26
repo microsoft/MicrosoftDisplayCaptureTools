@@ -76,20 +76,28 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	}
 
 	void RefreshRateTool::ApplyToOutput(IDisplayOutput displayOutput)
-	{
-        auto displayProperties = displayOutput.GetProperties();
+    {
+        constexpr double sc_refreshRateEpsilon = 0.00000000001;
 
-		switch (m_currentConfig)
+        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
 		{
-		case RefreshRateToolConfigurations::r60:
-			displayProperties.RefreshRate(60.);
-			break;
-		case RefreshRateToolConfigurations::r75:
-			displayProperties.RefreshRate(75.);
-			break;
-        }
+            double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
+                                      static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);
 
-        m_logger.LogNote(L"Applying " + Name() + L": " + ConfigurationMap[m_currentConfig] + L" to output.");
+            switch (m_currentConfig)
+            {
+            case RefreshRateToolConfigurations::r60:
+                args.IsModeCompatible(fabs(presentationRate - 60.0) < sc_refreshRateEpsilon);
+                return;
+            case RefreshRateToolConfigurations::r75:
+                args.IsModeCompatible(fabs(presentationRate - 75.0) < sc_refreshRateEpsilon);
+                return;
+            default:
+                m_logger.LogError(Name() + L" was set to use an invalid configuration option.");
+            }
+        });
+
+        m_logger.LogNote(L"Registering " + Name() + L": " + ConfigurationMap[m_currentConfig] + L" to be applied.");
 	}
 
 	void RefreshRateTool::ApplyToPrediction(IDisplayPrediction displayPrediction)

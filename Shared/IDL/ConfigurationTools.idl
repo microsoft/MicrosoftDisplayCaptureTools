@@ -133,7 +133,8 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     //
     // This object simply holds a slate of ConfigurationTools.
     //
-    interface IConfigurationToolbox {
+    interface IConfigurationToolbox
+    {
         // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
         String Name
         {
@@ -188,7 +189,8 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     //
     // This is to be implemented by toolbox producer.
     //
-    interface IConfigurationToolboxFactory {
+    interface IConfigurationToolboxFactory 
+    {
         // Create
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

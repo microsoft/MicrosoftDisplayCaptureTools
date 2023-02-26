@@ -9,8 +9,6 @@ namespace MonitorUtilities
 
 namespace winrt::BasicDisplayControl::implementation
 {
-    constexpr double sc_refreshRateEpsilon = 0.00000000001;
-
     struct DisplayPredictionData : implements<DisplayPredictionData, MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>
     {
         DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
@@ -49,11 +47,11 @@ namespace winrt::BasicDisplayControl::implementation
         event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_renderLoopCallback;
     };
 
-    struct DisplayEnginePlanePropertySet : implements<DisplayEnginePlanePropertySet, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet>
+    struct DisplayEnginePlaneProperties : implements<DisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties>
     {
-        DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        ~DisplayEnginePlanePropertySet()
+        ~DisplayEnginePlaneProperties()
         {
         }
 
@@ -68,32 +66,95 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::DirectX::DirectXPixelFormat Format();
         void Format(Windows::Graphics::DirectX::DirectXPixelFormat format);
 
-        Windows::Foundation::Collections::IMap<hstring, IInspectable> PropertyBag();
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
 
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         bool m_active = false;
         Windows::Graphics::Imaging::BitmapBounds m_rect{0};
         Windows::Graphics::DirectX::DirectXPixelFormat m_format{ Windows::Graphics::DirectX::DirectXPixelFormat::Unknown };
-        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_propertyBag;
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_Properties;
     };
 
-    struct DisplayEngineRenderCallbackProperties : implements<DisplayEngineRenderCallbackProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties>
+    struct DisplaySetupToolArgs : implements<DisplaySetupToolArgs, MicrosoftDisplayCaptureTools::Display::IDisplaySetupToolArgs>
     {
-        DisplayEngineRenderCallbackProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-            m_logger(logger){};
+        DisplaySetupToolArgs(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
+            MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties,
+            Windows::Devices::Display::Core::DisplayModeInfo const& mode) :
+            m_logger(logger),
+            m_properties(properties),
+            m_mode(mode)
+        {};
 
-        uint64_t FrameNumber() { return m_frameNumber; };
-        void FrameNumber(uint64_t frameNumber) { m_frameNumber = frameNumber; };
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties Properties()
+        {
+            return m_properties;
+        }
+
+        Windows::Devices::Display::Core::DisplayModeInfo Mode()
+        {
+            return m_mode;
+        }
+
+        void IsModeCompatible(bool accept);
+
+        bool Compatible()
+        {
+            return m_compatibility;
+        }
 
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-        uint64_t m_frameNumber = 0;
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties m_properties;
+        const Windows::Devices::Display::Core::DisplayModeInfo m_mode;
+
+        std::atomic_bool m_compatibility = true;
     };
 
-    struct DisplayEnginePropertySet : implements<DisplayEnginePropertySet, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet>
+    struct RenderSetupToolArgs : implements<RenderSetupToolArgs, MicrosoftDisplayCaptureTools::Display::IRenderSetupToolArgs>
     {
-        DisplayEnginePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        RenderSetupToolArgs(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger, MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties) :
+            m_logger(logger), m_properties(properties){};
+
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties Properties()
+        {
+            return m_properties;
+        }
+
+    private:
+        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties m_properties;
+    };
+
+    struct RenderingToolArgs : implements<RenderingToolArgs, MicrosoftDisplayCaptureTools::Display::IRenderingToolArgs>
+    {
+        RenderingToolArgs(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger, MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties) :
+            m_logger(logger), m_properties(properties){};
+
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties Properties()
+        {
+            return m_properties;
+        }
+
+        uint64_t FrameNumber()
+        {
+            return m_frameNumber;
+        };
+
+        void FrameNumber(uint64_t frameNumber)
+        {
+            m_frameNumber = frameNumber;
+        };
+
+    private:
+        uint64_t m_frameNumber = 0;
+        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties m_properties;
+    };
+
+    struct DisplayEngineProperties : implements<DisplayEngineProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties>
+    {
+        DisplayEngineProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         Windows::Devices::Display::Core::DisplayModeInfo ActiveMode();
         void ActiveMode(Windows::Devices::Display::Core::DisplayModeInfo mode);
@@ -104,22 +165,18 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::SizeInt32 Resolution();
         void Resolution(Windows::Graphics::SizeInt32 resolution);
 
-        com_array<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet> GetPlaneProperties();
+        com_array<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties> GetPlaneProperties();
 
         double m_refreshRate;
         Windows::Graphics::SizeInt32 m_resolution;
         Windows::Devices::Display::Core::DisplayModeInfo m_mode;
-        std::vector<com_ptr<DisplayEnginePlanePropertySet>> m_planeProperties;
+        std::vector<com_ptr<DisplayEnginePlaneProperties>> m_planeProperties;
 
         bool m_requeryMode;
         bool RequeryMode();
 
-        MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties RenderCallbackProperties();
-        void RenderCallbackProperties(MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties renderCallbackProperties);
-
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-        MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties m_renderCallbackProperties{nullptr};
     };
 
     //
@@ -137,19 +194,18 @@ namespace winrt::BasicDisplayControl::implementation
         ~DisplayOutput();
 
         Windows::Devices::Display::Core::DisplayTarget Target();
-        MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet GetProperties();
-        MicrosoftDisplayCaptureTools::Display::IDisplayPrediction GetPrediction();
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties GetProperties();
 
         Windows::Foundation::IClosable StartRender();
         void StopRender();
 
-        event_token DisplaySetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet> const& handler);
+        event_token DisplaySetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplaySetupToolArgs> const& handler);
         void DisplaySetupCallback(event_token const& token) noexcept;
 
-        event_token RenderSetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet> const& handler);
+        event_token RenderSetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IRenderSetupToolArgs> const& handler);
         void RenderSetupCallback(event_token const& token) noexcept;
 
-        event_token RenderLoopCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet> const& handler);
+        event_token RenderLoopCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IRenderingToolArgs> const& handler);
         void RenderLoopCallback(event_token const& token) noexcept;
 
     private:
@@ -170,11 +226,11 @@ namespace winrt::BasicDisplayControl::implementation
 
         std::unique_ptr<MonitorUtilities::MonitorControl> m_monitorControl;
 
-        com_ptr<DisplayEnginePropertySet> m_propertySet;
+        com_ptr<DisplayEngineProperties> m_properties;
 
-        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet>> m_displaySetupCallback;
-        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet>> m_renderSetupCallback;
-        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePropertySet>> m_renderLoopCallback;
+        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplaySetupToolArgs>> m_displaySetupCallback;
+        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IRenderSetupToolArgs>> m_renderSetupCallback;
+        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IRenderingToolArgs>> m_renderLoopCallback;
 
         std::thread m_renderThread;
         std::atomic_bool m_valid = true;

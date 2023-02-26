@@ -43,10 +43,10 @@ namespace winrt::MicrosoftDisplayCaptureTools::Libraries
     // Take an item from the property bag and return it as the templated type. This is specifically intended to be used
     // with items stored in the property bag using the above com wrapper.
     template <typename T>
-    static T* GetMapEntry(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertySet propertyMap, winrt::hstring propertyName)
+    static T* GetMapEntry(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties propertyMap, winrt::hstring propertyName)
     {
         ::IUnknown* ptr = nullptr;
-        winrt::check_hresult(propertyMap.PropertyBag().Lookup(propertyName).as<IWrapper>()->GetWrappedPointer(&ptr));
+        winrt::check_hresult(propertyMap.Properties().Lookup(propertyName).as<IWrapper>()->GetWrappedPointer(&ptr));
 
         T* output = nullptr;
         winrt::check_hresult(ptr->QueryInterface<T>(&output));

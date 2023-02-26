@@ -99,19 +99,23 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	void PatternTool::ApplyToOutput(IDisplayOutput displayOutput)
     {
-        m_drawCallbackToken = displayOutput.RenderSetupCallback( 
-			[this](const auto&, IDisplayEnginePropertySet displayProperties) {
+        m_drawCallbackToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args)
+        {
             m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
 
-            auto planeProperties = displayProperties.GetPlaneProperties()[0];
+            auto sourceModeFormat = args.Properties().ActiveMode().SourcePixelFormat();
+            auto sourceModeResolution = args.Properties().ActiveMode().SourceResolution();
 
-            if (SupportedFormatsWithSizePerPixel.find(planeProperties.Format()) == SupportedFormatsWithSizePerPixel.end())
+            if (SupportedFormatsWithSizePerPixel.find(sourceModeFormat) == SupportedFormatsWithSizePerPixel.end())
             {
                 m_logger.LogError(L"PatternTool does not support the plane pixel format.");
                 return;
             }
 
+            auto planeProperties = args.Properties().GetPlaneProperties()[0];
+
             auto dxgiSurface = winrt::MicrosoftDisplayCaptureTools::Libraries::GetMapEntry<IDXGISurface>(planeProperties, L"D3DSurface");
+
             winrt::com_ptr<ID2D1Factory> d2dFactory;
             winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
             winrt::com_ptr<ID2D1RenderTarget> d2dTarget;
@@ -153,9 +157,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
             d2dTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black, 1.0f));
 
             bool indent = false;
-            for (float x = 0; x < displayProperties.Resolution().Width; x += PATTERN_SQUARE_SIZE)
+            for (float x = 0; x < sourceModeResolution.Width; x += PATTERN_SQUARE_SIZE)
             {
-                for (float y = indent ? (float)PATTERN_SQUARE_SIZE : 0.f; y < displayProperties.Resolution().Height; y += 2 * PATTERN_SQUARE_SIZE)
+                for (float y = indent ? (float)PATTERN_SQUARE_SIZE : 0.f; y < sourceModeResolution.Height; y += 2 * PATTERN_SQUARE_SIZE)
                 {
                     d2dTarget->FillRectangle(D2D1::RectF(x, y, x + PATTERN_SQUARE_SIZE, y + PATTERN_SQUARE_SIZE), checkerBrush.get());
                 }

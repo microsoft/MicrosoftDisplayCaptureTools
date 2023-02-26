@@ -5,6 +5,9 @@
 #include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Devices.Display.h>
+#include <winrt/Windows.Devices.Display.Core.h>
+#include <winrt/Windows.Graphics.DirectX.h>
 
 #include "winrt\MicrosoftDisplayCaptureTools.Display.h"
 #include "winrt\MicrosoftDisplayCaptureTools.Framework.h"

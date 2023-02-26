@@ -25,6 +25,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
         static const RefreshRateToolConfigurations sc_defaultConfig = RefreshRateToolConfigurations::r60;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
-        winrt::event_token m_drawCallbackToken;
+        winrt::event_token m_displaySetupEventToken;
 	};
 }

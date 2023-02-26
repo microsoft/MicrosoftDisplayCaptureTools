@@ -53,6 +53,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     winrt::MicrosoftDisplayCaptureTools::Framework::IFrameDataComparisons FrameData::GetImageDelta(
         winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData const& other)
     {
+        // This method only functions if the 'other' provided is of the same underlying implementation
+        // as this.
+        auto otherFrameData = other.try_as<FrameData>();
+        if (!otherFrameData)
+        {
+            m_logger.LogError(L"Multiple IFrameData implementations used, cannot generate a comparison with GetImageDelta.");
+            throw hresult_invalid_argument();
+        }
+
         throw hresult_not_implemented();
     }
 } // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation

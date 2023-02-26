@@ -208,6 +208,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   <ItemGroup>
     <ClInclude Include="PatternTool.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PixelFormatTool.h" />
     <ClInclude Include="RefreshRateTool.h" />
     <ClInclude Include="ResolutionTool.h" />
     <ClInclude Include="Toolbox.h" />
@@ -218,6 +219,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="PixelFormatTool.cpp" />
     <ClCompile Include="RefreshRateTool.cpp" />
     <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="Toolbox.cpp" />

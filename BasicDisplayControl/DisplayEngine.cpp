@@ -209,14 +209,14 @@ namespace winrt::BasicDisplayControl::implementation
         ConnectTarget();
 
         // Instantiate properties object
-        m_propertySet = winrt::make_self<DisplayEnginePropertySet>(m_logger);
+        m_properties = winrt::make_self<DisplayEngineProperties>(m_logger);
         
         // This DisplayEngine implementation only supports 1 plane
-        auto planeProperties = winrt::make_self<DisplayEnginePlanePropertySet>(m_logger);
-        m_propertySet->m_planeProperties.push_back(planeProperties);
+        auto planeProperties = winrt::make_self<DisplayEnginePlaneProperties>(m_logger);
+        m_properties->m_planeProperties.push_back(planeProperties);
 
         // Mark the base plane as active
-        m_propertySet->m_planeProperties[0]->Active(true);
+        m_properties->m_planeProperties[0]->Active(true);
     }
 
     DisplayOutput::~DisplayOutput()
@@ -231,9 +231,9 @@ namespace winrt::BasicDisplayControl::implementation
     {
         return m_displayTarget;
     }
-    winrt::IDisplayEnginePropertySet DisplayOutput::GetProperties()
+    winrt::IDisplayEngineProperties DisplayOutput::GetProperties()
     {
-        return *m_propertySet;
+        return *m_properties;
     }
 
     winrt::IClosable DisplayOutput::StartRender()
@@ -251,7 +251,7 @@ namespace winrt::BasicDisplayControl::implementation
         return renderWatchdog.as<IClosable>();
     }
 
-    event_token DisplayOutput::DisplaySetupCallback(Windows::Foundation::EventHandler<IDisplayEnginePropertySet> const& handler)
+    event_token DisplayOutput::DisplaySetupCallback(Windows::Foundation::EventHandler<IDisplaySetupToolArgs> const& handler)
     {
         return m_displaySetupCallback.add(handler);
     }
@@ -261,7 +261,7 @@ namespace winrt::BasicDisplayControl::implementation
         m_displaySetupCallback.remove(token);
     }
 
-    event_token DisplayOutput::RenderSetupCallback(Windows::Foundation::EventHandler<IDisplayEnginePropertySet> const& handler)
+    event_token DisplayOutput::RenderSetupCallback(Windows::Foundation::EventHandler<IRenderSetupToolArgs> const& handler)
     {
         return m_renderSetupCallback.add(handler);
     }
@@ -271,7 +271,7 @@ namespace winrt::BasicDisplayControl::implementation
         m_renderSetupCallback.remove(token);
     }
 
-    event_token DisplayOutput::RenderLoopCallback(Windows::Foundation::EventHandler<IDisplayEnginePropertySet> const& handler)
+    event_token DisplayOutput::RenderLoopCallback(Windows::Foundation::EventHandler<IRenderingToolArgs> const& handler)
     {
         return m_renderLoopCallback.add(handler);
     }
@@ -357,34 +357,26 @@ namespace winrt::BasicDisplayControl::implementation
 
     void DisplayOutput::RefreshMode()
     {
-        if (m_propertySet->RequeryMode())
+        if (m_properties->RequeryMode())
         {
             auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
 
             for (auto&& mode : modeList)
             {
-                double presentationRate = static_cast<double>(mode.PresentationRate().VerticalSyncRate.Numerator) /
-                                          static_cast<double>(mode.PresentationRate().VerticalSyncRate.Denominator);
-
-                double delta = fabs(presentationRate - m_propertySet->RefreshRate());
-
-                if (mode.SourcePixelFormat() == DirectXPixelFormat::R8G8B8A8UIntNormalized && mode.IsInterlaced() == false &&
-                    mode.TargetResolution().Height == m_propertySet->Resolution().Height &&
-                    mode.TargetResolution().Width == m_propertySet->Resolution().Width &&
-                    mode.SourceResolution().Height == m_propertySet->Resolution().Height &&
-                    mode.SourceResolution().Width == m_propertySet->Resolution().Width)
+                // Check to see if this mode is acceptable
+                if (m_displaySetupCallback)
                 {
+                    auto displaySetupArgs =
+                        winrt::make_self<DisplaySetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>(), mode);
 
-                    if (delta < sc_refreshRateEpsilon)
+                    m_displaySetupCallback(*this, displaySetupArgs.as<IDisplaySetupToolArgs>());
+
+                    if (displaySetupArgs->Compatible())
                     {
-                        std::wstringstream buf{};
-                        buf << L"Mode chosen: source(" << mode.TargetResolution().Width << L" x " << mode.TargetResolution().Height
-                            << L") target(" << mode.SourceResolution().Width << L" x " << mode.SourceResolution().Height << L")";
-
                         // we have a mode matching the requirements.
-                        m_logger.LogNote(buf.str());
+                        m_logger.LogNote(L"Found an acceptable mode.");
 
-                        m_propertySet->ActiveMode(mode);
+                        m_properties->ActiveMode(mode);
                         return;
                     }
                 }
@@ -401,18 +393,17 @@ namespace winrt::BasicDisplayControl::implementation
     {
         m_logger.LogNote(L"Preparing Renderer Thread");
 
-        m_propertySet->RenderCallbackProperties(winrt::make<DisplayEngineRenderCallbackProperties>(m_logger));
-        m_propertySet->RenderCallbackProperties().FrameNumber(0);
-
         m_presenting = false;
-
-        // Call back to any tools which need to apply settings before the mode is chosen and applied
-        if (m_displaySetupCallback) m_displaySetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
 
         RefreshMode();
 
-        m_displayPath.ApplyPropertiesFromMode(m_propertySet->ActiveMode());
-        auto result = m_displayState.TryApply(winrt::DisplayStateApplyOptions::None);
+        m_displayPath.ApplyPropertiesFromMode(m_properties->ActiveMode());
+        auto result = m_displayState.TryApply(winrt::DisplayStateApplyOptions::FailIfStateChanged);
+
+        if (result.Status() != DisplayStateOperationStatus::Success)
+        {
+            m_logger.LogError(L"Applying modes to the display failed.");
+        }
 
         m_renderThread = std::thread(&DisplayOutput::RenderLoop, this);
 
@@ -428,6 +419,8 @@ namespace winrt::BasicDisplayControl::implementation
         winrt::init_apartment();
 
         m_logger.LogNote(L"Starting Render");
+
+        uint64_t frameCounter = 0;
 
         // Initialize D3D objects
         winrt::com_ptr<IDXGIFactory6> dxgiFactory;
@@ -514,11 +507,15 @@ namespace winrt::BasicDisplayControl::implementation
 
         // Insert the underlying surface to be modified
         // TODO: this should be added to an interop header instead of dropped in the property bag like this.
-        m_propertySet->GetPlaneProperties()[0].PropertyBag().Insert(hstring(L"D3DSurface"), winrt::make<Wrapper>(d3dSurface.get()));
+        m_properties->GetPlaneProperties()[0].Properties().Insert(hstring(L"D3DSurface"), winrt::make<Wrapper>(d3dSurface.get()));
 
         // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
         // actual scan out starts.
-        if (m_renderSetupCallback) m_renderSetupCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+        auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
+        if (m_renderSetupCallback) m_renderSetupCallback(*this, renderSetupArgs);
+
+        // Create the callback args object for per-frame rendering tools
+        auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
 
         // Render and present until termination is signaled
         while (m_valid)
@@ -527,7 +524,8 @@ namespace winrt::BasicDisplayControl::implementation
             d3dContext4->Signal(d3dFence.get(), ++d3dFenceValue);
 
             // Callback to any tools which need to perform per-scanout operations
-            if (m_renderLoopCallback) m_renderLoopCallback(*this, m_propertySet.as<IDisplayEnginePropertySet>());
+            if (m_renderLoopCallback)
+                m_renderLoopCallback(*this, renderLoopArgs.as<IRenderingToolArgs>());
 
             winrt::DisplayTask task = taskPool.CreateTask();
             task.SetScanout(primaryScanout);
@@ -538,121 +536,100 @@ namespace winrt::BasicDisplayControl::implementation
             m_presenting = true;
 
             // Increment the frame counter
-            m_propertySet->RenderCallbackProperties().FrameNumber(m_propertySet->RenderCallbackProperties().FrameNumber() + 1);
+            renderLoopArgs->FrameNumber(++frameCounter);
         }
 
         m_logger.LogNote(L"Stopping Render");
     }
 
-    // DisplayEnginePropertySet
-    DisplayEnginePropertySet::DisplayEnginePropertySet(winrt::ILogger const& logger) :
+    // DisplayEngineProperties
+    DisplayEngineProperties::DisplayEngineProperties(winrt::ILogger const& logger) :
         m_resolution({ 0,0 }),
         m_refreshRate(0.),
         m_mode(nullptr),
         m_requeryMode(true), 
-        m_logger(logger),
-        m_renderCallbackProperties(nullptr)
+        m_logger(logger)
     {
     }
 
-    winrt::DisplayModeInfo DisplayEnginePropertySet::ActiveMode()
+    winrt::DisplayModeInfo DisplayEngineProperties::ActiveMode()
     {
         return m_mode;
     }
 
-    void DisplayEnginePropertySet::ActiveMode(winrt::DisplayModeInfo mode)
+    void DisplayEngineProperties::ActiveMode(winrt::DisplayModeInfo mode)
     {
         m_mode = std::move(mode);
         m_requeryMode = false;
     }
 
-    double DisplayEnginePropertySet::RefreshRate()
+    double DisplayEngineProperties::RefreshRate()
     {
         return m_refreshRate;
     }
 
-    void DisplayEnginePropertySet::RefreshRate(double rate)
+    void DisplayEngineProperties::RefreshRate(double rate)
     {
         m_refreshRate = rate;
         m_requeryMode = true;
     }
 
-    winrt::Windows::Graphics::SizeInt32 DisplayEnginePropertySet::Resolution()
+    winrt::Windows::Graphics::SizeInt32 DisplayEngineProperties::Resolution()
     {
         return m_resolution;
     }
 
-    void DisplayEnginePropertySet::Resolution(winrt::Windows::Graphics::SizeInt32 resolution)
+    void DisplayEngineProperties::Resolution(winrt::Windows::Graphics::SizeInt32 resolution)
     {
         m_resolution = resolution;
         m_requeryMode = true;
     }
 
-    winrt::com_array<winrt::IDisplayEnginePlanePropertySet> DisplayEnginePropertySet::GetPlaneProperties()
+    winrt::com_array<winrt::IDisplayEnginePlaneProperties> DisplayEngineProperties::GetPlaneProperties()
     {
-        std::vector<winrt::IDisplayEnginePlanePropertySet> retVector;
+        std::vector<winrt::IDisplayEnginePlaneProperties> retVector;
         for (auto plane : m_planeProperties)
         {
-            retVector.push_back(plane.as<winrt::IDisplayEnginePlanePropertySet>());
+            retVector.push_back(plane.as<winrt::IDisplayEnginePlaneProperties>());
         }
-        return winrt::com_array<winrt::IDisplayEnginePlanePropertySet>(retVector);
+        return winrt::com_array<winrt::IDisplayEnginePlaneProperties>(retVector);
     }
 
-    bool DisplayEnginePropertySet::RequeryMode()
+    bool DisplayEngineProperties::RequeryMode()
     {
         return m_requeryMode;
     }
 
-    MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties DisplayEnginePropertySet::RenderCallbackProperties()
-    {
-        return m_renderCallbackProperties;
-    }
-
-    void DisplayEnginePropertySet::RenderCallbackProperties(MicrosoftDisplayCaptureTools::Display::IDisplayEngineRenderCallbackProperties renderCallbackProperties)
-    {
-        m_renderCallbackProperties = renderCallbackProperties;
-    }
-
-    DisplayEnginePlanePropertySet::DisplayEnginePlanePropertySet(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
+    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
         m_logger(logger),
-        m_propertyBag(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
+        m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
     {
     }
 
-    // DisplayEnginePlanePropertySet
-    bool DisplayEnginePlanePropertySet::Active()
+    // DisplayEnginePlaneProperties
+    bool DisplayEnginePlaneProperties::Active()
     {
         return m_active;
     }
 
-    void DisplayEnginePlanePropertySet::Active(bool active)
+    void DisplayEnginePlaneProperties::Active(bool active)
     {
         m_active = active;
     }
 
-    winrt::BitmapBounds DisplayEnginePlanePropertySet::Rect()
+    winrt::BitmapBounds DisplayEnginePlaneProperties::Rect()
     {
         return m_rect;
     }
 
-    void DisplayEnginePlanePropertySet::Rect(winrt::BitmapBounds bounds)
+    void DisplayEnginePlaneProperties::Rect(winrt::BitmapBounds bounds)
     {
         m_rect = bounds;
     }
 
-    winrt::DirectXPixelFormat DisplayEnginePlanePropertySet::Format()
+    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::IInspectable> DisplayEnginePlaneProperties::Properties()
     {
-        return winrt::DirectXPixelFormat::R8G8B8A8UIntNormalized;
-    }
-
-    void DisplayEnginePlanePropertySet::Format(winrt::DirectXPixelFormat format) 
-    {
-        // TODO: this needs to do something.
-    }
-
-    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::IInspectable> DisplayEnginePlanePropertySet::PropertyBag()
-    {
-        return m_propertyBag;
+        return m_Properties;
     }
 
     DisplayPredictionData::DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
@@ -762,6 +739,14 @@ namespace winrt::BasicDisplayControl::implementation
     void DisplayPrediction::RenderLoopCallback(event_token const& token) noexcept
     {
         m_renderLoopCallback.remove(token);
+    }
+
+    void DisplaySetupToolArgs::IsModeCompatible(bool accept)
+    {
+        if (m_compatibility && !accept)
+        {
+            m_compatibility = false;
+        }
     }
 
 } // namespace winrt::BasicDisplayControl::implementation

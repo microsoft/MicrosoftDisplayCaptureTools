@@ -6,6 +6,7 @@
 #include "PatternTool.h"
 #include "ResolutionTool.h"
 #include "RefreshRateTool.h"
+#include "PixelFormatTool.h"
 
 namespace winrt
 {
@@ -35,14 +36,16 @@ namespace winrt::BasicDisplayConfiguration::implementation
     {
         Pattern,
         Resolution,
-        RefreshRate
+        RefreshRate,
+        PixelFormat
     };
 
     std::map<hstring, Tools> MapNameToTool =
     {
         {L"Pattern", Tools::Pattern},
         {L"Resolution", Tools::Resolution},
-        {L"RefreshRate", Tools::RefreshRate}
+        {L"RefreshRate", Tools::RefreshRate},
+        {L"PixelFormat", Tools::PixelFormat}
     };
 
     hstring Toolbox::Name()
@@ -69,6 +72,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
             return winrt::make<RefreshRateTool>(m_logger);
         case Tools::Resolution: 
             return winrt::make<ResolutionTool>(m_logger);
+        case Tools::PixelFormat:
+            return winrt::make<PixelFormatTool>(m_logger);
         }
 
         // The caller has asked for a tool that is not exposed from this toolbox
