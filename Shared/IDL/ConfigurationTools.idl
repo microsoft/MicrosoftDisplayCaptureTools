@@ -141,8 +141,8 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
             get;
         };
 
-        // Get the version of this implementation, in Major.Minor format
-        String Version
+        // Get the version of this implementation, in Major.Minor.Patch format
+        MicrosoftDisplayCaptureTools.Framework.Version Version
         {
             get;
         };

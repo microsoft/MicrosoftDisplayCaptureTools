@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <filesystem>
 
 namespace winrt 
 {
@@ -260,7 +261,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
 
-        Sleep(5000);
+        Sleep(1000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
@@ -419,12 +420,16 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 winrt::hstring(L"Capture should be at least as large as prediction") + std::to_wstring(captureBuffer.Length()) +
                 L", Predicted=" + std::to_wstring(predictBuffer.Length()));
         }
-        else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), predictBuffer.Length()))
+        else if (0 == memcmp(captureBuffer.data(), predictBuffer.data(), predictBuffer.Length()))
+        {
+            m_logger.LogNote(L"Capture and Prediction perfectly match!");
+        }
+        else
         {
             m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
             {
                 auto filename = name + L"_Captured.bin";
-                auto folder = winrt::KnownFolders::PicturesLibrary();
+                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
                 auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
                 stream.WriteAsync(captureBuffer).get();
@@ -435,7 +440,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             }
             {
                 auto filename = name + L"_Predicted.bin";
-                auto folder = winrt::KnownFolders::PicturesLibrary();
+                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
                 auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
                 stream.WriteAsync(predictBuffer).get();

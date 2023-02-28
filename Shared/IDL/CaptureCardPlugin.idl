@@ -179,11 +179,9 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         // FinalizeDisplayState
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      This is called by the framework upon iterating through every "DisplaySetup" configuration tool. If this
+        //      This is called by the framework after iterating through every "DisplaySetup" configuration tool. If this
         //      plugin has tools that require some device reset or some time consuming operation (for example, HPD'ing with
         //      a specific EDID), that operation should be performed when this function is called.
-        //
-        // TODO: fix this wording a bit to remove tools
         //
         void FinalizeDisplayState();
     }
@@ -201,11 +199,8 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
             get;
         };
 
-        // Get the version of this implementation, in Major.Minor format.
-        String Version
-        {
-            get;
-        };
+        // Get the version of this implementation, in Major.Minor.Patch format.
+        MicrosoftDisplayCaptureTools.Framework.Version Version();
 
         // EnumerateDisplayInputs
         // ----------------------------------------------------------------------------------------------------------------

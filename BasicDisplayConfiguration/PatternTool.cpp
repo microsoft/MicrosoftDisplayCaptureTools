@@ -235,9 +235,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
                 0, 
                 patternTarget.SizeInPixels().Width, 
                 patternTarget.SizeInPixels().Height);
-
-
-                // TODO: what if we added a category which allowed tools to take control over memory allocation?
         });
         
     }

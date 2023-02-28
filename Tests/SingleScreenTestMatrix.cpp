@@ -15,6 +15,7 @@ namespace winrt
     using namespace Windows::Devices::Display::Core;
     using namespace Windows::Graphics::Imaging;
     using namespace MicrosoftDisplayCaptureTools;
+    using namespace MicrosoftDisplayCaptureTools::Display;
     using namespace MicrosoftDisplayCaptureTools::Framework;
     using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
 }
@@ -46,11 +47,20 @@ void SingleScreenTestMatrix::Test()
 
     if (displayEngines.empty())
     {
-        g_logger.LogAssert(L"No DisplayEngine loaded.");
+        g_logger.LogAssert(L"No DisplayEngines loaded.");
     }
-    
-    // TODO: need to add some logic for selecting a specific displayEngine
-    auto displayEngine = displayEngines[0];
+
+    winrt::IDisplayEngine displayEngine = displayEngines[0];
+
+    // This test only supports a single screen and so can only load a single DisplayEngine,
+    // so select the highest version one installed.
+    for (auto&& engine : displayEngines)
+    {
+        if (engine.Version().IsHigherVersion(displayEngine.Version()))
+        {
+            displayEngine = engine;
+        }
+    }
 
     auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
     auto prediction = displayEngine.CreateDisplayPrediction();

@@ -687,7 +687,6 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
         // reserve enough memory for the output frame.
-        // TODO: need a mechanism for tools to indicate their multi frame support
         auto pixelBuffer = winrt::Buffer(resolution.Height * desc.Stride);
 
         predictionData.FrameData().Data(pixelBuffer);
@@ -701,7 +700,6 @@ namespace winrt::BasicDisplayControl::implementation
         // Invoke any tools registering as rendering
         if (m_renderLoopCallback)
         {
-            // TODO: tools that register frame limits can cause this to call with a frame counter
             m_renderLoopCallback(*this, predictionData);
         }
 

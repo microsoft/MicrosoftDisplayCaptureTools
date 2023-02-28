@@ -77,7 +77,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         }
 
         // The caller has asked for a tool that is not exposed from this toolbox
-        // TODO - log this case
+        m_logger.LogAssert(Name() + L"::GetTool was called with invalid tool name: " + toolName);
         throw winrt::hresult_invalid_argument();
     }
 

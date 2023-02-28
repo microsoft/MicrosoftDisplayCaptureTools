@@ -268,9 +268,9 @@ namespace winrt::BasicDisplayControl::implementation
         {
             return L"BasicDisplayControl";
         };
-        hstring Version()
+        MicrosoftDisplayCaptureTools::Framework::Version Version()
         {
-            return L"0.1";
+            return MicrosoftDisplayCaptureTools::Framework::Version(0, 1, 0);
         };
 
         MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(Windows::Devices::Display::Core::DisplayTarget const& target);

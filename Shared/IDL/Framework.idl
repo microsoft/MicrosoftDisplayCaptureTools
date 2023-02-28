@@ -5,7 +5,6 @@ import "DisplayManager.idl";
 namespace MicrosoftDisplayCaptureTools.Framework 
 {
     // IFrameData Implementations
-
     struct FrameDataDescription
     {
         // The number of bits to represent each pixel, regardless of subsampling mode.
@@ -63,6 +62,18 @@ namespace MicrosoftDisplayCaptureTools.Framework
         // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
         // do not match.
         IFrameDataComparisons GetImageDelta(IFrameData other);
+    };
+
+    runtimeclass Version
+    {
+        Version(UInt32 major, UInt32 minor, UInt32 patch);
+
+        UInt32 Major();
+        UInt32 Minor();
+        UInt32 Patch();
+        String AsString();
+
+        Boolean IsHigherVersion(Version other);
     };
 
     //
@@ -217,11 +228,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface ICore
     {
-        // Get the version, in Major.Minor format
-        String Version
-        {
-            get;
-        };
+        // Get the version, in Major.Minor.Patch format
+        MicrosoftDisplayCaptureTools.Framework.Version Version();
 
         // Get the logger for this instance
         ILogger Logger

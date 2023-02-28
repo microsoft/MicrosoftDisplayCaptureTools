@@ -122,10 +122,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Libraries
 
         if (!library)
         {
-            // Failed to load the binary using the provided path as fully qualified. 
-            // 
-            // TODO - Attempt again using the provided path as a relative path, using
-            //        GetModulePath as a base.
+            // Failed to load the binary using the provided path as fully qualified. Attempt
+            // again using the provided path as a relative path.
             auto cwd = std::filesystem::current_path();
             winrt::hstring cwdInclusivePath = winrt::hstring(cwd.c_str()) + L"\\" + loaderPath.GetPath();
             loadPath = cwdInclusivePath.data();

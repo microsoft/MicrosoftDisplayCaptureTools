@@ -2,6 +2,7 @@
 #include "GenericCaptureCardPlugin.h"
 #include "Controller.g.cpp"
 #include "ControllerFactory.g.cpp"
+#include <filesystem>
 
 namespace winrt
 {
@@ -12,6 +13,7 @@ namespace winrt
     using namespace Windows::Media::Capture::Core;
     using namespace Windows::Media::Capture::Frames;
     using namespace Windows::Media::MediaProperties;
+    using namespace Windows::Storage;
     using namespace Windows::Storage::Streams;
     using namespace Windows::Graphics;
     using namespace Windows::Graphics::Imaging;
@@ -256,37 +258,72 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // Compare descriptions
         auto predictedFrameDesc = predictedFrame.FormatDescription();
         auto capturedFrameDesc = m_frameData.FormatDescription();
-
-        /*
-
-        // Convert limited range to full range
-        capturedR = capturedR < 16 ? 0 : capturedR > 235 ? 235 : (uint8_t)((float)(capturedR - 16) * 1.164f);
-        capturedG = capturedG < 16 ? 0 : capturedG > 235 ? 235 : (uint8_t)((float)(capturedG - 16) * 1.164f);
-        capturedB = capturedB < 16 ? 0 : capturedB > 235 ? 235 : (uint8_t)((float)(capturedB - 16) * 1.164f);
-
-        m_logger.LogNote(std::format(
-            L"Captured pixel ({},{},{}) - Expected ({},{},{})",
-            capturedR,
-            capturedG,
-            capturedB,
-            predictBuffer.data()[0],
-            predictBuffer.data()[1],
-            predictBuffer.data()[2]));
-
-        //
-        // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
-        // plugin only RGB8 is supported.
-        //
-        // TODO: right now this is only comparing a single pixel for speed reasons - both of the buffers are fully available here.
-        //
-        if (ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedR - (float)predictBuffer.data()[0])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedG - (float)predictBuffer.data()[1])) ||
-            ColorChannelTolerance < static_cast<uint8_t>(fabsf((float)capturedB - (float)predictBuffer.data()[2])))
+        if (m_frameData.Data().Length() < predictedFrame.Data().Length())
         {
-            m_logger.LogError(L"Image comparison failed.");
-            return false;
+            m_logger.LogError(
+                winrt::hstring(L"Capture should be at least as large as prediction") +
+                std::to_wstring(m_frameData.Data().Length()) +
+                L", Predicted=" + std::to_wstring(predictedFrame.Data().Length()));
         }
-        */
+        else if (0 != memcmp(m_frameData.Data().data(), predictedFrame.Data().data(), predictedFrame.Data().Length()))
+        {
+            m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+            {
+                auto filename = name + L"_Captured.bin";
+                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                stream.WriteAsync(m_frameData.Data()).get();
+                stream.FlushAsync().get();
+                stream.Close();
+
+                m_logger.LogNote(L"Dumping captured data here: " + filename);
+            }
+            {
+                auto filename = name + L"_Predicted.bin";
+                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                stream.WriteAsync(predictedFrame.Data()).get();
+                stream.FlushAsync().get();
+                stream.Close();
+
+                m_logger.LogNote(L"Dumping captured data here: " + filename);
+            }
+
+            struct PixelStruct
+            {
+                uint8_t r, g, b, a;
+            };
+
+            auto differenceCount = 0;
+
+            PixelStruct* cap = reinterpret_cast<PixelStruct*>(m_frameData.Data().data());
+            PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictedFrame.Data().data());
+
+            // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
+            const int samples = 10000;
+            const int pixelCount = m_frameData.Resolution().Width * m_frameData.Resolution().Height;
+            for (auto i = 0; i < samples; i++)
+            {
+                auto index = rand() % pixelCount;
+
+                if (cap[index].r != pre[index].r || cap[index].g != pre[index].g || cap[index].b != pre[index].b)
+                {
+                    differenceCount++;
+                }
+            }
+
+            float diff = (float)differenceCount / (float)pixelCount;
+            if (diff > 0.10f)
+            {
+                std::wstring msg;
+                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
+                m_logger.LogError(msg);
+
+                return false;
+            }
+        }
 
         return true;
     }
