@@ -266,7 +266,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
     {
-        // TODO: Add some sort of size check?
+        if (edid.empty() || edid.size()%128 !=0)
+        {
+            m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
+        }
+
         unsigned short writeAddress;
         switch (m_port)
         {
