@@ -116,7 +116,14 @@ namespace winrt::BasicDisplayConfiguration::implementation
             winrt::com_ptr<IDXGISurface> dxgiSurface;
             {
                 winrt::com_ptr<ID3D11Texture2D> texture;
-                auto planePropertiesInterop = planeProperties.as<IDisplayEngineInterop>();
+                auto planePropertiesInterop = planeProperties.try_as<IDisplayEnginePlanePropertiesInterop>();
+
+                if (!planePropertiesInterop)
+                {
+                    m_logger.LogError(Name() + L": this tool requires the DisplayEngine to expose IDisplayEnginePlanePropertiesInterop.");
+                    throw winrt::hresult_class_not_available();
+                }
+
                 winrt::check_hresult(planePropertiesInterop->GetPlaneTexture(texture.put()));
                 dxgiSurface = texture.as<IDXGISurface>();
             }

@@ -5,11 +5,9 @@ using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
 using System;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Devices.Display;
@@ -228,9 +226,9 @@ namespace CaptureCardViewer.ViewModels
 						.ToList();
 
 					// Apply all tools to the display, in categorical order
-					ConfigurationToolCategory[] toolOrder = { 
-						ConfigurationToolCategory.DisplaySetup, 
-						ConfigurationToolCategory.RenderSetup, 
+					ConfigurationToolCategory[] toolOrder = {
+						ConfigurationToolCategory.DisplaySetup,
+						ConfigurationToolCategory.RenderSetup,
 						ConfigurationToolCategory.Render };
 
 					foreach (var category in toolOrder)

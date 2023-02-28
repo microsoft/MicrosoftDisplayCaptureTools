@@ -6,7 +6,7 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Display 
 {
-	struct __declspec(uuid("08715D73-F1CC-4391-AEEF-BF4DEA64FC1C")) IDisplayEngineInterop : ::IUnknown
+	struct __declspec(uuid("08715D73-F1CC-4391-AEEF-BF4DEA64FC1C")) IDisplayEnginePlanePropertiesInterop : ::IUnknown
 	{
         virtual HRESULT __stdcall GetPlaneTexture(ID3D11Texture2D** texture) = 0;
 	};

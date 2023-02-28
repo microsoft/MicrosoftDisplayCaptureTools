@@ -50,7 +50,7 @@ namespace winrt::BasicDisplayControl::implementation
     };
 
     struct DisplayEnginePlaneProperties
-        : implements<DisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEngineInterop>
+        : implements<DisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertiesInterop>
     {
         DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
