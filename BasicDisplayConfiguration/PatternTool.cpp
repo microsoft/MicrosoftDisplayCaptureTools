@@ -4,7 +4,7 @@
 #include "winrt\Microsoft.Graphics.Canvas.h"
 #include "winrt\Windows.UI.h"
 
-#include "..\Shared\Inc\DisplayToolComInterop.h"
+#include "..\Shared\Inc\DisplayEngineInterop.h"
 
 #define PATTERN_SQUARE_SIZE 50.f
 
@@ -99,8 +99,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	void PatternTool::ApplyToOutput(IDisplayOutput displayOutput)
     {
-        m_drawCallbackToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args)
-        {
+        m_drawCallbackToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args) {
             m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
 
             auto sourceModeFormat = args.Properties().ActiveMode().SourcePixelFormat();
@@ -114,7 +113,13 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
             auto planeProperties = args.Properties().GetPlaneProperties()[0];
 
-            auto dxgiSurface = winrt::MicrosoftDisplayCaptureTools::Libraries::GetMapEntry<IDXGISurface>(planeProperties, L"D3DSurface");
+            winrt::com_ptr<IDXGISurface> dxgiSurface;
+            {
+                winrt::com_ptr<ID3D11Texture2D> texture;
+                auto planePropertiesInterop = planeProperties.as<IDisplayEngineInterop>();
+                winrt::check_hresult(planePropertiesInterop->GetPlaneTexture(texture.put()));
+                dxgiSurface = texture.as<IDXGISurface>();
+            }
 
             winrt::com_ptr<ID2D1Factory> d2dFactory;
             winrt::check_hresult(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.put()));
@@ -128,7 +133,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
             d2dRtProperties.dpiY = 96.f;
             d2dRtProperties.usage = D2D1_RENDER_TARGET_USAGE_NONE;
 
-            winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface, d2dRtProperties, d2dTarget.put()));
+            winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface.get(), d2dRtProperties, d2dTarget.put()));
 
             D2D1_COLOR_F checkerColor;
             switch (m_currentConfig)
@@ -227,8 +232,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
                 drawingSession.Close();
             }
 
-            auto bytesPerPixel = SupportedFormatsWithSizePerPixel[predictionData.FrameData().FormatDescription().PixelFormat];
-            
             patternTarget.GetPixelBytes(
                 predictionData.FrameData().Data(), 
                 0, 

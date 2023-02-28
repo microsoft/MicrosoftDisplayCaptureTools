@@ -9,9 +9,9 @@
 #include <winrt/Windows.Devices.Display.Core.h>
 #include <winrt/Windows.Graphics.DirectX.h>
 
-#include "winrt\MicrosoftDisplayCaptureTools.Display.h"
-#include "winrt\MicrosoftDisplayCaptureTools.Framework.h"
-#include "winrt\MicrosoftDisplayCaptureTools.ConfigurationTools.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Display.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
+#include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 
 #include <map>
 

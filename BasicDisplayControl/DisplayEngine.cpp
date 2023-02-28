@@ -422,6 +422,9 @@ namespace winrt::BasicDisplayControl::implementation
 
         uint64_t frameCounter = 0;
 
+        // This DisplayEngine only supports a single plane, so directly use the base plane's properties here.
+        auto basePlaneProperties = m_properties->GetPlaneProperties()[0].as<DisplayEnginePlaneProperties>();
+
         // Initialize D3D objects
         winrt::com_ptr<IDXGIFactory6> dxgiFactory;
         winrt::com_ptr<ID3D11Device5> d3dDevice;
@@ -483,12 +486,19 @@ namespace winrt::BasicDisplayControl::implementation
             interopDevice->CreateSharedHandle(rawSurface.get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandle.put()));
 
         winrt::com_ptr<ID3D11RenderTargetView> d3dRenderTarget;
-        winrt::com_ptr<ID3D11Texture2D> d3dSurface;
 
-        d3dSurface.capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandle.get());
+        {
+            winrt::com_ptr<ID3D11Texture2D> d3dSurface;
+            d3dSurface.capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandle.get());
+            basePlaneProperties->SetPlaneTexture(d3dSurface.get());
+        }
+
+        winrt::com_ptr<ID3D11Texture2D> basePlaneSurface;
+        winrt::check_hresult(basePlaneProperties->GetPlaneTexture(basePlaneSurface.put()));
+
 
         D3D11_TEXTURE2D_DESC d3dTextureDesc{};
-        d3dSurface->GetDesc(&d3dTextureDesc);
+        basePlaneSurface->GetDesc(&d3dTextureDesc);
 
         D3D11_RENDER_TARGET_VIEW_DESC d3dRenderTargetViewDesc{};
         d3dRenderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -496,7 +506,7 @@ namespace winrt::BasicDisplayControl::implementation
         d3dRenderTargetViewDesc.Format = d3dTextureDesc.Format;
 
         // Create the render target view
-        winrt::check_hresult(d3dDevice->CreateRenderTargetView(d3dSurface.get(), &d3dRenderTargetViewDesc, d3dRenderTarget.put()));
+        winrt::check_hresult(d3dDevice->CreateRenderTargetView(basePlaneSurface.get(), &d3dRenderTargetViewDesc, d3dRenderTarget.put()));
 
         // Get a fence to wait for render work to complete
         winrt::handle fenceHandle;
@@ -504,10 +514,6 @@ namespace winrt::BasicDisplayControl::implementation
         winrt::com_ptr<winrt::IInspectable> displayFenceIInspectable;
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
-
-        // Insert the underlying surface to be modified
-        // TODO: this should be added to an interop header instead of dropped in the property bag like this.
-        m_properties->GetPlaneProperties()[0].Properties().Insert(hstring(L"D3DSurface"), winrt::make<Wrapper>(d3dSurface.get()));
 
         // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
         // actual scan out starts.
@@ -630,6 +636,19 @@ namespace winrt::BasicDisplayControl::implementation
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::IInspectable> DisplayEnginePlaneProperties::Properties()
     {
         return m_Properties;
+    }
+
+    HRESULT __stdcall DisplayEnginePlaneProperties::GetPlaneTexture(ID3D11Texture2D** texture) noexcept
+    {
+        m_planeTexture->AddRef();
+        *texture = m_planeTexture.get();
+
+        return S_OK;
+    }
+
+    void DisplayEnginePlaneProperties::SetPlaneTexture(ID3D11Texture2D* texture)
+    {
+        m_planeTexture.copy_from(texture);
     }
 
     DisplayPredictionData::DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :

@@ -2,6 +2,8 @@
 #include "DisplayEngine.g.h"
 #include "DisplayEngineFactory.g.h"
 
+#include "..\Shared\Inc\DisplayEngineInterop.h"
+
 namespace MonitorUtilities
 {
     class MonitorControl;
@@ -47,7 +49,8 @@ namespace winrt::BasicDisplayControl::implementation
         event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_renderLoopCallback;
     };
 
-    struct DisplayEnginePlaneProperties : implements<DisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties>
+    struct DisplayEnginePlaneProperties
+        : implements<DisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEngineInterop>
     {
         DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
@@ -56,17 +59,17 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
         // Required plane properties
-
         bool Active();
         void Active(bool active);        
-
         Windows::Graphics::Imaging::BitmapBounds Rect();
         void Rect(Windows::Graphics::Imaging::BitmapBounds bounds);
-
-        Windows::Graphics::DirectX::DirectXPixelFormat Format();
-        void Format(Windows::Graphics::DirectX::DirectXPixelFormat format);
-
         Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
+
+        // Properties defined in the interop header
+        HRESULT __stdcall GetPlaneTexture(ID3D11Texture2D** texture) noexcept override;
+
+        // Internal-only functions
+        void SetPlaneTexture(ID3D11Texture2D* texture);
 
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
@@ -74,6 +77,8 @@ namespace winrt::BasicDisplayControl::implementation
         Windows::Graphics::Imaging::BitmapBounds m_rect{0};
         Windows::Graphics::DirectX::DirectXPixelFormat m_format{ Windows::Graphics::DirectX::DirectXPixelFormat::Unknown };
         Windows::Foundation::Collections::IMap<hstring, IInspectable> m_Properties;
+
+        winrt::com_ptr<ID3D11Texture2D> m_planeTexture;
     };
 
     struct DisplaySetupToolArgs : implements<DisplaySetupToolArgs, MicrosoftDisplayCaptureTools::Display::IDisplaySetupToolArgs>

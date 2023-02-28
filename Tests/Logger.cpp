@@ -77,12 +77,14 @@ void WEXLogger::LogError(hstring const& error)
     else
     {
         Log::Error(error.c_str());
+        throw winrt::hresult_error();
     }
 }
 
 void WEXLogger::LogAssert(hstring const& assert)
 {
     Log::Assert(assert.c_str());
+    throw winrt::hresult_error();
 }
 
 void WEXLogger::LogConfig(hstring const& config)

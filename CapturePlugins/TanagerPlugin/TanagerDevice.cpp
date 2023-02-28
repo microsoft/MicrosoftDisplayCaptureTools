@@ -266,7 +266,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
     {
-        if (edid.empty() || edid.size()%128 !=0)
+        // EDIDs are made of a series of 128-byte blocks
+        if (edid.empty() || edid.size() % 128 !=0)
         {
             m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
         }
@@ -358,6 +359,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
         m_frameData = FrameData(m_logger);
 
+        // TODO: isolate this into a header supporting different masks
         typedef struct
         {
             uint64_t pad1 : 2;
@@ -408,15 +410,18 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     {
         auto predictedFrameData = prediction.FrameData();
 
+        if (predictedFrameData.Resolution().Height != m_frameData.Resolution().Height || 
+            predictedFrameData.Resolution().Width != m_frameData.Resolution().Width)
+        {
+            m_logger.LogError(winrt::hstring(L"Predicted resolution (") + 
+                to_hstring(predictedFrameData.Resolution().Width) + L"," +
+                to_hstring(predictedFrameData.Resolution().Height) + L"), Captured Resolution(" + 
+                to_hstring(m_frameData.Resolution().Width) + L"," +
+                to_hstring(m_frameData.Resolution().Height) + L")");
+        }
+
         auto captureBuffer = m_frameData.Data();
         auto predictBuffer = predictedFrameData.Data();
-
-        //
-        // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
-        // plugin only RGB8 is supported.
-        //
-        // TODO: this needs to handle multiple formats
-        //
 
         if (captureBuffer.Length() < predictBuffer.Length())
         {
