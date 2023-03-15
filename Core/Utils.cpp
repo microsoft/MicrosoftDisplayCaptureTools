@@ -28,10 +28,6 @@ hstring Version::AsString()
 }
 bool Version::IsHigherVersion(IVersion other)
 {
-    std::tuple<uint32_t, uint32_t, uint32_t> otherVersion
-    {
-        other.Major(), other.Minor(), other.Patch()
-    };
-    return m_version > otherVersion;
+    return m_version > std::make_tuple(other.Major(), other.Minor(), other.Patch());
 }
 } // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
