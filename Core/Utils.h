@@ -2,9 +2,6 @@
 #include "Framework.Version.g.h"
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
-
-    constexpr uint32_t MaxVersion = 0x1000;
-
 struct Version : VersionT<Version>
 {
     Version() = delete;
@@ -19,7 +16,7 @@ struct Version : VersionT<Version>
     bool IsHigherVersion(IVersion other);
 
 private:
-    uint32_t m_major, m_minor, m_patch;
+    std::tuple<uint32_t, uint32_t, uint32_t> m_version;
 };
 } // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::factory_implementation {

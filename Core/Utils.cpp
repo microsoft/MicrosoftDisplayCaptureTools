@@ -7,33 +7,31 @@
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
 
 Version::Version(uint32_t major, uint32_t minor, uint32_t patch) : 
-    m_major(major), m_minor(minor), m_patch(patch)
+    m_version{major, minor, patch}
 {
-    // If any of the version members is too large, throw.
-    if (major > MaxVersion || minor > MaxVersion || patch > MaxVersion)
-    {
-        throw winrt::hresult_invalid_argument();
-    }
 }
 uint32_t Version::Major()
 {
-    return m_major;
+    return std::get<0>(m_version);
 }
 uint32_t Version::Minor()
 {
-    return m_minor;
+    return std::get<1>(m_version);
 }
 uint32_t Version::Patch()
 {
-    return m_patch;
+    return std::get<2>(m_version);
 }
 hstring Version::AsString()
 {
-    return to_hstring(m_major) + L"." + to_hstring(m_minor) + L"." + to_hstring(m_patch);
+    return to_hstring(Major()) + L"." + to_hstring(Minor()) + L"." + to_hstring(Patch());
 }
 bool Version::IsHigherVersion(IVersion other)
 {
-    return (m_major * MaxVersion * MaxVersion + m_minor * MaxVersion + m_patch) >
-           (other.Major() * MaxVersion * MaxVersion + other.Minor() * MaxVersion + other.Patch());
+    std::tuple<uint32_t, uint32_t, uint32_t> otherVersion
+    {
+        other.Major(), other.Minor(), other.Patch()
+    };
+    return m_version > otherVersion;
 }
 } // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
