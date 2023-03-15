@@ -1,31 +1,23 @@
 #pragma once
-namespace winrt::BasicDisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation {
+struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 {
-	enum class PatternToolConfigurations
-	{
-		Black,
-		White,
-		Red,
-		Green,
-		Blue
-	};
+    PatternTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    winrt::hstring Name();
+    winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
+    winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
+    winrt::com_array<winrt::hstring> GetSupportedConfigurations();
+    winrt::hstring GetDefaultConfiguration();
+    winrt::hstring GetConfiguration();
+    void SetConfiguration(winrt::hstring configuration);
+    void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
+    void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
-	struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
-	{
-        PatternTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
-		winrt::hstring Name();
-		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
-		winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
-		winrt::com_array<winrt::hstring> GetSupportedConfigurations();
-		winrt::hstring GetDefaultConfiguration();
-        winrt::hstring GetConfiguration();
-		void SetConfiguration(winrt::hstring configuration);
-		void Apply(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput reference);
+private:
+    std::wstring m_currentConfig;
 
-	private:
-		PatternToolConfigurations m_currentConfig;
-        static const PatternToolConfigurations sc_defaultConfig = PatternToolConfigurations::Green;
+    const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
-		const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
-	};
-}
+    winrt::event_token m_drawOutputEventToken, m_drawPredictionEventToken;
+};
+} // namespace winrt::BasicDisplayConfiguration::implementation

@@ -10,14 +10,15 @@ namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation
 {
-	std::map<ResolutionToolConfigurations, winrt::hstring> ConfigurationMap
+	static const std::wstring DefaultConfiguration = L"1920x1080";
+	std::map<std::wstring, Windows::Graphics::SizeInt32> ConfigurationMap
 	{
-		{ ResolutionToolConfigurations::w1920h1080, L"1920x1080" },
-		{ ResolutionToolConfigurations::w800h600, L"800x600" }
+		{ L"1920x1080", {1920, 1080} },
+		{ L"800x600", {800, 600} }
 	};
 
 	ResolutionTool::ResolutionTool(winrt::ILogger const& logger) : 
-		m_currentConfig(sc_defaultConfig), 
+		m_currentConfig(DefaultConfiguration), 
 		m_logger(logger)
 	{
 	}
@@ -38,57 +39,61 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	}
 
 	com_array<hstring> ResolutionTool::GetSupportedConfigurations()
-	{
-		std::vector<hstring> configs;
-		for (auto config : ConfigurationMap)
-		{
-			configs.push_back(config.second);
-		}
+    {
+        std::vector<hstring> configs;
+        for (auto&& config : ConfigurationMap)
+        {
+            hstring configName(config.first);
+            configs.push_back(configName);
+        }
 
-		return com_array<hstring>(configs);
+        return com_array<hstring>(configs);
 	}
 
 	hstring ResolutionTool::GetDefaultConfiguration()
-	{
-		return ConfigurationMap[sc_defaultConfig];
+    {
+        hstring defaultConfig(DefaultConfiguration);
+        return defaultConfig;
 	}
 
     hstring ResolutionTool::GetConfiguration()
     {
-        return ConfigurationMap[m_currentConfig];
+        hstring currentConfig(m_currentConfig);
+        return currentConfig;
 	}
 
 	void ResolutionTool::SetConfiguration(hstring configuration)
-	{
-		for (auto config : ConfigurationMap)
-		{
-			if (config.second == configuration)
-			{
-				m_currentConfig = config.first;
-				return;
-			}
-		}
+    {
+        if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
+        {
+            // An invalid configuration was asked for
+            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
 
-		// An invalid configuration was asked for
-        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+            throw winrt::hresult_invalid_argument();
+        }
 
-		throw winrt::hresult_invalid_argument();
+        m_currentConfig = configuration.c_str();
 	}
 
-	void ResolutionTool::Apply(IDisplayOutput reference)
-	{
-		auto displayProperties = reference.GetProperties();
-
-		switch (m_currentConfig)
+	void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
+    {
+        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
 		{
-		case ResolutionToolConfigurations::w1920h1080:
-			displayProperties.Resolution({ 1920, 1080 });
-			break;
-		case ResolutionToolConfigurations::w800h600:
-			displayProperties.Resolution({ 800, 600 });
-			break;
-		}
+            auto sourceRes = args.Mode().SourceResolution();
+            auto targetRes = args.Mode().TargetResolution();
 
-		m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
+            auto& configRes = ConfigurationMap[m_currentConfig];
+            args.IsModeCompatible(sourceRes == configRes && targetRes == configRes);
+        });
+
+        m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
+	}
+
+	void ResolutionTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+    {
+        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
+		{ 
+            predictionData.FrameData().Resolution(ConfigurationMap[m_currentConfig]);
+		});
 	}
 }

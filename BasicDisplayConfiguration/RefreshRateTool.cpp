@@ -10,14 +10,15 @@ namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation
 {
-	std::map<RefreshRateToolConfigurations, winrt::hstring> ConfigurationMap
+	static const std::wstring DefaultConfiguration = L"60hz";
+	std::map<std::wstring, double> ConfigurationMap
 	{
-		{ RefreshRateToolConfigurations::r60, L"60hz" },
-		{ RefreshRateToolConfigurations::r75, L"75hz" }
+		{ L"60hz", 60. },
+		{ L"75hz", 75. }
 	};
 
 	RefreshRateTool::RefreshRateTool(winrt::ILogger const& logger) : 
-		m_currentConfig(sc_defaultConfig),
+		m_currentConfig(DefaultConfiguration),
 		m_logger(logger)
 	{
 	}
@@ -38,57 +39,59 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	}
 
 	com_array<hstring> RefreshRateTool::GetSupportedConfigurations()
-	{
-		std::vector<hstring> configs;
-		for (auto config : ConfigurationMap)
-		{
-			configs.push_back(config.second);
-		}
+    {
+        std::vector<hstring> configs;
+        for (auto&& config : ConfigurationMap)
+        {
+            hstring configName(config.first);
+            configs.push_back(configName);
+        }
 
-		return com_array<hstring>(configs);
+        return com_array<hstring>(configs);
 	}
 
 	hstring RefreshRateTool::GetDefaultConfiguration()
-	{
-		return ConfigurationMap[sc_defaultConfig];
+    {
+        hstring defaultConfig(DefaultConfiguration);
+        return defaultConfig;
 	}
 
 	hstring RefreshRateTool::GetConfiguration()
-	{
-        return ConfigurationMap[m_currentConfig];
+    {
+        hstring currentConfig(m_currentConfig);
+        return currentConfig;
 	}
 
 	void RefreshRateTool::SetConfiguration(hstring configuration)
-	{
-		for (auto config : ConfigurationMap)
-		{
-			if (config.second == configuration)
-			{
-				m_currentConfig = config.first;
-				return;
-			}
-		}
+    {
+        if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
+        {
+            // An invalid configuration was asked for
+            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
 
-		// An invalid configuration was asked for
-        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
-
-		throw winrt::hresult_invalid_argument();
-	}
-
-	void RefreshRateTool::Apply(IDisplayOutput reference)
-	{
-		auto displayProperties = reference.GetProperties();
-
-		switch (m_currentConfig)
-		{
-		case RefreshRateToolConfigurations::r60:
-			displayProperties.RefreshRate(60.);
-			break;
-		case RefreshRateToolConfigurations::r75:
-			displayProperties.RefreshRate(75.);
-			break;
+            throw winrt::hresult_invalid_argument();
         }
 
-        m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
+        m_currentConfig = configuration.c_str();
+	}
+
+	void RefreshRateTool::ApplyToOutput(IDisplayOutput displayOutput)
+    {
+        constexpr double sc_refreshRateEpsilon = 0.00000000001;
+
+        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
+		{
+            double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
+                                      static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);
+
+            args.IsModeCompatible(fabs(presentationRate - ConfigurationMap[m_currentConfig]) < sc_refreshRateEpsilon);
+        });
+
+        m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
+	}
+
+	void RefreshRateTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+    {
+        // This tool doesn't currently matter to the output
 	}
 }

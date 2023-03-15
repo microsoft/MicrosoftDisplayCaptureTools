@@ -7,9 +7,6 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 {
-    // The version of this implementation
-    const winrt::hstring c_Version = L"0.1";
-
     // Constant names used for automatically discovering installed plugins for this framework. These assume that items are
     // installed via the preferred mechanism, our nuget packages.
     const std::wstring c_CapturePluginDirectory        = L"CaptureCards";
@@ -65,10 +62,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         Core();
         Core(Framework::ILogger const& logger);
 
-        Core::~Core()
-        {
-        }
-
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath);
 
@@ -91,9 +84,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         
         winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(bool regenerateMappings, Display::IDisplayEngine displayEngine);
 
-        hstring Version()
+        MicrosoftDisplayCaptureTools::Framework::Version Version()
         {
-            return c_Version;
+            return MicrosoftDisplayCaptureTools::Framework::Version(0, 1, 0);
         };
 
         winrt::MicrosoftDisplayCaptureTools::Framework::ILogger Logger()

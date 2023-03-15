@@ -28,13 +28,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
 // Constructor that uses the default logger
 Core::Core() : m_logger(winrt::make<winrt::Logger>().as<ILogger>())
 {
-    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version());
+    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().AsString());
 }
 
 // Constructor taking a caller-defined logging class
 Core::Core(ILogger const& logger) : m_logger(logger)
 {
-    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version());
+    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().AsString());
 }
 
 IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
@@ -51,7 +51,7 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& cl
 
     auto captureCardController = captureCardFactory.CreateController(m_logger);
 
-    m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version());
+    m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version().AsString());
 
     return captureCardController;
 }
@@ -77,7 +77,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
 
     auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
 
-    m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version());
+    m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version().AsString());
 
     return toolbox;
 }
@@ -114,7 +114,7 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring
 
     if (displayEngine)
     {
-        m_logger.LogNote(L"Loaded DisplayManager: " + displayEngine.Name() + L", Version " + displayEngine.Version());
+        m_logger.LogNote(L"Loaded DisplayManager: " + displayEngine.Name() + L", Version " + displayEngine.Version().AsString());
     }
 
     return displayEngine;
@@ -303,9 +303,6 @@ void Core::LoadConfigFile(hstring const& configFile)
                                 if (input.Name() == pluginInputName)
                                 {
                                     foundInput = input;
-
-                                    // TODO: Remove this call - if the machine is going to be set up via config file, then the caller is responsible
-                                    //       for ensuring that the system is setup before trying to load the config file.
                                     foundInput.FinalizeDisplayState();
                                 }
                             }
@@ -461,6 +458,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                 {
                     // For this type of capture card - targets should appear to Windows as regular displays and would be composed
                     // normally. This means we can filter to only 'connected' targets.
+
                     if (!target.IsConnected())
                     {
                         continue;
@@ -499,18 +497,20 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
                         // matches it, using default settings for the tools.
                         auto output = displayEngine.InitializeOutput(target);
+                        auto prediction = displayEngine.CreateDisplayPrediction();
                         for (auto&& tool : toolList)
                         {
                             tool.SetConfiguration(tool.GetDefaultConfiguration());
-                            tool.Apply(output);
+                            tool.ApplyToOutput(output);
+                            tool.ApplyToPrediction(prediction);
                         }
+
+                        // Start generating the prediction in the background
+                        auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
 
                         // Start outputting to the target with the current settings
                         auto renderer = output.StartRender();
                         std::this_thread::sleep_for(std::chrono::seconds(5));
-
-                        // Get the predicted frame
-                        auto prediction = output.GetPrediction();
 
                         // Iterate through the still unassigned inputs to find any matches
                         for (auto&& unassignedInput: unassignedInputs_NoEDID)
@@ -527,7 +527,9 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                     winrt::hstring(L"Comparing output of ") + monitor.DisplayName() + L" to input " +
                                     card.Name() + L"." + input.Name());
 
-                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction);
+                                // Make sure that we finished generating the prediction
+                                auto predictionData = predictionDataAsync.get();
+                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", predictionData);
 
                                 if (captureResult && !suppressErrors.HasErrored())
                                 {

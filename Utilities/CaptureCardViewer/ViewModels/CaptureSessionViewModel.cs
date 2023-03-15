@@ -1,14 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MicrosoftDisplayCaptureTools.CaptureCard;
+using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
 using System;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Devices.Display;
@@ -57,7 +56,7 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayEnginePrediction? lastPredictedFrame;
+		IDisplayPrediction? lastPredictedFrame;
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]
@@ -187,7 +186,7 @@ namespace CaptureCardViewer.ViewModels
 				captureInput.FinalizeDisplayState();
 
 				var capturedFrame = captureInput.CaptureFrame();
-				var capPixelBuffer = capturedFrame.GetRawPixelData();
+				var capPixelBuffer = capturedFrame.GetRawFrameData();
 				var capturedBitmap = BufferToImgConv(capPixelBuffer, capturedFrame.Resolution, (int)capturedFrame.Stride);
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
@@ -226,10 +225,21 @@ namespace CaptureCardViewer.ViewModels
 							.Select((tool) => tool.Tool))
 						.ToList();
 
-					// Apply all tools to the display
-					foreach (var tool in activeTools)
+					// Apply all tools to the display, in categorical order
+					ConfigurationToolCategory[] toolOrder = {
+						ConfigurationToolCategory.DisplaySetup,
+						ConfigurationToolCategory.RenderSetup,
+						ConfigurationToolCategory.Render };
+
+					foreach (var category in toolOrder)
 					{
-						tool.Apply(selectedEngineOutput);
+						foreach (var tool in activeTools)
+						{
+							if (tool.Category == category)
+							{
+								tool.Apply(selectedEngineOutput);
+							}
+						}
 					}
 
 					selectedEngineOutputRenderer = selectedEngineOutput.StartRender();

@@ -111,16 +111,12 @@ namespace winrt::TanagerPlugin::implementation
             winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps,
             winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction);
-        winrt::Windows::Foundation::IMemoryBufferReference GetRawPixelData();
-        winrt::Windows::Graphics::SizeInt32 Resolution();
-        uint32_t Stride();
-        winrt::Windows::Graphics::DirectX::DirectXPixelFormat PixelFormat();
+        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction);
+        winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData GetFrameData();
         winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
 
     private:
-        winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
-        winrt::Windows::Graphics::Imaging::BitmapPlaneDescription m_bitmapDesc{0};
+        winrt::MicrosoftDisplayCaptureTools::Framework::FrameData m_frameData{nullptr};
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_extendedProps{nullptr};
 
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};

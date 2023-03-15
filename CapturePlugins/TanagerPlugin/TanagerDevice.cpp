@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <filesystem>
 
 namespace winrt 
 {
@@ -7,6 +8,7 @@ namespace winrt
     using namespace winrt::Windows::Devices::Enumeration;
     using namespace winrt::Windows::Devices::Usb;
     using namespace winrt::Windows::Graphics::Imaging;
+    using namespace winrt::Windows::Graphics::DirectX;
     using namespace winrt::Windows::Devices::Display;
     using namespace winrt::Windows::Devices::Display::Core;
     using namespace winrt::Windows::Storage;
@@ -202,10 +204,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         // compute size of buffer
         uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
 
-        // FX3 requires the read size to be a multiple of 1024 DWORDs
-        if(bufferSizeInDWords % 1024)
+        // FX3 requires the read size to be a multiple of 2048 DWORDs
+        if(bufferSizeInDWords % 2048)
         {
-            bufferSizeInDWords += 1024 - (bufferSizeInDWords % 1024);
+            bufferSizeInDWords += 2048 - (bufferSizeInDWords % 2048);
         }
 
         // specify number of dwords to read
@@ -259,12 +261,23 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
 
-        Sleep(5000);
+        Sleep(1000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
     {
-        // TODO: Add some sort of size check?
+        // EDIDs are made of a series of 128-byte blocks
+        if (edid.empty() || edid.size() % 128 != 0)
+        {
+            m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
+        }
+
+        // Max EDID size is 512-bytes
+        if (edid.size() > 512)
+        {
+            m_logger.LogError(L"SetEdid provided a too large edid, size=" + to_hstring(edid.size()));
+        }
+
         unsigned short writeAddress;
         switch (m_port)
         {
@@ -350,6 +363,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             throw hresult_invalid_argument();
         }
 
+        m_frameData = FrameData(m_logger);
+
+        // TODO: isolate this into a header supporting different masks
         typedef struct
         {
             uint64_t pad1 : 2;
@@ -367,62 +383,88 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             uint64_t rsvd : 4;
         } rgbDataType;
 
-        // Yes this is doing a double copy (triple to remove padding) at the moment - because the interfaces are dumb
-        // I want to pull the comparisons entirely away from using SoftwareBitmap as the solution here
-
-        std::vector<byte> pixels;
+        auto pixelDataWriter = DataWriter();
         rgbDataType* rgbData = (rgbDataType*)rawCaptureData.data();
-        for (int i = 0; i < rawCaptureData.size() / sizeof(rgbDataType); i++)
+        while ((void*)rgbData < (void*)(rawCaptureData.data() + rawCaptureData.size()))
         {
-            pixels.push_back(rgbData->red1);
-            pixels.push_back(rgbData->green1);
-            pixels.push_back(rgbData->blue1);
-            pixels.push_back(0); // alpha
-            pixels.push_back(rgbData->red2);
-            pixels.push_back(rgbData->green2);
-            pixels.push_back(rgbData->blue2);
-            pixels.push_back(0); // alpha
+            pixelDataWriter.WriteByte(rgbData->red1);
+            pixelDataWriter.WriteByte(rgbData->green1);
+            pixelDataWriter.WriteByte(rgbData->blue1);
+            pixelDataWriter.WriteByte(0xFF); // Alpha padding
+            pixelDataWriter.WriteByte(rgbData->red2);
+            pixelDataWriter.WriteByte(rgbData->green2);
+            pixelDataWriter.WriteByte(rgbData->blue2);
+            pixelDataWriter.WriteByte(0xFF); // Alpha padding
             rgbData++;
         }
 
-        m_bitmap = winrt::SoftwareBitmap(
-            winrt::BitmapPixelFormat::Rgba8, resolution.Width, resolution.Height, winrt::BitmapAlphaMode::Ignore);
+        m_frameData.Data(pixelDataWriter.DetachBuffer());
+        m_frameData.Resolution(resolution);
 
-        auto buff = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Write);
-        auto ref = buff.CreateReference();
+        // This is only supporting 8bpc RGB444 currently
+        FrameDataDescription desc{0};
+        desc.BitsPerPixel = 24;
+        desc.Stride = resolution.Width * 3; // There is no padding with this capture
+        desc.PixelFormat = DirectXPixelFormat::Unknown; // Specify that we don't have an exact match to the input DirectX formats
+        desc.PixelEncoding = DisplayWireFormatPixelEncoding::Rgb444;
+        desc.Eotf = DisplayWireFormatEotf::Sdr;
 
-        m_bitmapDesc = buff.GetPlaneDescription(0);
-
-        // Because reads need to be in chunks of 4096 bytes, pixels can be up to 4096 bytes larger
-        if (ref.Capacity() < (pixels.size() - 4096))
-        {
-            throw hresult_invalid_argument();
-        }
-
-        RtlCopyMemory(ref.data(), pixels.data(), ref.Capacity());
+        m_frameData.FormatDescription(desc);
     }
 
-    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayEnginePrediction prediction)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction)
     {
-        auto predictedBitmap = prediction.GetBitmap();
-        auto captureBuffer = m_bitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
-        auto predictBuffer = predictedBitmap.LockBuffer(BitmapBufferAccessMode::Read).CreateReference();
+        auto predictedFrameData = prediction.FrameData();
 
-        //
-        // Compare the two images. In some capture cards this can be done on the capture device itself. In this generic
-        // plugin only RGB8 is supported.
-        //
-        // TODO: this needs to handle multiple formats
-        //
+        if (predictedFrameData.Resolution().Height != m_frameData.Resolution().Height || 
+            predictedFrameData.Resolution().Width != m_frameData.Resolution().Width)
+        {
+            m_logger.LogError(winrt::hstring(L"Predicted resolution (") + 
+                to_hstring(predictedFrameData.Resolution().Width) + L"," +
+                to_hstring(predictedFrameData.Resolution().Height) + L"), Captured Resolution(" + 
+                to_hstring(m_frameData.Resolution().Width) + L"," +
+                to_hstring(m_frameData.Resolution().Height) + L")");
+        }
 
-        if (captureBuffer.Capacity() != predictBuffer.Capacity())
+        auto captureBuffer = m_frameData.Data();
+        auto predictBuffer = predictedFrameData.Data();
+
+        if (captureBuffer.Length() < predictBuffer.Length())
         {
             m_logger.LogError(
-                winrt::hstring(L"Capture Sizes don't match!  Captured=") + std::to_wstring(captureBuffer.Capacity()) +
-                L", Predicted=" + std::to_wstring(predictBuffer.Capacity()));
+                winrt::hstring(L"Capture should be at least as large as prediction") + std::to_wstring(captureBuffer.Length()) +
+                L", Predicted=" + std::to_wstring(predictBuffer.Length()));
         }
-        else if (0 != memcmp(captureBuffer.data(), predictBuffer.data(), captureBuffer.Capacity()))
+        else if (0 == memcmp(captureBuffer.data(), predictBuffer.data(), predictBuffer.Length()))
         {
+            m_logger.LogNote(L"Capture and Prediction perfectly match!");
+        }
+        else
+        {
+            m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+            {
+                auto filename = name + L"_Captured.bin";
+                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                stream.WriteAsync(captureBuffer).get();
+                stream.FlushAsync().get();
+                stream.Close();
+
+                m_logger.LogNote(L"Dumping captured data here: " + filename);
+            }
+            {
+                auto filename = name + L"_Predicted.bin";
+                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
+                stream.WriteAsync(predictBuffer).get();
+                stream.FlushAsync().get();
+                stream.Close();
+
+                m_logger.LogNote(L"Dumping captured data here: " + filename);
+            }
+
             struct PixelStruct
             {
                 uint8_t r, g, b, a;
@@ -435,7 +477,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
             // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
             const int samples = 10000;
-            const int pixelCount = m_bitmapDesc.Width * m_bitmapDesc.Height;
+            const int pixelCount = m_frameData.Resolution().Width * m_frameData.Resolution().Height;
             for (auto i = 0; i < samples; i++)
             {
                 auto index = rand() % pixelCount;
@@ -446,27 +488,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 {
                     differenceCount++;
                 }
-            }
-
-            {
-                auto filename = name + L"_Captured.bmp";
-                auto folder = winrt::KnownFolders::PicturesLibrary();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
-                encoder.SetSoftwareBitmap(m_bitmap);
-
-                encoder.FlushAsync().get();
-            }
-            {
-                auto filename = name + L"_Predicted.bmp";
-                auto folder = winrt::KnownFolders::PicturesLibrary();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                auto encoder = winrt::BitmapEncoder::CreateAsync(winrt::BitmapEncoder::BmpEncoderId(), stream).get();
-                encoder.SetSoftwareBitmap(predictedBitmap);
-
-                encoder.FlushAsync().get();
             }
 
             float diff = (float)differenceCount / (float)pixelCount;
@@ -483,26 +504,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         return true;
     }
 
-    winrt::Windows::Graphics::SizeInt32 TanagerDisplayCapture::Resolution()
+    winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData TanagerDisplayCapture::GetFrameData()
     {
-        return {m_bitmapDesc.Width, m_bitmapDesc.Height};
-    }
-
-    uint32_t TanagerDisplayCapture::Stride()
-    {
-        return m_bitmapDesc.Stride;
-    }
-
-    winrt::Windows::Graphics::DirectX::DirectXPixelFormat TanagerDisplayCapture::PixelFormat()
-    {
-        // The BitmapPixelFormat enum type is intentionally compatible with DirectXPixelFormats
-        return static_cast<winrt::Windows::Graphics::DirectX::DirectXPixelFormat>(m_bitmap.BitmapPixelFormat());
-    }
-
-    winrt::Windows::Foundation::IMemoryBufferReference TanagerDisplayCapture::GetRawPixelData()
-    {
-        auto buffer = m_bitmap.LockBuffer(winrt::BitmapBufferAccessMode::Read);
-        return buffer.CreateReference();
+        return m_frameData;
     }
 
     winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> TanagerDisplayCapture::ExtendedProperties()

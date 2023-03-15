@@ -16,6 +16,7 @@
     <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="RefreshRateTool.cpp" />
     <ClCompile Include="Toolbox.cpp" />
+    <ClCompile Include="PixelFormatTool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -23,6 +24,7 @@
     <ClInclude Include="ResolutionTool.h" />
     <ClInclude Include="RefreshRateTool.h" />
     <ClInclude Include="Toolbox.h" />
+    <ClInclude Include="PixelFormatTool.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Toolbox.idl" />

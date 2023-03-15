@@ -1,7 +1,7 @@
-Pattern:     White, Black, Red, Green, Blue
-WireFormat:  RGB8
+Pattern:     White, Red, Green, Blue, Gray
 Resolution:  1920x1080, 800x600
 RefreshRate: 60hz, 75hz
+PixelFormat: R8G8B8A8UIntNormalized_NotInterlaced
 
 IF [Resolution] = "1920x1080" THEN [RefreshRate] = "60hz";
 IF [Resolution] = "800x600"   THEN [RefreshRate] = "75hz";

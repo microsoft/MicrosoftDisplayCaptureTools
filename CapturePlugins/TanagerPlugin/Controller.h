@@ -72,9 +72,9 @@ namespace winrt::TanagerPlugin::implementation
         com_array<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
         void SetConfigData(Windows::Data::Json::IJsonValue data);
 
-        hstring Version()
+        MicrosoftDisplayCaptureTools::Framework::Version Version()
         {
-            return L"0.1";
+            return MicrosoftDisplayCaptureTools::Framework::Version(0, 1, 0);
         };
 
         // IControllerWithFirmware

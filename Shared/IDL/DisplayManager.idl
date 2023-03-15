@@ -1,84 +1,157 @@
 import "Framework.idl";
 
-namespace MicrosoftDisplayCaptureTools.Display
+namespace MicrosoftDisplayCaptureTools.Display 
 {
-    //
-    // Struct representing a 3-channel color
-    // 
-    // TODO: this is intended as a demonstrative for the time being, a more expressive version will replace this to
-    //       allow expressing other acceptable pixel formats.
-    //
-    struct PixelColor
+    // Represents the predicted output for the current settings of the display engine that creates it
+    interface IDisplayPredictionData
     {
-        Single ChannelA;
-        Single ChannelB;
-        Single ChannelC;
+        // GetFrameData
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Gets an object representing the data corresponding to the predicted frame.
+        //
+        MicrosoftDisplayCaptureTools.Framework.IFrameData FrameData
+        {
+            get;
+        };
+
+        // A collection of properties to go alongside the frame itself
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
     };
 
-    // Used to set parameters for this particular MPO plane.
-    interface IDisplayEnginePlanePropertySet
+    // Manages the predicted output of a series of tools. Analogous to the IDisplayOutput interface, but for the the
+    // predicted output rather than the actual output.
+    interface IDisplayPrediction
+    {
+        // GeneratePredictionDataAsync
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Go through and generate the predicted output data using any and all tools which have registered with
+        //     this object
+        //
+        Windows.Foundation.IAsyncOperation<IDisplayPredictionData> GeneratePredictionDataAsync();
+
+        // DisplaySetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
+        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
+        //     rate, etc.
+        //
+        event Windows.Foundation.EventHandler<IDisplayPredictionData> DisplaySetupCallback;
+
+        // RenderSetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
+        //     created, but before the core render loop begins.
+        //
+        event Windows.Foundation.EventHandler<IDisplayPredictionData> RenderSetupCallback;
+
+        // RenderLoopCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
+        //     called for each frame, so high-latency callbacks may cause problems.
+        //
+        event Windows.Foundation.EventHandler<IDisplayPredictionData> RenderLoopCallback;
+    };
+
+    // Used to set parameters for this particular output plane.
+    interface IDisplayEnginePlaneProperties
     {
         // Should this plane be rendered
-        Boolean Active{ get; set; };
+        Boolean Active
+        {
+            get;
+            set;
+        };
 
         // The location of this plane, relative to the top left corner of the base plane.
-        Windows.Graphics.Imaging.BitmapBounds Rect{ get; set; };
+        Windows.Graphics.Imaging.BitmapBounds Rect
+        {
+            get;
+            set;
+        };
 
-        // The format of this plane
-        Windows.Graphics.DirectX.DirectXPixelFormat Format{ get; set; };
-
-        // The bitmap to be rendered (optional)
-        Windows.Graphics.Imaging.SoftwareBitmap SourceBitmap{ get; set; };
-
-        // The color to initialize this plane with
-        MicrosoftDisplayCaptureTools.Display.PixelColor ClearColor{ get; set; };
-    };
-
-    // Represents the capabilities of this MPO plane
-    interface IDisplayEnginePlaneCapabilities
-    {
-        // TODO: placeholder for now.
-        String Name{ get; };
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h). It is intended
+        // for tools to retrieve/set items to this list in any callbacks to the DisplayEngine rendering pipeline.
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
     };
 
     // Used to set parameters to the selected display
-    interface IDisplayEnginePropertySet
+    interface IDisplayEngineProperties
     {
         // The active mode of this display
-        Windows.Devices.Display.Core.DisplayModeInfo ActiveMode{ get; set; };
-
-        // The refresh rate of this display
-        Double RefreshRate{ get; set; };
-
-        // The resolution of this display
-        Windows.Graphics.SizeInt32 Resolution{ get; set; };
+        Windows.Devices.Display.Core.DisplayModeInfo ActiveMode
+        {
+            get;
+            set;
+        };
 
         // Get the per-plane property set for this display
         // The first entry of the returned array will always represent the base plane
-        IDisplayEnginePlanePropertySet[] GetPlaneProperties();
+        IDisplayEnginePlaneProperties[] GetPlaneProperties();
     };
 
-    // Represents the capabilities of the display currently set to the display engine
-    interface IDisplayEngineCapabilities
+    // The arguments passed to tool display setup callback events. Specifically
+    // these events are called for available modes on the test sytem until one
+    // is found to be compatible with all registered display setup tools.
+    interface IDisplaySetupToolArgs
     {
-        // Get all supported modes for this display
-        Windows.Devices.Display.Core.DisplayModeInfo[] GetSupportedModes();
+        // Properties of the current display engine.
+        IDisplayEngineProperties Properties
+        {
+            get;
+        };
 
-        // Get the per-plane capabilties for this display
-        // The first entry of the returned array will always represent the base plane
-        IDisplayEnginePlaneCapabilities[] GetPlaneCapabilities();
+        // The current mode being tested to see if all tools can accept it
+        Windows.Devices.Display.Core.DisplayModeInfo Mode
+        {
+            get;
+        };
+
+        // All registered display setup tools must be compatible with a mode
+        // before it can be selected for a test. If no available mode can 
+        // meet the tool requirements, the test with those tool settings is 
+        // blocked from running.
+        void IsModeCompatible(Boolean accept);
+    };
+    
+    // The arguments passed to tool render setup callback events. Specifically
+    // these events are called once, just before the start of the render loop,
+    // to construct any needed objects before the actual rendering.
+    interface IRenderSetupToolArgs
+    {
+        // Properties of the current display engine.
+        IDisplayEngineProperties Properties
+        {
+            get;
+        };
     };
 
-    // Represents the predicted output for the current settings of the display engine that creates it
-    interface IDisplayEnginePrediction
+    // The arguments passed to tool render loop callback events. Specifically
+    // these events are called for each sync when drawing to the output.
+    interface IRenderingToolArgs
     {
-        // GetBitmap 
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Gets a bitmap representing the predicted output for the current settings on the parent IDisplayEngine
-        //     implementation.
-        //
-        Windows.Graphics.Imaging.SoftwareBitmap GetBitmap();
+        // Properties of the current display engine.
+        IDisplayEngineProperties Properties
+        {
+            get;
+        };
+
+        // Indicates the current frame number of the output
+        UInt64 FrameNumber
+        {
+            get;
+        };
     };
 
     // Represents a particular display managed with this DisplayEngine
@@ -90,40 +163,46 @@ namespace MicrosoftDisplayCaptureTools.Display
             get;
         };
 
-        // GetCapabilities 
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Gets the capabilities object for this IDisplayEngine implementation. This is expected to contain 
-        //     capabilities for the current DisplayTarget as a whole display, not capabilities that are specific to MPO
-        //     planes. A good example would be modes supported by the targeted display and GPU.
-        //
-        IDisplayEngineCapabilities GetCapabilities();
-
-        // GetProperties 
+        // GetProperties
         // ------------------------------------------------------------------------------------------------------------
         // Notes:
         //     Get the properties object for this IDisplayEngine implementation. ConfigurationTools will manipulate the
-        //     various members of this object to change how and what is rendered to both the phyiscal display and the 
-        //     associated prediction.
+        //     various members of this object to change how and what is rendered to the display
         //
-        IDisplayEnginePropertySet GetProperties();
+        IDisplayEngineProperties GetProperties();
 
-        // GetPrediction 
+        // StartRender
         // ------------------------------------------------------------------------------------------------------------
         // Notes:
-        //     Gets the prediction object for this IDisplayEngine implementation. This object will use the same 
-        //     information used for physical rendering to create a software approximation.
-        //
-        IDisplayEnginePrediction GetPrediction();
-
-        // StartRender 
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Using all set properties on this object and all child planes, actually begins physically rendering to 
+        //     Using all set properties on this object and all child planes, actually begins physically rendering to
         //     the target display. The rendering will stop when Close() is called on the returned object.
         //
         Windows.Foundation.IClosable StartRender();
 
+        // DisplaySetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
+        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
+        //     rate, etc.
+        //
+        event Windows.Foundation.EventHandler<IDisplaySetupToolArgs> DisplaySetupCallback;
+
+        // RenderSetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
+        //     created, but before the core render loop begins.
+        //
+        event Windows.Foundation.EventHandler<IRenderSetupToolArgs> RenderSetupCallback;
+
+        // RenderLoopCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
+        //     called for each frame, so high-latency callbacks may cause problems.
+        //
+        event Windows.Foundation.EventHandler<IRenderingToolArgs> RenderLoopCallback;
     };
 
     // The engine managing both physical and predicted output to the display
@@ -135,19 +214,18 @@ namespace MicrosoftDisplayCaptureTools.Display
             get;
         };
 
-        // Get the version of this implementation, in Major.Minor format
-        String Version
+        // Get the version of this implementation, in Major.Minor.Patch format
+        MicrosoftDisplayCaptureTools.Framework.Version Version
         {
             get;
         };
 
-        // InitializeOutput 
+        // InitializeOutput
         // ------------------------------------------------------------------------------------------------------------
         // Notes:
         //     Initializes the display engine for a particular target
         //
-        [default_overload]
-        IDisplayOutput InitializeOutput(Windows.Devices.Display.Core.DisplayTarget target);
+        [default_overload] IDisplayOutput InitializeOutput(Windows.Devices.Display.Core.DisplayTarget target);
 
         // InitializeOutput
         // ------------------------------------------------------------------------------------------------------------
@@ -156,6 +234,13 @@ namespace MicrosoftDisplayCaptureTools.Display
         //     display. This is expected to be sourced from a pre-generated config file.
         //
         IDisplayOutput InitializeOutput(String target);
+
+        // CreateDisplayPrediction
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates a display prediction object, these are used by tools to create a prediction of an object
+        //
+        IDisplayPrediction CreateDisplayPrediction();
 
         // SetConfigData
         // ----------------------------------------------------------------------------------------------------------------
@@ -185,4 +270,4 @@ namespace MicrosoftDisplayCaptureTools.Display
         IDisplayEngine CreateDisplayEngine(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
     };
 
-}
+} // namespace MicrosoftDisplayCaptureTools. Display

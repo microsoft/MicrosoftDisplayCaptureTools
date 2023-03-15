@@ -1,10 +1,10 @@
 import "DisplayManager.idl";
 import "Framework.idl";
 
-namespace MicrosoftDisplayCaptureTools.ConfigurationTools
+namespace MicrosoftDisplayCaptureTools.ConfigurationTools 
 {
     //
-    // This enum defines what a particular tool is used for. The testing framework uses this information to determine in 
+    // This enum defines what a particular tool is used for. The testing framework uses this information to determine in
     // which order to run the tools.
     //
     // This list as currently stands is used for illustrative purposes, we anticipate adding several more categories
@@ -12,12 +12,12 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     enum ConfigurationToolCategory
     {
         // This tool assists in device setup, and should be run first. Examples might include setting a custom display EDID
-        DisplaySetup, 
+        DisplaySetup,
 
         // This tool prepares the OS to draw pixels to the screen. Examples include creation of MPO planes or changing mode
         RenderSetup,
 
-        // This tool actively modifies the output pixels directly. Examples drawing a specific pattern or 
+        // This tool actively modifies the output pixels directly. An example would be rendering a base pattern for each plane.
         Render,
     };
 
@@ -32,13 +32,13 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         // card.
         Single ContributedComparisonTolerance;
 
-        // The maximum capture tolerance that we can accept for this tool's operation. If the combined 
-        // ContributedComparisonTolerance's of all tools selected for this run exeeds this amount, the run will be disallowed
+        // The maximum capture tolerance that we can accept for this tool's operation. If the combined
+        // ContributedComparisonTolerance's of all tools selected for this run exceeds this amount, the run will be disallowed
         Single MaxComparisonTolerance;
 
         // This tool requires access to the raw pixel data when applying its changes to a reference image. A tool reporting
         // 'true' for this *must* use ITestOutput.GetFrameFromCPU instead of the GPU analogue when implementing the
-        // ApplyToSoftwareReference function. This can allow more complicated changes, but will disable many performance 
+        // ApplyToSoftwareReference function. This can allow more complicated changes, but will disable many performance
         // optimizations and cause significantly slower performance.
         Boolean RequiresRawFrameAccess;
     };
@@ -48,20 +48,29 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     // Tools are intended to be used together to define many different possible states for the entire display pipeline.
     // For example, a tool might modify the gamma lookup tables.
     //
-    // ConfigurationTools must be able to apply whatever transform they are doing to a reference image as well, this 
-    // reference image 
+    // ConfigurationTools must be able to apply whatever transform they are doing to a reference image as well, this
+    // reference image
     //
     interface IConfigurationTool
     {
         // The name of the configuration tool, this should exactly match the PICT parameter name that this supports.
-        String Name { get; };
+        String Name
+        {
+            get;
+        };
 
-        // The category for this configuration tool, this will determine when the framework interacts with this tool in 
+        // The category for this configuration tool, this will determine when the framework interacts with this tool in
         // relation to other tools in the test run.
-        ConfigurationToolCategory Category{ get; };
+        ConfigurationToolCategory Category
+        {
+            get;
+        };
 
         // The system and capture card requirements for this tool to be used.
-        IConfigurationToolRequirements Requirements{ get; };
+        IConfigurationToolRequirements Requirements
+        {
+            get;
+        };
 
         // GetSupportedConfigurations
         // ----------------------------------------------------------------------------------------------------------------
@@ -81,12 +90,12 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         // SetConfiguration
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      This sets the PICT configuration to use for this tool. This value should be used for any subsequent calls 
+        //      This sets the PICT configuration to use for this tool. This value should be used for any subsequent calls
         //      to apply this tool.
         //
         // Parameters:
         //      configuration
-        //          This string specifies which PICT configuration for the Tool to use. This value must be in the list 
+        //          This string specifies which PICT configuration for the Tool to use. This value must be in the list
         //          returned by GetSupportedConfigurations and must exactly match the PICT parameter values.
         //
         void SetConfiguration(String configuration);
@@ -98,16 +107,27 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //
         String GetConfiguration();
 
-        // Apply
+        // ApplyToOutput
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //      This applies this tool's properties to the display engine's properties.
+        //      Effect the tool's changes to the supplied output
         //
         // Parameters:
-        //      target
-        //          This identifies the Windows display path for the target output.
+        //      displayOutput
+        //          The output to apply this tool's changes on
         //
-        void Apply(MicrosoftDisplayCaptureTools.Display.IDisplayOutput reference);
+        void ApplyToOutput(MicrosoftDisplayCaptureTools.Display.IDisplayOutput displayOutput);
+
+        // ApplyToPrediction
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Effect the tool's changes to the supplied output
+        //
+        // Parameters:
+        //      displayPrediction
+        //          The prediction object to apply this tool's changes to
+        //
+        void ApplyToPrediction(MicrosoftDisplayCaptureTools.Display.IDisplayPrediction displayPrediction);
     }
 
     //
@@ -116,10 +136,16 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     interface IConfigurationToolbox
     {
         // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
-        String Name{ get; };
+        String Name
+        {
+            get;
+        };
 
-        // Get the version of this implementation, in Major.Minor format
-        String Version{ get; };
+        // Get the version of this implementation, in Major.Minor.Patch format
+        MicrosoftDisplayCaptureTools.Framework.Version Version
+        {
+            get;
+        };
 
         // GetSupportedTools
         // ----------------------------------------------------------------------------------------------------------------
@@ -152,18 +178,18 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //
         // Parameters:
         //      data
-        //          The subsection of the json file for this toolbox
+        //          The subsection of the json config file for this toolbox
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
     }
 
     //
-    // The required static initializer for IConfigurationToolbox implementations. This is how other components of this 
+    // The required static initializer for IConfigurationToolbox implementations. This is how other components of this
     // project will instantiate IController implementations.
     //
     // This is to be implemented by toolbox producer.
     //
-    interface IConfigurationToolboxFactory
+    interface IConfigurationToolboxFactory 
     {
         // Create
         // ----------------------------------------------------------------------------------------------------------------
@@ -172,4 +198,4 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //
         IConfigurationToolbox CreateConfigurationToolbox(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
     };
-}
+} // namespace MicrosoftDisplayCaptureTools. ConfigurationTools

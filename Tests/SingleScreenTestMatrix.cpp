@@ -15,7 +15,9 @@ namespace winrt
     using namespace Windows::Devices::Display::Core;
     using namespace Windows::Graphics::Imaging;
     using namespace MicrosoftDisplayCaptureTools;
+    using namespace MicrosoftDisplayCaptureTools::Display;
     using namespace MicrosoftDisplayCaptureTools::Framework;
+    using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
 }
 
 bool SingleScreenTestMatrix::Setup()
@@ -45,13 +47,23 @@ void SingleScreenTestMatrix::Test()
 
     if (displayEngines.empty())
     {
-        g_logger.LogAssert(L"No DisplayEngine loaded.");
+        g_logger.LogAssert(L"No DisplayEngines loaded.");
     }
-    
-    // TODO: need to add some logic for selecting a specific displayEngine
-    auto displayEngine = displayEngines[0];
+
+    winrt::IDisplayEngine displayEngine = displayEngines[0];
+
+    // This test only supports a single screen and so can only load a single DisplayEngine,
+    // so select the highest version one installed.
+    for (auto&& engine : displayEngines)
+    {
+        if (engine.Version().IsHigherVersion(displayEngine.Version()))
+        {
+            displayEngine = engine;
+        }
+    }
 
     auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
+    auto prediction = displayEngine.CreateDisplayPrediction();
     
     winrt::hstring testName = L"";
     auto toolboxes = g_framework.GetConfigurationToolboxes();
@@ -67,19 +79,33 @@ void SingleScreenTestMatrix::Test()
         }
     }
 
-    for (auto tool : tools)
-    {
-        String toolSetting;
-        if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
-        {
-            String output = L"";
+    // All tools need to be run in order of their category
+    constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
+        winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
 
-            // Setting the tool value
-            tool.SetConfiguration(winrt::hstring(toolSetting));
-            tool.Apply(displayOutput);
-            testName = testName + tool.GetConfiguration() + L"_";
+    for (auto& category : categoryOrder)
+    {
+        for (auto tool : tools)
+        {
+            if (tool.Category() != category)
+                continue;
+
+            String toolSetting;
+            if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
+            {
+                String output = L"";
+
+                // Setting the tool value
+                tool.SetConfiguration(winrt::hstring(toolSetting));
+                tool.ApplyToOutput(displayOutput);
+                tool.ApplyToPrediction(prediction);
+                testName = testName + tool.GetConfiguration() + L"_";
+            }
         }
     }
+
+    // Start generating the prediction at the same time as we start outputting.
+    auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
 
     // Make sure the capture card is ready
     displayInput.FinalizeDisplayState();
@@ -90,8 +116,7 @@ void SingleScreenTestMatrix::Test()
 
         // Capture the frame.
         auto capturedFrame = displayInput.CaptureFrame();
-        auto predictedFrame = displayOutput.GetPrediction();
 
-        capturedFrame.CompareCaptureToPrediction(testName, predictedFrame);
+        capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
     }
 }
