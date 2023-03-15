@@ -204,10 +204,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         // compute size of buffer
         uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
 
-        // FX3 requires the read size to be a multiple of 1024 DWORDs
-        if(bufferSizeInDWords % 1024)
+        // FX3 requires the read size to be a multiple of 2048 DWORDs
+        if(bufferSizeInDWords % 2048)
         {
-            bufferSizeInDWords += 1024 - (bufferSizeInDWords % 1024);
+            bufferSizeInDWords += 2048 - (bufferSizeInDWords % 2048);
         }
 
         // specify number of dwords to read

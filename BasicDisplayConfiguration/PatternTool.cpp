@@ -8,7 +8,6 @@
 
 #define PATTERN_SQUARE_SIZE 50.f
 
-
 namespace winrt
 {
 	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
@@ -20,18 +19,25 @@ namespace winrt
 	using namespace Windows::UI;
 }
 
-
-namespace winrt::BasicDisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation 
 {
+    static const std::wstring DefaultConfiguration = L"Green";
+    struct ConfigurationColor
+    {
+        float Red;
+        float Green;
+        float Blue;
+    };
 
-	std::map<PatternToolConfigurations, winrt::hstring> ConfigurationMap
-	{
-		{ PatternToolConfigurations::White, L"White" },
-		{ PatternToolConfigurations::Red,   L"Red"   },
-		{ PatternToolConfigurations::Green, L"Green" },
-		{ PatternToolConfigurations::Blue,  L"Blue"  },
-		{ PatternToolConfigurations::Gray,  L"Gray"  }
-	};
+    // A map of the properties supported by this tool, mapping a name to R,G,B values
+    std::map<std::wstring, ConfigurationColor> ConfigurationMap
+    {
+        {L"White", {1.0f, 1.0f, 1.0f}},
+        {L"Red",   {1.0f, 0.0f, 0.0f}},
+        {L"Green", {0.0f, 1.0f, 0.0f}},
+        {L"Blue",  {0.0f, 0.0f, 1.0f}},
+        {L"Gray",  {0.5f, 0.5f, 0.5f}},
+    };
 
 	std::map<Windows::Graphics::DirectX::DirectXPixelFormat, uint32_t> SupportedFormatsWithSizePerPixel
 	{
@@ -39,8 +45,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	};
 
 	PatternTool::PatternTool(winrt::ILogger const& logger) :
-		m_currentConfig(sc_defaultConfig),
-		m_logger(logger)
+        m_currentConfig(DefaultConfiguration),
+        m_logger(logger)
 	{
 	}
 
@@ -62,45 +68,44 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	com_array<hstring> PatternTool::GetSupportedConfigurations()
 	{
 		std::vector<hstring> configs;
-		for (auto config : ConfigurationMap)
+		for (auto&& config : ConfigurationMap)
 		{
-			configs.push_back(config.second);
+            hstring configName(config.first);
+            configs.push_back(configName);
 		}
 
 		return com_array<hstring>(configs);
 	}
 
 	hstring PatternTool::GetDefaultConfiguration()
-	{
-		return ConfigurationMap[sc_defaultConfig];
+    {
+        hstring defaultConfig(DefaultConfiguration);
+        return defaultConfig;
 	}
 
 	hstring PatternTool::GetConfiguration()
     {
-        return ConfigurationMap[m_currentConfig];
+        hstring currentConfig(m_currentConfig);
+        return currentConfig;
 	}
 
 	void PatternTool::SetConfiguration(hstring configuration)
 	{
-		for (auto config : ConfigurationMap)
-		{
-			if (config.second == configuration)
-			{
-				m_currentConfig = config.first;
-				return;
-			}
-		}
+        if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
+        {
+            // An invalid configuration was asked for
+            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
 
-		// An invalid configuration was asked for
-        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+            throw winrt::hresult_invalid_argument();
+        }
 
-		throw winrt::hresult_invalid_argument();
+        m_currentConfig = configuration.c_str();
 	}
 
 	void PatternTool::ApplyToOutput(IDisplayOutput displayOutput)
     {
-        m_drawCallbackToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args) {
-            m_logger.LogNote(L"Using " + Name() + L": " + ConfigurationMap[m_currentConfig]);
+        m_drawOutputEventToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args) {
+            m_logger.LogNote(L"Using " + Name() + L": " + m_currentConfig);
 
             auto sourceModeFormat = args.Properties().ActiveMode().SourcePixelFormat();
             auto sourceModeResolution = args.Properties().ActiveMode().SourceResolution();
@@ -142,25 +147,12 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
             winrt::check_hresult(d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface.get(), d2dRtProperties, d2dTarget.put()));
 
-            D2D1_COLOR_F checkerColor;
-            switch (m_currentConfig)
-            {
-            case PatternToolConfigurations::Green:
-                checkerColor = D2D1::ColorF(D2D1::ColorF::Green, 1.0f);
-                break;
-            case PatternToolConfigurations::White:
-                checkerColor = D2D1::ColorF(D2D1::ColorF::White, 1.0f);
-                break;
-            case PatternToolConfigurations::Red:
-                checkerColor = D2D1::ColorF(D2D1::ColorF::Red, 1.0f);
-                break;
-            case PatternToolConfigurations::Blue:
-                checkerColor = D2D1::ColorF(D2D1::ColorF::Blue, 1.0f);
-                break;
-            case PatternToolConfigurations::Gray:
-                checkerColor = D2D1::ColorF(D2D1::ColorF::Gray, 1.0f);
-                break;
-            }
+            auto& configColor = ConfigurationMap[m_currentConfig];
+            D2D1_COLOR_F checkerColor = D2D1::ColorF(
+                configColor.Red,
+                configColor.Green,
+                configColor.Blue
+            );
 
             winrt::com_ptr<ID2D1SolidColorBrush> checkerBrush;
             winrt::check_hresult(d2dTarget->CreateSolidColorBrush(checkerColor, checkerBrush.put()));
@@ -185,7 +177,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     void PatternTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
     {
-        m_drawCallbackToken = displayPrediction.RenderSetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
+        m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
         {
             auto canvasDevice = CanvasDevice::GetSharedDevice();
             auto patternTarget = CanvasRenderTarget(
@@ -198,29 +190,13 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
             {
                 auto drawingSession = patternTarget.CreateDrawingSession();
-                Color checkerColor;
 
-                switch (m_currentConfig)
-                {
-                case PatternToolConfigurations::White:
-                    checkerColor = Colors::White();
-                    break;
-                case PatternToolConfigurations::Red:
-                    checkerColor = Colors::Red();
-                    break;
-                case PatternToolConfigurations::Green:
-                    checkerColor = Colors::Green();
-                    break;
-                case PatternToolConfigurations::Blue:
-                    checkerColor = Colors::Blue();
-                    break;
-                case PatternToolConfigurations::Gray:
-                    checkerColor.R = 128;
-                    checkerColor.G = 128;
-                    checkerColor.B = 128;
-                    checkerColor.A = 255;
-                    break;
-                }
+                auto& configColor = ConfigurationMap[m_currentConfig];
+                Color checkerColor;
+                checkerColor.A = 255;
+                checkerColor.R = static_cast<uint8_t>(255 * configColor.Red);
+                checkerColor.G = static_cast<uint8_t>(255 * configColor.Green);
+                checkerColor.B = static_cast<uint8_t>(255 * configColor.Blue);
 
                 drawingSession.Clear(Colors::Black());
 

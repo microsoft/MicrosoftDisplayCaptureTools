@@ -1,10 +1,5 @@
 #pragma once
 namespace winrt::BasicDisplayConfiguration::implementation {
-enum class PixelFormatToolConfigurations
-{
-    R8G8B8A8UIntNormalized_Interlaced,
-};
-
 struct PixelFormatTool : implements<PixelFormatTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 {
     PixelFormatTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
@@ -19,10 +14,9 @@ struct PixelFormatTool : implements<PixelFormatTool, winrt::MicrosoftDisplayCapt
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
 private:
-    PixelFormatToolConfigurations m_currentConfig;
-    static const PixelFormatToolConfigurations sc_defaultConfig = PixelFormatToolConfigurations::R8G8B8A8UIntNormalized_Interlaced;
+    std::wstring m_currentConfig;
     const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
-    winrt::event_token m_displaySetupEventToken;
+    winrt::event_token m_displaySetupEventToken, m_drawPredictionEventToken;
 };
 } // namespace winrt::BasicDisplayConfiguration::implementation

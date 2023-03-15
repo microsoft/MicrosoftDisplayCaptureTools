@@ -34,7 +34,7 @@ namespace winrt
 #pragma warning(push)
 #pragma warning(disable : 4100)
 
-    namespace MonitorUtilities
+namespace MonitorUtilities
 {
     static LUID LuidFromAdapterId(winrt::Windows::Graphics::DisplayAdapterId id)
     {
@@ -682,10 +682,27 @@ namespace winrt::BasicDisplayControl::implementation
         // Create the prediction data object
         auto predictionData = winrt::make<DisplayPredictionData>(m_logger);
 
+        // Set any desired format defaults - tools may override these
+        {
+            auto formatDesc = predictionData.FrameData().FormatDescription();
+
+            formatDesc.Eotf = winrt::Windows::Devices::Display::Core::DisplayWireFormatEotf::Sdr;
+            formatDesc.PixelEncoding = winrt::Windows::Devices::Display::Core::DisplayWireFormatPixelEncoding::Rgb444;
+
+            predictionData.FrameData().FormatDescription(formatDesc);
+        }
+
         // Invoke any tools registering as display setup (format, resolution, etc.)
         if (m_displaySetupCallback)
         {
             m_displaySetupCallback(*this, predictionData);
+        }
+
+        // Perform any changes to the format description required before buffer allocation
+        {
+            auto formatDesc = predictionData.FrameData().FormatDescription();
+            formatDesc.Stride = formatDesc.BitsPerPixel * predictionData.FrameData().Resolution().Width;
+            predictionData.FrameData().FormatDescription(formatDesc);
         }
 
         // From the data set in the predictionData, allocate buffers

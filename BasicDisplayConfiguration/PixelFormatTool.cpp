@@ -12,12 +12,22 @@ namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation 
 {
-    std::map<PixelFormatToolConfigurations, winrt::hstring> ConfigurationMap
+    static const std::wstring DefaultConfiguration = L"R8G8B8A8UIntNormalized_NotInterlaced";
+    struct Configuration
     {
-    {PixelFormatToolConfigurations::R8G8B8A8UIntNormalized_Interlaced, L"R8G8B8A8UIntNormalized_Interlaced"}
+        bool Interlaced;
+        DirectXPixelFormat SourceFormat;
+        uint8_t BitsPerPixel;
     };
 
-    PixelFormatTool::PixelFormatTool(winrt::ILogger const& logger) : m_currentConfig(sc_defaultConfig), m_logger(logger)
+    std::map<std::wstring, Configuration> ConfigurationMap
+    {
+        {L"R8G8B8A8UIntNormalized_NotInterlaced", {false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 32}}
+    };
+
+    PixelFormatTool::PixelFormatTool(winrt::ILogger const& logger) :
+        m_currentConfig(DefaultConfiguration),
+        m_logger(logger)
     {
     }
 
@@ -39,9 +49,10 @@ namespace winrt::BasicDisplayConfiguration::implementation
     com_array<hstring> PixelFormatTool::GetSupportedConfigurations()
     {
         std::vector<hstring> configs;
-        for (auto config : ConfigurationMap)
+        for (auto&& config : ConfigurationMap)
         {
-            configs.push_back(config.second);
+            hstring configName(config.first);
+            configs.push_back(configName);
         }
 
         return com_array<hstring>(configs);
@@ -49,29 +60,27 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     hstring PixelFormatTool::GetDefaultConfiguration()
     {
-        return ConfigurationMap[sc_defaultConfig];
+        hstring defaultConfig(DefaultConfiguration);
+        return defaultConfig;
     }
 
     hstring PixelFormatTool::GetConfiguration()
     {
-        return ConfigurationMap[m_currentConfig];
+        hstring currentConfig(m_currentConfig);
+        return currentConfig;
     }
 
     void PixelFormatTool::SetConfiguration(hstring configuration)
     {
-        for (auto config : ConfigurationMap)
+        if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
         {
-            if (config.second == configuration)
-            {
-                m_currentConfig = config.first;
-                return;
-            }
+            // An invalid configuration was asked for
+            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+
+            throw winrt::hresult_invalid_argument();
         }
 
-        // An invalid configuration was asked for
-        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
-
-        throw winrt::hresult_invalid_argument();
+        m_currentConfig = configuration.c_str();
     }
 
     void PixelFormatTool::ApplyToOutput(IDisplayOutput displayOutput)
@@ -79,24 +88,23 @@ namespace winrt::BasicDisplayConfiguration::implementation
         m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args)
         {
             auto interlaced = args.Mode().IsInterlaced();
-            auto sourceMode = args.Mode().SourcePixelFormat();
+            auto sourceFormat = args.Mode().SourcePixelFormat();
 
-            switch (m_currentConfig)
-            {
-            case PixelFormatToolConfigurations::R8G8B8A8UIntNormalized_Interlaced:
-                args.IsModeCompatible(!interlaced && sourceMode == DirectXPixelFormat::R8G8B8A8UIntNormalized);
-                return;
-
-            default:
-                m_logger.LogError(Name() + L" was set to use an invalid configuration option.");
-            }
+            auto& configValues = ConfigurationMap[m_currentConfig];
+            args.IsModeCompatible(interlaced == configValues.Interlaced && sourceFormat == configValues.SourceFormat);
         });
 
-        m_logger.LogNote(L"Registering " + Name() + L": " + ConfigurationMap[m_currentConfig] + L" to be applied.");
+        m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
     }
 
     void PixelFormatTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
     {
-        // This tool doesn't currently matter to the output
+        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
+        {
+            auto desc = predictionData.FrameData().FormatDescription();
+            desc.BitsPerPixel = ConfigurationMap[m_currentConfig].BitsPerPixel;
+            desc.PixelFormat = ConfigurationMap[m_currentConfig].SourceFormat;
+            predictionData.FrameData().FormatDescription(desc);
+        });
     }
 } // namespace winrt::BasicDisplayConfiguration::implementation
