@@ -129,4 +129,4 @@ winrt::IMonitorDescriptor EDIDDescriptor::CreateEDIDFromFile(hstring filePath)
     return winrt::make<EDIDDescriptor>(fileData);
 }
 
-}// namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities
+} // namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities

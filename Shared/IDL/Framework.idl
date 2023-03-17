@@ -241,8 +241,6 @@ namespace MicrosoftDisplayCaptureTools.Framework
         {
             get;
         };
-
-        // The capture card top level object
     };
 
     //
