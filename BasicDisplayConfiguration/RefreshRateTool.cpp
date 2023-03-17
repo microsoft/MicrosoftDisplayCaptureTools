@@ -13,8 +13,10 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	static const std::wstring DefaultConfiguration = L"60hz";
 	std::map<std::wstring, double> ConfigurationMap
 	{
-		{ L"60hz", 60. },
-		{ L"75hz", 75. }
+		{L"30hz",  30.},
+		{L"60hz",  60.},
+		{L"100hz", 100.},
+		{L"120hz", 120.}
 	};
 
 	RefreshRateTool::RefreshRateTool(winrt::ILogger const& logger) : 

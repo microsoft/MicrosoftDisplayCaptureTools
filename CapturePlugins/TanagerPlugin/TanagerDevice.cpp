@@ -48,7 +48,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 	}
 
 	TanagerDevice::~TanagerDevice()
-	{
+    {
 	}
 
 	std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> TanagerDevice::EnumerateDisplayInputs()
@@ -129,6 +129,17 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port, winrt::ILogger const& logger) :
         m_parent(parent), m_port(port), m_logger(logger)
     {
+    }
+
+    TanagerDisplayInput::~TanagerDisplayInput()
+    {
+        m_logger.LogNote(L"Cleaning up TanagerDisplayInput.");
+
+        // HPD out
+        if (auto parent = m_parent.lock())
+        {
+            parent->FpgaWrite(0x4, std::vector<byte>({0x32})); // HPD low
+        }
     }
 
 	hstring TanagerDisplayInput::Name()
@@ -254,7 +265,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     {
         if (auto parent = m_parent.lock())
         {
-            parent->FpgaWrite(0x4, std::vector<byte>({0x34})); // HPD high
+            parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
         }
         else
         {
@@ -442,27 +453,70 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         else
         {
             m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+
             {
-                auto filename = name + L"_Captured.bin";
+                auto filename = name + L"_Captured";
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+
+                // Attempt to extract a renderable approximation of the frame
+                auto bitmap = m_frameData.GetRenderableApproximationAsync().get();
+                filename = filename + (bitmap ? L".png" : L".bin");
+
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::ReplaceExisting).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(captureBuffer).get();
+
+                if (bitmap)
+                {
+                    // We could extract a valid bitmap from the data, save that way
+                    auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::PngEncoderId(), stream).get();
+                    encoder.SetSoftwareBitmap(bitmap);
+                }
+                else
+                {
+                    // We could not extract a valid bitmap from the data, just save the binary to disk
+                    stream.WriteAsync(captureBuffer).get();
+                }
+
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
+                m_logger.LogNote(L"Saving captured data here: " + filename);
             }
             {
-                auto filename = name + L"_Predicted.bin";
+                auto filename = name + L"_Predicted";
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+
+                // Attempt to extract a renderable approximation of the frame
+                SoftwareBitmap bitmap{nullptr};
+                auto predictedFrameDataComparisons = predictedFrameData.as<IFrameDataComparisons>();
+                if (predictedFrameDataComparisons && (bitmap = predictedFrameDataComparisons.GetRenderableApproximationAsync().get()))
+                {
+                    filename = filename + L".png";
+                }
+                else 
+                {
+                    filename = filename + L".bin";
+                }
+
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::ReplaceExisting).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(predictBuffer).get();
+
+                if (bitmap)
+                {
+                    // We could extract a valid bitmap from the data, save that way
+                    auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::PngEncoderId(), stream).get();
+                    encoder.SetSoftwareBitmap(bitmap);
+                }
+                else
+                {
+                    // We could not extract a valid bitmap from the data, just save the binary to disk
+                    stream.WriteAsync(predictBuffer).get();
+                }
+
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
+                m_logger.LogNote(L"Saving predicted data here: " + filename);
             }
 
             struct PixelStruct
@@ -490,11 +544,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 }
             }
 
-            float diff = (float)differenceCount / (float)pixelCount;
+            float diff = (float)differenceCount / (float)samples;
             if (diff > 0.10f)
             {
                 std::wstring msg;
-                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
+                std::format_to(std::back_inserter(msg), "{:.2f}% of sampled pixels did not match!", diff*100);
                 m_logger.LogError(msg);
 
                 return false;

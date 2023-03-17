@@ -12,17 +12,18 @@ namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation 
 {
-    static const std::wstring DefaultConfiguration = L"R8G8B8A8UIntNormalized_NotInterlaced";
+    static const std::wstring DefaultConfiguration = L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo";
     struct Configuration
     {
         bool Interlaced;
+        bool Stereo;
         DirectXPixelFormat SourceFormat;
         uint8_t BitsPerPixel;
     };
 
     std::map<std::wstring, Configuration> ConfigurationMap
     {
-        {L"R8G8B8A8UIntNormalized_NotInterlaced", {false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 32}}
+        {L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo", {false, false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 32}}
     };
 
     PixelFormatTool::PixelFormatTool(winrt::ILogger const& logger) :
@@ -88,10 +89,14 @@ namespace winrt::BasicDisplayConfiguration::implementation
         m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args)
         {
             auto interlaced = args.Mode().IsInterlaced();
+            auto stereo = args.Mode().IsStereo();
             auto sourceFormat = args.Mode().SourcePixelFormat();
 
             auto& configValues = ConfigurationMap[m_currentConfig];
-            args.IsModeCompatible(interlaced == configValues.Interlaced && sourceFormat == configValues.SourceFormat);
+            args.IsModeCompatible(
+                interlaced == configValues.Interlaced &&
+                stereo == configValues.Stereo &&
+                sourceFormat == configValues.SourceFormat);
         });
 
         m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");

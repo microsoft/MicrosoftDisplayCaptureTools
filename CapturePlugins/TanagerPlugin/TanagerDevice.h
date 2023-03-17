@@ -57,6 +57,8 @@ namespace winrt::TanagerPlugin::implementation
             TanagerDisplayInputPort port,
             winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
+        ~TanagerDisplayInput();
+
         hstring Name();
         void SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor);
         MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger GetCaptureTrigger();

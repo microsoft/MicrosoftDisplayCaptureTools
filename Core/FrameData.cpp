@@ -1,16 +1,21 @@
 #include "pch.h"
 #include "FrameData.h"
 #include "Framework.FrameData.g.cpp"
+#include "Framework.FrameMetadata.g.cpp"
 
 #include <string>
 #include <format>
 
 namespace winrt
 {
+    using namespace Windows::Foundation;
+    using namespace Windows::Graphics;
     using namespace Windows::Graphics::DirectX;
     using namespace Windows::Devices::Display::Core;
     using namespace Windows::Storage::Streams;
     using namespace Windows::Graphics::Imaging;
+
+    using namespace MicrosoftDisplayCaptureTools::Framework;
 }
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
@@ -19,39 +24,59 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     {
         return m_data;
     }
-    void FrameData::Data(winrt::Windows::Storage::Streams::IBuffer const& data)
+    void FrameData::Data(winrt::IBuffer const& data)
     {
         m_data = data;
     }
-    winrt::Windows::Graphics::SizeInt32 FrameData::Resolution()
+    winrt::SizeInt32 FrameData::Resolution()
     {
         return m_resolution;
     }
-    void FrameData::Resolution(winrt::Windows::Graphics::SizeInt32 const& resolution)
+    void FrameData::Resolution(winrt::SizeInt32 const& resolution)
     {
         m_resolution = resolution;
     }
-    winrt::MicrosoftDisplayCaptureTools::Framework::FrameDataDescription FrameData::FormatDescription()
+    winrt::FrameDataDescription FrameData::FormatDescription()
     {
         return m_description;
     }
-    void FrameData::FormatDescription(winrt::MicrosoftDisplayCaptureTools::Framework::FrameDataDescription const& description)
+    void FrameData::FormatDescription(winrt::FrameDataDescription const& description)
     {
         m_description = description;
     }
-
-
-    winrt::SoftwareBitmap FrameData::GetRenderableApproximation()
+    com_array<winrt::FrameMetadata> FrameData::GetFrameMetadata()
     {
-        SoftwareBitmap bitmap =
-            SoftwareBitmap((BitmapPixelFormat)m_description.PixelEncoding, m_resolution.Width, m_resolution.Height, BitmapAlphaMode::Ignore);
-
-        bitmap.CopyFromBuffer(m_data);
-
-        return bitmap;
+        return com_array<winrt::FrameMetadata>(m_metadataList);
     }
-    winrt::MicrosoftDisplayCaptureTools::Framework::IFrameDataComparisons FrameData::GetImageDelta(
-        winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData const& other)
+    void FrameData::AddMetadata(winrt::FrameMetadata const& data)
+    {
+        m_metadataList.push_back(data);
+    }
+
+    winrt::IAsyncOperation<winrt::SoftwareBitmap> FrameData::GetRenderableApproximationAsync()
+    {
+        co_await winrt::resume_background();
+
+        try
+        {
+            SoftwareBitmap bitmap = SoftwareBitmap(
+                BitmapPixelFormat::Rgba8, m_resolution.Width, m_resolution.Height, BitmapAlphaMode::Ignore);
+
+            // if the pixel format is conveniently exactly what SoftwareBitmap wants, cool, just copy from the buffer
+            if (m_description.PixelFormat == DirectXPixelFormat::R8G8B8A8UInt)
+            {
+                bitmap.CopyFromBuffer(m_data);
+                co_return bitmap;
+            }
+
+            throw winrt::hresult_not_implemented();
+        }
+        catch (...)
+        {
+            co_return nullptr;
+        }
+    }
+    winrt::IFrameDataComparisons FrameData::GetImageDelta(winrt::IFrameData const& other)
     {
         // This method only functions if the 'other' provided is of the same underlying implementation
         // as this.
@@ -63,5 +88,18 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         }
 
         throw hresult_not_implemented();
+    }
+
+    FrameMetadata::FrameMetadata(hstring const& Format, winrt::IBuffer const& Data) :
+        m_format(Format), m_data(Data)
+    {
+    }
+    winrt::Windows::Storage::Streams::IBuffer FrameMetadata::Data()
+    {
+        return m_data;
+    }
+    hstring FrameMetadata::Name()
+    {
+        return m_format;
     }
 } // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
