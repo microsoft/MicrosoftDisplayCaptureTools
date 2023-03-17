@@ -31,6 +31,8 @@ namespace winrt::TanagerPlugin::implementation
 
         IteIt68051Plugin::VideoTiming GetVideoTiming();
 
+        IteIt68051Plugin::aviInfoframe GetAviInfoframe();
+
     private:
         winrt::hstring m_deviceId;
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
@@ -69,6 +71,7 @@ namespace winrt::TanagerPlugin::implementation
 
     private:
         std::weak_ptr<TanagerDevice> m_parent;
+        std::shared_ptr<TanagerDevice> m_strongParent;
         TanagerDisplayInputPort m_port;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };

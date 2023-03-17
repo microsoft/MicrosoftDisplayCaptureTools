@@ -295,12 +295,8 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <ClInclude Include="Controller.h">
       <DependentUpon>TanagerPlugin.idl</DependentUpon>
     </ClInclude>
-    <ClInclude Include="FrankenboardDevice.h" />
     <ClInclude Include="Fx3FpgaInterface.h" />
     <ClInclude Include="I2cDriver.h" />
-    <ClInclude Include="IteIt6803.h" />
-    <ClInclude Include="IteIt6803Registers.h" />
-    <ClInclude Include="IteIt68051.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="TanagerDevice.h" />
   </ItemGroup>
@@ -308,10 +304,8 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <ClCompile Include="Controller.cpp">
       <DependentUpon>TanagerPlugin.idl</DependentUpon>
     </ClCompile>
-    <ClCompile Include="FrankenboardDevice.cpp" />
     <ClCompile Include="Fx3FpgaInterface.cpp" />
     <ClCompile Include="I2cDriver.cpp" />
-    <ClCompile Include="IteIt6803.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

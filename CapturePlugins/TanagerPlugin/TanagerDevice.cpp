@@ -100,6 +100,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         return hdmiChip.GetVideoTiming();
     }
 
+    IteIt68051Plugin::aviInfoframe TanagerDevice::GetAviInfoframe()
+    {
+        return hdmiChip.GetAviInfoframe();
+    }
+
     winrt::hstring TanagerDevice::GetDeviceId()
     {
         return m_deviceId;
@@ -254,7 +259,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         extendedProps.Insert(L"vFrontPorch", winrt::box_value(timing.vFrontPorch));
         extendedProps.Insert(L"vSyncWidth",  winrt::box_value(timing.vSyncWidth));
         extendedProps.Insert(L"vBackPorch",  winrt::box_value(timing.vBackPorch));
-        
+
+        auto aviInfoFrame = parent->GetAviInfoframe();
+        winrt::Buffer infoFrame(ARRAYSIZE(aviInfoFrame.data));
+        memcpy(infoFrame.data(), aviInfoFrame.data, infoFrame.Capacity());
+        extendedProps.Insert(L"InfoFrame", infoFrame);
+
         auto resolution = winrt::Windows::Graphics::SizeInt32();
         resolution = { timing.hActive, timing.vActive };
 
@@ -266,6 +276,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         if (auto parent = m_parent.lock())
         {
             parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
+
+            // We have HPD'd in a display, since we need to be able to HPD out again - take a strong reference on the 'parent'
+            // to ensure it isn't cleaned up before this input HPD's out.
+            m_strongParent = parent;
         }
         else
         {
