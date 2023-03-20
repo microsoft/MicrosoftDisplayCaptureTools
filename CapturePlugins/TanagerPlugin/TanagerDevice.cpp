@@ -286,7 +286,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
 
-        Sleep(1000);
+        Sleep(5000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
