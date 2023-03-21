@@ -73,6 +73,7 @@ namespace winrt::TanagerPlugin::implementation
         std::weak_ptr<TanagerDevice> m_parent;
         std::shared_ptr<TanagerDevice> m_strongParent;
         TanagerDisplayInputPort m_port;
+        std::atomic_bool m_hasDescriptorChanged = false;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 

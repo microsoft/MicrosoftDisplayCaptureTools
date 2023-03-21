@@ -109,12 +109,12 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring
     }
     catch (...)
     {
-        m_logger.LogWarning(L"Failed to load DisplayManager: " + className + L" from " + displayEnginePath);
+        m_logger.LogWarning(L"Failed to load DisplayEngine: " + className + L" from " + displayEnginePath);
     }
 
     if (displayEngine)
     {
-        m_logger.LogNote(L"Loaded DisplayManager: " + displayEngine.Name() + L", Version " + displayEngine.Version().AsString());
+        m_logger.LogNote(L"Loaded DisplayEngine: " + displayEngine.Name() + L", Version " + displayEngine.Version().AsString());
     }
 
     return displayEngine;

@@ -163,6 +163,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
     {
+        // Indicate that we have a new call to set the descriptor, after we HPD next - don't try to HPD again until 
+        // after the descriptor changes again.
+        m_hasDescriptorChanged = true;
+
         switch (m_port)
         {
         case TanagerDisplayInputPort::hdmi:
@@ -176,6 +180,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             std::vector<byte> edid(edidDataView.begin(), edidDataView.end());
 
             SetEdid(edid);
+
             break;
         }
         case TanagerDisplayInputPort::displayPort:
@@ -209,7 +214,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         parent->FpgaWrite(0x20, std::vector<byte>({0}));
 
         // Give the Tanager time to capture a frame.
-        Sleep(17);
+        Sleep(200);
 
         // put video capture logic back in reset
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
@@ -275,18 +280,24 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     {
         if (auto parent = m_parent.lock())
         {
-            parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
+            if (m_hasDescriptorChanged || !m_strongParent)
+            {
+                parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
 
-            // We have HPD'd in a display, since we need to be able to HPD out again - take a strong reference on the 'parent'
-            // to ensure it isn't cleaned up before this input HPD's out.
-            m_strongParent = parent;
+                // We have HPD'd in a display, since we need to be able to HPD out again - take a strong reference on the 'parent'
+                // to ensure it isn't cleaned up before this input HPD's out.
+                m_strongParent = parent;
+
+                // Reset the descriptor guard bool here to make sure that we won't HPD in again unless the descriptor changes
+                m_hasDescriptorChanged = false;
+
+                Sleep(5000);
+            }
         }
         else
         {
             m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
-
-        Sleep(5000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
