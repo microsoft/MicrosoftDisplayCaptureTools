@@ -200,7 +200,10 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         };
 
         // Get the version of this implementation, in Major.Minor.Patch format.
-        MicrosoftDisplayCaptureTools.Framework.Version Version();
+        MicrosoftDisplayCaptureTools.Framework.Version Version
+        {
+            get;
+        };
 
         // EnumerateDisplayInputs
         // ----------------------------------------------------------------------------------------------------------------

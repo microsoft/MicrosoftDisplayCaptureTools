@@ -11,7 +11,7 @@ struct Version : VersionT<Version>
     uint32_t Major();
     uint32_t Minor();
     uint32_t Patch();
-    hstring AsString();
+    hstring ToString();
 
     bool IsHigherVersion(IVersion other);
 

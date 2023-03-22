@@ -22,7 +22,7 @@ uint32_t Version::Patch()
 {
     return std::get<2>(m_version);
 }
-hstring Version::AsString()
+hstring Version::ToString()
 {
     return to_hstring(Major()) + L"." + to_hstring(Minor()) + L"." + to_hstring(Patch());
 }

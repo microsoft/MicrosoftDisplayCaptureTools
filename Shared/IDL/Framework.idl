@@ -64,14 +64,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
         IFrameDataComparisons GetImageDelta(IFrameData other);
     };
 
-    runtimeclass Version
+    runtimeclass Version : Windows.Foundation.IStringable
     {
         Version(UInt32 major, UInt32 minor, UInt32 patch);
 
         UInt32 Major();
         UInt32 Minor();
         UInt32 Patch();
-        String AsString();
 
         Boolean IsHigherVersion(Version other);
     };
@@ -229,7 +228,10 @@ namespace MicrosoftDisplayCaptureTools.Framework
     interface ICore
     {
         // Get the version, in Major.Minor.Patch format
-        MicrosoftDisplayCaptureTools.Framework.Version Version();
+        MicrosoftDisplayCaptureTools.Framework.Version Version
+        {
+            get;
+        };
 
         // Get the logger for this instance
         ILogger Logger

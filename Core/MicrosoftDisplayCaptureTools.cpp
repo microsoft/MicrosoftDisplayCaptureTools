@@ -28,13 +28,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
 // Constructor that uses the default logger
 Core::Core() : m_logger(winrt::make<winrt::Logger>().as<ILogger>())
 {
-    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().AsString());
+    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
 }
 
 // Constructor taking a caller-defined logging class
 Core::Core(ILogger const& logger) : m_logger(logger)
 {
-    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().AsString());
+    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
 }
 
 IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& className)
@@ -51,7 +51,7 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& cl
 
     auto captureCardController = captureCardFactory.CreateController(m_logger);
 
-    m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version().AsString());
+    m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version().ToString());
 
     return captureCardController;
 }
@@ -77,7 +77,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
 
     auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
 
-    m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version().AsString());
+    m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version().ToString());
 
     return toolbox;
 }
@@ -114,7 +114,7 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring
 
     if (displayEngine)
     {
-        m_logger.LogNote(L"Loaded DisplayManager: " + displayEngine.Name() + L", Version " + displayEngine.Version().AsString());
+        m_logger.LogNote(L"Loaded DisplayManager: " + displayEngine.Name() + L", Version " + displayEngine.Version().ToString());
     }
 
     return displayEngine;
