@@ -81,7 +81,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
     {
         constexpr double sc_refreshRateEpsilon = 0.00000000001;
 
-        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
+        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([&](const auto&, IDisplaySetupToolArgs args) 
 		{
             double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
                                       static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);
