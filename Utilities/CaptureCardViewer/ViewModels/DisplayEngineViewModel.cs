@@ -7,7 +7,7 @@ namespace CaptureCardViewer.ViewModels
 	{
 		public IDisplayEngine Engine { get; }
 		public string Name => Engine.Name;
-		public string Version => Engine.Version;
+		public string Version => Engine.Version.ToString();
 
 		public DisplayEngineViewModel(IDisplayEngine engine)
 		{

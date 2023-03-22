@@ -11,8 +11,6 @@ namespace CaptureCardViewer.Mocks
 	{
 		public string Name => "Mock Controller";
 
-		public string Version => "0.1.2.3";
-
 		public ControllerFirmwareState FirmwareState { get; set; } = ControllerFirmwareState.UpdateRequired;
 
 		public string FirmwareVersion { get; set; } = "2.3.4.5";
@@ -38,52 +36,54 @@ namespace CaptureCardViewer.Mocks
 			FirmwareVersion = "3.2.1.0";
 			FirmwareState = ControllerFirmwareState.UpToDate;
 		}
+
+		MicrosoftDisplayCaptureTools.Framework.Version IController.Version { get; } = new MicrosoftDisplayCaptureTools.Framework.Version(0, 1, 2);
+	}
+}
+
+public class MockDisplayInput : IDisplayInput
+{
+	private class MockDisplayInputCaps : ICaptureCapabilities
+	{
+		public bool CanCaptureFrameSeries() => true;
+
+		public bool CanConfigureDisplayID() => true;
+
+		public bool CanConfigureEDID() => true;
+
+		public bool CanHotPlug() => true;
+
+		public bool CanReturnFramesToHost() => true;
+
+		public bool CanReturnRawFramesToHost() => true;
+
+		public uint GetMaxDescriptorSize() => 512;
 	}
 
-	public class MockDisplayInput : IDisplayInput
+	public string Name => "HDMI 2.0 Input";
+
+	public IDisplayCapture CaptureFrame()
 	{
-		private class MockDisplayInputCaps : ICaptureCapabilities
-		{
-			public bool CanCaptureFrameSeries() => true;
+		throw new NotImplementedException();
+	}
 
-			public bool CanConfigureDisplayID() => true;
+	public void FinalizeDisplayState()
+	{
+		throw new NotImplementedException();
+	}
 
-			public bool CanConfigureEDID() => true;
+	public ICaptureCapabilities GetCapabilities()
+	{
+		return new MockDisplayInputCaps();
+	}
 
-			public bool CanHotPlug() => true;
+	public ICaptureTrigger GetCaptureTrigger()
+	{
+		throw new NotImplementedException();
+	}
 
-			public bool CanReturnFramesToHost() => true;
-
-			public bool CanReturnRawFramesToHost() => true;
-
-			public uint GetMaxDescriptorSize() => 512;
-		}
-
-		public string Name => "HDMI 2.0 Input";
-
-		public IDisplayCapture CaptureFrame()
-		{
-			throw new NotImplementedException();
-		}
-
-		public void FinalizeDisplayState()
-		{
-			throw new NotImplementedException();
-		}
-
-		public ICaptureCapabilities GetCapabilities()
-		{
-			return new MockDisplayInputCaps();
-		}
-
-		public ICaptureTrigger GetCaptureTrigger()
-		{
-			throw new NotImplementedException();
-		}
-
-		public void SetDescriptor(IMonitorDescriptor descriptor)
-		{
-			throw new NotImplementedException();
-		}
+	public void SetDescriptor(IMonitorDescriptor descriptor)
+	{
+		throw new NotImplementedException();
 	}
 }

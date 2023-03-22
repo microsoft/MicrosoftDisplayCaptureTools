@@ -7,6 +7,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -15,6 +16,7 @@ using Windows.Devices.Display.Core;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
 using WinRT;
 
 namespace CaptureCardViewer.ViewModels
@@ -56,7 +58,7 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayPrediction? lastPredictedFrame;
+		IDisplayPredictionData? lastPredictedFrame;
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]
@@ -107,7 +109,14 @@ namespace CaptureCardViewer.ViewModels
 			[ICommand]
 			void Connect()
 			{
-				parent.SelectedEngineOutput = parent.Engine.InitializeOutput(Target);
+				try
+				{
+					parent.SelectedEngineOutput = parent.Engine.InitializeOutput(Target);
+				}
+				catch (Exception ex)
+				{
+					ModernWpf.MessageBox.Show("Failed to connect to GPU output: " + ex.Message);
+				}
 			}
 		}
 
@@ -186,8 +195,8 @@ namespace CaptureCardViewer.ViewModels
 				captureInput.FinalizeDisplayState();
 
 				var capturedFrame = captureInput.CaptureFrame();
-				var capPixelBuffer = capturedFrame.GetRawFrameData();
-				var capturedBitmap = BufferToImgConv(capPixelBuffer, capturedFrame.Resolution, (int)capturedFrame.Stride);
+				var capPixelBuffer = capturedFrame.GetFrameData();
+				var capturedBitmap = BufferToImgConv(capPixelBuffer.Data, capPixelBuffer.Resolution, (int)capPixelBuffer.FormatDescription.Stride);
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
 			});
@@ -237,7 +246,7 @@ namespace CaptureCardViewer.ViewModels
 						{
 							if (tool.Category == category)
 							{
-								tool.Apply(selectedEngineOutput);
+								tool.ApplyToOutput(selectedEngineOutput);
 							}
 						}
 					}
@@ -273,6 +282,8 @@ namespace CaptureCardViewer.ViewModels
 			if (displayOutput == null)
 				return;
 
+			var displayPrediction = Engine.CreateDisplayPrediction();
+
 			// TODO: Encapsulate the active tools into a sub-property of this CaptureSessionViewModel
 			var activeTools =
 				this.Workspace.Toolboxes
@@ -280,29 +291,21 @@ namespace CaptureCardViewer.ViewModels
 					.Select((tool) => tool.Tool))
 				.ToList();
 
-			(var prediction, var predictedBitmap) = await Task.Run(() =>
+			(var predictedFrame, var predictedBitmap) = await Task.Run(async () =>
 			{
 				// Apply all tools to the display
 				foreach (var tool in activeTools)
 				{
-					tool.Apply(displayOutput);
+					tool.ApplyToPrediction(displayPrediction);
 				}
 
-				// Get the output's properties
-				var prop = displayOutput.GetProperties();
-				var mode = prop.ActiveMode;
-				var refreshRate = prop.RefreshRate;
+				var prediction = await displayPrediction.GeneratePredictionDataAsync();
+				var predictionBitmap = prediction.FrameData;
 
-				var prediction = displayOutput.GetPrediction();
-				var predictionBitmap = prediction.GetBitmap();
-
-				var bmpBuffer = predictionBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite);
-				var stride = bmpBuffer.GetPlaneDescription(0).Stride;
-				using (IMemoryBufferReference predPixelBuffer = bmpBuffer.CreateReference())
-					return (prediction, BufferToImgConv(predPixelBuffer, prop.Resolution, stride));
+				return (prediction, BufferToImgConv(predictionBitmap.Data, predictionBitmap.Resolution, (int)predictionBitmap.FormatDescription.Stride));
 			});
 
-			LastPredictedFrame = prediction;
+			LastPredictedFrame = predictedFrame;
 			PredictionSource = predictedBitmap;
 		}
 
@@ -323,24 +326,13 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Converting buffer to image source
-		private static BitmapSource BufferToImgConv(IMemoryBufferReference pixelBuffer, Windows.Graphics.SizeInt32 resolution, int stride)
+		private static BitmapSource BufferToImgConv(IBuffer pixelBuffer, Windows.Graphics.SizeInt32 resolution, int stride)
 		{
 			BitmapSource imgSource;
 			unsafe
 			{
 				byte[] bytes = new byte[pixelBuffer.Capacity];
-				fixed (byte* bytesAccess = bytes)
-				{
-					byte* ptr;
-					uint capacity;
-					var ByteAccess = pixelBuffer.As<IMemoryBufferByteAccess>();
-					ByteAccess.GetBuffer(out ptr, out capacity);
-
-					// copy the raw memory out to the byte array
-					Unsafe.CopyBlockUnaligned(
-						ref bytesAccess[0], ref ptr[0], capacity);
-
-				}
+				pixelBuffer.CopyTo(bytes);
 
 				var pixCap = pixelBuffer.Capacity;
 				imgSource = BitmapSource.Create(resolution.Width, resolution.Height, 96, 96, PixelFormats.Bgr32, null, bytes, stride);

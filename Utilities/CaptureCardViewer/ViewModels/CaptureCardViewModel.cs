@@ -18,7 +18,7 @@ namespace CaptureCardViewer.ViewModels
 		public IControllerWithFirmware? Firmware { get; }
 
 		public string Name => Controller.Name;
-		public string Version => Controller.Version;
+		public string Version => Controller.Version.ToString();
 
 		#region Firmware Update Properties
 		public ControllerFirmwareState FirmwareStatus => Firmware?.FirmwareState ?? ControllerFirmwareState.UpToDate;
