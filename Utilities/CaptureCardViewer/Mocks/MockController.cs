@@ -39,51 +39,51 @@ namespace CaptureCardViewer.Mocks
 
 		MicrosoftDisplayCaptureTools.Framework.Version IController.Version { get; } = new MicrosoftDisplayCaptureTools.Framework.Version(0, 1, 2);
 	}
-}
 
-public class MockDisplayInput : IDisplayInput
-{
-	private class MockDisplayInputCaps : ICaptureCapabilities
+	public class MockDisplayInput : IDisplayInput
 	{
-		public bool CanCaptureFrameSeries() => true;
+		private class MockDisplayInputCaps : ICaptureCapabilities
+		{
+			public bool CanCaptureFrameSeries() => true;
 
-		public bool CanConfigureDisplayID() => true;
+			public bool CanConfigureDisplayID() => true;
 
-		public bool CanConfigureEDID() => true;
+			public bool CanConfigureEDID() => true;
 
-		public bool CanHotPlug() => true;
+			public bool CanHotPlug() => true;
 
-		public bool CanReturnFramesToHost() => true;
+			public bool CanReturnFramesToHost() => true;
 
-		public bool CanReturnRawFramesToHost() => true;
+			public bool CanReturnRawFramesToHost() => true;
 
-		public uint GetMaxDescriptorSize() => 512;
-	}
+			public uint GetMaxDescriptorSize() => 512;
+		}
 
-	public string Name => "HDMI 2.0 Input";
+		public string Name => "HDMI 2.0 Input";
 
-	public IDisplayCapture CaptureFrame()
-	{
-		throw new NotImplementedException();
-	}
+		public IDisplayCapture CaptureFrame()
+		{
+			throw new NotImplementedException();
+		}
 
-	public void FinalizeDisplayState()
-	{
-		throw new NotImplementedException();
-	}
+		public void FinalizeDisplayState()
+		{
+			throw new NotImplementedException();
+		}
 
-	public ICaptureCapabilities GetCapabilities()
-	{
-		return new MockDisplayInputCaps();
-	}
+		public ICaptureCapabilities GetCapabilities()
+		{
+			return new MockDisplayInputCaps();
+		}
 
-	public ICaptureTrigger GetCaptureTrigger()
-	{
-		throw new NotImplementedException();
-	}
+		public ICaptureTrigger GetCaptureTrigger()
+		{
+			throw new NotImplementedException();
+		}
 
-	public void SetDescriptor(IMonitorDescriptor descriptor)
-	{
-		throw new NotImplementedException();
+		public void SetDescriptor(IMonitorDescriptor descriptor)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
