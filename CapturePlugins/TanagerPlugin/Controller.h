@@ -47,22 +47,6 @@ namespace winrt::TanagerPlugin::implementation
         virtual MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() = 0;
     };
 
-    // I2C bus device
-    class TiTca6416a
-    {
-    public:
-        TiTca6416a(unsigned char address, std::shared_ptr<I2cDriver> pDriver);
-        ~TiTca6416a();
-
-        void SetOutputDirection(char bank, unsigned char value, unsigned char mask);
-        void SetOutput(char bank, unsigned char value, unsigned char mask);
-        
-
-    private:
-        unsigned char address;
-        std::shared_ptr<I2cDriver> pDriver;
-    };
-
     struct Controller : ControllerT<Controller>
     {
         Controller();

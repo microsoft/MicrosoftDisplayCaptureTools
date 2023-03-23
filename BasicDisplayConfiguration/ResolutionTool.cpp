@@ -13,8 +13,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	static const std::wstring DefaultConfiguration = L"1920x1080";
 	std::map<std::wstring, Windows::Graphics::SizeInt32> ConfigurationMap
 	{
+		{ L"1600x900",  {1600,  900} },
 		{ L"1920x1080", {1920, 1080} },
-		{ L"800x600", {800, 600} }
+		{ L"3840x2160", {3840, 2160} }
 	};
 
 	ResolutionTool::ResolutionTool(winrt::ILogger const& logger) : 

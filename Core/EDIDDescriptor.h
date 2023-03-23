@@ -23,12 +23,12 @@ struct EDIDDescriptor : winrt::implements<EDIDDescriptor, winrt::MicrosoftDispla
     bool IsSame(winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor other);
 
     static winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor CreateStandardEDID();
+    static winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor CreateEDIDFromFile(hstring filePath);
 
 private:
     void UpdateChecksum();
 
     winrt::Windows::Foundation::Collections::IVector<uint8_t> m_data;
-    winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
     static const uint32_t MinEDIDSize = 128;
     static const uint32_t SerialNumberLocation = 12;

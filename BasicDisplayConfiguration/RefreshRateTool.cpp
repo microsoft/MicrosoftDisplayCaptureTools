@@ -13,8 +13,10 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	static const std::wstring DefaultConfiguration = L"60hz";
 	std::map<std::wstring, double> ConfigurationMap
 	{
-		{ L"60hz", 60. },
-		{ L"75hz", 75. }
+		{L"30hz",  30.},
+		{L"60hz",  60.},
+		{L"100hz", 100.},
+		{L"120hz", 120.}
 	};
 
 	RefreshRateTool::RefreshRateTool(winrt::ILogger const& logger) : 
@@ -79,7 +81,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
     {
         constexpr double sc_refreshRateEpsilon = 0.00000000001;
 
-        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
+        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([&](const auto&, IDisplaySetupToolArgs args) 
 		{
             double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
                                       static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);

@@ -25,6 +25,24 @@ namespace MicrosoftDisplayCaptureTools.Framework
     };
 
     //
+    // An interface representing any additional non-pixel data describing the link or pixel data (i.e. An AVI Infoframe)
+    //
+    runtimeclass FrameMetadata
+    {
+        FrameMetadata(String Format, Windows.Storage.Streams.IBuffer Data);
+
+        Windows.Storage.Streams.IBuffer Data
+        {
+            get;
+        };
+
+        String Name
+        {
+            get;
+        };
+    };
+
+    //
     // An interface representing formatted pixel data
     //
     interface IFrameData
@@ -49,6 +67,9 @@ namespace MicrosoftDisplayCaptureTools.Framework
             get;
             set;
         };
+
+        FrameMetadata[] GetFrameMetadata();
+        void AddMetadata(FrameMetadata data);
     };
 
     //
@@ -56,8 +77,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     interface IFrameDataComparisons
     {
-        // Get an easily renderable approximation of the image data, in BGRA8 format
-        Windows.Graphics.Imaging.SoftwareBitmap GetRenderableApproximation();
+        // Get an easily renderable approximation of the image data, in RGBA8 format
+        Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap> GetRenderableApproximationAsync();
 
         // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
         // do not match.

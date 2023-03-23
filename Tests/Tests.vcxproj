@@ -103,6 +103,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -110,11 +111,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -331,9 +335,9 @@
   </Target>
   <PropertyGroup>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommand>.\TE.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>$(TargetFileName) -inproc -enablewttlogging</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommand>$(SolutionDir)$(Platform)\$(Configuration)\TE.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>$(OutDir)$(TargetFileName) -inproc -enablewttlogging</LocalDebuggerCommandArguments>
     <LocalDebuggerMergeEnvironment>false</LocalDebuggerMergeEnvironment>
-    <LocalDebuggerWorkingDirectory>$(OutputPath)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)$(Platform)\$(Configuration)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

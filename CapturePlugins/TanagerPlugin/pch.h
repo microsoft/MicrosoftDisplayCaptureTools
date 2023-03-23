@@ -26,12 +26,10 @@
 #include <ranges>
 #include <iterator>
 
-#include "IteIt6803.h"
 #include "IteIt68051.h"
 
 #include "Controller.h"
 #include "TanagerDevice.h"
-#include "FrankenboardDevice.h"
 
 #define TCA6416A_BANK_0 0
 #define TCA6416A_BANK_1 1
