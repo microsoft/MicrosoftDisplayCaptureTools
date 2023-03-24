@@ -70,6 +70,11 @@ namespace winrt::TanagerPlugin::implementation
         void SetEdid(std::vector<byte> edid);
 
     private:
+        // Members for detecting changes to the display stack - do not take ownership of any devices with this DisplayManager
+        winrt::Windows::Foundation::IAsyncAction WaitForDisplayDevicesChange();
+        winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
+
+    private:
         std::weak_ptr<TanagerDevice> m_parent;
         std::shared_ptr<TanagerDevice> m_strongParent;
         TanagerDisplayInputPort m_port;
