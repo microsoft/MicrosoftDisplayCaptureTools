@@ -2,6 +2,9 @@
 
 namespace winrt::TanagerPlugin::implementation
 {
+    // This is a temporary limit while we're bringing up some of the hardware on board.
+    constexpr uint32_t MaxDescriptorByteSize = 512;
+
     class TanagerDevice :
         public IMicrosoftCaptureBoard,
         public std::enable_shared_from_this<TanagerDevice>

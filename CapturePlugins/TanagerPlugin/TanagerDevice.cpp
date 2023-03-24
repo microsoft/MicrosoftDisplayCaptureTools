@@ -359,8 +359,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
         }
 
-        // Max EDID size is 512-bytes
-        if (edid.size() > 512)
+        // Ensure under max descriptor size
+        if (edid.size() > MaxDescriptorByteSize)
         {
             m_logger.LogError(L"SetEdid provided a too large edid, size=" + to_hstring(edid.size()));
         }
@@ -431,7 +431,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         switch (m_port)
 		{
 		case TanagerDisplayInputPort::hdmi:
-			return 1024;
+			return MaxDescriptorByteSize;
 		case TanagerDisplayInputPort::displayPort:
         default:
 			throw winrt::hresult_not_implemented();
