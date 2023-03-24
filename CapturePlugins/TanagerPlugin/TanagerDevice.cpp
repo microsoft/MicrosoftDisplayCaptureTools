@@ -168,13 +168,13 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_displayManager = winrt::DisplayManager::Create(DisplayManagerOptions::None);
         }
 
-        std::atomic_bool hasChangedEventFired = false;
+        winrt::handle changedEvent{CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
         auto changedToken = m_displayManager.Changed(
             [&](const auto&, IDisplayManagerChangedEventArgs args) 
             { 
                 args.Handled(true);
-                hasChangedEventFired = true;
+                SetEvent(changedEvent.get());
             });
 
         auto enabledToken = m_displayManager.Enabled([](const auto&, IDisplayManagerEnabledEventArgs args)
@@ -186,13 +186,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         
         m_displayManager.Start();
 
-        // After the changed event has been registered, return control and resume in the background.
-        co_await winrt::resume_background();
-
-        while (!hasChangedEventFired)
-        {
-            Sleep(20);
-        }
+        // After the changed event has been registered, suspend until the changed event is fired
+        co_await winrt::resume_on_signal(changedEvent.get());
 
         m_displayManager.Stop();
 
