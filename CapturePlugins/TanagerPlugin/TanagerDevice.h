@@ -2,6 +2,9 @@
 
 namespace winrt::TanagerPlugin::implementation
 {
+    // This is a temporary limit while we're bringing up some of the hardware on board.
+    constexpr uint32_t MaxDescriptorByteSize = 512;
+
     class TanagerDevice :
         public IMicrosoftCaptureBoard,
         public std::enable_shared_from_this<TanagerDevice>
@@ -68,6 +71,11 @@ namespace winrt::TanagerPlugin::implementation
         MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame();
         void FinalizeDisplayState();
         void SetEdid(std::vector<byte> edid);
+
+    private:
+        // Members for detecting changes to the display stack - do not take ownership of any devices with this DisplayManager
+        winrt::Windows::Foundation::IAsyncAction WaitForDisplayDevicesChange();
+        winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
 
     private:
         std::weak_ptr<TanagerDevice> m_parent;

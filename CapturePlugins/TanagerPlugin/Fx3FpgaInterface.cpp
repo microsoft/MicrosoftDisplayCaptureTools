@@ -41,33 +41,31 @@ namespace winrt::TanagerPlugin::implementation
 	}
 
 	std::vector<byte> Fx3FpgaInterface::Read(unsigned short address, UINT16 size)
-	{
-		std::vector<byte> dataVector;
-		const size_t readBlockSize = 0x50;
-		UINT16 remaining = size;
-		while (remaining)
-		{
-			UINT16 amountToRead = min(readBlockSize, remaining);
-			
-			UsbSetupPacket setupPacket;
-			UsbControlRequestType requestType;
-			requestType.AsByte(0xC0);
-			setupPacket.RequestType(requestType);
-			setupPacket.Request(VR_UART_DATA_TRANSFER);
-			setupPacket.Value(0);
-			setupPacket.Index(address);
-			setupPacket.Length(amountToRead);
-			auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket).get();
-			if (buffer == nullptr)
-			{
-				throw_last_error();
-			}
+    {
+        std::vector<byte> dataVector;
+        const size_t readBlockSize = 0x50;
+        UINT16 remaining = size;
+        while (remaining)
+        {
+            UINT16 amountToRead = min(readBlockSize, remaining);
 
-			dataVector.insert(dataVector.end(), buffer.data(), buffer.data() + buffer.Length());
-			remaining -= (UINT16)buffer.Length();
-		}
-		return dataVector;
-	}
+            UsbSetupPacket setupPacket;
+            UsbControlRequestType requestType;
+            requestType.AsByte(0xC0);
+            setupPacket.RequestType(requestType);
+            setupPacket.Request(VR_UART_DATA_TRANSFER);
+            setupPacket.Value(0);
+            setupPacket.Index(address);
+            setupPacket.Length(amountToRead);
+
+            Buffer inBuffer(remaining);
+            auto buffer = m_usbDevice.SendControlInTransferAsync(setupPacket, inBuffer).get();
+
+            dataVector.insert(dataVector.end(), buffer.data(), buffer.data() + buffer.Length());
+            remaining -= (UINT16)buffer.Length();
+        }
+        return dataVector;
+    }
 
 	std::vector<byte> Fx3FpgaInterface::ReadEndPointData(UINT32 dataSize)
 	{

@@ -138,7 +138,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     TanagerDisplayInput::~TanagerDisplayInput()
     {
-        m_logger.LogNote(L"Cleaning up TanagerDisplayInput.");
+        m_logger.LogNote(winrt::hstring(L"Cleaning up TanagerDisplayInput: ") + Name());
 
         // HPD out
         if (auto parent = m_parent.lock())
@@ -159,6 +159,39 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogAssert(L"Invalid port chosen.");
             return L"";
 		}
+    }
+
+    IAsyncAction TanagerDisplayInput::WaitForDisplayDevicesChange()
+    {
+        if (!m_displayManager)
+        {
+            m_displayManager = winrt::DisplayManager::Create(DisplayManagerOptions::None);
+        }
+
+        winrt::handle changedEvent{CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+
+        auto changedToken = m_displayManager.Changed(
+            [&](const auto&, IDisplayManagerChangedEventArgs args) 
+            { 
+                args.Handled(true);
+                SetEvent(changedEvent.get());
+            });
+
+        auto enabledToken = m_displayManager.Enabled([](const auto&, IDisplayManagerEnabledEventArgs args)
+            { args.Handled(true); });
+        auto disabledToken = m_displayManager.Disabled([](const auto&, IDisplayManagerDisabledEventArgs args)
+            { args.Handled(true); });
+        auto pathsToken = m_displayManager.PathsFailedOrInvalidated([](const auto&, IDisplayManagerPathsFailedOrInvalidatedEventArgs args)
+            { args.Handled(true); });
+        
+        m_displayManager.Start();
+
+        // After the changed event has been registered, suspend until the changed event is fired
+        co_await winrt::resume_on_signal(changedEvent.get());
+
+        m_displayManager.Stop();
+
+        co_return;
     }
 
     void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
@@ -214,10 +247,23 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         parent->FpgaWrite(0x20, std::vector<byte>({0}));
 
         // Give the Tanager time to capture a frame.
-        Sleep(200);
+        uint32_t loopCount = 0;
+        constexpr uint32_t loopLimit = 50;
+        std::vector<byte> video_register_vector = parent->FpgaRead(0x20, 1);
+        while (video_register_vector.size() > 0 && (video_register_vector[0] & 0x01) == 0x00 && loopCount++ < loopLimit)
+        {
+            video_register_vector = parent->FpgaRead(0x20, 1);
+            Sleep(20);
+        }
 
-        // put video capture logic back in reset
-        parent->FpgaWrite(0x20, std::vector<byte>({1}));
+        if (video_register_vector.size() == 0)
+        {
+            m_logger.LogAssert(L"Zero bytes of data returned from FpgaRead.");
+        }
+        if (loopCount >= loopLimit)
+        {
+            m_logger.LogAssert(L"Timeout while waiting for video frame capture to complete.");
+        }
 
         // query resolution
         auto timing = parent->GetVideoTiming();
@@ -282,6 +328,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         {
             if (m_hasDescriptorChanged || !m_strongParent)
             {
+                auto hasDeviceChanged = WaitForDisplayDevicesChange();
+
                 parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
 
                 // We have HPD'd in a display, since we need to be able to HPD out again - take a strong reference on the 'parent'
@@ -291,7 +339,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 // Reset the descriptor guard bool here to make sure that we won't HPD in again unless the descriptor changes
                 m_hasDescriptorChanged = false;
 
-                Sleep(5000);
+                if (AsyncStatus::Completed != hasDeviceChanged.wait_for(std::chrono::seconds(5)))
+                {
+                    m_logger.LogError(L"Did not detect a new device being plugged in after hotplugging.");
+                }
             }
         }
         else
@@ -308,8 +359,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
         }
 
-        // Max EDID size is 512-bytes
-        if (edid.size() > 512)
+        // Ensure under max descriptor size
+        if (edid.size() > MaxDescriptorByteSize)
         {
             m_logger.LogError(L"SetEdid provided a too large edid, size=" + to_hstring(edid.size()));
         }
@@ -380,7 +431,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         switch (m_port)
 		{
 		case TanagerDisplayInputPort::hdmi:
-			return 1024;
+			return MaxDescriptorByteSize;
 		case TanagerDisplayInputPort::displayPort:
         default:
 			throw winrt::hresult_not_implemented();
