@@ -249,7 +249,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
 
         // Capture frame in DRAM
-        Sleep(20);
         parent->FpgaWrite(0x20, std::vector<byte>({0}));
 
         // Give the Tanager time to capture a frame.
@@ -259,6 +258,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         while (video_register_vector.size() > 0 && (video_register_vector[0] & 0x01) == 0x00 && loopCount++ < loopLimit)
         {
             video_register_vector = parent->FpgaRead(0x20, 1);
+            Sleep(20);
         }
 
         if (video_register_vector.size() == 0)
