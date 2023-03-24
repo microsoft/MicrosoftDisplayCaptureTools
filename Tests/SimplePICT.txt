@@ -1,7 +1,7 @@
 Pattern:     White, Red, Green, Blue, Gray
-Resolution:  1920x1080, 800x600
-RefreshRate: 60hz, 75hz
-PixelFormat: R8G8B8A8UIntNormalized_NotInterlaced
+Resolution:  1600x900, 1920x1080, 3840x2160
+RefreshRate: 30hz, 60hz, 100hz, 120hz
+PixelFormat: R8G8B8A8UIntNormalized_NotInterlaced_NotStereo
 
-IF [Resolution] = "1920x1080" THEN [RefreshRate] = "60hz";
-IF [Resolution] = "800x600"   THEN [RefreshRate] = "75hz";
+IF [Resolution] = "3840x2160" THEN [RefreshRate] = "30hz";
+IF [Resolution] = "1600x900" THEN [RefreshRate] = "30hz";

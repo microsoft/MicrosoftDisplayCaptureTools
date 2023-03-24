@@ -26,6 +26,7 @@
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 #include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
 #include "winrt/MicrosoftDisplayCaptureTools.Display.h"
+#include "..\Shared\Inc\BinaryLoader.h"
 
 // Local headers
 #include "TestSettings.h"

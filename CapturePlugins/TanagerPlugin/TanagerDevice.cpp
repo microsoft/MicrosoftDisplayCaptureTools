@@ -48,7 +48,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 	}
 
 	TanagerDevice::~TanagerDevice()
-	{
+    {
 	}
 
 	std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> TanagerDevice::EnumerateDisplayInputs()
@@ -100,6 +100,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         return hdmiChip.GetVideoTiming();
     }
 
+    IteIt68051Plugin::aviInfoframe TanagerDevice::GetAviInfoframe()
+    {
+        return hdmiChip.GetAviInfoframe();
+    }
+
     winrt::hstring TanagerDevice::GetDeviceId()
     {
         return m_deviceId;
@@ -131,6 +136,17 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     {
     }
 
+    TanagerDisplayInput::~TanagerDisplayInput()
+    {
+        m_logger.LogNote(L"Cleaning up TanagerDisplayInput.");
+
+        // HPD out
+        if (auto parent = m_parent.lock())
+        {
+            parent->FpgaWrite(0x4, std::vector<byte>({0x32})); // HPD low
+        }
+    }
+
 	hstring TanagerDisplayInput::Name()
 	{
 		switch (m_port)
@@ -147,6 +163,10 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
     void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
     {
+        // Indicate that we have a new call to set the descriptor, after we HPD next - don't try to HPD again until 
+        // after the descriptor changes again.
+        m_hasDescriptorChanged = true;
+
         switch (m_port)
         {
         case TanagerDisplayInputPort::hdmi:
@@ -160,6 +180,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             std::vector<byte> edid(edidDataView.begin(), edidDataView.end());
 
             SetEdid(edid);
+
             break;
         }
         case TanagerDisplayInputPort::displayPort:
@@ -193,7 +214,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         parent->FpgaWrite(0x20, std::vector<byte>({0}));
 
         // Give the Tanager time to capture a frame.
-        Sleep(17);
+        Sleep(200);
 
         // put video capture logic back in reset
         parent->FpgaWrite(0x20, std::vector<byte>({1}));
@@ -243,7 +264,12 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         extendedProps.Insert(L"vFrontPorch", winrt::box_value(timing.vFrontPorch));
         extendedProps.Insert(L"vSyncWidth",  winrt::box_value(timing.vSyncWidth));
         extendedProps.Insert(L"vBackPorch",  winrt::box_value(timing.vBackPorch));
-        
+
+        auto aviInfoFrame = parent->GetAviInfoframe();
+        winrt::Buffer infoFrame(ARRAYSIZE(aviInfoFrame.data));
+        memcpy(infoFrame.data(), aviInfoFrame.data, infoFrame.Capacity());
+        extendedProps.Insert(L"InfoFrame", infoFrame);
+
         auto resolution = winrt::Windows::Graphics::SizeInt32();
         resolution = { timing.hActive, timing.vActive };
 
@@ -254,14 +280,24 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     {
         if (auto parent = m_parent.lock())
         {
-            parent->FpgaWrite(0x4, std::vector<byte>({0x34})); // HPD high
+            if (m_hasDescriptorChanged || !m_strongParent)
+            {
+                parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
+
+                // We have HPD'd in a display, since we need to be able to HPD out again - take a strong reference on the 'parent'
+                // to ensure it isn't cleaned up before this input HPD's out.
+                m_strongParent = parent;
+
+                // Reset the descriptor guard bool here to make sure that we won't HPD in again unless the descriptor changes
+                m_hasDescriptorChanged = false;
+
+                Sleep(5000);
+            }
         }
         else
         {
             m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
         }
-
-        Sleep(1000);
     }
 
     void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
@@ -442,27 +478,70 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         else
         {
             m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+
             {
-                auto filename = name + L"_Captured.bin";
+                auto filename = name + L"_Captured";
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+
+                // Attempt to extract a renderable approximation of the frame
+                auto bitmap = m_frameData.GetRenderableApproximationAsync().get();
+                filename = filename + (bitmap ? L".png" : L".bin");
+
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::ReplaceExisting).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(captureBuffer).get();
+
+                if (bitmap)
+                {
+                    // We could extract a valid bitmap from the data, save that way
+                    auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::PngEncoderId(), stream).get();
+                    encoder.SetSoftwareBitmap(bitmap);
+                }
+                else
+                {
+                    // We could not extract a valid bitmap from the data, just save the binary to disk
+                    stream.WriteAsync(captureBuffer).get();
+                }
+
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
+                m_logger.LogNote(L"Saving captured data here: " + filename);
             }
             {
-                auto filename = name + L"_Predicted.bin";
+                auto filename = name + L"_Predicted";
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
+
+                // Attempt to extract a renderable approximation of the frame
+                SoftwareBitmap bitmap{nullptr};
+                auto predictedFrameDataComparisons = predictedFrameData.as<IFrameDataComparisons>();
+                if (predictedFrameDataComparisons && (bitmap = predictedFrameDataComparisons.GetRenderableApproximationAsync().get()))
+                {
+                    filename = filename + L".png";
+                }
+                else 
+                {
+                    filename = filename + L".bin";
+                }
+
+                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::ReplaceExisting).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(predictBuffer).get();
+
+                if (bitmap)
+                {
+                    // We could extract a valid bitmap from the data, save that way
+                    auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::PngEncoderId(), stream).get();
+                    encoder.SetSoftwareBitmap(bitmap);
+                }
+                else
+                {
+                    // We could not extract a valid bitmap from the data, just save the binary to disk
+                    stream.WriteAsync(predictBuffer).get();
+                }
+
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
+                m_logger.LogNote(L"Saving predicted data here: " + filename);
             }
 
             struct PixelStruct
@@ -490,11 +569,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 }
             }
 
-            float diff = (float)differenceCount / (float)pixelCount;
+            float diff = (float)differenceCount / (float)samples;
             if (diff > 0.10f)
             {
                 std::wstring msg;
-                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
+                std::format_to(std::back_inserter(msg), "{:.2f}% of sampled pixels did not match!", diff*100);
                 m_logger.LogError(msg);
 
                 return false;
