@@ -11,8 +11,6 @@ namespace CaptureCardViewer.Mocks
 	{
 		public string Name => "Mock Controller";
 
-		public string Version => "0.1.2.3";
-
 		public ControllerFirmwareState FirmwareState { get; set; } = ControllerFirmwareState.UpdateRequired;
 
 		public string FirmwareVersion { get; set; } = "2.3.4.5";
@@ -38,6 +36,8 @@ namespace CaptureCardViewer.Mocks
 			FirmwareVersion = "3.2.1.0";
 			FirmwareState = ControllerFirmwareState.UpToDate;
 		}
+
+		MicrosoftDisplayCaptureTools.Framework.Version IController.Version { get; } = new MicrosoftDisplayCaptureTools.Framework.Version(0, 1, 2);
 	}
 
 	public class MockDisplayInput : IDisplayInput
