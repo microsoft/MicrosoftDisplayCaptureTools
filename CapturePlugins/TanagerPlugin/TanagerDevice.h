@@ -33,8 +33,9 @@ namespace winrt::TanagerPlugin::implementation
         MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() override;
 
         IteIt68051Plugin::VideoTiming GetVideoTiming();
-
         IteIt68051Plugin::aviInfoframe GetAviInfoframe();
+
+        bool IsVideoLocked();
 
     private:
         winrt::hstring m_deviceId;
