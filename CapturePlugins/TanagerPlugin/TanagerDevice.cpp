@@ -265,6 +265,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogAssert(L"DRAM controller did not reset in time allowed.");
         }
 
+        // Clear the FPGA DRAM controller register
+        parent->FpgaWrite(0x30, std::vector<byte>({0}));
+
         // Check to see if ITE chip is locked
         auto locked = parent->IsVideoLocked();
         if (!locked)
