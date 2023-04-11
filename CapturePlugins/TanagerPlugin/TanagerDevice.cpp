@@ -105,6 +105,11 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         return hdmiChip.GetAviInfoframe();
     }
 
+    bool TanagerDevice::IsVideoLocked()
+    {
+        return hdmiChip.IsVideoLocked();
+    }
+
     winrt::hstring TanagerDevice::GetDeviceId()
     {
         return m_deviceId;
@@ -243,12 +248,38 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             m_logger.LogAssert(L"Cannot obtain reference to Tanager device.");
         }
 
+        // Reset the DRAM controller in the FPGA
+        parent->FpgaWrite(0x30, std::vector<byte>({1}));
+
+        // Wait for reset to complete
+        uint32_t loopCount = 0;
+        constexpr uint32_t loopLimit = 50;
+        std::vector<byte> controller_register_vector = parent->FpgaRead(0x30, 1);
+        while (controller_register_vector.size() > 0 && (controller_register_vector[0] & 0x02) == 0x00 && loopCount++ < loopLimit)
+        {
+            controller_register_vector = parent->FpgaRead(0x30, 1);
+            Sleep(20);
+        }
+        if (loopCount >= loopLimit)
+        {
+            m_logger.LogAssert(L"DRAM controller did not reset in time allowed.");
+        }
+
+        // Clear the FPGA DRAM controller register
+        parent->FpgaWrite(0x30, std::vector<byte>({0}));
+
+        // Check to see if ITE chip is locked
+        auto locked = parent->IsVideoLocked();
+        if (!locked)
+        {
+            m_logger.LogAssert(L"Video is not locked");
+         }
+
         // Capture frame in DRAM
         parent->FpgaWrite(0x20, std::vector<byte>({0}));
 
         // Give the Tanager time to capture a frame.
-        uint32_t loopCount = 0;
-        constexpr uint32_t loopLimit = 50;
+        loopCount = 0;
         std::vector<byte> video_register_vector = parent->FpgaRead(0x20, 1);
         while (video_register_vector.size() > 0 && (video_register_vector[0] & 0x01) == 0x00 && loopCount++ < loopLimit)
         {
