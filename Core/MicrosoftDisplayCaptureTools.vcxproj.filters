@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>accd3aa8-1ba0-4223-9bbe-0c431709210b</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedIDLs">
+      <UniqueIdentifier>{ffcafd31-db8e-420b-8cfe-a50aede31df8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="EDIDDescriptor.cpp" />
+    <ClCompile Include="FrameData.cpp" />
+    <ClCompile Include="Utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="EDIDDescriptor.h" />
+    <ClInclude Include="FrameData.h" />
+    <ClInclude Include="Utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="MicrosoftDisplayCaptureTools.idl" />
+    <Midl Include="..\Shared\IDL\Framework.idl">
+      <Filter>SharedIDLs</Filter>
+    </Midl>
+    <Midl Include="..\Shared\IDL\CaptureCardPlugin.idl">
+      <Filter>SharedIDLs</Filter>
+    </Midl>
+    <Midl Include="..\Shared\IDL\ConfigurationTools.idl">
+      <Filter>SharedIDLs</Filter>
+    </Midl>
+    <Midl Include="..\Shared\IDL\DisplayManager.idl">
+      <Filter>SharedIDLs</Filter>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="MicrosoftDisplayCaptureTools.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+  </ItemGroup>
+</Project>

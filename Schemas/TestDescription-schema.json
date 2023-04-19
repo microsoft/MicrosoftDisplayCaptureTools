@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "Version": {
+      "type": "number"
+    },
+    "Components": {
+      "$ref": "#/definitions/Components"
+    },
+    "TestCase": {
+      "$ref": "#/definitions/TestCase"
+    }
+  },
+  "definitions": {
+    "Components": {
+      "type": "object",
+      "properties": {
+		"CapturePlugin": {
+			"$ref": "#/definitions/LoadedComponent"
+		},
+		"DisplayEngine": {
+			"$ref": "#/definitions/LoadedComponent"
+		},
+        "ConfigurationToolboxes": {
+          "type": "array",
+			"items": {
+				"$ref": "#/definitions/LoadedComponent"
+			}
+        }
+      }
+    },
+    "LoadedComponent": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string"
+        },
+        "Class": {
+          "type": "string"
+        },
+        "Version": {
+          "type": "number"
+        },
+        "Settings": {}
+      }
+    },
+    "TestCase": {
+      "type": "object",
+      "properties": {
+        "Tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Tool"
+          }
+        },
+        "ComparisonTolerance": {
+          "$ref": "#/definitions/ComparisonTolerance"
+        }
+      }
+    },
+    "Tool": {
+      "type": "object",
+      "properties": {
+        "ToolName": {
+          "type": "string"
+        }
+      }
+    },
+    "ComparisonTolerance": {
+      "type": "object",
+      "properties": {
+        "PerPixel": {
+          "type": "boolean"
+        },
+        "PercentageError": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}
