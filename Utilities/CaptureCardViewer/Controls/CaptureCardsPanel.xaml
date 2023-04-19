@@ -1,0 +1,158 @@
+﻿<UserControl
+    x:Class="CaptureCardViewer.Controls.CaptureCardsPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:CaptureCardViewer"
+    xmlns:localcontrols="clr-namespace:CaptureCardViewer.Controls"
+    xmlns:localvm="clr-namespace:CaptureCardViewer.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <local:FirmwareUpdateStatusConverter x:Key="FirmwareUpdateStatusConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!--  Toolbar at the top of the pane  -->
+        <ui:CommandBarToolBar DockPanel.Dock="Top">
+            <ui:AppBarButton
+                Icon="OpenFile"
+                IsCompact="True"
+                Label="Load Plugin">
+                <ui:AppBarButton.Flyout>
+                    <ui:MenuFlyout Placement="Bottom">
+                        <MenuItem Header="Generic Video Device" />
+                        <MenuItem Header="Tanager Device" />
+                        <Separator />
+                        <MenuItem Command="{Binding ViewModel.LoadCaptureCardFromFileCommand}" Header="Load from file..." />
+                    </ui:MenuFlyout>
+                </ui:AppBarButton.Flyout>
+            </ui:AppBarButton>
+            <ui:AppBarButton
+                Icon="Clear"
+                IsCompact="True"
+                Label="Clear" />
+        </ui:CommandBarToolBar>
+
+        <!--  Split the main part of the pane into two halves separated by a GridSplitter  -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition Height="4" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <!--  TreeView and its data templates  -->
+            <Border Grid.Row="0">
+                <Border.Resources>
+                    <HierarchicalDataTemplate DataType="{x:Type localvm:CaptureCardViewModel}" ItemsSource="{Binding Inputs}">
+                        <TextBlock>
+                            <Run Text="{Binding Name, Mode=OneWay}" />
+                            <Run Foreground="Gray" Text="{Binding Version, Mode=OneWay}" />
+                        </TextBlock>
+                    </HierarchicalDataTemplate>
+                    <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
+                        <TextBlock>
+                            <Run Text="{Binding Name, Mode=OneWay}" />
+                        </TextBlock>
+                    </DataTemplate>
+                </Border.Resources>
+                <TreeView x:Name="captureTree" ItemsSource="{Binding ViewModel.CaptureCards}" />
+            </Border>
+
+            <GridSplitter
+                Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                ResizeBehavior="PreviousAndNext"
+                ResizeDirection="Rows" />
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Resources>
+
+                    <!--  Template for IController capture cards  -->
+                    <DataTemplate DataType="{x:Type localvm:CaptureCardViewModel}">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Margin="5" TextWrapping="Wrap">
+                                <Run Text="Name: " />
+                                <Run Text="{Binding Name, Mode=OneWay}" />
+                                <LineBreak />
+                                <Run Text="Plug-in Version: " />
+                                <Run Text="{Binding Version, Mode=OneWay}" />
+                                <LineBreak />
+                                <Run Text="Firmware Version: " />
+                                <Run Text="{Binding FirmwareVersion, Mode=OneWay}" />
+                                <InlineUIContainer BaselineAlignment="Center">
+                                    <ui:SymbolIcon
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}"
+                                        Symbol="Refresh"
+                                        ToolTip="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}"
+                                        Visibility="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}" />
+                                </InlineUIContainer>
+                            </TextBlock>
+                            <WrapPanel Orientation="Horizontal">
+                                <Button
+                                    Margin="5"
+                                    Command="{Binding UpdateFirmwareCommand}"
+                                    Content="Update Firmware"
+                                    IsEnabled="{Binding CanUpdateFirmware}"
+                                    Visibility="{Binding FirmwareStatus, Converter={StaticResource FirmwareUpdateStatusConverter}}" />
+                                <ui:ProgressRing
+                                    Width="16"
+                                    Height="16"
+                                    Margin="5"
+                                    IsActive="{Binding IsUpdatingFirmware}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <!--  Template for individual IDisplayInputs  -->
+                    <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
+                        <StackPanel>
+                            <TextBlock Margin="5" TextWrapping="Wrap">
+                                <Run Text="Name: " />
+                                <Run Text="{Binding Name, Mode=OneWay}" />
+                                <LineBreak />
+                                <Run Text="Max Descriptor Size: " />
+                                <Run Text="{Binding MaxDescriptorSize, Mode=OneWay}" />
+                                <LineBreak />
+                                <Run Text="Capabilities: " />
+                                <Run Text="{Binding CapabilitiesString, Mode=OneWay}" />
+                            </TextBlock>
+                            <Button
+                                Margin="5"
+                                Command="{Binding CreateCaptureSessionCommand}"
+                                Content="Start Capture Session" />
+                            <ui:DropDownButton
+                                Margin="5"
+                                Content="Load Descriptor"
+                                Visibility="{Binding CanConfigureEDID, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ui:DropDownButton.Flyout>
+                                    <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                        <MenuItem Command="{Binding SetDescriptorFromFileCommand}" Header="From file...">
+                                            <MenuItem.Icon>
+                                                <ui:SymbolIcon Symbol="OpenFile" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ui:MenuFlyout>
+                                </ui:DropDownButton.Flyout>
+                            </ui:DropDownButton>
+                        </StackPanel>
+                    </DataTemplate>
+                </ScrollViewer.Resources>
+
+                <!--  Automatically picks the template above based on the TreeView selection  -->
+                <ContentControl Content="{Binding ElementName=captureTree, Path=SelectedItem}" />
+            </ScrollViewer>
+        </Grid>
+
+    </DockPanel>
+</UserControl>

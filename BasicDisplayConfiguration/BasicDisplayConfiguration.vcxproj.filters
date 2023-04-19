@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>accd3aa8-1ba0-4223-9bbe-0c431709210b</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="PatternTool.cpp" />
+    <ClCompile Include="ResolutionTool.cpp" />
+    <ClCompile Include="RefreshRateTool.cpp" />
+    <ClCompile Include="Toolbox.cpp" />
+    <ClCompile Include="PixelFormatTool.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="PatternTool.h" />
+    <ClInclude Include="ResolutionTool.h" />
+    <ClInclude Include="RefreshRateTool.h" />
+    <ClInclude Include="Toolbox.h" />
+    <ClInclude Include="PixelFormatTool.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="Toolbox.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BasicDisplayConfiguration.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+</Project>

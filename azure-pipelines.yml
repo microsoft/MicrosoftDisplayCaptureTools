@@ -1,0 +1,53 @@
+trigger:
+- master
+
+pool:
+  vmImage: windows-latest
+
+variables:
+  major: 0
+  minor: 1
+  semantic: ${{variables.major}}.${{variables.minor}}
+  semanticVersion: $[counter(variables['semantic'], 0)]
+  buildConfiguration: 'Debug'
+
+name: $(semantic).$(semanticVersion).$(rev:r)
+
+steps:
+  - task: NuGetAuthenticate@0
+  - task: NuGetToolInstaller@1
+    displayName: Install NuGet tools
+    inputs:
+      checkLatest: true
+
+  - task: NuGetCommand@2
+    displayName: 'Restore Nuget Packages'
+    inputs:
+      restoreDirectory: packages
+      nugetConfigPath: 'nuget.config'
+      restoreSolution: '*.sln'
+      feedsToUse: 'config'
+
+  - task: VSBuild@1
+    displayName: 'Visual Studio 2022 Build, Debug x64'
+    inputs:
+      solution: '**\*.sln'
+      vsVersion: '17.0'
+      platform: 'x64'
+      configuration: 'debug'
+
+  - task: NuGetCommand@2
+    inputs:
+      command: 'pack'
+      packagesToPack: '**/*.nuspec'
+      configuration: 
+      versioningScheme: 'byBuildNumber'
+
+  - task: NuGetCommand@2
+    displayName: 'Nuget push'
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: 'DisplayHardwareHLK/Microsoft.Display.HardwareCaptureTesting'
+      allowPackageConflicts: true

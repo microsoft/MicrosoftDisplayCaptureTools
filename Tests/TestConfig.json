@@ -1,0 +1,36 @@
+{
+	"Version": 0.1,
+	"Components": {
+		"CapturePlugin": {
+			"Path": "CaptureCards\\TanagerPlugin.dll",
+			"Class": "TanagerPlugin.ControllerFactory",
+			"Version": 0.1,
+			"Settings": null
+		},
+		"DisplayEngine": {
+			"Path": "DisplayEngines\\BasicDisplayControl.dll",
+			"Class": "BasicDisplayControl.DisplayEngineFactory",
+			"Version": 0.1,
+			"Settings": null
+		},
+		"ConfigurationToolboxes": [
+			{
+				"Path": "Toolboxes\\BasicDisplayConfiguration.dll",
+				"Class": "BasicDisplayConfiguration.ToolboxFactory",
+				"Version": 0.1,
+				"Settings": null
+			}
+		]
+	},
+	"TestCase": {
+		"Tools": [
+			{ "Resolution": "1920x1080" },
+			{ "RefreshRate": "60hz" },
+			{ "Pattern": "green" }
+		],
+		"ComparisonTolerance": {
+			"PerPixel": true,
+			"PercentageError": 2.5
+		}
+	}
+}
