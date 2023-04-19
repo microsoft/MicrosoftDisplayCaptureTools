@@ -1,0 +1,4 @@
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
+#define TEST_CLASS_SETUP(methodName) TAEF_REGISTER_FIXTURE_METHOD(methodName, ::WEX::Private::TaefAbiStructIdentifier::TestClassSetup, YOU_CAN_ONLY_DESIGNATE_ONE_CLASS_METHOD_TO_BE_A_TEST_CLASS_SETUP_METHOD) TAEF_DECLARE_OR_DEFINE_FIXTURE(methodName)

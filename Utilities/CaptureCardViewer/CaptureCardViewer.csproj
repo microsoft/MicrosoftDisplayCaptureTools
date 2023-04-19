@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net7.0-windows10.0.22000.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+		<PublishReadyToRun>true</PublishReadyToRun>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<Platforms>AnyCPU;x64;ARM64</Platforms>
+    <StartupObject>CaptureCardViewer.App</StartupObject>
+    <!--<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>obj\SourceGenerated</CompilerGeneratedFilesOutputPath>-->
+  </PropertyGroup>
+
+	<!-- Generates a C# projection of WinRT types (see https://docs.microsoft.com/en-us/windows/uwp/csharp-winrt/net-projection-from-cppwinrt-component)-->
+	<PropertyGroup>
+		<CsWinRTIncludes>MicrosoftDisplayCaptureTools</CsWinRTIncludes>
+		<CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<Description>A UI wrapping the capabilities of the Microsoft Display Capture Tools project.</Description>
+		<Title>Microsoft Display Capture Tools Utilities</Title>
+	</PropertyGroup>
+  
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="7.1.2" />
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.71.2" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.71.2" />
+		<PackageReference Include="Microsoft.Taef" Version="10.77.230207002" />
+		<PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
+		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.2.162-beta">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.1" />
+		<PackageReference Include="ModernWpf.MessageBox" Version="0.5.2" />
+		<PackageReference Include="ModernWpfUI" Version="0.9.6" />
+		<PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Core\MicrosoftDisplayCaptureTools.vcxproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="TestConfig.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+</Project>
