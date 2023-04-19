@@ -1,0 +1,296 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"$id": "http://raw.githubusercontent.com/microsoft/display-capture-tools/main/schemas/configuration-schema.json",
+	"type": "object",
+	"default": {},
+	"title": "Root Schema",
+	"required": [
+		"Version",
+		"Components",
+		"TestSystem"
+	],
+	"properties": {
+		"Version": {
+			"type": "string",
+			"default": "",
+			"title": "Display capture tools version",
+			"examples": [
+				"0.1"
+			]
+		},
+		"Components": {
+			"type": "object",
+			"default": {},
+			"title": "The set of components",
+			"required": [
+				"CapturePlugin",
+				"DisplayEngine",
+				"ConfigurationToolboxes"
+			],
+			"properties": {
+				"CapturePlugin": {
+					"type": "object",
+					"default": {},
+					"title": "The CapturePlugin Schema",
+					"required": [
+						"Path",
+						"Class",
+						"Settings"
+					],
+					"properties": {
+						"Path": {
+							"type": "string",
+							"default": "",
+							"title": "The Path Schema",
+							"examples": [
+								"TanagerPlugin.dll"
+							]
+						},
+						"Class": {
+							"type": "string",
+							"default": "",
+							"title": "The Class Schema",
+							"examples": [
+								"TanagerPlugin.Controller"
+							]
+						},
+						"Settings": {
+							"type": "null",
+							"default": null,
+							"title": "The Settings Schema",
+							"examples": [
+								null
+							]
+						}
+					},
+					"examples": [
+						{
+							"Path": "TanagerPlugin.dll",
+							"Class": "TanagerPlugin.Controller",
+							"Settings": null
+						}
+					]
+				},
+				"DisplayEngine": {
+					"type": "object",
+					"default": {},
+					"title": "The DisplayEngine Schema",
+					"required": [
+						"Path",
+						"Class",
+						"Settings"
+					],
+					"properties": {
+						"Path": {
+							"type": "string",
+							"default": "",
+							"title": "The Path Schema",
+							"examples": [
+								"BasicDisplayControl.dll"
+							]
+						},
+						"Class": {
+							"type": "string",
+							"default": "",
+							"title": "The Class Schema",
+							"examples": [
+								"DisplayControl.DisplayEngine"
+							]
+						},
+						"Settings": {
+							"type": "null",
+							"default": null,
+							"title": "The Settings Schema",
+							"examples": [
+								null
+							]
+						}
+					},
+					"examples": [
+						{
+							"Path": "BasicDisplayControl.dll",
+							"Class": "DisplayControl.DisplayEngine",
+							"Settings": null
+						}
+					]
+				},
+				"ConfigurationToolboxes": {
+					"type": "array",
+					"default": [],
+					"title": "The ConfigurationToolboxes Schema",
+					"items": {
+						"type": "object",
+						"default": {},
+						"title": "A Schema",
+						"required": [
+							"Path",
+							"Class",
+							"Settings"
+						],
+						"properties": {
+							"Path": {
+								"type": "string",
+								"default": "",
+								"title": "The Path Schema",
+								"examples": [
+									"BasicDisplayConfiguration.dll"
+								]
+							},
+							"Class": {
+								"type": "string",
+								"default": "",
+								"title": "The Class Schema",
+								"examples": [
+									"BasicDisplayConfiguration.Toolbox"
+								]
+							},
+							"Settings": {
+								"type": "null",
+								"default": null,
+								"title": "The Settings Schema",
+								"examples": [
+									null
+								]
+							}
+						},
+						"examples": [
+							{
+								"Path": "BasicDisplayConfiguration.dll",
+								"Class": "BasicDisplayConfiguration.Toolbox",
+								"Settings": null
+							}
+						]
+					},
+					"examples": [
+						[
+							{
+								"Path": "BasicDisplayConfiguration.dll",
+								"Class": "BasicDisplayConfiguration.Toolbox",
+								"Settings": null
+							}
+						]
+					]
+				}
+			},
+			"examples": [
+				{
+					"CapturePlugin": {
+						"Path": "TanagerPlugin.dll",
+						"Class": "TanagerPlugin.Controller",
+						"Settings": null
+					},
+					"DisplayEngine": {
+						"Path": "BasicDisplayControl.dll",
+						"Class": "DisplayControl.DisplayEngine",
+						"Settings": null
+					},
+					"ConfigurationToolboxes": [
+						{
+							"Path": "BasicDisplayConfiguration.dll",
+							"Class": "BasicDisplayConfiguration.Toolbox",
+							"Settings": null
+						}
+					]
+				}
+			]
+		},
+		"TestSystem": {
+			"type": "object",
+			"default": {},
+			"title": "The TestSystem Schema",
+			"required": [
+				"DisplayInputMapping"
+			],
+			"properties": {
+				"DisplayInputMapping": {
+					"type": "array",
+					"default": [],
+					"title": "A list of display inputs and their plugin mappings",
+					"items": {
+						"type": "object",
+						"default": {},
+						"title": "Maps a display input to a plugin",
+						"required": [
+							"DisplayId",
+							"PluginInputName"
+						],
+						"properties": {
+							"DisplayId": {
+								"type": "string",
+								"default": "",
+								"title": "An ID uniquely identifying the display input",
+								"examples": [
+									"DEL41846VTHZ13_1E_07E4_EC"
+								]
+							},
+							"PluginInputName": {
+								"type": "string",
+								"default": "",
+								"title": "An ID that the plugin uses to select the input",
+								"examples": [
+									"HDMI"
+								]
+							}
+						},
+						"examples": [
+							{
+								"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+								"PluginInputName": "HDMI"
+							}
+						]
+					},
+					"examples": [
+						[
+							{
+								"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+								"PluginInputName": "HDMI"
+							}
+						]
+					]
+				}
+			},
+			"examples": [
+				{
+					"DisplayInputMapping": [
+						{
+							"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+							"PluginInputName": "HDMI"
+						}
+					]
+				}
+			]
+		}
+	},
+	"examples": [
+		{
+			"Version": "0.1",
+			"Components": {
+				"CapturePlugin": {
+					"Path": "TanagerPlugin.dll",
+					"Class": "TanagerPlugin.Controller",
+					"Settings": null
+				},
+				"DisplayEngine": {
+					"Path": "BasicDisplayControl.dll",
+					"Class": "DisplayControl.DisplayEngine",
+					"Settings": null
+				},
+				"ConfigurationToolboxes": [
+					{
+						"Path": "BasicDisplayConfiguration.dll",
+						"Class": "BasicDisplayConfiguration.Toolbox",
+						"Settings": null
+					}
+				]
+			},
+			"TestSystem": {
+				"DisplayInputMapping": [
+					{
+						"DisplayId": "DEL41846VTHZ13_1E_07E4_EC",
+						"PluginInputName": "HDMI"
+					}
+				]
+			}
+		}
+	]
+}

@@ -1,0 +1,181 @@
+﻿<Window
+    x:Class="CaptureCardViewer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:CaptureCardViewer"
+    xmlns:localcontrols="clr-namespace:CaptureCardViewer.Controls"
+    xmlns:localvm="clr-namespace:CaptureCardViewer.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="Frame Debugger"
+    Width="1200"
+    Height="600"
+    local:TitlebarCustomizations.DarkModeTitlebar="True"
+    ui:ThemeManager.IsThemeAware="True"
+    Background="{DynamicResource SystemControlPageBackgroundAltHighBrush}"
+    DataContext="{Binding RelativeSource={RelativeSource Self}}"
+    Foreground="{DynamicResource SystemControlPageTextBaseHighBrush}"
+    mc:Ignorable="d">
+
+    <Window.Resources>
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <DataTemplate DataType="{x:Type localvm:CaptureSessionViewModel}">
+            <localcontrols:CaptureSessionControl />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type localvm:WorkspaceViewModel}">
+            <localcontrols:WelcomePage />
+        </DataTemplate>
+
+        <local:DocumentTemplateSelector x:Key="DocumentTitleSelector">
+            <local:DocumentTemplateSelector.CaptureSessionTemplate>
+                <DataTemplate>
+                    <TextBlock>Frame Capture</TextBlock>
+                </DataTemplate>
+            </local:DocumentTemplateSelector.CaptureSessionTemplate>
+            <local:DocumentTemplateSelector.WelcomeTemplate>
+                <DataTemplate>
+                    <TextBlock>Welcome</TextBlock>
+                </DataTemplate>
+            </local:DocumentTemplateSelector.WelcomeTemplate>
+        </local:DocumentTemplateSelector>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0" Grid.ColumnSpan="3">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Clear configuration" />
+                <MenuItem Command="{Binding ViewModel.LoadFromConfigFileCommand}" Header="_Open device configuration..." />
+                <MenuItem Header="_Save configuration" />
+                <Separator />
+                <MenuItem Header="Open test case..." />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Command="{Binding ShowDocumentationCommand}" Header="_Documentation" />
+                <MenuItem Command="{Binding ShowAboutCommand}" Header="_About" />
+            </MenuItem>
+        </Menu>
+
+        <!--  The DockingManager handles the layout of documents, docked and anchored panels, etc.  -->
+        <DockingManager
+            x:Name="dockManager"
+            Grid.Row="1"
+            ActiveContent="{Binding ActiveContent, Mode=TwoWay}"
+            DocumentHeaderTemplateSelector="{StaticResource DocumentTitleSelector}"
+            DocumentTitleTemplateSelector="{StaticResource DocumentTitleSelector}"
+            DocumentsSource="{Binding ViewModel.Documents}">
+            <DockingManager.Theme>
+                <Vs2013DarkTheme />
+            </DockingManager.Theme>
+            <DockingManager.LayoutUpdateStrategy>
+                <local:CustomLayoutUpdateStrategy />
+            </DockingManager.LayoutUpdateStrategy>
+            <LayoutRoot>
+                <LayoutRoot.LeftSide>
+                    <LayoutAnchorSide>
+                        <LayoutAnchorGroup>
+
+                            <!--  Capture Inputs pane  -->
+                            <LayoutAnchorable
+                                Title="Capture Inputs"
+                                AutoHideMinWidth="200"
+                                AutoHideWidth="300"
+                                CanClose="False"
+                                FloatingWidth="300">
+
+                                <localcontrols:CaptureCardsPanel />
+
+                            </LayoutAnchorable>
+
+                            <!--  Toolboxes pane  -->
+                            <LayoutAnchorable
+                                Title="Toolboxes"
+                                AutoHideMinWidth="200"
+                                AutoHideWidth="300"
+                                CanClose="False"
+                                FloatingWidth="300">
+
+                                <localcontrols:ToolboxesPanel />
+
+                            </LayoutAnchorable>
+
+                            <!--  Render Engines pane  -->
+                            <LayoutAnchorable
+                                Title="Render Engines"
+                                AutoHideMinWidth="200"
+                                AutoHideWidth="300"
+                                CanClose="False"
+                                FloatingWidth="300">
+
+                                <localcontrols:RenderEnginesPanel />
+
+                            </LayoutAnchorable>
+
+
+                        </LayoutAnchorGroup>
+                    </LayoutAnchorSide>
+                </LayoutRoot.LeftSide>
+                <LayoutRoot.BottomSide>
+                    <LayoutAnchorSide>
+                        <LayoutAnchorGroup>
+
+                            <!--  Log Output pane  -->
+                            <LayoutAnchorable
+                                Title="Log Output"
+                                AutoHideHeight="200"
+                                CanClose="False">
+                                <DockPanel LastChildFill="True">
+                                    <ui:CommandBarToolBar DockPanel.Dock="Top">
+                                        <ui:AppBarButton
+                                            Command="{Binding ViewModel.Logger.SaveLogCommand}"
+                                            Icon="Save"
+                                            IsCompact="True"
+                                            Label="Save" />
+                                        <ui:AppBarButton
+                                            Command="{Binding ViewModel.Logger.ClearLogCommand}"
+                                            Icon="Clear"
+                                            IsCompact="True"
+                                            Label="Clear" />
+                                    </ui:CommandBarToolBar>
+                                    <FlowDocumentScrollViewer Document="{Binding ViewModel.Logger.Document}" />
+                                </DockPanel>
+                            </LayoutAnchorable>
+                        </LayoutAnchorGroup>
+                    </LayoutAnchorSide>
+                </LayoutRoot.BottomSide>
+
+                <LayoutPanel Orientation="Horizontal">
+                    <LayoutDocumentPaneGroup>
+                        <LayoutDocumentPane />
+                    </LayoutDocumentPaneGroup>
+                </LayoutPanel>
+            </LayoutRoot>
+        </DockingManager>
+
+        <!--  About box  -->
+        <ui:ContentDialog
+            x:Name="aboutDialog"
+            Grid.RowSpan="2"
+            CloseButtonText="Close"
+            DefaultButton="Close">
+            <StackPanel Orientation="Vertical">
+                <TextBlock FontSize="15" Text="Microsoft Display Capture Tools" />
+                <TextBlock Margin="0,0,0,10">
+                    <Run Text="Frame Debugger" />
+                    <Run Text="{Binding ViewModel.AppVersion, Mode=OneWay}" />
+                </TextBlock>
+                <TextBlock Text="Copyright ©️ Microsoft Corporation" />
+            </StackPanel>
+        </ui:ContentDialog>
+
+    </Grid>
+</Window>
