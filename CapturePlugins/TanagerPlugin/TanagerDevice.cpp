@@ -111,16 +111,16 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         }
     }
 
-    TanagerPortSelection TanagerDevice::SelectHdmi()
+    std::mutex& TanagerDevice::SelectHdmi()
     {
         hdmiChip.SelectHdmi();
-        return TanagerPortSelection(m_changingPortsLocked);
+        return m_changingPortsLocked;
     }
 
-    TanagerPortSelection TanagerDevice::SelectDisplayPort()
+    std::mutex& TanagerDevice::SelectDisplayPort()
     {
         hdmiChip.SelectDisplayPort();
-        return TanagerPortSelection(m_changingPortsLocked);
+        return m_changingPortsLocked;
     }
 
     IteIt68051Plugin::VideoTiming TanagerDevice::GetVideoTiming()

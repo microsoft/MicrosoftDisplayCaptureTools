@@ -5,23 +5,6 @@ namespace winrt::TanagerPlugin::implementation
     // This is a temporary limit while we're bringing up some of the hardware on board.
     constexpr uint32_t MaxDescriptorByteSize = 512;
 
-    // A small struct to enforce that we don't accidentally interleave hardware calls for the HDMI and DP inputs.
-    struct TanagerPortSelection
-    {
-    private:
-        std::atomic_bool& m_isLocked;
-    public:
-        TanagerPortSelection(std::atomic_bool& isLocked) : m_isLocked(isLocked)
-        {
-            m_isLocked = true;
-        }
-
-        ~TanagerPortSelection()
-        {
-            m_isLocked = false;
-        }
-    };
-
     class TanagerDevice :
         public IMicrosoftCaptureBoard,
         public std::enable_shared_from_this<TanagerDevice>
@@ -51,8 +34,8 @@ namespace winrt::TanagerPlugin::implementation
         MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() override;
 
         bool IsVideoLocked();
-        TanagerPortSelection SelectHdmi();
-        TanagerPortSelection SelectDisplayPort();
+        std::mutex& SelectHdmi();
+        std::mutex& SelectDisplayPort();
         IteIt68051Plugin::VideoTiming GetVideoTiming();
 
         IteIt68051Plugin::aviInfoframe GetAviInfoframe();
@@ -63,7 +46,7 @@ namespace winrt::TanagerPlugin::implementation
         std::shared_ptr<I2cDriver> m_pDriver;
         IteIt68051Plugin::IteIt68051 hdmiChip;
         Fx3FpgaInterface m_fpga;
-        std::atomic_bool m_changingPortsLocked = false;
+        std::mutex m_changingPortsLocked;
 
     public:
         // Adding logger as public member as classes use a weak_from_this pattern

@@ -66,7 +66,7 @@ TanagerDisplayInputHdmi::~TanagerDisplayInputHdmi()
     // HPD out
     if (auto parent = m_parent.lock())
     {
-        auto selection = parent->SelectHdmi();
+        auto lock = std::scoped_lock(parent->SelectHdmi());
         parent->FpgaWrite(0x4, std::vector<byte>({0x32})); // HPD high
     }
 }
@@ -111,7 +111,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
         m_logger.LogError(L"Cannot obtain reference to Tanager device.");
     }
 
-    auto selection = parent->SelectHdmi();
+    auto lock = std::scoped_lock(parent->SelectHdmi());
 
     // Reset the DRAM controller in the FPGA
     parent->FpgaWrite(0x30, std::vector<byte>({1}));
@@ -240,7 +240,7 @@ void TanagerDisplayInputHdmi::FinalizeDisplayState()
     {
         if (m_hasDescriptorChanged || !m_strongParent)
         {
-            auto selection = parent->SelectHdmi();
+            auto lock = std::scoped_lock(parent->SelectHdmi());
 
             auto hasDeviceChanged = WaitForDisplayDevicesChange();
             parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
@@ -282,7 +282,7 @@ void TanagerDisplayInputHdmi::SetEdid(std::vector<byte> edid)
 
     if (auto parent = m_parent.lock())
     {
-        auto selection = parent->SelectHdmi();
+        auto lock = std::scoped_lock(parent->SelectHdmi());
         parent->FpgaWrite(writeAddress, edid);
     }
     else
