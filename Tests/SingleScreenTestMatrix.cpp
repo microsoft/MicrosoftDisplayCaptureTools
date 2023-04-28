@@ -36,6 +36,37 @@ void SingleScreenTestMatrix::Test()
     auto frameworkLock = g_framework.LockFramework();
     VERIFY_IS_NOT_NULL(frameworkLock);
 
+    auto displayEngines = g_framework.GetDisplayEngines();
+
+    if (displayEngines.empty())
+    {
+        g_logger.LogAssert(L"No DisplayEngines loaded.");
+    }
+
+    // This test only supports a single screen and so can only load a single DisplayEngine,
+    // so select the highest version one installed.
+    winrt::IDisplayEngine displayEngine = displayEngines[0];
+    for (auto&& engine : displayEngines)
+    {
+        if (engine.Version().IsHigherVersion(displayEngine.Version()))
+        {
+            displayEngine = engine;
+        }
+    }
+
+    auto toolboxes = g_framework.GetConfigurationToolboxes();
+    std::vector<winrt::ConfigurationTools::IConfigurationTool> tools;
+
+    for (auto&& toolbox : toolboxes)
+    {
+        auto toolList = toolbox.GetSupportedTools();
+
+        for (auto toolName : toolList)
+        {
+            tools.push_back(toolbox.GetTool(toolName));
+        }
+    }
+
     // Pick the display - capture pair to use for this test.
     VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
 
@@ -44,41 +75,10 @@ void SingleScreenTestMatrix::Test()
         auto displayOutputTarget = mapping.Source();
         auto displayInput = mapping.Sink();
 
-        auto displayEngines = g_framework.GetDisplayEngines();
-
-        if (displayEngines.empty())
-        {
-            g_logger.LogAssert(L"No DisplayEngines loaded.");
-        }
-
-        winrt::IDisplayEngine displayEngine = displayEngines[0];
-
-        // This test only supports a single screen and so can only load a single DisplayEngine,
-        // so select the highest version one installed.
-        for (auto&& engine : displayEngines)
-        {
-            if (engine.Version().IsHigherVersion(displayEngine.Version()))
-            {
-                displayEngine = engine;
-            }
-        }
-
         auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
         auto prediction = displayEngine.CreateDisplayPrediction();
 
-        winrt::hstring testName = L"";
-        auto toolboxes = g_framework.GetConfigurationToolboxes();
-        std::vector<winrt::ConfigurationTools::IConfigurationTool> tools;
-
-        for (auto&& toolbox : toolboxes)
-        {
-            auto toolList = toolbox.GetSupportedTools();
-
-            for (auto toolName : toolList)
-            {
-                tools.push_back(toolbox.GetTool(toolName));
-            }
-        }
+        winrt::hstring testName = displayInput.Name() + L":";
 
         // All tools need to be run in order of their category
         constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
