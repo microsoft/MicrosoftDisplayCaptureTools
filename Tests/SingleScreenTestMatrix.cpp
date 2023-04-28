@@ -38,85 +38,87 @@ void SingleScreenTestMatrix::Test()
 
     // Pick the display - capture pair to use for this test.
     VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
-    winrt::ISourceToSinkMapping mapping = g_displayMap.GetAt(0);
 
-    auto displayOutputTarget = mapping.Source();
-    auto displayInput = mapping.Sink();
-
-    auto displayEngines = g_framework.GetDisplayEngines();
-
-    if (displayEngines.empty())
+    for (auto&& mapping : g_displayMap)
     {
-        g_logger.LogAssert(L"No DisplayEngines loaded.");
-    }
+        auto displayOutputTarget = mapping.Source();
+        auto displayInput = mapping.Sink();
 
-    winrt::IDisplayEngine displayEngine = displayEngines[0];
+        auto displayEngines = g_framework.GetDisplayEngines();
 
-    // This test only supports a single screen and so can only load a single DisplayEngine,
-    // so select the highest version one installed.
-    for (auto&& engine : displayEngines)
-    {
-        if (engine.Version().IsHigherVersion(displayEngine.Version()))
+        if (displayEngines.empty())
         {
-            displayEngine = engine;
+            g_logger.LogAssert(L"No DisplayEngines loaded.");
         }
-    }
 
-    auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
-    auto prediction = displayEngine.CreateDisplayPrediction();
-    
-    winrt::hstring testName = L"";
-    auto toolboxes = g_framework.GetConfigurationToolboxes();
-    std::vector<winrt::ConfigurationTools::IConfigurationTool> tools;
+        winrt::IDisplayEngine displayEngine = displayEngines[0];
 
-    for (auto&& toolbox : toolboxes)
-    {
-        auto toolList = toolbox.GetSupportedTools();
-
-        for (auto toolName : toolList)
+        // This test only supports a single screen and so can only load a single DisplayEngine,
+        // so select the highest version one installed.
+        for (auto&& engine : displayEngines)
         {
-            tools.push_back(toolbox.GetTool(toolName));
-        }
-    }
-
-    // All tools need to be run in order of their category
-    constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
-        winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
-
-    for (auto& category : categoryOrder)
-    {
-        for (auto tool : tools)
-        {
-            if (tool.Category() != category)
-                continue;
-
-            String toolSetting;
-            if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
+            if (engine.Version().IsHigherVersion(displayEngine.Version()))
             {
-                String output = L"";
-
-                // Setting the tool value
-                tool.SetConfiguration(winrt::hstring(toolSetting));
-                tool.ApplyToOutput(displayOutput);
-                tool.ApplyToPrediction(prediction);
-                testName = testName + tool.GetConfiguration() + L"_";
+                displayEngine = engine;
             }
         }
-    }
 
-    // Start generating the prediction at the same time as we start outputting.
-    auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
+        auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
+        auto prediction = displayEngine.CreateDisplayPrediction();
 
-    // Make sure the capture card is ready
-    displayInput.FinalizeDisplayState();
+        winrt::hstring testName = L"";
+        auto toolboxes = g_framework.GetConfigurationToolboxes();
+        std::vector<winrt::ConfigurationTools::IConfigurationTool> tools;
 
-    {
-        auto renderer = displayOutput.StartRender();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        for (auto&& toolbox : toolboxes)
+        {
+            auto toolList = toolbox.GetSupportedTools();
 
-        // Capture the frame.
-        auto capturedFrame = displayInput.CaptureFrame();
+            for (auto toolName : toolList)
+            {
+                tools.push_back(toolbox.GetTool(toolName));
+            }
+        }
 
-        capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
+        // All tools need to be run in order of their category
+        constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
+            winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
+
+        for (auto& category : categoryOrder)
+        {
+            for (auto tool : tools)
+            {
+                if (tool.Category() != category)
+                    continue;
+
+                String toolSetting;
+                if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
+                {
+                    String output = L"";
+
+                    // Setting the tool value
+                    tool.SetConfiguration(winrt::hstring(toolSetting));
+                    tool.ApplyToOutput(displayOutput);
+                    tool.ApplyToPrediction(prediction);
+                    testName = testName + tool.GetConfiguration() + L"_";
+                }
+            }
+        }
+
+        // Start generating the prediction at the same time as we start outputting.
+        auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
+
+        // Make sure the capture card is ready
+        displayInput.FinalizeDisplayState();
+
+        {
+            auto renderer = displayOutput.StartRender();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            // Capture the frame.
+            auto capturedFrame = displayInput.CaptureFrame();
+
+            capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
+        }
     }
 }

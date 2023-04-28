@@ -390,7 +390,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             {
                 // Create a standard EDID, and give it a specific serial number
                 auto standardEDID = EDIDDescriptor::CreateStandardEDID();
-                standardEDID.SerialNumber(serialNum);
+                standardEDID.SerialNumber(++serialNum);
 
                 // Set the EDID to the capture device plugin and instruct it to hotplug with it.
                 input.SetDescriptor(standardEDID);

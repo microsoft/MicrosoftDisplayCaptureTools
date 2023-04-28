@@ -33,8 +33,6 @@ namespace winrt::TanagerPlugin::implementation
     public:
         virtual winrt::hstring GetDeviceId() = 0;
         virtual std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() = 0;
-
-        virtual void TriggerHdmiCapture() = 0;
         virtual std::vector<byte> ReadEndPointData(UINT32 dataSize) = 0;
         virtual std::vector<byte> FpgaRead(unsigned short address, UINT16 dataSize) = 0;
         virtual void FpgaWrite(unsigned short address, std::vector<byte> data) = 0;
