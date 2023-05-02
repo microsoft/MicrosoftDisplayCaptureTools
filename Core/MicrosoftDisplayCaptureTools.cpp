@@ -270,7 +270,7 @@ void Core::LoadConfigFile(hstring const& configFile)
         }
         else
         {
-            if (m_captureCards.empty() || !m_displayEngines.empty())
+            if (m_captureCards.empty() || m_displayEngines.empty())
             {
                 m_logger.LogAssert(L"Display mappings specified in config file while missing display or capture card plugins.");
                 return;
