@@ -80,7 +80,7 @@ extends:
 
           - task: MSBuild@1
             inputs:
-              solution: '$(Build.SourcesDirectory)\dirs.proj'
+              solution: '$(Build.SourcesDirectory)\HardwareHlk.sln'
               msbuildLocationMethod: 'version'
               msbuildVersion: 'latest'
               platform: 'x64'
@@ -92,7 +92,7 @@ extends:
 
           - task: MSBuild@1
             inputs:
-              solution: '$(Build.SourcesDirectory)\dirs.proj'
+              solution: '$(Build.SourcesDirectory)\HardwareHlk.sln'
               msbuildLocationMethod: 'version'
               msbuildVersion: 'latest'
               platform: 'x64'
@@ -127,6 +127,9 @@ extends:
               testResultsFiles: '$(Build.SourcesDirectory)\out\logs\TestResults\**\*.trx'
               failTaskOnFailedTests: true
 
+- task: CodeInspector@2
+  inputs:
+    ProductId: '9116a377-9c24-438f-8dfb-39ba0934fac6'
 # https://aka.ms/obpipelines/cloudtest
 # uncomment this section and edit parameters to enable CloudTest
     # - stage: cloudtest
