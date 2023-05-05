@@ -388,9 +388,12 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             uint32_t serialNum = 0xFFFFAAAA;
             for (auto [card, input] : unassignedInputs_EDID)
             {
+                // For mappings we don't want to fail the setup if we fail to map.
+                auto suppressErrors = m_logger.LogErrorsAsWarnings();
+
                 // Create a standard EDID, and give it a specific serial number
                 auto standardEDID = EDIDDescriptor::CreateStandardEDID();
-                standardEDID.SerialNumber(serialNum);
+                standardEDID.SerialNumber(++serialNum);
 
                 // Set the EDID to the capture device plugin and instruct it to hotplug with it.
                 input.SetDescriptor(standardEDID);

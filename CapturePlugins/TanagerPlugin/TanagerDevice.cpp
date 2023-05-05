@@ -32,16 +32,15 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         { return m_pDriver->readRegisterByte(it68051i2cAddress, address); })
 	{
 		m_usbDevice = UsbDevice::FromIdAsync(deviceId).get();
-		if (m_usbDevice == nullptr)
+
+		if (!m_usbDevice)
 		{
 			throw_hresult(E_FAIL);
 		}
+
 		m_fpga.SetUsbDevice(m_usbDevice);
-
 		m_pDriver = std::make_shared<I2cDriver>(m_usbDevice);
-
         m_fpga.SysReset(); // Blocks until FPGA is ready
-
 		hdmiChip.Initialize();
 
         m_logger.LogNote(L"Initializing Tanager Device: " + m_deviceId);
@@ -55,14 +54,9 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 	{
 		return std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
 		{
-			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::hdmi, m_logger),
-			winrt::make<TanagerDisplayInput>(this->weak_from_this(), TanagerDisplayInputPort::displayPort, m_logger),
+			winrt::make<TanagerDisplayInputHdmi>(this->weak_from_this(), m_logger),
+			winrt::make<TanagerDisplayInputDisplayPort>(this->weak_from_this(), m_logger)
 		};
-	}
-
-	void TanagerDevice::TriggerHdmiCapture()
-	{
-        m_logger.LogAssert(L"TriggerHdmiCapture not currently implemented.");
 	}
 
 	void TanagerDevice::FpgaWrite(unsigned short address, std::vector<byte> data)
@@ -95,6 +89,40 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 		return m_fpga.GetFirmwareVersionInfo();
 	}
 
+    void TanagerDevice::SelectDisplayPortEDID(USHORT value)
+    {
+        m_fpga.SelectDisplayPortEDID(value);
+    }
+
+    bool TanagerDevice::IsVideoLocked()
+    {
+        return hdmiChip.IsVideoLocked();
+    }
+
+    void TanagerDevice::I2cWriteData(uint16_t i2cAddress, uint8_t address, std::vector<byte> data)
+    {
+        // Send this down in chunks
+        const size_t writeBlockSize = 0x20;
+        for (size_t i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
+        {
+            size_t amountToWrite = min(writeBlockSize, remaining);
+            m_pDriver->writeRegister(i2cAddress, address + i, static_cast<uint32_t>(amountToWrite), data.data() + i);
+            Sleep(100);
+        }
+    }
+
+    std::mutex& TanagerDevice::SelectHdmi()
+    {
+        hdmiChip.SelectHdmi();
+        return m_changingPortsLocked;
+    }
+
+    std::mutex& TanagerDevice::SelectDisplayPort()
+    {
+        hdmiChip.SelectDisplayPort();
+        return m_changingPortsLocked;
+    }
+
     IteIt68051Plugin::VideoTiming TanagerDevice::GetVideoTiming()
     {
         return hdmiChip.GetVideoTiming();
@@ -103,11 +131,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     IteIt68051Plugin::aviInfoframe TanagerDevice::GetAviInfoframe()
     {
         return hdmiChip.GetAviInfoframe();
-    }
-
-    bool TanagerDevice::IsVideoLocked()
-    {
-        return hdmiChip.IsVideoLocked();
     }
 
     winrt::hstring TanagerDevice::GetDeviceId()
@@ -134,339 +157,6 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         {
             return MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState::UpToDate;
         }
-    }
-
-	TanagerDisplayInput::TanagerDisplayInput(std::weak_ptr<TanagerDevice> parent, TanagerDisplayInputPort port, winrt::ILogger const& logger) :
-        m_parent(parent), m_port(port), m_logger(logger)
-    {
-    }
-
-    TanagerDisplayInput::~TanagerDisplayInput()
-    {
-        m_logger.LogNote(winrt::hstring(L"Cleaning up TanagerDisplayInput: ") + Name());
-
-        // HPD out
-        if (auto parent = m_parent.lock())
-        {
-            parent->FpgaWrite(0x4, std::vector<byte>({0x32})); // HPD low
-        }
-    }
-
-	hstring TanagerDisplayInput::Name()
-	{
-		switch (m_port)
-		{
-		case TanagerDisplayInputPort::hdmi:
-			return L"HDMI";
-		case TanagerDisplayInputPort::displayPort:
-			return L"DisplayPort";
-        default: 
-            m_logger.LogAssert(L"Invalid port chosen.");
-            return L"";
-		}
-    }
-
-    IAsyncAction TanagerDisplayInput::WaitForDisplayDevicesChange()
-    {
-        if (!m_displayManager)
-        {
-            m_displayManager = winrt::DisplayManager::Create(DisplayManagerOptions::None);
-        }
-
-        winrt::handle changedEvent{CreateEventW(nullptr, TRUE, FALSE, nullptr)};
-
-        auto changedToken = m_displayManager.Changed(
-            [&](const auto&, IDisplayManagerChangedEventArgs args) 
-            { 
-                args.Handled(true);
-                SetEvent(changedEvent.get());
-            });
-
-        auto enabledToken = m_displayManager.Enabled([](const auto&, IDisplayManagerEnabledEventArgs args)
-            { args.Handled(true); });
-        auto disabledToken = m_displayManager.Disabled([](const auto&, IDisplayManagerDisabledEventArgs args)
-            { args.Handled(true); });
-        auto pathsToken = m_displayManager.PathsFailedOrInvalidated([](const auto&, IDisplayManagerPathsFailedOrInvalidatedEventArgs args)
-            { args.Handled(true); });
-        
-        m_displayManager.Start();
-
-        // After the changed event has been registered, suspend until the changed event is fired
-        co_await winrt::resume_on_signal(changedEvent.get());
-
-        m_displayManager.Stop();
-
-        co_return;
-    }
-
-    void TanagerDisplayInput::SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
-    {
-        // Indicate that we have a new call to set the descriptor, after we HPD next - don't try to HPD again until 
-        // after the descriptor changes again.
-        m_hasDescriptorChanged = true;
-
-        switch (m_port)
-        {
-        case TanagerDisplayInputPort::hdmi:
-        {
-            if (descriptor.Type() != MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType::EDID)
-            {
-                m_logger.LogAssert(L"Only EDID descriptors are currently supported.");
-            }
-
-            auto edidDataView = descriptor.Data();
-            std::vector<byte> edid(edidDataView.begin(), edidDataView.end());
-
-            SetEdid(edid);
-
-            break;
-        }
-        case TanagerDisplayInputPort::displayPort:
-        default:
-        {
-            m_logger.LogAssert(L"DisplayPort input does not currently support setting descriptors.");
-        }
-        }
-    }
-
-    MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger TanagerDisplayInput::GetCaptureTrigger()
-    {
-        return MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger();
-    }
-
-	MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities TanagerDisplayInput::GetCapabilities()
-	{
-        auto caps = winrt::make<TanagerCaptureCapabilities>(m_port);
-        return caps;
-    }
-
-    MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInput::CaptureFrame()
-    {
-        auto parent = m_parent.lock();
-        if (!parent)
-        {
-            m_logger.LogAssert(L"Cannot obtain reference to Tanager device.");
-        }
-
-        // Reset the DRAM controller in the FPGA
-        parent->FpgaWrite(0x30, std::vector<byte>({1}));
-
-        // Wait for reset to complete
-        uint32_t loopCount = 0;
-        constexpr uint32_t loopLimit = 50;
-        std::vector<byte> controller_register_vector = parent->FpgaRead(0x30, 1);
-        while (controller_register_vector.size() > 0 && (controller_register_vector[0] & 0x02) == 0x00 && loopCount++ < loopLimit)
-        {
-            controller_register_vector = parent->FpgaRead(0x30, 1);
-            Sleep(20);
-        }
-        if (loopCount >= loopLimit)
-        {
-            m_logger.LogAssert(L"DRAM controller did not reset in time allowed.");
-        }
-
-        // Clear the FPGA DRAM controller register
-        parent->FpgaWrite(0x30, std::vector<byte>({0}));
-
-        // Check to see if ITE chip is locked
-        auto locked = parent->IsVideoLocked();
-        if (!locked)
-        {
-            m_logger.LogAssert(L"Video is not locked");
-         }
-
-        // Capture frame in DRAM
-        parent->FpgaWrite(0x20, std::vector<byte>({0}));
-
-        // Give the Tanager time to capture a frame.
-        loopCount = 0;
-        std::vector<byte> video_register_vector = parent->FpgaRead(0x20, 1);
-        while (video_register_vector.size() > 0 && (video_register_vector[0] & 0x01) == 0x00 && loopCount++ < loopLimit)
-        {
-            video_register_vector = parent->FpgaRead(0x20, 1);
-            Sleep(20);
-        }
-
-        if (video_register_vector.size() == 0)
-        {
-            m_logger.LogAssert(L"Zero bytes of data returned from FpgaRead.");
-        }
-        if (loopCount >= loopLimit)
-        {
-            m_logger.LogAssert(L"Timeout while waiting for video frame capture to complete.");
-        }
-
-        // query resolution
-        auto timing = parent->GetVideoTiming();
-
-        // compute size of buffer
-        uint32_t bufferSizeInDWords = timing.hActive * timing.vActive; // For now, assume good sync and 4 bytes per pixel
-
-        // FX3 requires the read size to be a multiple of 2048 DWORDs
-        if(bufferSizeInDWords % 2048)
-        {
-            bufferSizeInDWords += 2048 - (bufferSizeInDWords % 2048);
-        }
-
-        // specify number of dwords to read
-        // This is bufferSizeInDWords but in big-endian order in a vector<byte>
-        parent->FpgaWrite(
-            0x15,
-            std::vector<byte>(
-                {(uint8_t)((bufferSizeInDWords >> 24) & 0xff),
-                 (uint8_t)((bufferSizeInDWords >> 16) & 0xff),
-                 (uint8_t)((bufferSizeInDWords >> 8) & 0xff),
-                 (uint8_t)(bufferSizeInDWords & 0xff)}));
-
-        // prepare for reading
-        parent->FpgaWrite(0x10, std::vector<byte>({3}));
-
-        // initiate read sequencer
-        parent->FpgaWrite(0x10, std::vector<byte>({2}));
-
-        // read frame
-        auto frameData = parent->ReadEndPointData(bufferSizeInDWords * 4);
-
-        // turn off read sequencer
-        parent->FpgaWrite(0x10, std::vector<byte>({3}));
-
-        // Add any extended properties that aren't directly exposable in the IDisplayCapture* interfaces yet
-        auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
-        extendedProps.Insert(L"pixelClock",  winrt::box_value(timing.pixelClock));
-        extendedProps.Insert(L"hTotal",      winrt::box_value(timing.hTotal));
-        extendedProps.Insert(L"hFrontPorch", winrt::box_value(timing.hFrontPorch));
-        extendedProps.Insert(L"hSyncWidth",  winrt::box_value(timing.hSyncWidth));
-        extendedProps.Insert(L"hBackPorch",  winrt::box_value(timing.hBackPorch));
-        extendedProps.Insert(L"vTotal",      winrt::box_value(timing.vTotal));
-        extendedProps.Insert(L"vFrontPorch", winrt::box_value(timing.vFrontPorch));
-        extendedProps.Insert(L"vSyncWidth",  winrt::box_value(timing.vSyncWidth));
-        extendedProps.Insert(L"vBackPorch",  winrt::box_value(timing.vBackPorch));
-
-        auto aviInfoFrame = parent->GetAviInfoframe();
-        winrt::Buffer infoFrame(ARRAYSIZE(aviInfoFrame.data));
-        memcpy(infoFrame.data(), aviInfoFrame.data, infoFrame.Capacity());
-        extendedProps.Insert(L"InfoFrame", infoFrame);
-
-        auto resolution = winrt::Windows::Graphics::SizeInt32();
-        resolution = { timing.hActive, timing.vActive };
-
-        return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps, m_logger);
-    }
-
-	void TanagerDisplayInput::FinalizeDisplayState()
-    {
-        if (auto parent = m_parent.lock())
-        {
-            if (m_hasDescriptorChanged || !m_strongParent)
-            {
-                auto hasDeviceChanged = WaitForDisplayDevicesChange();
-
-                parent->FpgaWrite(0x4, std::vector<byte>({0x30})); // HPD high
-
-                // We have HPD'd in a display, since we need to be able to HPD out again - take a strong reference on the 'parent'
-                // to ensure it isn't cleaned up before this input HPD's out.
-                m_strongParent = parent;
-
-                // Reset the descriptor guard bool here to make sure that we won't HPD in again unless the descriptor changes
-                m_hasDescriptorChanged = false;
-
-                if (AsyncStatus::Completed != hasDeviceChanged.wait_for(std::chrono::seconds(5)))
-                {
-                    m_logger.LogError(L"Did not detect a new device being plugged in after hotplugging.");
-                }
-            }
-        }
-        else
-        {
-            m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
-        }
-    }
-
-    void TanagerDisplayInput::SetEdid(std::vector<byte> edid)
-    {
-        // EDIDs are made of a series of 128-byte blocks
-        if (edid.empty() || edid.size() % 128 != 0)
-        {
-            m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
-        }
-
-        // Ensure under max descriptor size
-        if (edid.size() > MaxDescriptorByteSize)
-        {
-            m_logger.LogError(L"SetEdid provided a too large edid, size=" + to_hstring(edid.size()));
-        }
-
-        unsigned short writeAddress;
-        switch (m_port)
-        {
-            case TanagerDisplayInputPort::hdmi:
-                writeAddress = 0x400;
-                break;
-            default:
-            case TanagerDisplayInputPort::displayPort:
-                m_logger.LogAssert(L"DisplayPort input of Tanager does not currently support setting EDIDs.");
-                return;
-        }
-
-        if (auto parent = m_parent.lock())
-        {
-            parent->FpgaWrite(writeAddress, edid);
-        }
-        else
-        {
-            m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
-        }
-    }
-
-
-	bool TanagerCaptureCapabilities::CanReturnRawFramesToHost()
-    {
-        return true;
-    }
-
-    bool TanagerCaptureCapabilities::CanReturnFramesToHost()
-    {
-        return true;
-    }
-
-    bool TanagerCaptureCapabilities::CanCaptureFrameSeries()
-    {
-        return false;
-    }
-
-    bool TanagerCaptureCapabilities::CanHotPlug()
-    {
-        return true;
-    }
-
-    bool TanagerCaptureCapabilities::CanConfigureEDID()
-    {
-        switch (m_port)
-		{
-		case TanagerDisplayInputPort::hdmi:
-			return true;
-		case TanagerDisplayInputPort::displayPort:
-			return false;
-        }
-
-        return false;
-    }
-
-    bool TanagerCaptureCapabilities::CanConfigureDisplayID()
-    {
-        return false;
-    }
-
-    uint32_t TanagerCaptureCapabilities::GetMaxDescriptorSize()
-    {
-        switch (m_port)
-		{
-		case TanagerDisplayInputPort::hdmi:
-			return MaxDescriptorByteSize;
-		case TanagerDisplayInputPort::displayPort:
-        default:
-			throw winrt::hresult_not_implemented();
-		}
     }
 
     TanagerDisplayCapture::TanagerDisplayCapture(

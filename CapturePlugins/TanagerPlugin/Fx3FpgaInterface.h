@@ -18,6 +18,7 @@ namespace winrt::TanagerPlugin::implementation
         struct FirmwareVersionInfo GetFirmwareVersionInfo();
         void SysReset();
         bool IsFpgaReady();
+        void SelectDisplayPortEDID(USHORT value);
 
     private:
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;

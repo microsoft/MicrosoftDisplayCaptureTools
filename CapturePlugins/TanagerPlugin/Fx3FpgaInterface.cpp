@@ -152,4 +152,17 @@ namespace winrt::TanagerPlugin::implementation
 
         return buffer.data()[0] != 0;
     }
+
+    void Fx3FpgaInterface::SelectDisplayPortEDID(USHORT value)
+    {
+        UsbSetupPacket setupPacket;
+        UsbControlRequestType requestType;
+        requestType.AsByte(0x40);
+        setupPacket.RequestType(requestType);
+        setupPacket.Request(VR_DP2_EDID_SELECT);
+        setupPacket.Value(value);
+        setupPacket.Index(0);
+        setupPacket.Length(0);
+        m_usbDevice.SendControlOutTransferAsync(setupPacket);
     }
+}
