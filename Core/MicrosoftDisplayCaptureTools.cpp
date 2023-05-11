@@ -129,7 +129,7 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath)
 
 void Core::LoadConfigFile(hstring const& configFile)
 {
-    m_logger.LogNote(L"Loading configuration...");
+    m_logger.LogNote(L"Loading configuration from file...");
 
     // Ensure that a component can't be changed if a test has locked the framework
     if (IsFrameworkLocked())
@@ -602,90 +602,111 @@ void Core::DiscoverInstalledPlugins()
     auto displayEngineDirectory        = installedDirectory / c_DisplayEngineDirectory;
 
     // Search for capture cards
-    try
+    if (m_captureCards.empty())
     {
-        for (auto const& file : std::filesystem::directory_iterator{capturePluginDirectory})
+        try
         {
-            if (file.path().extension() == L".dll")
+            for (auto const& file : std::filesystem::directory_iterator{capturePluginDirectory})
             {
-                m_logger.LogNote(L"Discovered Capture Plugin: " + file.path().stem());
+                if (file.path().extension() == L".dll")
+                {
+                    m_logger.LogNote(L"Discovered Capture Plugin: " + file.path().stem());
 
-                try
-                {
-                    if (auto capturePlugin = LoadCapturePlugin(file.path().c_str()))
+                    try
                     {
-                        m_logger.LogNote(L"Loaded " + file.path().stem());
-                        m_captureCards.push_back(capturePlugin);
+                        if (auto capturePlugin = LoadCapturePlugin(file.path().c_str()))
+                        {
+                            m_logger.LogNote(L"Loaded " + file.path().stem());
+                            m_captureCards.push_back(capturePlugin);
+                        }
                     }
-                }
-                catch (...)
-                {
-                    m_logger.LogNote(L"Failed to load " + file.path().stem());
+                    catch (...)
+                    {
+                        m_logger.LogNote(L"Failed to load " + file.path().stem());
+                    }
                 }
             }
         }
+        catch (...)
+        {
+            m_logger.LogNote(L"Unable to load capture plugin directory.");
+        }
     }
-    catch (...)
+    else
     {
-        m_logger.LogNote(L"Unable to load capture plugin directory.");
+        m_logger.LogNote(L"Using pre-loaded capture plugins, skipping auto-discovery.");
     }
 
     // Search for toolboxes
-    try
+    if (m_toolboxes.empty())
     {
-        for (auto const& file : std::filesystem::directory_iterator{configurationToolboxDirectory})
+        try
         {
-            if (file.path().extension() == L".dll")
+            for (auto const& file : std::filesystem::directory_iterator{configurationToolboxDirectory})
             {
-                m_logger.LogNote(L"Discovered Toolbox: " + file.path().stem());
+                if (file.path().extension() == L".dll")
+                {
+                    m_logger.LogNote(L"Discovered Toolbox: " + file.path().stem());
 
-                try
-                {
-                    if (auto toolbox = LoadToolbox(file.path().c_str()))
+                    try
                     {
-                        m_logger.LogNote(L"Loaded " + file.path().stem());
-                        m_toolboxes.push_back(toolbox);
+                        if (auto toolbox = LoadToolbox(file.path().c_str()))
+                        {
+                            m_logger.LogNote(L"Loaded " + file.path().stem());
+                            m_toolboxes.push_back(toolbox);
+                        }
                     }
-                }
-                catch (...)
-                {
-                    m_logger.LogNote(L"Failed to load " + file.path().stem());
+                    catch (...)
+                    {
+                        m_logger.LogNote(L"Failed to load " + file.path().stem());
+                    }
                 }
             }
         }
+        catch (...)
+        {
+            m_logger.LogNote(L"Unable to load configuration toolbox directory.");
+        }
     }
-    catch (...)
+    else
     {
-        m_logger.LogNote(L"Unable to load configuration toolbox directory.");
+        m_logger.LogNote(L"Using pre-loaded toolboxes, skipping auto-discovery.");
     }
 
     // Search for displayEngines
-    try
+    if (m_displayEngines.empty())
     {
-        for (auto const& file : std::filesystem::directory_iterator{displayEngineDirectory})
+        try
         {
-            if (file.path().extension() == L".dll")
+            for (auto const& file : std::filesystem::directory_iterator{displayEngineDirectory})
             {
-                m_logger.LogNote(L"Discovered Display Engine: " + file.path().stem());
+                if (file.path().extension() == L".dll")
+                {
+                    m_logger.LogNote(L"Discovered Display Engine: " + file.path().stem());
 
-                try
-                {
-                    if (auto displayEngine = LoadDisplayEngine(file.path().c_str()))
+                    try
                     {
-                        m_logger.LogNote(L"Loaded " + file.path().stem());
-                        m_displayEngines.push_back(displayEngine);
+                        if (auto displayEngine = LoadDisplayEngine(file.path().c_str()))
+                        {
+                            m_logger.LogNote(L"Loaded " + file.path().stem());
+                            m_displayEngines.push_back(displayEngine);
+                        }
                     }
-                }
-                catch (...)
-                {
-                    m_logger.LogNote(L"Failed to load " + file.path().stem());
+                    catch (...)
+                    {
+                        m_logger.LogNote(L"Failed to load " + file.path().stem());
+                    }
                 }
             }
         }
+        catch (...)
+        {
+            m_logger.LogNote(L"Unable to load display engine directory.");
+        }
     }
-    catch (...)
+    else
     {
-        m_logger.LogNote(L"Unable to load display engine directory.");
+        m_logger.LogNote(L"Using pre-loaded DisplayEngines, skipping auto-discovery.");
     }
 }
 

@@ -45,19 +45,18 @@ MODULE_SETUP(ModuleSetup)
     {
         g_framework.LoadConfigFile(static_cast<const wchar_t*>(configFile));
     }
-    else
-    {
-        g_framework.DiscoverInstalledPlugins();
-    }
+    
+    // DiscoverInstalledPlugins will only discover plugin categories that are not specified via configuration file.
+    g_framework.DiscoverInstalledPlugins();
 
-    winrt::Display::IDisplayEngine displayEngine = nullptr;
+    winrt::Display::IDisplayEngine displayEngineForMapping = nullptr;
     auto displayEngines = g_framework.GetDisplayEngines();
 
     if (!displayEngines.empty())
     {
         // This displayEngine is only used for the purposes of identifying display mappings, any full implementation
         // of the interface should work for this.
-        displayEngine = displayEngines[0];
+        displayEngineForMapping = displayEngines[0];
     }
 
     g_logger.LogNote(L"Loaded plugins");
@@ -125,7 +124,7 @@ MODULE_SETUP(ModuleSetup)
     }
 
     // First see if the config file contained any display mappings, if so we will use these.
-    g_displayMap = g_framework.GetSourceToSinkMappings(false, displayEngine);
+    g_displayMap = g_framework.GetSourceToSinkMappings(false, displayEngineForMapping);
     if (g_displayMap.Size() == 0)
     {
         g_logger.LogNote(
@@ -133,7 +132,7 @@ MODULE_SETUP(ModuleSetup)
 
         // if no display mappings were in the config file - attempt to figure out the mappings automatically
         // This uses the normal test mechanisms to control and render to displays - so if this fails normally it can be safely ignored.
-        g_displayMap = g_framework.GetSourceToSinkMappings(true, displayEngine);
+        g_displayMap = g_framework.GetSourceToSinkMappings(true, displayEngineForMapping);
 
         if (g_displayMap.Size() == 0)
         {
