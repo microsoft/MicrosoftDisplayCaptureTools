@@ -78,7 +78,7 @@ void SingleScreenTestMatrix::Test()
         auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
         auto prediction = displayEngine.CreateDisplayPrediction();
 
-        winrt::hstring testName = displayInput.Name() + L":";
+        winrt::hstring testName = displayInput.Name() + L"_";
 
         // All tools need to be run in order of their category
         constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
