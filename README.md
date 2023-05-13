@@ -46,7 +46,10 @@ A step by step series of examples that tell you how to get a development environ
 
 This entire code project is meant to be executed as a series of tests using a display device and a display capture device in tandem to verify that the expected display output is received. With the solution built, there are a few steps for running our default test pass:
 
-1. Attach a capture 
+1. Attach a capture device supporting one of the installed plugins.
+    a. If using a capture device which _cannot_ hotplug a display with an arbitrary EDID, you will need to go into Windows Display Settings and remove the target display from the desktop.
+2. Run the Tests project in the solution
+    a. By default - this will attempt to automatically determine which display sources correspond to available display sink devices, and will run all available tests on all source-to-sink combinations.
 
 ## Contributing
 
