@@ -11,6 +11,8 @@ This repository contains the source for a generic test framework for validating 
 
 The goal for this project is to provide a standard for validating display adapters. The framework is designed to be as generic and extensible as possible, to enable a very wide variety of hardware devices, protocols, and tests to be plugged in.
 
+Please find more information [here](Design.md).
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -42,7 +44,9 @@ A step by step series of examples that tell you how to get a development environ
 
 ### Starting a Test
 
-This entire code project is meant to be executed as a series of tests using a display device and a display capture device in tandem to verify that the expected display output is received.
+This entire code project is meant to be executed as a series of tests using a display device and a display capture device in tandem to verify that the expected display output is received. With the solution built, there are a few steps for running our default test pass:
+
+1. Attach a capture 
 
 ## Contributing
 
@@ -62,11 +66,11 @@ Dave Hargrove (Microsoft) - hardware design, debugging
 Zachary Northrup (Microsoft) - software design, CaptureCardViewer project
 Larissa Umulinga (Microsoft) - author, CaptureCardViewer project
 
->Note: Please add to this list as new components/contributors are added.
+Note: Please add to this list as new components/contributors are added.
 
 ## License
 
-This project is licensed under the MIT license - see the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT license - see the [LICENSE](LICENSE.txt) file for details
 
 ## Acknowledgments
 
@@ -75,4 +79,4 @@ This project is licensed under the MIT license - see the [LICENSE](LICENSE) file
 
 ## Contributions
 
-Please refer to the [contributing](CONTRIBUTING) file.
+Please refer to the [contributing](CONTRIBUTING.md) file.
