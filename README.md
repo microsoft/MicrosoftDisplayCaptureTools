@@ -1,65 +1,48 @@
 ---
-ArtifactType: nupkg, executable, azure-web-app, azure-cloud-service, etc. More requirements for artifact type standardization may come later.
-Documentation: URL
-Language: typescript, csharp, java, js, python, golang, powershell, markdown, etc. More requirements for language names standardization may come later.
-Platform: windows, node, linux, ubuntu16, azure-function, etc. More requirements for platform standardization may come later.
-Stackoverflow: URL
-Tags: comma,separated,list,of,tags
+ArtifactType: nupkg
+Language: c++, csharp, markdown
+Platform: windows
+Tags: display,testing,taef,displays,graphics
 ---
 
 # Microsoft Display Capture Tools
 
-This repository contains the source for a generic test framework for validating display adapter devices, such as GPUs and USB-to-HDMI dongles. It contains a plugin model for physical capture devices that can emulate monitors and receive pixel data, metadata, and other channels common to display protocols.
+This repository contains the source for a generic test framework for validating display adapter devices, such as GPUs and USB-display dongles. It contains a plugin model for physical capture devices that can emulate monitors and receive pixel data, metadata, and other channels common to display protocols.
 
-The goal for this project is to provide an industry-wide standard for validating display adapters. The framework is designed to be as generic and extensible as possible, to enable a very wide variety of hardware devices, protocols, and tests to be plugged in.
+The goal for this project is to provide a standard for validating display adapters. The framework is designed to be as generic and extensible as possible, to enable a very wide variety of hardware devices, protocols, and tests to be plugged in.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-1. Clone the repo
-2. Restore Nuget Dependencies
-3. Do a complete solution build.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
 You will need to install:
-1. Visual Studio 2022
+1. Visual Studio 2022 with the following components:
+    a. .NET 7.0 Runtime
+    b. Windows 11 SDK
+    c. C++ Core Features
+    d. C# and Visual Basic
+    e. MSVC v143 - VS 2022 C++ x64/x86 build tools
+    f. MSBuild
+    g. C++ Universal Windows Platform support for v143 build tools
+    h. NuGet package manager
+
+>Note: Installing the Visual Studio 2022 "Workflows" for .Net desktop development, Universal Windows Platform development, and Desktop development with C++ will install all required individual components.
 
 ### Installing
 
 A step by step series of examples that tell you how to get a development environment running
 
-1. Describe what needs to be done first
+1. Clone the repository
+2. Open the solution file (HardwareHLK.sln) from an admin Visual Studio 2022 instance.
+    a. Due to the nature of the tests, admin is required for most testing situations - See [Running tests].
+3. Right click on the solution and select "restore nuget packages"
+4. Build the solution.
 
-    ``` batch
-    Give an example of performing step 1
-    ```
+## Running tests
 
-2. And then repeat for each step
-
-    ``` sh
-    Another example, this time for step 2
-    ```
-
-## Running the tests
-
-Explain how to run the tests for this project that are relevant to users. You can also link to the testing portion of [CONTRIBUTING.md](CONTRIBUTING.md) for tests relevant to contributors.
-
-### End-to-end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### Unit tests
-
-Explain what these test and why
-
-```
-Give examples
-```
+This entire code project is meant to be executed as a series of tests using a display device and a display capture device in tandem to verify that the expected display output is received.
 
 ## Deployment
 
@@ -115,7 +98,7 @@ An overview of this project and how it functions can be found [here](https://dev
 This testing framework makes use of the [Testing Authoring and Execution Framework (TAEF)](https://docs.microsoft.com/en-us/windows-hardware/drivers/taef/) used in much of Microsoft's internal and HLK testing. In order to run this project, you will need to have TAEF installed. Follow the steps (1, 1.5, and 2) from [this documentation](https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk) to get set up.
 
 ## Running a Test
-Once the tooling is installed, just hitting F5 should start the "basic" test run. This test run is intended for illustrative purposes in seeing how the framework functions and how the various components fit together. The AddressSanitizer for Windows will be required to run the project for memory detector issues. These are shown by Tl.exe having different breakpoints, heap errors, or exceptions thrown at different lines of the code. In order to install it, follow the instruction under the title “Turning on Asan for Windows MSBuild projects” from [this documentation] AddressSanitizer (ASan) for Windows with MSVC | C++ Team Blog (microsoft.com). Once installed, the incremental linking needs to be disabled through Solutions Explorer menu > right click on Core(Desktop) > Properties > Linker (under General) > choose No(/INCREMENTAL:NO) on the pop up menu next to Enable Incremental Linking > and click on Apply. On the same Core Property Pages menu, select C/C++ (under General), select None next to Debug Information Format. As for the Warning Level, select Level3 (/W3).
+Once the project is building locally - you can start running display loopback tests just by running the "Tests" project. This project will automatically attempt to discover the capture hardware you are using and start running an automated combinatorial test using that hardware. If 
 
 # Contribute
 We will happily consider any PRs made against this project. We don't have a firm process for 3rd party contributions set up yet, until then things will be considered on a case-by-case basis.
