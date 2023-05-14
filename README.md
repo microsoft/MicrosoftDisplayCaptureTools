@@ -21,14 +21,14 @@ A test system running Windows 11 Pro or Enterprise.
 
 You will need to install:
 1. Visual Studio 2022 with the following components:
-    a. .NET 7.0 Runtime
-    b. Windows 11 SDK
-    c. C++ Core Features
-    d. C# and Visual Basic
-    e. MSVC v143 - VS 2022 C++ x64/x86 build tools
-    f. MSBuild
-    g. C++ Universal Windows Platform support for v143 build tools
-    h. NuGet package manager
+    * .NET 7.0 Runtime
+    * Windows 11 SDK
+    * C++ Core Features
+    * C# and Visual Basic
+    * MSVC v143 - VS 2022 C++ x64/x86 build tools
+    * MSBuild
+    * C++ Universal Windows Platform support for v143 build tools
+    * NuGet package manager
 
 >Note: Installing the Visual Studio 2022 "Workflows" for .Net desktop development, Universal Windows Platform development, and Desktop development with C++ will install all required individual components.
 
@@ -38,7 +38,7 @@ A step by step series of examples that tell you how to get a development environ
 
 1. Clone the repository
 2. Open the solution file (HardwareHLK.sln) from an admin Visual Studio 2022 instance.
-    a. Due to the nature of the tests, admin is required for most testing situations - See [Starting a Test].
+    * Due to the nature of these tests, admin is required for most testing situations.
 3. Right click on the solution and select "restore nuget packages"
 4. Build the solution.
 
@@ -47,13 +47,15 @@ A step by step series of examples that tell you how to get a development environ
 This entire code project is meant to be executed as a series of tests using a display device and a display capture device in tandem to verify that the expected display output is received. With the solution built, there are a few steps for running our default test pass:
 
 1. Attach a capture device supporting one of the installed plugins.
-    a. Two plugins are initially included
-        - CapturePlugins\TanagerPlugin: Designed for a soon-to-be release capture device developed alongside this framework.
-        - CapturePlugins\GenericCaptureCardPlugin: Designed for [DirectShow](https://learn.microsoft.com/en-us/windows/win32/directshow/directshow)-compatible USB capture cards.
-            - The [Elgato Cam Link](https://www.elgato.com/en/cam-link-4k) is an example of such a device (although this is not an explicit endorsement). Generally... if the capture device appears as a Camera device to Windows, it should work.
-            - These capture cards generally cannot emulate an arbitrary display, and as such have an additional setup step: you will need to go into Windows Display Settings and remove the target display from the desktop.
+    * Two plugins are initially included:
+        * CapturePlugins\TanagerPlugin:
+            * Designed for a soon-to-be release capture device developed alongside this framework.
+        * CapturePlugins\GenericCaptureCardPlugin:
+            * Designed for [DirectShow](https://learn.microsoft.com/en-us/windows/win32/directshow/directshow) compatible USB capture cards.
+                * The [Elgato Cam Link](https://www.elgato.com/en/cam-link-4k) is an example of such a device (although this is not an explicit endorsement). Generally... if the capture device appears as a Camera device to Windows, it should work.
+            * These capture cards generally cannot emulate an arbitrary display, and as such have an additional setup step: you will need to go into Windows Display Settings and remove the target display from the desktop.
 2. Run the Tests project in the solution
-    a. By default - this will attempt to automatically determine which display sources correspond to available display sink devices, and will run all available tests on all source-to-sink combinations.
+    * By default - this will attempt to automatically determine which display sources correspond to available display sink devices, and will run all available tests on all source-to-sink combinations.
 
 ### Troubleshooting
 
