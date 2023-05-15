@@ -229,7 +229,7 @@
   <ItemGroup>
     <None Include="MicrosoftDisplayCaptureTools.def" />
     <None Include="StandardEDID.bin">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent>true</DeploymentContent>
     </None>
   </ItemGroup>
   <ItemGroup>
