@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "EDIDDescriptor.h"
+#include "MicrosoftDisplayCaptureTools.h"
 
 #include <fstream>
 
@@ -104,12 +105,34 @@ winrt::IMonitorDescriptor EDIDDescriptor::CreateStandardEDID()
 
 winrt::IMonitorDescriptor EDIDDescriptor::CreateEDIDFromFile(hstring filePath)
 {
+    // Attempt to load the file given either as a fully qualified path or from the cwd
     std::ifstream file(filePath.c_str());
 
     if (!file)
     {
-        // the filepath was invalid or the file did not exist!
-        throw winrt::hresult_invalid_argument();
+        // Attempt to load the file as a relative path to this current dll
+        wchar_t currentFilePath[MAX_PATH];
+        auto coreHandle = GetModuleHandle(winrt::MicrosoftDisplayCaptureTools::Framework::implementation::c_CoreFrameworkName.c_str());
+        auto returnLength = GetModuleFileNameW(coreHandle, currentFilePath, MAX_PATH);
+
+        if (returnLength == MAX_PATH)
+        {
+            // The file could not be located.
+            throw winrt::hresult_invalid_argument();
+        }
+
+        std::filesystem::path currentPath(currentFilePath);
+        auto localDirectory = currentPath.parent_path();
+
+        auto edidFilePath = localDirectory / filePath.c_str();
+
+        file = std::ifstream(edidFilePath);
+
+        if (!file)
+        {
+            // The file could not be located.
+            throw winrt::hresult_invalid_argument();
+        }
     }
 
     std::vector<uint8_t> fileData(std::istreambuf_iterator<char>(file), {});
