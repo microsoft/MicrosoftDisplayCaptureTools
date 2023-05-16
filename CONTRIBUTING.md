@@ -13,6 +13,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
 or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Licensing
+
+All code in this repo is licensed with a standard MIT license, the text of which can be found [here](LICENSE.txt). No changes will be considered which cannot be included under this license.
+
 ## Policies
 
 In order to maintain clarity and direction - we will only accept pull requests that include appropriate updates to the [changelog](CHANGELOG.md) and stick to our semantic versioning.
@@ -23,4 +27,17 @@ A [clang-format](https://clang.llvm.org/docs/ClangFormat.html) [file](.clang-for
 
 ## Issues
 
-Issues raised within the Github project will be considered.
+Issues must be raised within this github project to be considered.
+
+### Issues we will consider
+
+* Bugs identified in the framework, such as rendering an incorrect image for a particular parameter combination.
+    * Please include details of the bug repro setup, including test machine configuration, test details and both the predicted & captured output.
+* Suggestions of new "tools"/parameters to be added to the combinatoric framework.
+* Suggestions of APIs/DDIs to be tested that are either not tested, or tested in a different way.
+* Suggestions of new APIs in the test framework to enable new tools or enable framework use in a new context.
+
+### Issues we won't consider
+
+* Test failures that could be due to the hardware legitimately failing the test, without a detailed investigation that identified an actual framework bug.
+* Requests for HLK waivers (please contact your Microsoft partner representative for requesting waivers)

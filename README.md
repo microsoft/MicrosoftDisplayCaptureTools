@@ -17,7 +17,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-A test system running Windows 11 Pro or Enterprise.
+A test system running Windows 11 Enterprise or Pro For Workstations
 
 You will need to install:
 1. Visual Studio 2022 with the following components:
@@ -92,4 +92,4 @@ This project is licensed under the MIT license - see the [LICENSE](LICENSE.txt) 
 ## Acknowledgments
 
 * Hat tip to industry partners who helped inspire this project and provided early-stage feedback:
-    Intel, Nvidia, AMD and Qualcomm
+    Intel, Nvidia, AMD, Qualcomm, and Synaptics
