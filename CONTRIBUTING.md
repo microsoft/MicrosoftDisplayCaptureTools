@@ -1,37 +1,43 @@
----
-
----
-
 # Contributing
 
-Welcome contributors to your project then list particular contribution procedures your team follows including but not limited to the sections below.
+This project welcomes contributions and suggestions. Most contributions require you to
+agree to a Contributor License Agreement (CLA) declaring that you have the right to,
+and actually do, grant us the rights to use your contribution. For details, visit
+https://cla.microsoft.com.
 
-Sample text may go like this. *Welcome and thank you for your interest
-in contributing to **project-name**! Before contributing to this
-project, please review this document for policies and procedures which
-will ease the contribution and review process for everyone. If you have
-questions, please contact **contact-method**. This project adopted Inner
-Source
-[model](https://oe-documentation.azurewebsites.net/inner-source/index.html).*
+When you submit a pull request, a CLA-bot will automatically determine whether you need
+to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the
+instructions provided by the bot. You will only need to do this once across all repositories using our CLA.
 
-## Issues and Feature Requests
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
+or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-Describe procedures or other requirements on filing issues, fixing bugs, proposing new features, etc that you have including references to roadmaps or other considerations contributors should make before submitting anything to the project team for review.
+## Licensing
 
-## Style Guidelines
+All code in this repo is licensed with a standard MIT license, the text of which can be found [here](LICENSE.txt). No changes will be considered which cannot be included under this license.
 
-Include any code and/or documentation style guidelines, linting requirements, etc.
+## Policies
 
-## Pull Request Process
+In order to maintain clarity and direction - we will only accept pull requests that include appropriate updates to the [changelog](CHANGELOG.md) and stick to our semantic versioning.
 
-Give very detailed instructions on your PR procedure to ensure contributions are made in the way your teams wants/expects them. This eases the process for everyone. An example process could include the following but this should align with your team's processes.
+### Formatting
 
-1. Ensure builds are still successful and tests, including any added or updated tests, pass prior to submitting the pull request.
-2. Update any documentation, user and contributor, that is impacted by your changes.
-3. Increase the version numbers in any examples and the `README.md` to the new version that this pull request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
-4. Include your change description in `CHANGELOG.md` file as part of pull request.
-5. You may merge the pull request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
+A [clang-format](https://clang.llvm.org/docs/ClangFormat.html) [file](.clang-format) is included in this project and all contributed code should conform to that formatting.
 
-## License Information
+## Issues
 
-Inform the user of the license(s) under which this project accepts and distributes contributions. If you have any license agreement or other legal requirements, include those here as well.
+Issues must be raised within this github project to be considered.
+
+### Issues we will consider
+
+* Bugs identified in the framework, such as rendering an incorrect image for a particular parameter combination.
+    * Please include details of the bug repro setup, including test machine configuration, test details and both the predicted & captured output.
+* Suggestions of new "tools"/parameters to be added to the combinatoric framework.
+* Suggestions of APIs/DDIs to be tested that are either not tested, or tested in a different way.
+* Suggestions of new APIs in the test framework to enable new tools or enable framework use in a new context.
+
+### Issues we won't consider
+
+* Test failures that could be due to the hardware legitimately failing the test, without a detailed investigation that identified an actual framework bug.
+* Requests for HLK waivers (please contact your Microsoft partner representative for requesting waivers)

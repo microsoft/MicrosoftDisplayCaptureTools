@@ -1,77 +1,65 @@
 ---
-ArtifactType: nupkg, executable, azure-web-app, azure-cloud-service, etc. More requirements for artifact type standardization may come later.
-Documentation: URL
-Language: typescript, csharp, java, js, python, golang, powershell, markdown, etc. More requirements for language names standardization may come later.
-Platform: windows, node, linux, ubuntu16, azure-function, etc. More requirements for platform standardization may come later.
-Stackoverflow: URL
-Tags: comma,separated,list,of,tags
+ArtifactType: nupkg
+Language: c++, csharp, markdown
+Platform: windows
+Tags: display,testing,taef,displays,graphics
 ---
 
 # Microsoft Display Capture Tools
 
-This repository contains the source for a generic test framework for validating display adapter devices, such as GPUs and USB-to-HDMI dongles. It contains a plugin model for physical capture devices that can emulate monitors and receive pixel data, metadata, and other channels common to display protocols.
+This repository contains the source for a generic test framework for validating display adapter devices, such as GPUs and USB-display dongles. It contains a plugin model for physical capture devices that can emulate monitors and receive pixel data, metadata, and other channels common to display protocols.
 
-The goal for this project is to provide an industry-wide standard for validating display adapters. The framework is designed to be as generic and extensible as possible, to enable a very wide variety of hardware devices, protocols, and tests to be plugged in.
+The goal for this project is to provide a standard for validating display adapters. The framework is designed to be as generic and extensible as possible, to enable a very wide variety of hardware devices, protocols, and tests to be plugged in.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-1. Clone the repo
-2. Restore Nuget Dependencies
-3. Do a complete solution build.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
+A test system running Windows 11 Enterprise or Pro For Workstations
+
 You will need to install:
-1. Visual Studio 2022
+1. Visual Studio 2022 with the following components:
+    * .NET 7.0 Runtime
+    * Windows 11 SDK
+    * C++ Core Features
+    * C# and Visual Basic
+    * MSVC v143 - VS 2022 C++ x64/x86 build tools
+    * MSBuild
+    * C++ Universal Windows Platform support for v143 build tools
+    * NuGet package manager
+
+>Note: Installing the Visual Studio 2022 "Workflows" for .Net desktop development, Universal Windows Platform development, and Desktop development with C++ will install all required individual components.
 
 ### Installing
 
 A step by step series of examples that tell you how to get a development environment running
 
-1. Describe what needs to be done first
+1. Clone the repository
+2. Open the solution file (HardwareHLK.sln) from an admin Visual Studio 2022 instance.
+    * Due to the nature of these tests, admin is required for most testing situations.
+3. Right click on the solution and select "restore nuget packages"
+4. Build the solution.
 
-    ``` batch
-    Give an example of performing step 1
-    ```
+### Starting a Test
 
-2. And then repeat for each step
+This entire code project is meant to be executed as a series of tests using a display device and a display capture device in tandem to verify that the expected display output is received. With the solution built, there are a few steps for running our default test pass:
 
-    ``` sh
-    Another example, this time for step 2
-    ```
+1. Attach a capture device supporting one of the installed plugins.
+    * Two plugins are initially included:
+        * CapturePlugins\TanagerPlugin:
+            * Designed for a soon-to-be release capture device developed alongside this framework.
+        * CapturePlugins\GenericCaptureCardPlugin:
+            * Designed for [DirectShow](https://learn.microsoft.com/en-us/windows/win32/directshow/directshow) compatible USB capture cards.
+                * The [Elgato Cam Link](https://www.elgato.com/en/cam-link-4k) is an example of such a device (although this is not an explicit endorsement). Generally... if the capture device appears as a Camera device to Windows, it should work.
+            * These capture cards generally cannot emulate an arbitrary display, and as such have an additional setup step: you will need to go into Windows Display Settings and remove the target display from the desktop.
+2. Run the Tests project in the solution
+    * By default - this will attempt to automatically determine which display sources correspond to available display sink devices, and will run all available tests on all source-to-sink combinations.
 
-## Running the tests
+### Troubleshooting
 
-Explain how to run the tests for this project that are relevant to users. You can also link to the testing portion of [CONTRIBUTING.md](CONTRIBUTING.md) for tests relevant to contributors.
-
-### End-to-end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### Unit tests
-
-Explain what these test and why
-
-```
-Give examples
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-Documenting some of the main tools used to build this project, manage dependencies, etc will help users get more information if they are trying to understand or having difficulties getting the project up and running.
-
-* Link to some dependency manager
-* Link to some framework or build tool
-* Link to some compiler, linting tool, bundler, etc
+Generally, the command line output of the tests will indicate what the problem is and next steps. Problems can be raised as Github issues or you can [contact the authors](#contact-us).
 
 ## Contributing
 
@@ -79,43 +67,29 @@ Please read our [CONTRIBUTING.md](CONTRIBUTING.md) which outlines all of our pol
 
 ## Versioning and changelog
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](link-to-tags-or-other-release-location).
+We use [SemVer](http://semver.org/) for versioning. For a PR to be accepted it will have to include appropriate versioning updates for the impacted components.
 
-It is a good practice to keep `CHANGELOG.md` file in repository that can be updated as part of a pull request.
+We maintain a [ChangeLog](CHANGELOG.md) to be updated alongside any notable changes.
 
 ## Authors
 
-List main authors of this project with a couple of words about their contribution.
+David Spruill (Microsoft) - principle author, framework
+Katie Anderson (Microsoft) - principle author, Tanager plugin
+Dave Hargrove (Microsoft) - hardware design, debugging
+Zachary Northrup (Microsoft) - software design, CaptureCardViewer project
+Larissa Umulinga (Microsoft) - author, CaptureCardViewer project
 
-Also insert a link to the `owners.txt` file if it exists as well as any other dashboard or other resources that lists all contributors to the project.
+Note: Please add to this list as new components/contributors are added.
+
+### Contact Us
+
+Suggestions and feedback can be sent to the authors at hwhlk@microsoft.com
 
 ## License
 
-This project is licensed under the < INSERT LICENSE NAME > - see the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT license - see the [LICENSE](LICENSE.txt) file for details
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
-
-
-# Introduction 
-This repository contains the source for a generic test framework for validating display adapter devices, such as GPUs and USB-to-HDMI dongles. It contains a plugin model for physical capture devices that can emulate monitors and receive pixel data, metadata, and other channels common to display protocols.
-
-The goal for this project is to provide an industry-wide standard for validating display adapters. The framework is designed to be as generic and extensible as possible, to enable a very wide variety of hardware devices, protocols, and tests to be plugged in.
-
-Specifications for the framework are available on the Microsoft-internal CGA-Internal Git repo [here](https://dev.azure.com/cga-internal/docs/_wiki/wikis/Docs/217/Overview).
-
-# Overview
-An overview of this project and how it functions can be found [here](https://dev.azure.com/cga-exchange/_git/docs?path=%2Fdisplay%2FHardwareHlk%2FTests.md).
-
-# Getting Started
-## Install Tooling
-This testing framework makes use of the [Testing Authoring and Execution Framework (TAEF)](https://docs.microsoft.com/en-us/windows-hardware/drivers/taef/) used in much of Microsoft's internal and HLK testing. In order to run this project, you will need to have TAEF installed. Follow the steps (1, 1.5, and 2) from [this documentation](https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk) to get set up.
-
-## Running a Test
-Once the tooling is installed, just hitting F5 should start the "basic" test run. This test run is intended for illustrative purposes in seeing how the framework functions and how the various components fit together. The AddressSanitizer for Windows will be required to run the project for memory detector issues. These are shown by Tl.exe having different breakpoints, heap errors, or exceptions thrown at different lines of the code. In order to install it, follow the instruction under the title “Turning on Asan for Windows MSBuild projects” from [this documentation] AddressSanitizer (ASan) for Windows with MSVC | C++ Team Blog (microsoft.com). Once installed, the incremental linking needs to be disabled through Solutions Explorer menu > right click on Core(Desktop) > Properties > Linker (under General) > choose No(/INCREMENTAL:NO) on the pop up menu next to Enable Incremental Linking > and click on Apply. On the same Core Property Pages menu, select C/C++ (under General), select None next to Debug Information Format. As for the Warning Level, select Level3 (/W3).
-
-# Contribute
-We will happily consider any PRs made against this project. We don't have a firm process for 3rd party contributions set up yet, until then things will be considered on a case-by-case basis.
+* Hat tip to industry partners who helped inspire this project and provided early-stage feedback:
+    Intel, Nvidia, AMD, Qualcomm, and Synaptics
