@@ -106,7 +106,7 @@ winrt::IMonitorDescriptor EDIDDescriptor::CreateStandardEDID()
 winrt::IMonitorDescriptor EDIDDescriptor::CreateEDIDFromFile(hstring filePath)
 {
     // Attempt to load the file given either as a fully qualified path or from the cwd
-    std::ifstream file(filePath.c_str());
+    std::ifstream file(filePath.c_str(), std::ios_base::binary);
 
     if (!file)
     {
@@ -135,7 +135,7 @@ winrt::IMonitorDescriptor EDIDDescriptor::CreateEDIDFromFile(hstring filePath)
         }
     }
 
-    std::vector<uint8_t> fileData(std::istreambuf_iterator<char>(file), {});
+    std::vector<uint8_t> fileData(std::istreambuf_iterator(file), {});
     return winrt::make<EDIDDescriptor>(fileData);
 }
 

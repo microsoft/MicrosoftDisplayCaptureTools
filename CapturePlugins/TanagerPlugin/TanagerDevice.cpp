@@ -38,6 +38,23 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 			throw_hresult(E_FAIL);
 		}
 
+        // Attempt to reboot the Tanager device
+        /* {
+            auto rebootPacket = winrt::UsbSetupPacket();
+            auto rebootPacketRequestType = winrt::UsbControlRequestType();
+            rebootPacketRequestType.AsByte(0x40);
+            rebootPacket.RequestType(rebootPacketRequestType);
+            rebootPacket.Request(0xc6);
+
+            auto ret = m_usbDevice.SendControlOutTransferAsync(rebootPacket).get();
+
+            if (0 == ret)
+            {
+                // If the command to start a board reset succeeded - Sleep for a few seconds to let the board come back up.
+                Sleep(10000);
+            }
+        }*/
+
 		m_fpga.SetUsbDevice(m_usbDevice);
 		m_pDriver = std::make_shared<I2cDriver>(m_usbDevice);
         m_fpga.SysReset(); // Blocks until FPGA is ready

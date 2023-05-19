@@ -252,7 +252,7 @@ void TanagerDisplayInputDisplayPort::FinalizeDisplayState()
             // Reset the descriptor guard bool here to make sure that we won't HPD in again unless the descriptor changes
             m_hasDescriptorChanged = false;
 
-            if (AsyncStatus::Completed != hasDeviceChanged.wait_for(std::chrono::seconds(5)))
+            if (AsyncStatus::Completed != hasDeviceChanged.wait_for(std::chrono::seconds(8)))
             {
                 m_logger.LogError(L"Did not detect a new device being plugged in after hotplugging DisplayPort.");
             }

@@ -330,8 +330,8 @@ namespace winrt::BasicDisplayControl::implementation
         if (result.ErrorCode() != winrt::DisplayManagerResult::Success)
         {
             // We failed to acquire control of the target.
-            m_logger.LogError(L"Failed to acquire control of the target. Error: " + result.ExtendedErrorCode());
-            throw winrt::hresult_error();
+            m_logger.LogError(winrt::hstring(L"Failed to acquire control of the target. Error: ") + winrt::to_hstring(result.ExtendedErrorCode()));
+            throw result.ExtendedErrorCode();
         }
 
         m_displayState = result.State();
@@ -360,9 +360,15 @@ namespace winrt::BasicDisplayControl::implementation
         if (m_properties->RequeryMode())
         {
             auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
+            std::vector<DisplayModeInfo> modeListVec;
 
             for (auto&& mode : modeList)
             {
+                if (mode.SourceResolution().Width == 3840 && 5 > fabs(
+                                                                 ((double)mode.PresentationRate().VerticalSyncRate.Numerator /
+                                                                 (double)mode.PresentationRate().VerticalSyncRate.Denominator) - 60))
+                    modeListVec.push_back(mode);
+
                 // Check to see if this mode is acceptable
                 if (m_displaySetupCallback)
                 {
