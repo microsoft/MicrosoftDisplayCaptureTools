@@ -79,7 +79,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
 	void RefreshRateTool::ApplyToOutput(IDisplayOutput displayOutput)
     {
-        constexpr double sc_refreshRateEpsilon = 0.00000000001;
+        constexpr double sc_refreshRateEpsilon = 0.005;
 
         m_displaySetupEventToken = displayOutput.DisplaySetupCallback([&](const auto&, IDisplaySetupToolArgs args) 
 		{

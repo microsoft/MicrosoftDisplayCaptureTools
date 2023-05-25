@@ -45,6 +45,9 @@
   <ItemGroup>
     <None Include="MicrosoftDisplayCaptureTools.def" />
     <None Include="packages.config" />
+    <None Include="StandardEDID.bin">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="PropertySheet.props" />
