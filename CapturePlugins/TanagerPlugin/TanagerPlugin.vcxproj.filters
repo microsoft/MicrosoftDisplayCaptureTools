@@ -6,12 +6,16 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="TanagerDevice.cpp" />
+    <ClCompile Include="InputHDMI.cpp" />
+    <ClCompile Include="InputDisplayPort.cpp" />
+    <ClCompile Include="DisplayHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Fx3FpgaInterface.h" />
     <ClInclude Include="I2cDriver.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="TanagerDevice.h" />
+    <ClInclude Include="DisplayHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="TanagerPlugin.idl" />

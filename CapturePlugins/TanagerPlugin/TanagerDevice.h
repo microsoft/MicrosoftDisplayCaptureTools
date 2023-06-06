@@ -20,10 +20,11 @@ namespace winrt::TanagerPlugin::implementation
 
         winrt::hstring GetDeviceId() override;
         std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs() override;
-        void TriggerHdmiCapture() override;
         void FpgaWrite(unsigned short address, std::vector<byte> data) override;
         std::vector<byte> FpgaRead(unsigned short address, UINT16 data) override;
         std::vector<byte> ReadEndPointData(UINT32 dataSize) override;
+        void SelectDisplayPortEDID(USHORT value);
+        void I2cWriteData(uint16_t i2cAddress, uint8_t address, std::vector<byte> data);
 
         // Firmware updates
         void FlashFpgaFirmware(winrt::hstring filePath) override;
@@ -32,10 +33,12 @@ namespace winrt::TanagerPlugin::implementation
         winrt::Windows::Foundation::IAsyncAction UpdateFirmwareAsync() override;
         MicrosoftDisplayCaptureTools::CaptureCard::ControllerFirmwareState GetFirmwareState() override;
 
-        IteIt68051Plugin::VideoTiming GetVideoTiming();
-        IteIt68051Plugin::aviInfoframe GetAviInfoframe();
-
         bool IsVideoLocked();
+        std::mutex& SelectHdmi();
+        std::mutex& SelectDisplayPort();
+        IteIt68051Plugin::VideoTiming GetVideoTiming();
+
+        IteIt68051Plugin::aviInfoframe GetAviInfoframe();
 
     private:
         winrt::hstring m_deviceId;
@@ -43,27 +46,20 @@ namespace winrt::TanagerPlugin::implementation
         std::shared_ptr<I2cDriver> m_pDriver;
         IteIt68051Plugin::IteIt68051 hdmiChip;
         Fx3FpgaInterface m_fpga;
+        std::mutex m_changingPortsLocked;
 
     public:
         // Adding logger as public member as classes use a weak_from_this pattern
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
-    enum class TanagerDisplayInputPort
-    {
-        hdmi,
-        displayPort,
-    };
-
-    struct TanagerDisplayInput : implements<TanagerDisplayInput, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
+    struct TanagerDisplayInputHdmi : implements<TanagerDisplayInputHdmi, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
     {
     public:
-        TanagerDisplayInput(
-            std::weak_ptr<TanagerDevice> parent,
-            TanagerDisplayInputPort port,
-            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        TanagerDisplayInputHdmi(
+            std::weak_ptr<TanagerDevice> parent, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
-        ~TanagerDisplayInput();
+        ~TanagerDisplayInputHdmi();
 
         hstring Name();
         void SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor);
@@ -74,14 +70,30 @@ namespace winrt::TanagerPlugin::implementation
         void SetEdid(std::vector<byte> edid);
 
     private:
-        // Members for detecting changes to the display stack - do not take ownership of any devices with this DisplayManager
-        winrt::Windows::Foundation::IAsyncAction WaitForDisplayDevicesChange();
-        winrt::Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
+        std::weak_ptr<TanagerDevice> m_parent;
+        std::shared_ptr<TanagerDevice> m_strongParent;
+        std::atomic_bool m_hasDescriptorChanged = false;
+        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+    };
+
+    struct TanagerDisplayInputDisplayPort : implements<TanagerDisplayInputDisplayPort, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
+    {
+    public:
+        TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> parent, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+
+        ~TanagerDisplayInputDisplayPort();
+
+        hstring Name();
+        void SetDescriptor(MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor);
+        MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger GetCaptureTrigger();
+        MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities GetCapabilities();
+        MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture CaptureFrame();
+        void FinalizeDisplayState();
+        void SetEdid(std::vector<byte> edid);
 
     private:
         std::weak_ptr<TanagerDevice> m_parent;
         std::shared_ptr<TanagerDevice> m_strongParent;
-        TanagerDisplayInputPort m_port;
         std::atomic_bool m_hasDescriptorChanged = false;
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
@@ -135,23 +147,6 @@ namespace winrt::TanagerPlugin::implementation
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_extendedProps{nullptr};
 
         const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-    };
-
-    struct TanagerCaptureCapabilities : implements<TanagerCaptureCapabilities, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities>
-    {
-        TanagerCaptureCapabilities(TanagerDisplayInputPort Port) : m_port(Port)
-        {
-        }
-
-        bool CanReturnRawFramesToHost();
-        bool CanReturnFramesToHost();
-        bool CanCaptureFrameSeries();
-        bool CanHotPlug();
-        bool CanConfigureEDID();
-        bool CanConfigureDisplayID();
-        uint32_t GetMaxDescriptorSize();
-
-        TanagerDisplayInputPort m_port;
     };
 }
 
