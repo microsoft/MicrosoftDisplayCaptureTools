@@ -30,6 +30,7 @@
 
 #include "Controller.h"
 #include "TanagerDevice.h"
+#include "DisplayHelpers.h"
 
 #define TCA6416A_BANK_0 0
 #define TCA6416A_BANK_1 1

@@ -228,6 +228,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="MicrosoftDisplayCaptureTools.def" />
+    <None Include="StandardEDID.bin">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
