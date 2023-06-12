@@ -114,6 +114,7 @@ void SingleScreenTestMatrix::Test()
                     tool.ApplyToOutput(displayOutput);
                     tool.ApplyToPrediction(prediction);
                     testName = testName + tool.GetConfiguration() + L"_";
+
                 }
             }
         }
@@ -124,8 +125,17 @@ void SingleScreenTestMatrix::Test()
         // Make sure the capture card is ready
         displayInput.FinalizeDisplayState();
 
+        auto inputCaps = displayInput.GetCapabilities();
+        inputCaps.ValidateAgainstDisplayOutput(displayOutput);
+
         {
             auto renderer = displayOutput.StartRender();
+            if (!renderer)
+            {
+                WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, "Could not run this test due to mode incompatibilities.");
+                continue;
+            }
+
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
             // Capture the frame.

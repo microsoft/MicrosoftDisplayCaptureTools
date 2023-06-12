@@ -14,6 +14,7 @@ namespace winrt
 	using namespace winrt::Windows::Storage;
 	using namespace winrt::Windows::Storage::Streams;
 	using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+	using namespace winrt::MicrosoftDisplayCaptureTools::Display;
     using namespace winrt::TanagerPlugin::DisplayHelpers;
 }
 
@@ -51,6 +52,20 @@ struct DPCapabilities : implements<DPCapabilities, winrt::MicrosoftDisplayCaptur
     {
         return MaxDescriptorByteSize;
     }
+    void ValidateAgainstDisplayOutput(winrt::IDisplayOutput displayOutput)
+    {
+        m_displayOutputValidationToken = displayOutput.DisplaySetupCallback([&](const auto&, IDisplaySetupToolArgs args) {
+            double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
+                                      static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);
+
+            bool isModeCapturable = args.Mode().TargetResolution().Width >= 3840 && presentationRate <= 30.;
+
+            args.IsModeCompatible(isModeCapturable);
+        });
+    }
+
+private:
+    winrt::event_token m_displayOutputValidationToken;
 };
 
 TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> parent, winrt::ILogger const& logger) :

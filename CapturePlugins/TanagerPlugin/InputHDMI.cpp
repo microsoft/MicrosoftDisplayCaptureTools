@@ -14,6 +14,7 @@ namespace winrt
     using namespace winrt::Windows::Storage;
     using namespace winrt::Windows::Storage::Streams;
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+	using namespace winrt::MicrosoftDisplayCaptureTools::Display;
     using namespace winrt::TanagerPlugin::DisplayHelpers;
 }
 
@@ -51,6 +52,11 @@ struct HDMICapabilities : implements<HDMICapabilities, winrt::MicrosoftDisplayCa
     uint32_t GetMaxDescriptorSize()
     {
         return MaxDescriptorByteSize;
+    }
+    void ValidateAgainstDisplayOutput(winrt::IDisplayOutput displayOutput)
+    {
+        // Tanager HDMI does not have any current limitations
+        (void)displayOutput;
     }
 };
 

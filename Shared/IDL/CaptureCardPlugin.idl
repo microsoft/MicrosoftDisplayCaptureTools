@@ -33,6 +33,17 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         // The maximum size supported for an EDID/DisplayID descriptor.
         UInt32 GetMaxDescriptorSize();
 
+        // ValidateAgainstDisplayOutput
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Allows capture cards to deny selected output modes if they are can't be captured by the active input.
+        //
+        // Parameters:
+        //      displayOutput
+        //          This represents the monitor descriptor to represent to represent the emulated display.
+        //
+        void ValidateAgainstDisplayOutput(MicrosoftDisplayCaptureTools.Display.IDisplayOutput displayOutput);
+
         // Note: While there are only a few of these types defined now, we anticipate this list to grow as we
         // define more test scenarios.
     };
@@ -129,7 +140,8 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // This is to be implemented by capture card producer.
     //
-    interface IDisplayInput {
+    interface IDisplayInput
+    {
         // A string identifier for this particular captured display, to be used for logging.
         String Name
         {

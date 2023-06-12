@@ -216,8 +216,8 @@ namespace winrt::BasicDisplayControl::implementation
     private:
         void RefreshTarget();
         void ConnectTarget();
-        void RefreshMode();
-        void PrepareRender();
+        bool RefreshMode();
+        bool PrepareRender();
         void RenderLoop();
 
     private:
