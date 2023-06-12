@@ -54,19 +54,27 @@ struct DPCapabilities : implements<DPCapabilities, winrt::MicrosoftDisplayCaptur
 };
 
 TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> parent, winrt::ILogger const& logger) :
-m_parent(parent), m_logger(logger)
+    m_parent(parent), m_logger(logger)
 {
+    m_logger.LogNote(winrt::hstring(L"Initializing Tanager input: ") + Name());
+
+    // Make sure that the HPD line is low to start with
+    if (auto parent = m_parent.lock())
+    {
+        auto lock = std::scoped_lock(parent->SelectDisplayPort());
+        parent->FpgaWrite(0x6, std::vector<byte>({0x12})); // HPD low
+    }
 }
 
 TanagerDisplayInputDisplayPort::~TanagerDisplayInputDisplayPort()
 {
-    m_logger.LogNote(winrt::hstring(L"Cleaning up TanagerDisplayInputDisplayPort: ") + Name());
+    m_logger.LogNote(winrt::hstring(L"Cleaning up Tanager input: ") + Name());
 
     // HPD out
     if (auto parent = m_parent.lock())
     {
         auto lock = std::scoped_lock(parent->SelectDisplayPort());
-        parent->FpgaWrite(0x6, std::vector<byte>({0x12})); // HPD high
+        parent->FpgaWrite(0x6, std::vector<byte>({0x12})); // HPD low
     }
 }
 
@@ -108,6 +116,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     if (!parent)
     {
         m_logger.LogError(L"Cannot obtain reference to Tanager device.");
+        return nullptr;
     }
 
     auto lock = std::scoped_lock(parent->SelectDisplayPort());
@@ -119,11 +128,13 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     if (video_register_vector.empty())
     {
         m_logger.LogError(L"Failed to read DRAM controller registers.");
+        return nullptr;
     }
 
     if ((video_register_vector[0] & 0x01) == 0)
     {
         m_logger.LogError(L"DRAM controller register reset bit not set.");
+        return nullptr;
     }
 
     // Wait for reset to complete
@@ -138,6 +149,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     if ((video_register_vector[0] & 0x03) != 0x03)
     {
         m_logger.LogError(L"DRAM controller did not reset in time allowed.");
+        return nullptr;
     }
 
     // Clear the FPGA DRAM controller register
@@ -146,13 +158,15 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     if (video_register_vector[0] != 0)
     {
         m_logger.LogError(L"DRAM controller register did not zero.");
+        return nullptr;
     }
 
     // Check to see if ITE chip is locked
     auto locked = parent->IsVideoLocked();
     if (!locked)
     {
-        m_logger.LogError(L"Video is not locked");
+        m_logger.LogError(L"Video is not locked - check this capture card input's compatibility with the selected display mode.");
+        return nullptr;
     }
 
     // Capture frame in DRAM
@@ -170,10 +184,12 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     if (video_register_vector.size() == 0)
     {
         m_logger.LogError(L"Zero bytes of data returned from FpgaRead.");
+        return nullptr;
     }
     if (loopCount >= loopLimit)
     {
         m_logger.LogError(L"Timeout while waiting for video frame capture to complete.");
+        return nullptr;
     }
 
     // query resolution
@@ -240,6 +256,15 @@ void TanagerDisplayInputDisplayPort::FinalizeDisplayState()
         if (m_hasDescriptorChanged || !m_strongParent)
         {
             auto lock = std::scoped_lock(parent->SelectDisplayPort());
+            m_logger.LogNote(L"Hotplugging, this may take a few seconds...");
+
+            if (m_strongParent)
+            {
+                // If this input has already been HPD'd in by this test - HPD out so that we start from a clean baseline
+                m_logger.LogNote(L"Input has been previously used in this test pass, hotplugging out first.");
+                parent->FpgaWrite(0x6, std::vector<byte>({0x12})); // HPD low
+                Sleep(5000);
+            }
 
             auto hasDeviceChanged = WaitForDisplayDevicesChange();
 
