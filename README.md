@@ -83,7 +83,7 @@ Note: Please add to this list as new components/contributors are added.
 
 ### Contact Us
 
-Suggestions and feedback can be sent to the authors at hwhlk@microsoft.com
+Suggestions and feedback can be sent to the authors at displaycapturetools@microsoft.com
 
 ## License
 
