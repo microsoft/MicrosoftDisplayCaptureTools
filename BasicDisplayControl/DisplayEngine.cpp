@@ -132,17 +132,9 @@ namespace winrt::BasicDisplayControl::implementation
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
     {
-        try
-        {
-            auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+        auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
 
-            return output;
-        }
-        catch (...)
-        {
-            m_logger.LogError(L"Unable to initialize display output.");
-            return nullptr;
-        }
+        return output;
     }
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::hstring target)

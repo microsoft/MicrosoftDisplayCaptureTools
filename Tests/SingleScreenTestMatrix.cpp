@@ -76,20 +76,7 @@ void SingleScreenTestMatrix::Test()
         auto displayInput = mapping.Sink();
 
         auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
-        if (!displayOutput)
-        {
-            // We could not initialize the display output for whatever reason, there is no
-            // point in testing this mapping.
-            continue;
-        }
-
         auto prediction = displayEngine.CreateDisplayPrediction();
-        if (!prediction)
-        {
-            // We could not initialize the display prediction for whatever reason, there is no
-            // point in testing this mapping.
-            continue;
-        }
 
         winrt::hstring testName = displayInput.Name() + L"_";
 
@@ -130,11 +117,6 @@ void SingleScreenTestMatrix::Test()
 
             // Capture the frame.
             auto capturedFrame = displayInput.CaptureFrame();
-            if (!capturedFrame)
-            {
-                // CaptureFrame should log errors if there are any non-continuable issues.
-                continue;
-            }
 
             capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
         }
