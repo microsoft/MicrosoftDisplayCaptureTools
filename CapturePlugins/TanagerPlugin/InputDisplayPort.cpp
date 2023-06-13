@@ -58,7 +58,7 @@ struct DPCapabilities : implements<DPCapabilities, winrt::MicrosoftDisplayCaptur
             double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
                                       static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);
 
-            bool isModeCapturable = args.Mode().TargetResolution().Width >= 3840 && presentationRate <= 30.;
+            bool isModeCapturable = !(args.Mode().TargetResolution().Width >= 3840 && presentationRate > 30.);
 
             args.IsModeCompatible(isModeCapturable);
         });
