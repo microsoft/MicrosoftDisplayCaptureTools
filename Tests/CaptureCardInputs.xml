@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<Data>
+	<Table Id="Inputs">
+		<ParameterTypes>
+			<ParameterType Name="InputName">String</ParameterType>
+		</ParameterTypes>
+	    <Row>
+			<Parameter Name="InputName">HDMI</Parameter>
+		</Row>
+		<Row>
+			<Parameter Name="InputName">DisplayPort</Parameter>
+		</Row>
+	</Table>
+</Data>

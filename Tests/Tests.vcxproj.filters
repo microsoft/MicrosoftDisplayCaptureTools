@@ -58,9 +58,18 @@
     <None Include="TestConfig.json" />
     <None Include="cpp.hint" />
     <None Include="packages.config" />
-    <None Include="pict.exe" />
+    <None Include="pict.exe">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="SimplePICT.txt" />
+    <Xml Include="CaptureCardInputs.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="SimplePICT.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
