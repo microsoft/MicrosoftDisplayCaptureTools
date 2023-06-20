@@ -269,8 +269,12 @@ void TanagerDisplayInputHdmi::FinalizeDisplayState()
             {
                 // If this input has already been HPD'd in by this test - HPD out so that we start from a clean baseline
                 m_logger.LogNote(L"Input has been previously used in this test pass, hotplugging out first.");
+
+                auto hasDeviceChanged = WaitForDisplayDevicesChange();
                 parent->FpgaWrite(0x4, std::vector<byte>({0x32})); // HPD low
-                Sleep(5000);
+
+                // Wait for a few seconds after HPD'ing out, but don't fail if this doesn't work.
+                (void)hasDeviceChanged.wait_for(std::chrono::seconds(5));
             }
 
             auto hasDeviceChanged = WaitForDisplayDevicesChange();
