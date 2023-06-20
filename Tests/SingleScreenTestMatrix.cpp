@@ -99,7 +99,8 @@ void SingleScreenTestMatrix::Test()
     {
         // We could not initialize the display output for whatever reason, there is no
         // point in testing this mapping.
-        continue;
+        g_logger.LogError(L"Unable to initialize the display output.");
+        return;
     }
 
     auto prediction = displayEngine.CreateDisplayPrediction();
@@ -107,7 +108,8 @@ void SingleScreenTestMatrix::Test()
     {
         // We could not initialize the display prediction for whatever reason, there is no
         // point in testing this mapping.
-        continue;
+        g_logger.LogError(L"Unable to initialize the display prediction.");
+        return;
     }
 
     winrt::hstring testName = displayInput.Name() + L"_";
@@ -159,12 +161,16 @@ void SingleScreenTestMatrix::Test()
 
         // Capture the frame.
         auto capturedFrame = displayInput.CaptureFrame();
-            if (!capturedFrame)
-            {
-                // CaptureFrame should log errors if there are any non-continuable issues.
-                continue;
-            }
+        if (!capturedFrame)
+        {
+            // CaptureFrame should log errors if there are any non-continuable issues.
+            g_logger.LogError(L"Unable to capture the frame.");
+            return;
+        }
 
-        capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
+        if (!capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get()))
+        {
+            g_logger.LogError(L"CompareCaptureToPrediction returned false.");
+        }
     }
 }
