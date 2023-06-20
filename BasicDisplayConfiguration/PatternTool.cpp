@@ -32,11 +32,13 @@ namespace winrt::BasicDisplayConfiguration::implementation
     // A map of the properties supported by this tool, mapping a name to R,G,B values
     std::map<std::wstring, ConfigurationColor> ConfigurationMap
     {
-        {L"White", {1.0f, 1.0f, 1.0f}},
-        {L"Red",   {1.0f, 0.0f, 0.0f}},
-        {L"Green", {0.0f, 1.0f, 0.0f}},
-        {L"Blue",  {0.0f, 0.0f, 1.0f}},
-        {L"Gray",  {0.5f, 0.5f, 0.5f}},
+        {L"White",      {1.0f, 1.0f, 1.0f}},
+        {L"Red",        {1.0f, 0.0f, 0.0f}},
+        {L"Green",      {0.0f, 1.0f, 0.0f}},
+        {L"Blue",       {0.0f, 0.0f, 1.0f}},
+        {L"MediumGray", {0.5f, 0.5f, 0.5f}},
+        {L"DarkGray",   {1.f / 3.f, 1.f / 3.f, 1.f / 3.f}},
+        {L"LightGray",  {2.f / 3.f, 2.f / 3.f, 2.f / 3.f}},
     };
 
 	std::map<Windows::Graphics::DirectX::DirectXPixelFormat, uint32_t> SupportedFormatsWithSizePerPixel
