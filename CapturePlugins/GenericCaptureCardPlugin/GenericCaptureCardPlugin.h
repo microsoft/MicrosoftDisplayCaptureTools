@@ -52,6 +52,8 @@ struct CaptureCapabilities : implements<CaptureCapabilities, winrt::MicrosoftDis
     bool CanConfigureEDID();
     bool CanConfigureDisplayID();
     uint32_t GetMaxDescriptorSize();
+    
+    void ValidateAgainstDisplayOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput){};
 };
 
 struct DisplayInput : implements<DisplayInput, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>

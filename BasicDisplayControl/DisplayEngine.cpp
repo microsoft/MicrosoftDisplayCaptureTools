@@ -132,9 +132,17 @@ namespace winrt::BasicDisplayControl::implementation
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
     {
-        auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+        try
+        {
+            auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
 
-        return output;
+            return output;
+        }
+        catch (...)
+        {
+            m_logger.LogError(L"Unable to initialize display output.");
+            return nullptr;
+        }
     }
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::hstring target)
@@ -246,9 +254,13 @@ namespace winrt::BasicDisplayControl::implementation
 
         // Start the rendering process - first this will determine eligible modes and then it will spin off a thread to run 
         // a render loop. This function won't return until the thread has started.
-        PrepareRender();
+        if (PrepareRender())
+        {
+            return renderWatchdog.as<IClosable>();
+        }
 
-        return renderWatchdog.as<IClosable>();
+        return nullptr;
+
     }
 
     event_token DisplayOutput::DisplaySetupCallback(Windows::Foundation::EventHandler<IDisplaySetupToolArgs> const& handler)
@@ -355,7 +367,7 @@ namespace winrt::BasicDisplayControl::implementation
         }
     }
 
-    void DisplayOutput::RefreshMode()
+    bool DisplayOutput::RefreshMode()
     {
         if (m_properties->RequeryMode())
         {
@@ -383,7 +395,7 @@ namespace winrt::BasicDisplayControl::implementation
                         m_logger.LogNote(L"Found an acceptable mode.");
 
                         m_properties->ActiveMode(mode);
-                        return;
+                        return true;
                     }
                 }
             }
@@ -391,17 +403,20 @@ namespace winrt::BasicDisplayControl::implementation
             // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
             // to auto-configure. So log a warning instead of an error to assist the user.
             m_logger.LogWarning(L"No display mode fit the selected options");
-            throw winrt::hresult_invalid_argument();
+            return false;
         }
     }
 
-    void DisplayOutput::PrepareRender()
+    bool DisplayOutput::PrepareRender()
     {
         m_logger.LogNote(L"Preparing Renderer Thread");
 
         m_presenting = false;
 
-        RefreshMode();
+        if (!RefreshMode())
+        {
+            return false;
+        }
 
         m_displayPath.ApplyPropertiesFromMode(m_properties->ActiveMode());
         auto result = m_displayState.TryApply(winrt::DisplayStateApplyOptions::FailIfStateChanged);
@@ -418,6 +433,8 @@ namespace winrt::BasicDisplayControl::implementation
         {
             std::this_thread::yield();
         }
+
+        return true;
     }
 
     void DisplayOutput::RenderLoop()
