@@ -69,56 +69,74 @@ void SingleScreenTestMatrix::Test()
 
     // Pick the display - capture pair to use for this test.
     VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
-
-    for (auto&& mapping : g_displayMap)
+    String inputName;
+    if (FAILED(TestData::TryGetValue(L"InputName", inputName)))
     {
-        auto displayOutputTarget = mapping.Source();
-        auto displayInput = mapping.Sink();
+        g_logger.LogError(L"This test requires a TAEF table data source with names for the target inputs.");
+        return;
+    }
 
-        auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
-        auto prediction = displayEngine.CreateDisplayPrediction();
-
-        winrt::hstring testName = displayInput.Name() + L"_";
-
-        // All tools need to be run in order of their category
-        constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
-            winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
-
-        for (auto& category : categoryOrder)
+    winrt::ISourceToSinkMapping mapping = nullptr;
+    for (auto&& map : g_displayMap)
+    {
+        if (0 == inputName.CompareNoCase(map.Sink().Name().c_str()))
         {
-            for (auto tool : tools)
+            mapping = map;
+            break;
+        }
+    }
+
+    if (!mapping)
+    {
+        g_logger.LogError(winrt::hstring(L"Requested input name: ") + winrt::hstring(inputName) + winrt::hstring(L" was not found!"));
+        return;
+    }
+    auto displayOutputTarget = mapping.Source();
+    auto displayInput = mapping.Sink();
+
+    auto displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
+    auto prediction = displayEngine.CreateDisplayPrediction();
+
+    winrt::hstring testName = displayInput.Name() + L"_";
+
+    // All tools need to be run in order of their category
+    constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
+        winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
+
+    for (auto& category : categoryOrder)
+    {
+        for (auto tool : tools)
+        {
+            if (tool.Category() != category)
+                continue;
+
+            String toolSetting;
+            if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
             {
-                if (tool.Category() != category)
-                    continue;
+                String output = L"";
 
-                String toolSetting;
-                if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
-                {
-                    String output = L"";
-
-                    // Setting the tool value
-                    tool.SetConfiguration(winrt::hstring(toolSetting));
-                    tool.ApplyToOutput(displayOutput);
-                    tool.ApplyToPrediction(prediction);
-                    testName = testName + tool.GetConfiguration() + L"_";
-                }
+                // Setting the tool value
+                tool.SetConfiguration(winrt::hstring(toolSetting));
+                tool.ApplyToOutput(displayOutput);
+                tool.ApplyToPrediction(prediction);
+                testName = testName + tool.GetConfiguration() + L"_";
             }
         }
+    }
 
-        // Start generating the prediction at the same time as we start outputting.
-        auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
+    // Start generating the prediction at the same time as we start outputting.
+    auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
 
-        // Make sure the capture card is ready
-        displayInput.FinalizeDisplayState();
+    // Make sure the capture card is ready
+    displayInput.FinalizeDisplayState();
 
-        {
-            auto renderer = displayOutput.StartRender();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+    {
+        auto renderer = displayOutput.StartRender();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
-            // Capture the frame.
-            auto capturedFrame = displayInput.CaptureFrame();
+        // Capture the frame.
+        auto capturedFrame = displayInput.CaptureFrame();
 
-            capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
-        }
+        capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
     }
 }
