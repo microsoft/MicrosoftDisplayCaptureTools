@@ -1,4 +1,4 @@
-Pattern:     White, Red, Green, Blue, Gray
+Pattern:     White, Red, Green, Blue, MediumGray
 Resolution:  1600x900, 1920x1080, 3840x2160
 RefreshRate: 30hz, 60hz, 100hz, 120hz
 PixelFormat: R8G8B8A8UIntNormalized_NotInterlaced_NotStereo
