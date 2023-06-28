@@ -8,6 +8,9 @@
     <Filter Include="Generated Files">
       <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{914049c7-d054-4e91-9968-bf02d70dc2aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -17,6 +20,9 @@
     <ClCompile Include="RefreshRateTool.cpp" />
     <ClCompile Include="Toolbox.cpp" />
     <ClCompile Include="PixelFormatTool.cpp" />
+    <ClCompile Include="PredictionRenderer.ixx">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

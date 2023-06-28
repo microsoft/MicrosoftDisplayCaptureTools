@@ -227,6 +227,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="PixelFormatTool.cpp" />
+    <ClCompile Include="PredictionRenderer.ixx" />
     <ClCompile Include="RefreshRateTool.cpp" />
     <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="Toolbox.cpp" />
