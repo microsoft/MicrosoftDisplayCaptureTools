@@ -6,7 +6,7 @@ namespace BasicDisplayControl
         DisplayEngine(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
     }
 
-    [default_interface] 
+    [default_interface]
     runtimeclass DisplayEngineFactory : MicrosoftDisplayCaptureTools.Display.IDisplayEngineFactory
     {
         DisplayEngineFactory();

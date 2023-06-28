@@ -1,8 +1,16 @@
 #pragma once
 namespace winrt::BasicDisplayConfiguration::implementation {
+
+enum class ResolutionToolKind
+{
+    TargetResolution,
+    SourceResolution,
+    PlaneResolution
+};
+
 struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 {
-    ResolutionTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    ResolutionTool(ResolutionToolKind kind, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
     winrt::hstring Name();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -14,6 +22,7 @@ struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptur
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
 private:
+    ResolutionToolKind m_kind;
     std::wstring m_currentConfig;
     const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 

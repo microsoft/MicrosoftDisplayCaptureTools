@@ -15,7 +15,7 @@ namespace winrt
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 }
 
-namespace winrt::BasicDisplayConfiguration::implementation 
+namespace winrt::BasicDisplayConfiguration::implementation
 {
     winrt::IConfigurationToolbox ToolboxFactory::CreateConfigurationToolbox(winrt::ILogger const& logger)
     {
@@ -35,17 +35,23 @@ namespace winrt::BasicDisplayConfiguration::implementation
     enum class Tools
     {
         Pattern,
-        Resolution,
+        TargetResolution,
+        SourceResolution,
+        PlaneResolution,
         RefreshRate,
-        PixelFormat
+        SurfacePixelFormat,
+        SourcePixelFormat
     };
 
     std::map<hstring, Tools> MapNameToTool =
     {
         {L"Pattern", Tools::Pattern},
-        {L"Resolution", Tools::Resolution},
+        {L"TargetResolution", Tools::TargetResolution},
+        {L"SourceResolution", Tools::SourceResolution},
+        {L"PlaneResolution", Tools::PlaneResolution},
         {L"RefreshRate", Tools::RefreshRate},
-        {L"PixelFormat", Tools::PixelFormat}
+        {L"SurfacePixelFormat", Tools::SurfacePixelFormat},
+        {L"SourcePixelFormat", Tools::SourcePixelFormat}
     };
 
     hstring Toolbox::Name()
@@ -68,12 +74,18 @@ namespace winrt::BasicDisplayConfiguration::implementation
         {
         case Tools::Pattern:
             return winrt::make<PatternTool>(m_logger);
-        case Tools::RefreshRate: 
+        case Tools::RefreshRate:
             return winrt::make<RefreshRateTool>(m_logger);
-        case Tools::Resolution: 
-            return winrt::make<ResolutionTool>(m_logger);
-        case Tools::PixelFormat:
-            return winrt::make<PixelFormatTool>(m_logger);
+        case Tools::TargetResolution:
+            return winrt::make<ResolutionTool>(ResolutionToolKind::TargetResolution, m_logger);
+        case Tools::SourceResolution:
+            return winrt::make<ResolutionTool>(ResolutionToolKind::SourceResolution, m_logger);
+        case Tools::PlaneResolution:
+            return winrt::make<ResolutionTool>(ResolutionToolKind::PlaneResolution, m_logger);
+        case Tools::SourcePixelFormat:
+            return winrt::make<PixelFormatTool>(PixelFormatToolKind::SourcePixelFormat, m_logger);
+        case Tools::SurfacePixelFormat:
+            return winrt::make<PixelFormatTool>(PixelFormatToolKind::PlanePixelFormat, m_logger);
         }
 
         // The caller has asked for a tool that is not exposed from this toolbox

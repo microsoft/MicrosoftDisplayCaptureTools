@@ -19,7 +19,7 @@ namespace winrt
 	using namespace Windows::UI;
 }
 
-namespace winrt::BasicDisplayConfiguration::implementation 
+namespace winrt::BasicDisplayConfiguration::implementation
 {
     static const std::wstring DefaultConfiguration = L"Green";
     struct ConfigurationColor
@@ -177,9 +177,33 @@ namespace winrt::BasicDisplayConfiguration::implementation
         });
 	}
 
+    void PatternTool::RenderPatternToPlane(const CanvasDrawingSession& drawingSession, uint32_t width, uint32_t height)
+    {
+        auto& configColor = ConfigurationMap[m_currentConfig];
+        Color checkerColor;
+        checkerColor.A = 255;
+        checkerColor.R = static_cast<uint8_t>(255 * configColor.Red);
+        checkerColor.G = static_cast<uint8_t>(255 * configColor.Green);
+        checkerColor.B = static_cast<uint8_t>(255 * configColor.Blue);
+
+        drawingSession.Clear(Colors::Black());
+
+        bool indent = false;
+        for (float x = 0; x < width; x += PATTERN_SQUARE_SIZE)
+        {
+            for (float y = indent ? PATTERN_SQUARE_SIZE : 0.f; y < height; y += 2 * PATTERN_SQUARE_SIZE)
+            {
+                drawingSession.FillRectangle(x, y, PATTERN_SQUARE_SIZE, PATTERN_SQUARE_SIZE, checkerColor);
+            }
+
+            indent = !indent;
+        }
+
+    }
+
     void PatternTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
     {
-        m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
+        m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IDisplayPredictionData predictionData)
         {
             auto canvasDevice = CanvasDevice::GetSharedDevice();
             auto patternTarget = CanvasRenderTarget(
@@ -193,37 +217,19 @@ namespace winrt::BasicDisplayConfiguration::implementation
             {
                 auto drawingSession = patternTarget.CreateDrawingSession();
 
-                auto& configColor = ConfigurationMap[m_currentConfig];
-                Color checkerColor;
-                checkerColor.A = 255;
-                checkerColor.R = static_cast<uint8_t>(255 * configColor.Red);
-                checkerColor.G = static_cast<uint8_t>(255 * configColor.Green);
-                checkerColor.B = static_cast<uint8_t>(255 * configColor.Blue);
-
-                drawingSession.Clear(Colors::Black());
-
-                bool indent = false;
-                for (float x = 0; x < predictionData.FrameData().Resolution().Width; x += PATTERN_SQUARE_SIZE)
-                {
-                    for (float y = indent ? PATTERN_SQUARE_SIZE : 0.f; y < predictionData.FrameData().Resolution().Height;
-                         y += 2 * PATTERN_SQUARE_SIZE)
-                    {
-                        drawingSession.FillRectangle(x, y, PATTERN_SQUARE_SIZE, PATTERN_SQUARE_SIZE, checkerColor);
-                    }
-
-                    indent = !indent;
-                }
+                RenderPatternToPlane(
+                    drawingSession, predictionData.FrameData().Resolution().Width, predictionData.FrameData().Resolution().Height);
 
                 drawingSession.Close();
             }
 
             patternTarget.GetPixelBytes(
-                predictionData.FrameData().Data(), 
-                0, 
-                0, 
-                patternTarget.SizeInPixels().Width, 
+                predictionData.FrameData().Data(),
+                0,
+                0,
+                patternTarget.SizeInPixels().Width,
                 patternTarget.SizeInPixels().Height);
         });
-        
+
     }
 }

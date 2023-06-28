@@ -12,9 +12,12 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="DisplayEngine.cpp" />
+    <ClCompile Include="MonitorControl.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="DisplayEngine.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="DisplayEngine.idl" />

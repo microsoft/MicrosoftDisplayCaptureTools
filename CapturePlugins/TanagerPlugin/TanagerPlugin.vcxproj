@@ -160,6 +160,10 @@
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">stdcpplatest</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpplatest</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpplatest</LanguageStandard>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</EnableModules>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -233,6 +237,10 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">stdcpplatest</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpplatest</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpplatest</LanguageStandard>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</EnableModules>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

@@ -58,8 +58,8 @@ IndentCaseLabels: false
 IndentWidth:     4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: true
-MacroBlockBegin: ''
-MacroBlockEnd:   ''
+MacroBlockBegin: 'BEGIN_[A-Za-z\_0-9]*'
+MacroBlockEnd:   'END_[A-Z0-9\_]*'
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: Inner
 ObjCBlockIndentWidth: 2

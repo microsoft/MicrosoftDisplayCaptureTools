@@ -6,7 +6,7 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
 
-Version::Version(uint32_t major, uint32_t minor, uint32_t patch) : 
+Version::Version(uint32_t major, uint32_t minor, uint32_t patch) :
     m_version{major, minor, patch}
 {
 }

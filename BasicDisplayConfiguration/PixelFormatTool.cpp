@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "PixelFormatTool.h"
 
-namespace winrt 
+namespace winrt
 {
     using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace MicrosoftDisplayCaptureTools::Display;
@@ -10,7 +10,7 @@ namespace winrt
     using namespace winrt::Windows::Graphics::DirectX;
 } // namespace winrt
 
-namespace winrt::BasicDisplayConfiguration::implementation 
+namespace winrt::BasicDisplayConfiguration::implementation
 {
     static const std::wstring DefaultConfiguration = L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo";
     struct Configuration
@@ -26,7 +26,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
         {L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo", {false, false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 32}}
     };
 
-    PixelFormatTool::PixelFormatTool(winrt::ILogger const& logger) :
+    PixelFormatTool::PixelFormatTool(PixelFormatToolKind kind, winrt::ILogger const& logger) :
+        m_kind(kind),
         m_currentConfig(DefaultConfiguration),
         m_logger(logger)
     {
@@ -34,6 +35,13 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     hstring PixelFormatTool::Name()
     {
+        switch (m_kind)
+        {
+        case PixelFormatToolKind::SourcePixelFormat:
+            return L"SourcePixelFormat";
+        case PixelFormatToolKind::PlanePixelFormat:
+            return L"PlanePixelFormat";
+        }
         return L"PixelFormat";
     }
 
@@ -88,15 +96,16 @@ namespace winrt::BasicDisplayConfiguration::implementation
     {
         m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args)
         {
-            auto interlaced = args.Mode().IsInterlaced();
-            auto stereo = args.Mode().IsStereo();
-            auto sourceFormat = args.Mode().SourcePixelFormat();
+            if (m_kind == PixelFormatToolKind::SourcePixelFormat)
+            {
+                auto interlaced = args.Mode().IsInterlaced();
+                auto stereo = args.Mode().IsStereo();
+                auto sourceFormat = args.Mode().SourcePixelFormat();
 
-            auto& configValues = ConfigurationMap[m_currentConfig];
-            args.IsModeCompatible(
-                interlaced == configValues.Interlaced &&
-                stereo == configValues.Stereo &&
-                sourceFormat == configValues.SourceFormat);
+                auto& configValues = ConfigurationMap[m_currentConfig];
+                args.IsModeCompatible(
+                    interlaced == configValues.Interlaced && stereo == configValues.Stereo && sourceFormat == configValues.SourceFormat);
+            }
         });
 
         m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
@@ -104,7 +113,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     void PixelFormatTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
     {
-        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
+        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData)
         {
             auto desc = predictionData.FrameData().FormatDescription();
             desc.BitsPerPixel = ConfigurationMap[m_currentConfig].BitsPerPixel;

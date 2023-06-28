@@ -1,8 +1,15 @@
 #pragma once
 namespace winrt::BasicDisplayConfiguration::implementation {
+
+enum class PixelFormatToolKind
+{
+    SourcePixelFormat,
+    PlanePixelFormat,
+};
+
 struct PixelFormatTool : implements<PixelFormatTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 {
-    PixelFormatTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    PixelFormatTool(PixelFormatToolKind kind, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
     winrt::hstring Name();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -14,6 +21,7 @@ struct PixelFormatTool : implements<PixelFormatTool, winrt::MicrosoftDisplayCapt
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
 private:
+    PixelFormatToolKind m_kind;
     std::wstring m_currentConfig;
     const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 

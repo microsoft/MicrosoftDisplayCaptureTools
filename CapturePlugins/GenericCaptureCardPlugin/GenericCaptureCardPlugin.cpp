@@ -234,15 +234,15 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         }
 
         m_frameData = FrameData(m_logger);
-        
+
         // Copy the new data over to the FrameData object
         auto capturedFrameBitmap = SoftwareBitmap::Convert(frame.SoftwareBitmap(), BitmapPixelFormat::Rgba8);
-        
+
         m_frameData.Resolution({capturedFrameBitmap.PixelWidth(), capturedFrameBitmap.PixelHeight()});
 
         FrameDataDescription desc{0};
         desc.BitsPerPixel = 32;
-        desc.Stride = capturedFrameBitmap.PixelWidth() * 3; // There is no padding with this capture
+        desc.Stride = capturedFrameBitmap.PixelWidth() * 4;
         desc.PixelFormat = static_cast<DirectXPixelFormat>(BitmapPixelFormat::Rgba8);
         m_frameData.FormatDescription(desc);
 
@@ -254,7 +254,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction)
     {
         auto predictedFrame = prediction.FrameData();
-        
+
         // Compare descriptions
         auto predictedFrameDesc = predictedFrame.FormatDescription();
         auto capturedFrameDesc = m_frameData.FormatDescription();

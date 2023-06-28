@@ -20,13 +20,11 @@ winrt::IVector<winrt::Framework::ISourceToSinkMapping> g_displayMap;
 
 namespace MicrosoftDisplayCaptureTools::Tests {
 
-// clang-format off
 BEGIN_MODULE()
-	MODULE_PROPERTY(L"Area", L"Graphics")
-	MODULE_PROPERTY(L"SubArea", L"Display")
+    MODULE_PROPERTY(L"Area", L"Graphics")
+    MODULE_PROPERTY(L"SubArea", L"Display")
     MODULE_PROPERTY(L"RunAs", L"Elevated")
 END_MODULE()
-// clang-format on
 
 MODULE_SETUP(ModuleSetup)
 {
@@ -38,14 +36,14 @@ MODULE_SETUP(ModuleSetup)
     // Load the framework
     g_framework = winrt::Framework::Core(g_logger);
 
-    // If the user specified a particular configuration file in the test command, use it. Otherwise, 
+    // If the user specified a particular configuration file in the test command, use it. Otherwise,
     // the framework will auto-discover installed components.
     String configFile;
     if (SUCCEEDED(RuntimeParameters::TryGetValue<String>(L"Configuration", configFile)) && !String::IsNullOrEmpty(configFile))
     {
         g_framework.LoadConfigFile(static_cast<const wchar_t*>(configFile));
     }
-    
+
     // DiscoverInstalledPlugins will only discover plugin categories that are not specified via configuration file.
     g_framework.DiscoverInstalledPlugins();
 
@@ -97,8 +95,9 @@ MODULE_SETUP(ModuleSetup)
                     }
                     catch (...)
                     {
-                        g_logger.LogError(L"Failed to update capture device firmware. Please manually update the firmware and restart "
-                                   L"the test.");
+                        g_logger.LogError(
+                            L"Failed to update capture device firmware. Please manually update the firmware and restart "
+                            L"the test.");
                         return false;
                     }
                     break;
@@ -141,7 +140,7 @@ MODULE_SETUP(ModuleSetup)
         }
     }
 
-	return true;
+    return true;
 }
 
 MODULE_CLEANUP(ModuleCleanup)

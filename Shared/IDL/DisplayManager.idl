@@ -1,6 +1,6 @@
 import "Framework.idl";
 
-namespace MicrosoftDisplayCaptureTools.Display 
+namespace MicrosoftDisplayCaptureTools.Display
 {
     // Represents the predicted output for the current settings of the display engine that creates it
     interface IDisplayPredictionData
@@ -119,12 +119,12 @@ namespace MicrosoftDisplayCaptureTools.Display
         };
 
         // All registered display setup tools must be compatible with a mode
-        // before it can be selected for a test. If no available mode can 
-        // meet the tool requirements, the test with those tool settings is 
+        // before it can be selected for a test. If no available mode can
+        // meet the tool requirements, the test with those tool settings is
         // blocked from running.
         void IsModeCompatible(Boolean accept);
     };
-    
+
     // The arguments passed to tool render setup callback events. Specifically
     // these events are called once, just before the start of the render loop,
     // to construct any needed objects before the actual rendering.

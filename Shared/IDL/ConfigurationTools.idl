@@ -1,7 +1,7 @@
 import "DisplayManager.idl";
 import "Framework.idl";
 
-namespace MicrosoftDisplayCaptureTools.ConfigurationTools 
+namespace MicrosoftDisplayCaptureTools.ConfigurationTools
 {
     //
     // This enum defines what a particular tool is used for. The testing framework uses this information to determine in
@@ -44,7 +44,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     };
 
     //
-    // A ConfigurationTool represents a single operation that can be taken on a display according to the PICT parameters.
+    // A ConfigurationTool rep1ents a single operation that can be taken on a display according to the PICT parameters.
     // Tools are intended to be used together to define many different possible states for the entire display pipeline.
     // For example, a tool might modify the gamma lookup tables.
     //
@@ -189,7 +189,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     //
     // This is to be implemented by toolbox producer.
     //
-    interface IConfigurationToolboxFactory 
+    interface IConfigurationToolboxFactory
     {
         // Create
         // ----------------------------------------------------------------------------------------------------------------

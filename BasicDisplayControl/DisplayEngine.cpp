@@ -3,6 +3,8 @@
 #include "DisplayEngine.g.cpp"
 #include "DisplayEngineFactory.g.cpp"
 
+import MonitorControl;
+
 namespace winrt
 {
     // Standard WinRT inclusions
@@ -15,7 +17,7 @@ namespace winrt
     // JSON Parser
     using namespace winrt::Windows::Data::Json;
 
-    // Direct Display 
+    // Direct Display
     using namespace winrt::Windows::Devices::Display;
     using namespace winrt::Windows::Devices::Display::Core;
 
@@ -34,75 +36,6 @@ namespace winrt
 #pragma warning(push)
 #pragma warning(disable : 4100)
 
-namespace MonitorUtilities
-{
-    static LUID LuidFromAdapterId(winrt::Windows::Graphics::DisplayAdapterId id)
-    {
-        return { id.LowPart, id.HighPart };
-    }
-
-    class MonitorControl
-    {
-    public:
-        MonitorControl(LUID adapterId, UINT targetId, winrt::ILogger const& logger) :
-            m_luid(adapterId), m_targetId(targetId), m_removeSpecializationOnExit(true), m_logger(logger)
-        {
-            DISPLAYCONFIG_GET_MONITOR_SPECIALIZATION getSpecialization{};
-            getSpecialization.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_SPECIALIZATION;
-            getSpecialization.header.id = m_targetId;
-            getSpecialization.header.adapterId = m_luid;
-            getSpecialization.header.size = sizeof(getSpecialization);
-
-            winrt::check_win32(DisplayConfigGetDeviceInfo(&getSpecialization.header));
-
-            if (0 == getSpecialization.isSpecializationAvailableForSystem)
-            {
-                m_logger.LogError(L"Monitor specialization is not available - have you enabled test signing?");
-                throw winrt::hresult_error();
-            }
-
-            if (1 == getSpecialization.isSpecializationEnabled)
-            {
-                m_removeSpecializationOnExit = false;
-            }
-            else
-            {
-                Toggle();
-            }
-        }
-
-        ~MonitorControl()
-        {
-            if (m_removeSpecializationOnExit)
-            {
-                Toggle(true);
-            }
-        }
-
-    private:
-        void Toggle(bool reset = false)
-        {
-            DISPLAYCONFIG_SET_MONITOR_SPECIALIZATION setSpecialization{};
-            setSpecialization.header.type = DISPLAYCONFIG_DEVICE_INFO_SET_MONITOR_SPECIALIZATION;
-            setSpecialization.header.id = m_targetId;
-            setSpecialization.header.adapterId = m_luid;
-            setSpecialization.header.size = sizeof(setSpecialization);
-
-            setSpecialization.isSpecializationEnabled = reset ? 0 : 1;
-            wsprintf(setSpecialization.specializationApplicationName, L"%s", L"HardwareHLK - BasicDisplayControl");
-            setSpecialization.specializationType = GUID_MONITOR_OVERRIDE_PSEUDO_SPECIALIZED;
-            setSpecialization.specializationSubType = GUID_NULL;
-
-            winrt::check_win32(DisplayConfigSetDeviceInfo(&setSpecialization.header));
-        }
-
-        LUID m_luid;
-        UINT m_targetId;
-        bool m_removeSpecializationOnExit;
-        const winrt::ILogger m_logger;
-    };
-}
-
 namespace winrt::BasicDisplayControl::implementation
 {
     winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
@@ -110,7 +43,7 @@ namespace winrt::BasicDisplayControl::implementation
         return winrt::make<DisplayEngine>(logger);
     }
 
-    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) : 
+    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) :
         m_logger(logger)
     {
         m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
@@ -194,7 +127,7 @@ namespace winrt::BasicDisplayControl::implementation
             m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
                 MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
 
-            // If we change the UsageKind for the displayTarget, make sure to go refresh the target 
+            // If we change the UsageKind for the displayTarget, make sure to go refresh the target
             DisplayTarget refreshedTarget = nullptr;
             for (auto&& currTarget : m_displayManager.GetCurrentTargets())
             {
@@ -218,7 +151,7 @@ namespace winrt::BasicDisplayControl::implementation
 
         // Instantiate properties object
         m_properties = winrt::make_self<DisplayEngineProperties>(m_logger);
-        
+
         // This DisplayEngine implementation only supports 1 plane
         auto planeProperties = winrt::make_self<DisplayEnginePlaneProperties>(m_logger);
         m_properties->m_planeProperties.push_back(planeProperties);
@@ -252,7 +185,7 @@ namespace winrt::BasicDisplayControl::implementation
         // Create an object to stop the rendering when destroyed/closed.
         auto renderWatchdog = make_self<RenderWatchdog>(this);
 
-        // Start the rendering process - first this will determine eligible modes and then it will spin off a thread to run 
+        // Start the rendering process - first this will determine eligible modes and then it will spin off a thread to run
         // a render loop. This function won't return until the thread has started.
         if (PrepareRender())
         {
@@ -576,7 +509,7 @@ namespace winrt::BasicDisplayControl::implementation
         m_resolution({ 0,0 }),
         m_refreshRate(0.),
         m_mode(nullptr),
-        m_requeryMode(true), 
+        m_requeryMode(true),
         m_logger(logger)
     {
     }
@@ -629,7 +562,7 @@ namespace winrt::BasicDisplayControl::implementation
         return m_requeryMode;
     }
 
-    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
+    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
         m_logger(logger),
         m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
     {
@@ -691,17 +624,17 @@ namespace winrt::BasicDisplayControl::implementation
         return m_properties;
     }
 
-    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
+    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
         m_logger(logger)
     {
     }
 
     IAsyncOperation<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> DisplayPrediction::GeneratePredictionDataAsync()
     {
-        // This operation is expected to be heavyweight, as tools are moving a lot of memory. So 
+        // This operation is expected to be heavyweight, as tools are moving a lot of memory. So
         // we return the thread control and resume this function on the thread pool.
         co_await winrt::resume_background();
-      
+
         // Create the prediction data object
         auto predictionData = winrt::make<DisplayPredictionData>(m_logger);
 
