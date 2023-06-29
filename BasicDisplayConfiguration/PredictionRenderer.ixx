@@ -1,18 +1,15 @@
 module;
 
-#include "winrt/Windows.Foundation.Numerics.h"
-#include "winrt/Microsoft.Graphics.Canvas.h"
-#include "winrt/Microsoft.Graphics.Canvas.Brushes.h"
-#include "winrt/Windows.Devices.Display.Core.h"
-#include "winrt/Windows.UI.h"
+#include "pch.h"
+#include "Win2dRendering.h"
 
-#include <dxgi.h>
+export module PredictionRenderer;
+
+import :Rendering;
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Microsoft::Graphics::Canvas;
-
-export module PredictionRenderer;
 
 namespace PredictionRenderer {
 
@@ -32,14 +29,15 @@ export enum class PlaneColorType { RGB, YCbCr };
 export struct PlaneInformation
 {
     PlaneType Type = PlaneType::BasePlane;
-    winrt::com_ptr<IDXGISurface> Surface;
+    winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface Surface;
     CanvasAlphaMode AlphaMode = CanvasAlphaMode::Ignore;
     PlaneColorType ColorMode = PlaneColorType::RGB;
     DXGI_COLOR_SPACE_TYPE ColorSpace = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
     float3x2 TransformMatrix = float3x2::identity();
-    Rect SourceRect = {};
-    bool HasSourceRect = false;
+    std::optional<Rect> SourceRect = {};
+    std::optional<Rect> DestinationRect = {};
     float SdrWhiteLevel = 80.0F;
+    CanvasImageInterpolation InterpolationMode = CanvasImageInterpolation::Linear;
 };
 
 /// <summary>
@@ -51,14 +49,8 @@ export enum class StretchMode { Identity, Center, Fill, FillToAspectRatio };
 /// Contains all the information describing a frame from a display source. Frame providers will implement
 /// a class derived from this one that unlocks the frame on destruction.
 /// </summary>
-export struct FrameInformation abstract
+export struct FrameInformation
 {
-    virtual ~FrameInformation()
-    {
-    }
-
-    LONGLONG FrameSnapTime;
-
     // Pre-blend stage information
     float4 BackgroundColor;
     std::vector<PlaneInformation> Planes;
@@ -72,62 +64,6 @@ export struct FrameInformation abstract
     winrt::Windows::Devices::Display::Core::DisplayWireFormat WireFormat;
     std::vector<float> GammaLut;
     float4x4 ColorMatrixXyz;
-};
-
-/// <summary>
-/// Provides RAII for pushing/popping a matrix transform onto a D2D context.
-/// </summary>
-class CanvasAutoTransform
-{
-public:
-    CanvasAutoTransform(const CanvasAutoTransform&) = delete;
-    CanvasAutoTransform& operator=(const CanvasAutoTransform&) = delete;
-
-    CanvasAutoTransform(const CanvasDrawingSession& drawingSession, const float3x2& originalTransform, const float3x2& newTransform) :
-        m_drawingSession(drawingSession), m_originalTransform(originalTransform)
-    {
-        m_drawingSession.Transform(newTransform);
-        m_isPushed = true;
-    }
-
-    CanvasAutoTransform(const CanvasDrawingSession& drawingSession, const float3x2& IntermediateTransform, bool CombineWithOriginal = true) :
-        m_drawingSession(drawingSession)
-    {
-        m_originalTransform = m_drawingSession.Transform();
-        if (CombineWithOriginal)
-        {
-            m_drawingSession.Transform(IntermediateTransform * m_originalTransform);
-        }
-        else
-        {
-            m_drawingSession.Transform(IntermediateTransform);
-        }
-        m_isPushed = true;
-    }
-
-    void Pop()
-    {
-        if (m_isPushed)
-        {
-            m_drawingSession.Transform(m_originalTransform);
-            m_isPushed = false;
-        }
-    }
-
-    float3x2 GetOriginal() const
-    {
-        return m_originalTransform;
-    }
-
-    ~CanvasAutoTransform()
-    {
-        Pop();
-    }
-
-private:
-    const CanvasDrawingSession& m_drawingSession;
-    float3x2 m_originalTransform;
-    bool m_isPushed = false;
 };
 
 /// <summary>
@@ -188,7 +124,6 @@ public:
             sourceToTarget = float3x2::identity();
         }
 
-
         CanvasAutoTransform FrameTransform(drawingSession, sourceToTarget);
 
         // Render the target bounds in the background color first
@@ -200,24 +135,27 @@ public:
             if (plane.ColorMode == PlaneColorType::RGB)
             {
                 // Get a D2D bitmap for the DXGI surface
-                ComPtr<ID2D1Bitmap1> PlaneBitmap;
-                ThrowHR(Resources.D2DContext->CreateBitmapFromDxgiSurface(
-                    plane.Surface.Get(),
-                    D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_NONE, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, plane.AlphaMode)),
-                    &PlaneBitmap));
+                auto planeBitmap = CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
 
                 drawingSession.DrawImage(
-                    PlaneBitmap.Get(), nullptr, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, plane.HasSourceRect ? &plane.SourceRect : nullptr);
+                    planeBitmap,
+                    plane.DestinationRect.has_value() ? plane.DestinationRect.value() : Rect(Point(), m_frameInfo->SourceModeSize),
+                    plane.SourceRect.has_value() ? plane.SourceRect.value() : Rect(Point(), planeBitmap.Size()),
+                    1.0F,
+                    plane.InterpolationMode);
             }
             else
             {
                 // Create an image source, which knows how to perform certain color-space conversions
-                IDXGISurface* Surfaces[] = {plane.Surface.Get()};
-                ComPtr<ID2D1ImageSource> PlaneSource;
-                ThrowHR(Resources.D2DContext->CreateImageSourceFromDxgi(
-                    Surfaces, ARRAYSIZE(Surfaces), plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION, &PlaneSource));
+                auto planeSource = CreateVirtualBitmapFromDxgiSurface(
+                    drawingSession, plane.Surface, plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION);
 
-                drawingSession.DrawImage(PlaneSource.Get(), D2D1_INTERPOLATION_MODE_LINEAR);
+                drawingSession.DrawImage(
+                    planeSource,
+                    plane.DestinationRect.has_value() ? plane.DestinationRect.value() : Rect(Point(), m_frameInfo->SourceModeSize),
+                    plane.SourceRect.has_value() ? plane.SourceRect.value() : Rect(Point(), planeSource.Size()),
+                    1.0F,
+                    plane.InterpolationMode);
             }
         }
 

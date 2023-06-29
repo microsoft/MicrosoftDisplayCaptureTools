@@ -23,6 +23,9 @@
     <ClCompile Include="PredictionRenderer.ixx">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="PredictionRenderer.Rendering.ixx">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -31,6 +34,9 @@
     <ClInclude Include="RefreshRateTool.h" />
     <ClInclude Include="Toolbox.h" />
     <ClInclude Include="PixelFormatTool.h" />
+    <ClInclude Include="Win2dRendering.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Toolbox.idl" />
