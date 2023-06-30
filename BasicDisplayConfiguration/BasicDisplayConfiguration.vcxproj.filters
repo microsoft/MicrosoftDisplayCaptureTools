@@ -23,12 +23,18 @@
     <ClCompile Include="PredictionRenderer.ixx">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="PredictionRenderer.Rendering.ixx">
+    <ClCompile Include="RenderingUtils.ixx">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="CursorUtils.ixx">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.h" />
+    <ClCompile Include="Bitmap.ixx">
       <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h" />
     <ClInclude Include="PatternTool.h" />
     <ClInclude Include="ResolutionTool.h" />
     <ClInclude Include="RefreshRateTool.h" />

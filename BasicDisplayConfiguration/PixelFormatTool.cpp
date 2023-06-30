@@ -1,4 +1,4 @@
-#include "pch.h"
+import "pch.h";
 #include "PixelFormatTool.h"
 
 namespace winrt

@@ -1,12 +1,9 @@
-module;
-
-#include "pch.h"
-#include "Win2dRendering.h"
-
 export module PredictionRenderer;
 
-import :Rendering;
+import "pch.h";
+import RenderingUtils;
 
+using namespace RenderingUtils;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Microsoft::Graphics::Canvas;
@@ -80,88 +77,7 @@ public:
         SourceOnly
     };
 
-    void Render(const CanvasDrawingSession& drawingSession)
-    {
-        auto colorBrush = Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, m_frameInfo->BackgroundColor);
-
-        float3x2 sourceToTarget;
-
-        if (m_mode == RenderMode::Target)
-        {
-            // We are rendering the full target, so include the source -> target transform
-            switch (m_frameInfo->SourceToTargetStretch)
-            {
-            case StretchMode::Identity:
-                sourceToTarget = float3x2::identity();
-                break;
-            case StretchMode::Center:
-                sourceToTarget = make_float3x2_translation(
-                    (float)((m_frameInfo->TargetModeSize.Width + m_frameInfo->SourceModeSize.Width) / 2),
-                    (float)((m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height) / 2));
-                break;
-            case StretchMode::Fill:
-                sourceToTarget = make_float3x2_scale(
-                    (float)m_frameInfo->TargetModeSize.Width / m_frameInfo->SourceModeSize.Width,
-                    (float)m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height);
-                break;
-            case StretchMode::FillToAspectRatio:
-                float Ratio =
-                    min((float)m_frameInfo->TargetModeSize.Width / m_frameInfo->SourceModeSize.Width,
-                        (float)m_frameInfo->TargetModeSize.Height / m_frameInfo->SourceModeSize.Height);
-                sourceToTarget = make_float3x2_scale(Ratio, Ratio) *
-                                 make_float3x2_translation(
-                                     (m_frameInfo->TargetModeSize.Width + m_frameInfo->SourceModeSize.Width * Ratio) / 2,
-                                     (m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height * Ratio) / 2);
-                break;
-            }
-
-            colorBrush.ColorHdr(m_frameInfo->BackgroundColor);
-            drawingSession.FillRectangle(
-                Rect(0, 0, (float)m_frameInfo->TargetModeSize.Width, (float)m_frameInfo->TargetModeSize.Height), colorBrush);
-        }
-        else
-        {
-            sourceToTarget = float3x2::identity();
-        }
-
-        CanvasAutoTransform FrameTransform(drawingSession, sourceToTarget);
-
-        // Render the target bounds in the background color first
-        for (auto& plane : m_frameInfo->Planes)
-        {
-            CanvasAutoTransform PlaneTransform(drawingSession, plane.TransformMatrix);
-
-            // Render the plane
-            if (plane.ColorMode == PlaneColorType::RGB)
-            {
-                // Get a D2D bitmap for the DXGI surface
-                auto planeBitmap = CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
-
-                drawingSession.DrawImage(
-                    planeBitmap,
-                    plane.DestinationRect.has_value() ? plane.DestinationRect.value() : Rect(Point(), m_frameInfo->SourceModeSize),
-                    plane.SourceRect.has_value() ? plane.SourceRect.value() : Rect(Point(), planeBitmap.Size()),
-                    1.0F,
-                    plane.InterpolationMode);
-            }
-            else
-            {
-                // Create an image source, which knows how to perform certain color-space conversions
-                auto planeSource = CreateVirtualBitmapFromDxgiSurface(
-                    drawingSession, plane.Surface, plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION);
-
-                drawingSession.DrawImage(
-                    planeSource,
-                    plane.DestinationRect.has_value() ? plane.DestinationRect.value() : Rect(Point(), m_frameInfo->SourceModeSize),
-                    plane.SourceRect.has_value() ? plane.SourceRect.value() : Rect(Point(), planeSource.Size()),
-                    1.0F,
-                    plane.InterpolationMode);
-            }
-        }
-
-        // We need to flush before we release the FrameInformation, which releases the surfaces
-        drawingSession.Flush();
-    }
+    void Render(const CanvasDrawingSession& drawingSession);
 
 private:
     RenderMode m_mode = RenderMode::Target;
@@ -169,3 +85,90 @@ private:
 };
 
 } // namespace PredictionRenderer
+
+module : private;
+
+using namespace PredictionRenderer;
+
+void ::PredictionRenderer::PredictionRenderer::Render(const CanvasDrawingSession& drawingSession)
+{
+    auto colorBrush = Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, m_frameInfo->BackgroundColor);
+
+    float3x2 sourceToTarget;
+
+    if (m_mode == RenderMode::Target)
+    {
+        // We are rendering the full target, so include the source -> target transform
+        switch (m_frameInfo->SourceToTargetStretch)
+        {
+        case StretchMode::Identity:
+            sourceToTarget = float3x2::identity();
+            break;
+        case StretchMode::Center:
+            sourceToTarget = make_float3x2_translation(
+                (float)((m_frameInfo->TargetModeSize.Width + m_frameInfo->SourceModeSize.Width) / 2),
+                (float)((m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height) / 2));
+            break;
+        case StretchMode::Fill:
+            sourceToTarget = make_float3x2_scale(
+                (float)m_frameInfo->TargetModeSize.Width / m_frameInfo->SourceModeSize.Width,
+                (float)m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height);
+            break;
+        case StretchMode::FillToAspectRatio:
+            float Ratio =
+                min((float)m_frameInfo->TargetModeSize.Width / m_frameInfo->SourceModeSize.Width,
+                    (float)m_frameInfo->TargetModeSize.Height / m_frameInfo->SourceModeSize.Height);
+            sourceToTarget = make_float3x2_scale(Ratio, Ratio) *
+                                make_float3x2_translation(
+                                    (m_frameInfo->TargetModeSize.Width + m_frameInfo->SourceModeSize.Width * Ratio) / 2,
+                                    (m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height * Ratio) / 2);
+            break;
+        }
+
+        colorBrush.ColorHdr(m_frameInfo->BackgroundColor);
+        drawingSession.FillRectangle(
+            Rect(0, 0, (float)m_frameInfo->TargetModeSize.Width, (float)m_frameInfo->TargetModeSize.Height), colorBrush);
+    }
+    else
+    {
+        sourceToTarget = float3x2::identity();
+    }
+
+    CanvasAutoTransform FrameTransform(drawingSession, sourceToTarget);
+
+    // Render the target bounds in the background color first
+    for (auto& plane : m_frameInfo->Planes)
+    {
+        CanvasAutoTransform PlaneTransform(drawingSession, plane.TransformMatrix);
+
+        // Render the plane
+        if (plane.ColorMode == PlaneColorType::RGB)
+        {
+            // Get a D2D bitmap for the DXGI surface
+            auto planeBitmap = CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
+
+            drawingSession.DrawImage(
+                planeBitmap,
+                plane.DestinationRect.has_value() ? plane.DestinationRect.value() : Rect(Point(), m_frameInfo->SourceModeSize),
+                plane.SourceRect.has_value() ? plane.SourceRect.value() : Rect(Point(), planeBitmap.Size()),
+                1.0F,
+                plane.InterpolationMode);
+        }
+        else
+        {
+            // Create an image source, which knows how to perform certain color-space conversions
+            auto planeSource = CreateVirtualBitmapFromDxgiSurface(
+                drawingSession, plane.Surface, plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION);
+
+            drawingSession.DrawImage(
+                planeSource,
+                plane.DestinationRect.has_value() ? plane.DestinationRect.value() : Rect(Point(), m_frameInfo->SourceModeSize),
+                plane.SourceRect.has_value() ? plane.SourceRect.value() : Rect(Point(), planeSource.Size()),
+                1.0F,
+                plane.InterpolationMode);
+        }
+    }
+
+    // We need to flush before we release the FrameInformation, which releases the surfaces
+    drawingSession.Flush();
+}

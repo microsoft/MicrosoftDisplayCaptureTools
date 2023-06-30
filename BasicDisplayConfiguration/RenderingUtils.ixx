@@ -1,9 +1,6 @@
-module;
+export module RenderingUtils;
 
-#include "pch.h"
-#include "Win2dRendering.h"
-
-export module PredictionRenderer:Rendering;
+import "pch.h";
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
@@ -13,7 +10,7 @@ namespace abi {
 using namespace ABI::Microsoft::Graphics::Canvas;
 }
 
-namespace PredictionRenderer {
+namespace RenderingUtils {
 
 export auto GetNativeDxgiSurface(const winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface& surface)
 {

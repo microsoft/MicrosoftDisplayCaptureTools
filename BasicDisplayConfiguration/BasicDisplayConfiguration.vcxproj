@@ -110,7 +110,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level4</WarningLevel>
@@ -230,7 +230,10 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="PatternTool.h" />
-    <ClInclude Include="pch.h" />
+    <ClCompile Include="Bitmap.ixx" />
+    <ClCompile Include="pch.h">
+      <CompileAs>CompileAsHeaderUnit</CompileAs>
+    </ClCompile>
     <ClInclude Include="PixelFormatTool.h" />
     <ClInclude Include="RefreshRateTool.h" />
     <ClInclude Include="ResolutionTool.h" />
@@ -238,10 +241,9 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <ClInclude Include="Win2dRendering.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CursorUtils.ixx" />
     <ClCompile Include="PatternTool.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
+    <None Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="PixelFormatTool.cpp" />
     <ClCompile Include="PredictionRenderer.ixx" />
@@ -257,9 +259,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <ClCompile Include="PredictionRenderer.Rendering.ixx">
-      <FileType>Document</FileType>
-    </ClCompile>
+    <ClCompile Include="RenderingUtils.ixx" />
     <None Include="PropertySheet.props" />
     <Text Include="readme.txt">
       <DeploymentContent>false</DeploymentContent>

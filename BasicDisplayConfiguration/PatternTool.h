@@ -1,6 +1,6 @@
 #pragma once
 
-#include "winrt\Microsoft.Graphics.Canvas.h"
+//#include "winrt\Microsoft.Graphics.Canvas.h"
 
 namespace winrt::BasicDisplayConfiguration::implementation {
 

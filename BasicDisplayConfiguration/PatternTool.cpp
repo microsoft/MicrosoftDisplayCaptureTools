@@ -1,4 +1,4 @@
-#include "pch.h"
+import "pch.h";
 #include "PatternTool.h"
 
 #include "winrt\Microsoft.Graphics.Canvas.h"

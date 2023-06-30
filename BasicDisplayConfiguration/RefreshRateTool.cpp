@@ -1,4 +1,4 @@
-#include "pch.h"
+import "pch.h";
 #include "RefreshRateTool.h"
 
 namespace winrt
