@@ -1,7 +1,7 @@
 #include "pch.h"
 #include <filesystem>
 
-namespace winrt 
+namespace winrt
 {
 	using namespace winrt::Windows::Foundation;
 	using namespace winrt::Windows::Foundation::Collections;
@@ -18,7 +18,7 @@ namespace winrt
     using namespace winrt::TanagerPlugin::DisplayHelpers;
 }
 
-namespace winrt::TanagerPlugin::implementation 
+namespace winrt::TanagerPlugin::implementation
 {
 struct DPCapabilities : implements<DPCapabilities, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities>
 {
@@ -324,7 +324,7 @@ void TanagerDisplayInputDisplayPort::SetEdid(std::vector<byte> edid)
     if (auto parent = m_parent.lock())
     {
         auto lock = std::scoped_lock(parent->SelectDisplayPort());
-        
+
         parent->SelectDisplayPortEDID(1);
         parent->I2cWriteData(0x50, 0, edid);
         parent->SelectDisplayPortEDID(0);

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include <filesystem>
 
-namespace winrt 
+namespace winrt
 {
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Foundation::Collections;
@@ -18,7 +18,7 @@ namespace winrt
     using namespace winrt::TanagerPlugin::DisplayHelpers;
 }
 
-namespace winrt::TanagerPlugin::implementation 
+namespace winrt::TanagerPlugin::implementation
 {
 
 struct HDMICapabilities : implements<HDMICapabilities, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureCapabilities>
