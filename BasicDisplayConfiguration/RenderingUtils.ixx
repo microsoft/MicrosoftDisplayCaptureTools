@@ -12,7 +12,7 @@ using namespace ABI::Microsoft::Graphics::Canvas;
 
 namespace RenderingUtils {
 
-export auto GetNativeDxgiSurface(const winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface& surface)
+export winrt::com_ptr<IDXGISurface> GetNativeDxgiSurface(const winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface& surface)
 {
     auto surfaceAccess = surface.as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>();
 
@@ -21,7 +21,7 @@ export auto GetNativeDxgiSurface(const winrt::Windows::Graphics::DirectX::Direct
     return dxgiSurface;
 }
 
-export auto CreateVirtualBitmapFromDxgiSurface(
+export CanvasVirtualBitmap CreateVirtualBitmapFromDxgiSurface(
     const CanvasDrawingSession& drawingSession,
     const winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface& surface,
     DXGI_COLOR_SPACE_TYPE colorSpace,

@@ -1,7 +1,5 @@
 #pragma once
 
-//#include "winrt\Microsoft.Graphics.Canvas.h"
-
 namespace winrt::BasicDisplayConfiguration::implementation {
 
 struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>

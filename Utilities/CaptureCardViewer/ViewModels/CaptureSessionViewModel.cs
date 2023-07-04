@@ -277,11 +277,6 @@ namespace CaptureCardViewer.ViewModels
 		[ICommand]
 		async void RenderPrediction()
 		{
-			var displayOutput = SelectedEngineOutput;
-
-			if (displayOutput == null)
-				return;
-
 			var displayPrediction = Engine.CreateDisplayPrediction();
 
 			// TODO: Encapsulate the active tools into a sub-property of this CaptureSessionViewModel

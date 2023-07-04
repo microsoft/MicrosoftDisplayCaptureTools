@@ -6,6 +6,7 @@ import RenderingUtils;
 using namespace RenderingUtils;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
+using namespace winrt::Windows::Graphics::DirectX;
 using namespace winrt::Microsoft::Graphics::Canvas;
 
 namespace PredictionRenderer {
@@ -78,6 +79,7 @@ public:
     };
 
     void Render(const CanvasDrawingSession& drawingSession);
+    CanvasBitmap Render(const ICanvasResourceCreator& resourceCreator);
 
 private:
     RenderMode m_mode = RenderMode::Target;
@@ -171,4 +173,25 @@ void ::PredictionRenderer::PredictionRenderer::Render(const CanvasDrawingSession
 
     // We need to flush before we release the FrameInformation, which releases the surfaces
     drawingSession.Flush();
+}
+
+CanvasBitmap ::PredictionRenderer::PredictionRenderer::Render(const ICanvasResourceCreator& resourceCreator)
+{
+    auto renderTarget = CanvasRenderTarget(
+        resourceCreator,
+        (float)m_frameInfo->TargetModeSize.Width,
+        (float)m_frameInfo->TargetModeSize.Height,
+        96,
+        DirectXPixelFormat::R16G16B16A16Float,
+        CanvasAlphaMode::Ignore);
+
+    {
+        auto drawingSession = renderTarget.CreateDrawingSession();
+
+        Render(drawingSession);
+
+        drawingSession.Close();
+    }
+
+    return renderTarget;
 }

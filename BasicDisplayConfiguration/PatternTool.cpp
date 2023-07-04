@@ -1,9 +1,7 @@
 import "pch.h";
+import PredictionRenderer;
+
 #include "PatternTool.h"
-
-#include "winrt\Microsoft.Graphics.Canvas.h"
-#include "winrt\Windows.UI.h"
-
 #include "..\Shared\Inc\DisplayEngineInterop.h"
 
 #define PATTERN_SQUARE_SIZE 50.f
