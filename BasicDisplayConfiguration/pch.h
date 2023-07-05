@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <strsafe.h>
+#include <memory>
 
 // Windows headers
 #include <Windows.h>

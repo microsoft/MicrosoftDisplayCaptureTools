@@ -40,6 +40,7 @@
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Build.CopyOnWrite" Version="1.0.263" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="7.1.2" />
 		<PackageReference Include="Dirkster.AvalonDock" Version="4.71.2" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.71.2" />
@@ -62,39 +63,27 @@
 	<!-- Plugin projects for F5 support for the CaptureCardViewer project-->
 	<ItemGroup Condition="$(IncludePluginsInOutput) == 'true'">
 		<ProjectReference Include="..\..\BasicDisplayConfiguration\BasicDisplayConfiguration.vcxproj">
-			<EmbedInteropTypes>false</EmbedInteropTypes>
 			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 			<OutputItemType>Content</OutputItemType>
-			<Private>true</Private>
-			<CopyLocal>true</CopyLocal>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<Link>Toolboxes\BasicDisplayConfiguration.dll</Link>
 		</ProjectReference>
 		<ProjectReference Include="..\..\BasicDisplayControl\BasicDisplayControl.vcxproj">
-			<EmbedInteropTypes>false</EmbedInteropTypes>
 			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 			<OutputItemType>Content</OutputItemType>
-			<Private>true</Private>
-			<CopyLocal>true</CopyLocal>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<Link>DisplayEngines\BasicDisplayControl.dll</Link>
 		</ProjectReference>
 		<ProjectReference Include="..\..\CapturePlugins\TanagerPlugin\TanagerPlugin.vcxproj">
-			<EmbedInteropTypes>false</EmbedInteropTypes>
 			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 			<OutputItemType>Content</OutputItemType>
-			<Private>true</Private>
-			<CopyLocal>true</CopyLocal>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<Link>CaptureCards\TanagerPlugin.dll</Link>
 			<Targets></Targets>
 		</ProjectReference>
 		<ProjectReference Include="..\..\CapturePlugins\GenericCaptureCardPlugin\GenericCaptureCardPlugin.vcxproj">
-			<EmbedInteropTypes>false</EmbedInteropTypes>
 			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 			<OutputItemType>Content</OutputItemType>
-			<Private>true</Private>
-			<CopyLocal>true</CopyLocal>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<Link>CaptureCards\GenericCaptureCardPlugin.dll</Link>
 		</ProjectReference>

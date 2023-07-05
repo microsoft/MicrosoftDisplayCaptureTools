@@ -90,9 +90,9 @@ private:
 
 module : private;
 
-using namespace PredictionRenderer;
+namespace PredictionRenderer {
 
-void ::PredictionRenderer::PredictionRenderer::Render(const CanvasDrawingSession& drawingSession)
+void PredictionRenderer::Render(const CanvasDrawingSession& drawingSession)
 {
     auto colorBrush = Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, m_frameInfo->BackgroundColor);
 
@@ -121,15 +121,14 @@ void ::PredictionRenderer::PredictionRenderer::Render(const CanvasDrawingSession
                 min((float)m_frameInfo->TargetModeSize.Width / m_frameInfo->SourceModeSize.Width,
                     (float)m_frameInfo->TargetModeSize.Height / m_frameInfo->SourceModeSize.Height);
             sourceToTarget = make_float3x2_scale(Ratio, Ratio) *
-                                make_float3x2_translation(
-                                    (m_frameInfo->TargetModeSize.Width + m_frameInfo->SourceModeSize.Width * Ratio) / 2,
-                                    (m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height * Ratio) / 2);
+                             make_float3x2_translation(
+                                 (m_frameInfo->TargetModeSize.Width + m_frameInfo->SourceModeSize.Width * Ratio) / 2,
+                                 (m_frameInfo->TargetModeSize.Height + m_frameInfo->SourceModeSize.Height * Ratio) / 2);
             break;
         }
 
         colorBrush.ColorHdr(m_frameInfo->BackgroundColor);
-        drawingSession.FillRectangle(
-            Rect(0, 0, (float)m_frameInfo->TargetModeSize.Width, (float)m_frameInfo->TargetModeSize.Height), colorBrush);
+        drawingSession.FillRectangle(Rect(0, 0, (float)m_frameInfo->TargetModeSize.Width, (float)m_frameInfo->TargetModeSize.Height), colorBrush);
     }
     else
     {
@@ -175,7 +174,7 @@ void ::PredictionRenderer::PredictionRenderer::Render(const CanvasDrawingSession
     drawingSession.Flush();
 }
 
-CanvasBitmap ::PredictionRenderer::PredictionRenderer::Render(const ICanvasResourceCreator& resourceCreator)
+CanvasBitmap PredictionRenderer::Render(const ICanvasResourceCreator& resourceCreator)
 {
     auto renderTarget = CanvasRenderTarget(
         resourceCreator,
@@ -195,3 +194,5 @@ CanvasBitmap ::PredictionRenderer::PredictionRenderer::Render(const ICanvasResou
 
     return renderTarget;
 }
+
+} // namespace PredictionRenderer
