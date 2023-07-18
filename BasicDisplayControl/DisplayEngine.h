@@ -61,8 +61,8 @@ namespace winrt::BasicDisplayControl::implementation
         // Required plane properties
         bool Active();
         void Active(bool active);        
-        Windows::Graphics::Imaging::BitmapBounds Rect();
-        void Rect(Windows::Graphics::Imaging::BitmapBounds bounds);
+        Windows::Graphics::RectInt32 Rect();
+        void Rect(Windows::Graphics::RectInt32 bounds);
         Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
 
         // Properties defined in the interop header
@@ -74,7 +74,7 @@ namespace winrt::BasicDisplayControl::implementation
     private:
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         bool m_active = false;
-        Windows::Graphics::Imaging::BitmapBounds m_rect{0};
+        Windows::Graphics::RectInt32 m_rect{0};
         Windows::Graphics::DirectX::DirectXPixelFormat m_format{ Windows::Graphics::DirectX::DirectXPixelFormat::Unknown };
         Windows::Foundation::Collections::IMap<hstring, IInspectable> m_Properties;
 
@@ -171,6 +171,7 @@ namespace winrt::BasicDisplayControl::implementation
         void Resolution(Windows::Graphics::SizeInt32 resolution);
 
         com_array<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties> GetPlaneProperties();
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
 
         double m_refreshRate;
         Windows::Graphics::SizeInt32 m_resolution;
@@ -181,6 +182,7 @@ namespace winrt::BasicDisplayControl::implementation
         bool RequeryMode();
 
     private:
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_properties;
         const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 

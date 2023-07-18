@@ -1,5 +1,6 @@
+module ResolutionTool;
+
 import "pch.h";
-#include "ResolutionTool.h"
 
 namespace winrt {
 using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
@@ -15,6 +16,7 @@ std::map<std::wstring, Windows::Graphics::SizeInt32> ConfigurationMap{
     {L"1600x900", {1600, 900}}, {L"1920x1080", {1920, 1080}}, {L"3840x2160", {3840, 2160}}};
 
 ResolutionTool::ResolutionTool(ResolutionToolKind kind, winrt::ILogger const& logger) :
+    __super()
     m_kind(kind), m_currentConfig(DefaultConfiguration), m_logger(logger)
 {
 }
@@ -36,48 +38,6 @@ hstring ResolutionTool::Name()
 ConfigurationToolCategory ResolutionTool::Category()
 {
     return ConfigurationToolCategory::DisplaySetup;
-}
-
-IConfigurationToolRequirements ResolutionTool::Requirements()
-{
-    return nullptr;
-}
-
-com_array<hstring> ResolutionTool::GetSupportedConfigurations()
-{
-    std::vector<hstring> configs;
-    for (auto&& config : ConfigurationMap)
-    {
-        hstring configName(config.first);
-        configs.push_back(configName);
-    }
-
-    return com_array<hstring>(configs);
-}
-
-hstring ResolutionTool::GetDefaultConfiguration()
-{
-    hstring defaultConfig(DefaultConfiguration);
-    return defaultConfig;
-}
-
-hstring ResolutionTool::GetConfiguration()
-{
-    hstring currentConfig(m_currentConfig);
-    return currentConfig;
-}
-
-void ResolutionTool::SetConfiguration(hstring configuration)
-{
-    if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
-    {
-        // An invalid configuration was asked for
-        m_logger.LogError(L"An invalid configuration was requested: " + configuration);
-
-        throw winrt::hresult_invalid_argument();
-    }
-
-    m_currentConfig = configuration.c_str();
 }
 
 void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)

@@ -5,8 +5,7 @@
 
 import MonitorControl;
 
-namespace winrt
-{
+namespace winrt {
     // Standard WinRT inclusions
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Foundation::Collections;
@@ -36,15 +35,13 @@ namespace winrt
 #pragma warning(push)
 #pragma warning(disable : 4100)
 
-namespace winrt::BasicDisplayControl::implementation
-{
+namespace winrt::BasicDisplayControl::implementation {
     winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
     {
         return winrt::make<DisplayEngine>(logger);
     }
 
-    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) :
-        m_logger(logger)
+    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) : m_logger(logger)
     {
         m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
     }
@@ -81,7 +78,7 @@ namespace winrt::BasicDisplayControl::implementation
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::hstring target)
     {
         // Translate the target string to a DisplayTarget and call 'InitializeForDisplayTarget'
-        winrt::DisplayTarget chosenTarget{ nullptr };
+        winrt::DisplayTarget chosenTarget{nullptr};
         auto allDisplayTargets = m_displayManager.GetCurrentTargets();
         for (auto&& displayTarget : allDisplayTargets)
         {
@@ -193,7 +190,6 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
         return nullptr;
-
     }
 
     event_token DisplayOutput::DisplaySetupCallback(Windows::Foundation::EventHandler<IDisplaySetupToolArgs> const& handler)
@@ -275,7 +271,8 @@ namespace winrt::BasicDisplayControl::implementation
         if (result.ErrorCode() != winrt::DisplayManagerResult::Success)
         {
             // We failed to acquire control of the target.
-            m_logger.LogError(winrt::hstring(L"Failed to acquire control of the target. Error: ") + winrt::to_hstring(result.ExtendedErrorCode()));
+            m_logger.LogError(
+                winrt::hstring(L"Failed to acquire control of the target. Error: ") + winrt::to_hstring(result.ExtendedErrorCode()));
             throw result.ExtendedErrorCode();
         }
 
@@ -310,8 +307,9 @@ namespace winrt::BasicDisplayControl::implementation
             for (auto&& mode : modeList)
             {
                 if (mode.SourceResolution().Width == 3840 && 5 > fabs(
-                                                                 ((double)mode.PresentationRate().VerticalSyncRate.Numerator /
-                                                                 (double)mode.PresentationRate().VerticalSyncRate.Denominator) - 60))
+                                                                     ((double)mode.PresentationRate().VerticalSyncRate.Numerator /
+                                                                      (double)mode.PresentationRate().VerticalSyncRate.Denominator) -
+                                                                     60))
                     modeListVec.push_back(mode);
 
                 // Check to see if this mode is acceptable
@@ -452,7 +450,6 @@ namespace winrt::BasicDisplayControl::implementation
         winrt::com_ptr<ID3D11Texture2D> basePlaneSurface;
         winrt::check_hresult(basePlaneProperties->GetPlaneTexture(basePlaneSurface.put()));
 
-
         D3D11_TEXTURE2D_DESC d3dTextureDesc{};
         basePlaneSurface->GetDesc(&d3dTextureDesc);
 
@@ -474,7 +471,8 @@ namespace winrt::BasicDisplayControl::implementation
         // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
         // actual scan out starts.
         auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
-        if (m_renderSetupCallback) m_renderSetupCallback(*this, renderSetupArgs);
+        if (m_renderSetupCallback)
+            m_renderSetupCallback(*this, renderSetupArgs);
 
         // Create the callback args object for per-frame rendering tools
         auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
@@ -506,11 +504,7 @@ namespace winrt::BasicDisplayControl::implementation
 
     // DisplayEngineProperties
     DisplayEngineProperties::DisplayEngineProperties(winrt::ILogger const& logger) :
-        m_resolution({ 0,0 }),
-        m_refreshRate(0.),
-        m_mode(nullptr),
-        m_requeryMode(true),
-        m_logger(logger)
+        m_resolution({0, 0}), m_refreshRate(0.), m_mode(nullptr), m_requeryMode(true), m_logger(logger)
     {
     }
 
@@ -557,14 +551,18 @@ namespace winrt::BasicDisplayControl::implementation
         return winrt::com_array<winrt::IDisplayEnginePlaneProperties>(retVector);
     }
 
+    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayEngineProperties::Properties()
+    {
+        return m_properties;
+    }
+
     bool DisplayEngineProperties::RequeryMode()
     {
         return m_requeryMode;
     }
 
     DisplayEnginePlaneProperties::DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-        m_logger(logger),
-        m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
+        m_logger(logger), m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
     {
     }
 
@@ -579,12 +577,12 @@ namespace winrt::BasicDisplayControl::implementation
         m_active = active;
     }
 
-    winrt::BitmapBounds DisplayEnginePlaneProperties::Rect()
+    winrt::RectInt32 DisplayEnginePlaneProperties::Rect()
     {
         return m_rect;
     }
 
-    void DisplayEnginePlaneProperties::Rect(winrt::BitmapBounds bounds)
+    void DisplayEnginePlaneProperties::Rect(winrt::RectInt32 bounds)
     {
         m_rect = bounds;
     }
@@ -624,8 +622,7 @@ namespace winrt::BasicDisplayControl::implementation
         return m_properties;
     }
 
-    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-        m_logger(logger)
+    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger)
     {
     }
 

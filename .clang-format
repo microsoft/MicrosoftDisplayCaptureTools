@@ -61,7 +61,7 @@ KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: 'BEGIN_[A-Za-z\_0-9]*'
 MacroBlockEnd:   'END_[A-Z0-9\_]*'
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: Inner
+NamespaceIndentation: All
 ObjCBlockIndentWidth: 2
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true

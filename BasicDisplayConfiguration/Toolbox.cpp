@@ -4,7 +4,7 @@ import "pch.h";
 #include "ToolboxFactory.g.cpp"
 
 #include "PatternTool.h"
-#include "ResolutionTool.h"
+import ResolutionTool;
 #include "RefreshRateTool.h"
 #include "PixelFormatTool.h"
 

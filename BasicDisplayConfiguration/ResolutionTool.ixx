@@ -1,5 +1,9 @@
-#pragma once
-namespace winrt::BasicDisplayConfiguration::implementation {
+export module ResolutionTool;
+
+import "pch.h";
+import ToolboxBase;
+
+export namespace winrt::BasicDisplayConfiguration::implementation {
 
 enum class ResolutionToolKind
 {
@@ -8,16 +12,10 @@ enum class ResolutionToolKind
     PlaneResolution
 };
 
-struct ResolutionTool : implements<ResolutionTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+struct ResolutionTool : SizeTool<ResolutionTool>
 {
     ResolutionTool(ResolutionToolKind kind, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
-    winrt::hstring Name();
-    winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
-    winrt::com_array<winrt::hstring> GetSupportedConfigurations();
-    winrt::hstring GetDefaultConfiguration();
-    winrt::hstring GetConfiguration();
-    void SetConfiguration(winrt::hstring configuration);
     void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 

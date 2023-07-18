@@ -31,6 +31,11 @@
 #include <cstring>
 #include <strsafe.h>
 #include <memory>
+#include <functional>
+#include <string>
+#include <sstream>
+#include <concepts>
+#include <format>
 
 // Windows headers
 #include <Windows.h>

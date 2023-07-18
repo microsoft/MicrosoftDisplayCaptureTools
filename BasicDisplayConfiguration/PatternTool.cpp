@@ -1,6 +1,6 @@
 import "pch.h";
-import PredictionRenderer;
-import RenderingUtils;
+//import PredictionRenderer;
+//import RenderingUtils;
 
 #include "PatternTool.h"
 #include "..\Shared\Inc\DisplayEngineInterop.h"

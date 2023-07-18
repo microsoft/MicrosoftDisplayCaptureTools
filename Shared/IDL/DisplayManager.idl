@@ -70,8 +70,8 @@ namespace MicrosoftDisplayCaptureTools.Display
             set;
         };
 
-        // The location of this plane, relative to the top left corner of the base plane.
-        Windows.Graphics.Imaging.BitmapBounds Rect
+        // The location of this plane, relative to the top left corner of the source.
+        Windows.Graphics.RectInt32 Rect
         {
             get;
             set;
@@ -99,6 +99,11 @@ namespace MicrosoftDisplayCaptureTools.Display
         // Get the per-plane property set for this display
         // The first entry of the returned array will always represent the base plane
         IDisplayEnginePlaneProperties[] GetPlaneProperties();
+
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
     };
 
     // The arguments passed to tool display setup callback events. Specifically
