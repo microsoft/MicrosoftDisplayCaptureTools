@@ -16,8 +16,8 @@ std::map<std::wstring, Windows::Graphics::SizeInt32> ConfigurationMap{
     {L"1600x900", {1600, 900}}, {L"1920x1080", {1920, 1080}}, {L"3840x2160", {3840, 2160}}};
 
 ResolutionTool::ResolutionTool(ResolutionToolKind kind, winrt::ILogger const& logger) :
-    __super()
-    m_kind(kind), m_currentConfig(DefaultConfiguration), m_logger(logger)
+    SizeTool(L"Resolution", L"1920x1080", {L"1600x900", L"1920x1080", L"3840x2160"}, logger),
+    m_kind(kind)
 {
 }
 

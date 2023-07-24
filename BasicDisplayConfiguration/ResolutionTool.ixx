@@ -20,8 +20,7 @@ struct ResolutionTool : SizeTool<ResolutionTool>
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
 
 private:
-    ResolutionToolKind m_kind;
-    std::wstring m_currentConfig;
+    const ResolutionToolKind m_kind;
     const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
     winrt::event_token m_displaySetupEventToken, m_drawPredictionEventToken;

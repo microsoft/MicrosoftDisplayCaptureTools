@@ -44,7 +44,7 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     };
 
     //
-    // A ConfigurationTool rep1ents a single operation that can be taken on a display according to the PICT parameters.
+    // A ConfigurationTool represents a single operation that can be taken on a display according to the PICT parameters.
     // Tools are intended to be used together to define many different possible states for the entire display pipeline.
     // For example, a tool might modify the gamma lookup tables.
     //

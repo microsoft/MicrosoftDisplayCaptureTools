@@ -110,19 +110,16 @@ protected:
 /// Provides a tool implementation that stores an integer value.
 /// </summary>
 export template <typename TDerived>
-struct IntTool : BasicToolBase<TDerived, int, ConfigurationToolCategory::DisplaySetup>
+struct IntTool
+    : BasicToolBase<
+        TDerived,
+        int,
+        ConfigurationToolCategory::DisplaySetup>
 {
     using BaseType = BasicToolBase<TDerived, int, ConfigurationToolCategory::DisplaySetup>;
 
-    using BaseType::BasicToolBase;
-};
-
-template <>
-struct IntTool<int> : BasicToolBase<IntTool, int, ConfigurationToolCategory::DisplaySetup>
-{
-    using BaseType = BasicToolBase<TDerived, int, ConfigurationToolCategory::DisplaySetup>;
-
-    using BaseType::BasicToolBase;
+    //using BaseType::BasicToolBase;
+    using BasicToolBase<TDerived, int, ConfigurationToolCategory::DisplaySetup>::BasicToolBase;
 };
 
 /// <summary>
@@ -135,41 +132,37 @@ struct SizeTool
           SizeInt32,
           ConfigurationToolCategory::DisplaySetup>
 {
-    using BaseType = BasicToolBase<TDerived, int, ConfigurationToolCategory::DisplaySetup>;
+    using BaseType = BasicToolBase<TDerived, SizeInt32, ConfigurationToolCategory::DisplaySetup>;
 
-    using BaseType::BasicToolBase;
+    using BasicToolBase<TDerived, SizeInt32, ConfigurationToolCategory::DisplaySetup>::BasicToolBase;
 };
 
-template <>
-struct SizeTool<SizeInt32>
-    : BasicToolBase<
-          SizeTool,
-          SizeInt32,
-          ConfigurationToolCategory::DisplaySetup>
-{
-    using BaseType = BasicToolBase<TDerived, int, ConfigurationToolCategory::DisplaySetup>;
+export template <typename TToolType, typename TDerived>
+struct ToolFactory
+{};
 
-    using BaseType::BasicToolBase;
+export template <typename TDerived>
+struct ToolFactory<int, TDerived>
+{
+    IConfigurationTool CreateTool(
+        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
+        PCWSTR name,
+        winrt::hstring defaultConfig,
+        std::initializer_list<winrt::hstring> supportedConfigs)
+    {
+        return winrt::make<IntTool<TDerived>>(name, defaultConfig, supportedConfigs, logger);
+    }
 };
 
-export template <typename TDataType>
-std::function<IConfigurationTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const&)> CreateToolFactory(
-    PCWSTR name, winrt::hstring defaultConfig, std::initializer_list<winrt::hstring> supportedConfigs);
-
-export template <>
-std::function<IConfigurationTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const&)> CreateToolFactory<int>(
-    PCWSTR name, winrt::hstring defaultConfig, std::initializer_list<winrt::hstring> supportedConfigs)
+export template <typename TDerived>
+struct ToolFactory<SizeInt32, TDerived>
 {
-    return [=](winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) -> IConfigurationTool {
-        return winrt::make<IntTool>(name, defaultConfig, supportedConfigs, logger);
-    };
-}
-
-export template <>
-std::function<IConfigurationTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const&)> CreateToolFactory<SizeInt32>(
-    PCWSTR name, winrt::hstring defaultConfig, std::initializer_list<winrt::hstring> supportedConfigs)
-{
-    return [=](winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) -> IConfigurationTool {
-        return winrt::make<SizeTool>(name, defaultConfig, supportedConfigs, logger);
-    };
-}
+    IConfigurationTool CreateTool(
+        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
+        PCWSTR name,
+        winrt::hstring defaultConfig,
+        std::initializer_list<winrt::hstring> supportedConfigs)
+    {
+        return winrt::make<SizeTool<TDerived>>(name, defaultConfig, supportedConfigs, logger);
+    }
+};
