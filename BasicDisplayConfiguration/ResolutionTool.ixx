@@ -12,9 +12,14 @@ enum class ResolutionToolKind
     PlaneResolution
 };
 
-struct ResolutionTool : SizeTool<ResolutionTool>
+struct ResolutionTool
+    : ToolBase::SizeTool<ResolutionTool>
 {
     ResolutionTool(ResolutionToolKind kind, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+
+
+    winrt::hstring Name(); // Special overload because this tool can have different names for the different types of ResolutionToolKind
+
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
     void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
