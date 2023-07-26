@@ -17,17 +17,12 @@ namespace winrt::BasicDisplayConfiguration::implementation
         ToolBase::IntTool<RefreshRateTool>(L"RefreshRate", DefaultConfiguration, {L"30", L"60", L"100", L"120"}, logger)
 	{}
 
-	IConfigurationToolRequirements RefreshRateTool::Requirements()
-	{
-		return nullptr;
-	}
-
 	void RefreshRateTool::ApplyToOutput(IDisplayOutput displayOutput)
     {
-        constexpr double sc_refreshRateEpsilon = 0.005;
-
         m_eventTokens[L"DisplaySetup"] = displayOutput.DisplaySetupCallback([&](const auto&, IDisplaySetupToolArgs args) 
 		{
+            constexpr double sc_refreshRateEpsilon = 0.005;
+
             double presentationRate = static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Numerator) /
                                       static_cast<double>(args.Mode().PresentationRate().VerticalSyncRate.Denominator);
 
@@ -35,10 +30,5 @@ namespace winrt::BasicDisplayConfiguration::implementation
         });
 
         m_logger.LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
-	}
-
-	void RefreshRateTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
-    {
-        // This tool doesn't currently matter to the output
 	}
 }

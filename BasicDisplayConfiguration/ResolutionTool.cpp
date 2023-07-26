@@ -62,9 +62,4 @@ void ResolutionTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
         });
     }
 }
-
-winrt::IConfigurationToolRequirements ResolutionTool::Requirements()
-{
-    return nullptr;
-}
 } // namespace winrt::BasicDisplayConfiguration::implementation

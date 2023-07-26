@@ -13,11 +13,6 @@ export namespace winrt::BasicDisplayConfiguration::implementation {
     {
         RefreshRateTool(ILogger const& logger);
 
-        IConfigurationToolRequirements Requirements();
         void ApplyToOutput(IDisplayOutput displayOutput);
-        void ApplyToPrediction(IDisplayPrediction displayPrediction);
-
-    private:
-        winrt::event_token m_displaySetupEventToken, m_drawPredictionEventToken;
     };
 } // namespace winrt::BasicDisplayConfiguration::implementation
