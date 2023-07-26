@@ -3,9 +3,7 @@ export module ResolutionTool;
 import "pch.h";
 import ToolboxBase;
 
-using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
-using namespace winrt::MicrosoftDisplayCaptureTools::Display;
-using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
+using namespace winrt::MicrosoftDisplayCaptureTools;
 
 export namespace winrt::BasicDisplayConfiguration::implementation {
 
@@ -19,12 +17,12 @@ enum class ResolutionToolKind
 struct ResolutionTool
     : ToolBase::SizeTool<ResolutionTool>
 {
-    ResolutionTool(ResolutionToolKind kind, ILogger const& logger);
+    ResolutionTool(ResolutionToolKind kind, Framework::ILogger const& logger);
 
     winrt::hstring Name(); // Special overload because this tool can have different names for the different types of ResolutionToolKind
 
-    void ApplyToOutput(IDisplayOutput displayOutput);
-    void ApplyToPrediction(IDisplayPrediction displayPrediction);
+    void ApplyToOutput(Display::IDisplayOutput displayOutput);
+    void ApplyToPrediction(Display::IDisplayPrediction displayPrediction);
 
 private:
     const ResolutionToolKind m_kind;
