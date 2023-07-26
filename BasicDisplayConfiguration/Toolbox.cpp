@@ -5,7 +5,7 @@ import "pch.h";
 
 #include "PatternTool.h"
 import ResolutionTool;
-#include "RefreshRateTool.h"
+import RefreshRateTool;
 #include "PixelFormatTool.h"
 
 namespace winrt

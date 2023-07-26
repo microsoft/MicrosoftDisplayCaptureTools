@@ -86,12 +86,25 @@ export namespace ToolBase {
         {
             return ToolConfigConversions::ToConfigString<TDataType>(m_defaultConfig);
         }
+        winrt::hstring GetCurrentConfigurationString()
+        {
+            return ToolConfigConversions::ToConfigString(m_configuration);
+        }
         winrt::hstring GetConfiguration()
         {
             return ToolConfigConversions::ToConfigString<TDataType>(m_configuration);
         }
         void SetConfiguration(winrt::hstring configuration)
         {
+            // Validate that the configuration is within the available settings
+            if (std::end(m_supportedConfigs) == std::find(m_supportedConfigs.begin(), m_supportedConfigs.end(), configuration))
+            {
+                // An invalid configuration was asked for
+                m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+
+                throw winrt::hresult_invalid_argument();
+            }
+
             m_configuration = ToolConfigConversions::FromConfigString<TDataType>(configuration);
         }
         void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput)
@@ -107,6 +120,7 @@ export namespace ToolBase {
         TDataType m_configuration;
         std::vector<winrt::hstring> m_supportedConfigs;
         winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
+        std::map<winrt::hstring, winrt::event_token> m_eventTokens;
     };
 
     /// <summary>

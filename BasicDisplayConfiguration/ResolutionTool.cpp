@@ -10,10 +10,10 @@ using namespace MicrosoftDisplayCaptureTools::Framework;
 
 namespace winrt::BasicDisplayConfiguration::implementation {
 
-static const std::wstring DefaultConfiguration = L"1920x1080";
+static const winrt::hstring DefaultConfiguration = L"1920x1080";
 
 ResolutionTool::ResolutionTool(ResolutionToolKind kind, winrt::ILogger const& logger) :
-    ToolBase::SizeTool<ResolutionTool>(L"Resolution", DefaultConfiguration.c_str(), {L"1600x900", L"1920x1080", L"3840x2160"}, logger),
+    ToolBase::SizeTool<ResolutionTool>(L"Resolution", DefaultConfiguration, {L"1600x900", L"1920x1080", L"3840x2160"}, logger),
     m_kind(kind)
 {
 }
@@ -35,7 +35,7 @@ hstring ResolutionTool::Name()
 
 void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
 {
-    m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) {
+    m_eventTokens[L"DisplaySetup"] = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) {
         auto sourceRes = args.Mode().SourceResolution();
         auto targetRes = args.Mode().TargetResolution();
 
@@ -49,14 +49,15 @@ void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
         }
     });
 
-    m_logger.LogNote(L"Registering " + Name() + L": " + ToolConfigConversions::ToConfigString(m_configuration) + L" to be applied.");
+    m_logger.LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
 }
 
 void ResolutionTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
 {
     if (m_kind == ResolutionToolKind::TargetResolution)
     {
-        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData) {
+        m_eventTokens[L"PredictionEvent"] = displayPrediction.DisplaySetupCallback(
+            [this](const auto&, IDisplayPredictionData predictionData) {
             predictionData.FrameData().Resolution(m_configuration);
         });
     }

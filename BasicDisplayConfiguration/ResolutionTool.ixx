@@ -3,6 +3,10 @@ export module ResolutionTool;
 import "pch.h";
 import ToolboxBase;
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+using namespace winrt::MicrosoftDisplayCaptureTools::Display;
+using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
+
 export namespace winrt::BasicDisplayConfiguration::implementation {
 
 enum class ResolutionToolKind
@@ -15,18 +19,16 @@ enum class ResolutionToolKind
 struct ResolutionTool
     : ToolBase::SizeTool<ResolutionTool>
 {
-    ResolutionTool(ResolutionToolKind kind, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
-
+    ResolutionTool(ResolutionToolKind kind, ILogger const& logger);
 
     winrt::hstring Name(); // Special overload because this tool can have different names for the different types of ResolutionToolKind
 
-    winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
-    void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
-    void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
+    IConfigurationToolRequirements Requirements();
+    void ApplyToOutput(IDisplayOutput displayOutput);
+    void ApplyToPrediction(IDisplayPrediction displayPrediction);
 
 private:
     const ResolutionToolKind m_kind;
-    const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
     winrt::event_token m_displaySetupEventToken, m_drawPredictionEventToken;
 };

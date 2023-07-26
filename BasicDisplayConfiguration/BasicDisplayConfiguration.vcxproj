@@ -229,6 +229,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="RefreshRateTool.ixx" />
     <ClCompile Include="ToolboxBase.ixx" />
     <ClInclude Include="PatternTool.h" />
     <ClCompile Include="Bitmap.ixx" />
@@ -236,7 +237,6 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
       <CompileAs>CompileAsHeaderUnit</CompileAs>
     </ClCompile>
     <ClInclude Include="PixelFormatTool.h" />
-    <ClInclude Include="RefreshRateTool.h" />
     <ClCompile Include="ResolutionTool.ixx">
       <FileType>Document</FileType>
     </ClCompile>
