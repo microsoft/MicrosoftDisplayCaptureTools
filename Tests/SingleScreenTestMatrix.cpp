@@ -8,6 +8,8 @@ using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
+using namespace MicrosoftDisplayCaptureTools::Tests;
+
 namespace winrt
 {
     using namespace Windows::Foundation;
@@ -72,7 +74,7 @@ void SingleScreenTestMatrix::Test()
 
     // This test only supports a single screen and so can only load a single DisplayEngine,
     // so select the highest version one installed.
-    auto toolbox = toolboxes[0];
+    toolbox = toolboxes[0];
     for (auto&& box : toolboxes)
     {
         if (box.Version().IsHigherVersion(toolbox.Version()))
