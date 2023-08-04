@@ -58,7 +58,7 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayPredictionData? lastPredictedFrame;
+		IPredictionData? lastPredictedFrame;
 
 		[ObservableProperty]
 		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]
@@ -277,7 +277,7 @@ namespace CaptureCardViewer.ViewModels
 		[ICommand]
 		async void RenderPrediction()
 		{
-			var displayPrediction = Engine.CreateDisplayPrediction();
+			var displayPrediction = Engine.CreatePrediction();
 
 			// TODO: Encapsulate the active tools into a sub-property of this CaptureSessionViewModel
 			var activeTools =

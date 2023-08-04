@@ -127,8 +127,74 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //      displayPrediction
         //          The prediction object to apply this tool's changes to
         //
-        void ApplyToPrediction(MicrosoftDisplayCaptureTools.Display.IDisplayPrediction displayPrediction);
+        void ApplyToPrediction(MicrosoftDisplayCaptureTools.ConfigurationTools.IPrediction displayPrediction);
     }
+
+    //
+    // Represents the predicted output of a collection of tools
+    //
+    interface IPredictionData
+    {
+        // FrameData
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     retrieves a collection of the predicted frames alongside any frame-specific metadata
+        //
+        MicrosoftDisplayCaptureTools.Framework.IFrameData[] FrameData
+        {
+            get;
+        };
+        
+        // Properties
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     retrieves a collection of properties that apply to the entire prediction
+        //
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    //
+    // Represents the collective state that tools modify to generate what the display output of those settings should
+    // correspond to.
+    //
+    interface IPrediction
+    {
+        // GeneratePredictionDataAsync
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Go through and generate the predicted output data using any and all tools which have registered with
+        //     this object
+        //
+        Windows.Foundation.IAsyncOperation<IPredictionData> GeneratePredictionDataAsync();
+
+        // DisplaySetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
+        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
+        //     rate, etc.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> DisplaySetupCallback;
+
+        // RenderSetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
+        //     created, but before the core render loop begins.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> RenderSetupCallback;
+
+        // RenderLoopCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
+        //     called for each frame, so high-latency callbacks may cause problems.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> RenderLoopCallback;
+    };
 
     //
     // This object simply holds a slate of ConfigurationTools.
@@ -181,6 +247,14 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //          The subsection of the json config file for this toolbox
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
+
+        // CreatePrediction
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates a prediction object, these are used by tools to create a prediction of what the display output
+        //     should contain
+        //
+        IPrediction CreatePrediction();
     }
 
     //

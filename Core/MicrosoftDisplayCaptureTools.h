@@ -82,7 +82,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         com_array<CaptureCard::IController> GetCaptureCards();
         com_array<Display::IDisplayEngine> GetDisplayEngines();
         
-        winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(bool regenerateMappings, Display::IDisplayEngine displayEngine);
+        winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(
+            bool regenerateMappings, Display::IDisplayEngine displayEngine, ConfigurationTools::IConfigurationToolbox toolbox);
 
         MicrosoftDisplayCaptureTools::Framework::Version Version()
         {
@@ -101,7 +102,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             return m_lockCount > 0;
         }
 
-        std::vector<ConfigurationTools::IConfigurationTool> GetAllTools();
+        std::vector<ConfigurationTools::IConfigurationTool> GetAllTools(ConfigurationTools::IConfigurationToolbox specificToolbox);
 
     private:
         // A list of all capture card plugins wthat have been loaded

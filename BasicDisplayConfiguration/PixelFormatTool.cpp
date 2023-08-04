@@ -111,9 +111,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
         m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
     }
 
-    void PixelFormatTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+    void PixelFormatTool::ApplyToPrediction(IPrediction displayPrediction)
     {
-        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData)
+        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IPredictionData predictionData)
         {
             auto desc = predictionData.FrameData().FormatDescription();
             desc.BitsPerPixel = ConfigurationMap[m_currentConfig].BitsPerPixel;

@@ -52,12 +52,12 @@ void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
     m_logger.LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
 }
 
-void ResolutionTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+void ResolutionTool::ApplyToPrediction(IPrediction displayPrediction)
 {
     if (m_kind == ResolutionToolKind::TargetResolution)
     {
         m_eventTokens[L"PredictionEvent"] = displayPrediction.DisplaySetupCallback(
-            [this](const auto&, IDisplayPredictionData predictionData) {
+            [this](const auto&, IPredictionData predictionData) {
             predictionData.FrameData().Resolution(m_configuration);
         });
     }

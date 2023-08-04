@@ -251,7 +251,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_frameData.Data(buffer);
     }
 
-    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction)
+    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::ConfigurationTools::IPredictionData prediction)
     {
         auto predictedFrame = prediction.FrameData();
 

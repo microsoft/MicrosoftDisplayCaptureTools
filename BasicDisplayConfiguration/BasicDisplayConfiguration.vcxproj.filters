@@ -35,6 +35,7 @@
     <ClCompile Include="ToolboxBase.ixx" />
     <ClCompile Include="ResolutionTool.ixx" />
     <ClCompile Include="RefreshRateTool.ixx" />
+    <ClCompile Include="Prediction.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PatternTool.h" />

@@ -341,7 +341,7 @@ com_array<IDisplayEngine> Core::GetDisplayEngines()
     return com_array<IDisplayEngine>(m_displayEngines);
 }
 
-IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings, IDisplayEngine displayEngine)
+IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings, IDisplayEngine displayEngine, IConfigurationToolbox toolbox)
 {
     // Prevent component changes while we are attempting configuration
     auto lock = LockFramework();
@@ -441,7 +441,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
             //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
             //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
             //       device. For the latter case, this auto-config method will print out the possible display IDs.
-            auto toolList = GetAllTools();
+            auto toolList = GetAllTools(toolbox);
             if (toolList.empty())
             {
                 m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
@@ -500,7 +500,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
                         // matches it, using default settings for the tools.
                         auto output = displayEngine.InitializeOutput(target);
-                        auto prediction = displayEngine.CreateDisplayPrediction();
+                        auto prediction = toolbox.CreatePrediction();
                         for (auto&& tool : toolList)
                         {
                             tool.SetConfiguration(tool.GetDefaultConfiguration());
@@ -516,7 +516,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         std::this_thread::sleep_for(std::chrono::seconds(5));
 
                         // Iterate through the still unassigned inputs to find any matches
-                        for (auto&& unassignedInput: unassignedInputs_NoEDID)
+                        for (auto&& unassignedInput : unassignedInputs_NoEDID)
                         {
                             auto [card, input] = unassignedInput;
 
@@ -710,9 +710,19 @@ void Core::DiscoverInstalledPlugins()
     }
 }
 
-std::vector<ConfigurationTools::IConfigurationTool> Core::GetAllTools()
+std::vector<ConfigurationTools::IConfigurationTool> Core::GetAllTools(IConfigurationToolbox specificToolbox = nullptr)
 {
     std::vector<IConfigurationTool> tools;
+
+    if (specificToolbox)
+    {
+        for (auto&& toolName : specificToolbox.GetSupportedTools())
+        {
+            tools.push_back(specificToolbox.GetTool(toolName));
+        }
+
+        return tools;
+    }
 
     for (auto&& toolbox : m_toolboxes)
     {

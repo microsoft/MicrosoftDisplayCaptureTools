@@ -18,7 +18,7 @@ struct PixelFormatTool : implements<PixelFormatTool, winrt::MicrosoftDisplayCapt
     winrt::hstring GetConfiguration();
     void SetConfiguration(winrt::hstring configuration);
     void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
-    void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
+    void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction displayPrediction);
 
 private:
     PixelFormatToolKind m_kind;

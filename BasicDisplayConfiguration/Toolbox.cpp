@@ -8,6 +8,8 @@ import ResolutionTool;
 import RefreshRateTool;
 #include "PixelFormatTool.h"
 
+import PredictionRenderer;
+
 namespace winrt
 {
     using namespace winrt::Windows::Data::Json;
@@ -31,6 +33,12 @@ namespace winrt::BasicDisplayConfiguration::implementation
     Toolbox::Toolbox(winrt::ILogger const& logger) : m_logger(logger)
     {
     }
+
+    MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction Toolbox::CreatePrediction()
+    {
+        return winrt::make<Prediction>(m_logger);
+    }
+
 
     enum class Tools
     {

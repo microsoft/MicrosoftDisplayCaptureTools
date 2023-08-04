@@ -4,12 +4,55 @@ import "pch.h";
 import RenderingUtils;
 
 using namespace RenderingUtils;
+
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
+using namespace winrt::Windows::Foundation::Collections;
 using namespace winrt::Windows::Graphics::DirectX;
 using namespace winrt::Microsoft::Graphics::Canvas;
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
 
-namespace PredictionRenderer {
+namespace PredictionRenderer 
+{
+
+struct PredictionData : winrt::implements<PredictionData, IPredictionData>
+{
+    PredictionData(ILogger const& logger);
+
+    IFrameData FrameData();
+
+    IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> Properties();
+
+private:
+    const ILogger m_logger{nullptr};
+
+    IFrameData m_frameData{nullptr};
+    IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties;
+};
+
+struct Prediction : winrt::implements<Prediction, IPrediction>
+{
+    Prediction(ILogger const& logger);
+
+    IAsyncOperation<IPredictionData> GeneratePredictionDataAsync();
+
+    winrt::event_token DisplaySetupCallback(EventHandler<IPredictionData> const& handler);
+    void DisplaySetupCallback(winrt::event_token const& token) noexcept;
+
+    winrt::event_token RenderSetupCallback(EventHandler<IPredictionData> const& handler);
+    void RenderSetupCallback(winrt::event_token const& token) noexcept;
+
+    winrt::event_token RenderLoopCallback(EventHandler<IPredictionData> const& handler);
+    void RenderLoopCallback(winrt::event_token const& token) noexcept;
+
+private:
+    const ILogger m_logger{nullptr};
+
+    winrt::event<EventHandler<IPredictionData>> m_displaySetupCallback;
+    winrt::event<EventHandler<IPredictionData>> m_renderSetupCallback;
+    winrt::event<EventHandler<IPredictionData>> m_renderLoopCallback;
+};
 
 /// <summary>
 /// Represents the type of plane described by a PlaneInformation.
@@ -88,9 +131,128 @@ private:
 
 } // namespace PredictionRenderer
 
-module : private;
+module :private;
 
 namespace PredictionRenderer {
+
+PredictionData::PredictionData(ILogger const& logger) : m_logger(logger)
+{
+    m_properties = winrt::single_threaded_map<winrt::hstring, winrt::Windows::Foundation::IInspectable>();
+    m_frameData = winrt::make<FrameData>(m_logger);
+}
+
+IFrameData PredictionData::FrameData()
+{
+    return m_frameData;
+}
+
+IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> PredictionData::Properties()
+{
+    return m_properties;
+}
+
+Prediction::Prediction(ILogger const& logger) : m_logger(logger)
+{
+}
+
+IAsyncOperation<IPredictionData> Prediction::GeneratePredictionDataAsync()
+{
+    // This operation is expected to be heavyweight, as tools are moving a lot of memory. So
+    // we return the thread control and resume this function on the thread pool.
+    co_await winrt::resume_background();
+
+    // Create the prediction data object
+    auto predictionData = winrt::make<PredictionData>(m_logger);
+
+    // Set any desired format defaults - tools may override these
+    {
+        auto formatDesc = predictionData.FrameData().FormatDescription();
+
+        formatDesc.Eotf = winrt::Windows::Devices::Display::Core::DisplayWireFormatEotf::Sdr;
+        formatDesc.PixelEncoding = winrt::Windows::Devices::Display::Core::DisplayWireFormatPixelEncoding::Rgb444;
+
+        predictionData.FrameData().FormatDescription(formatDesc);
+    }
+
+    // Invoke any tools registering as display setup (format, resolution, etc.)
+    if (m_displaySetupCallback)
+    {
+        m_displaySetupCallback(*this, predictionData);
+    }
+
+    // Perform any changes to the format description required before buffer allocation
+    {
+        auto formatDesc = predictionData.FrameData().FormatDescription();
+        formatDesc.Stride = formatDesc.BitsPerPixel * predictionData.FrameData().Resolution().Width;
+        predictionData.FrameData().FormatDescription(formatDesc);
+    }
+
+    // From the data set in the predictionData, allocate buffers
+    auto resolution = predictionData.FrameData().Resolution();
+    auto desc = predictionData.FrameData().FormatDescription();
+
+    if (resolution.Width == 0 || resolution.Height == 0)
+    {
+        std::wstringstream buf{};
+        buf << L"Resolution of (" << resolution.Width << L", " << resolution.Height << L") not valid!";
+
+        m_logger.LogError(buf.str());
+    }
+
+    if (desc.BitsPerPixel == 0 || desc.Stride == 0)
+    {
+        m_logger.LogError(L"BitsPerPixel and Stride must be defined sizes for us to reserve buffers!");
+    }
+
+    // reserve enough memory for the output frame.
+    auto pixelBuffer = winrt::Buffer(resolution.Height * desc.Stride);
+
+    predictionData.FrameData().Data(pixelBuffer);
+
+    // Invoke any tools registering as render setup
+    if (m_renderSetupCallback)
+    {
+        m_renderSetupCallback(*this, predictionData);
+    }
+
+    // Invoke any tools registering as rendering
+    if (m_renderLoopCallback)
+    {
+        m_renderLoopCallback(*this, predictionData);
+    }
+
+    co_return predictionData.as<IPredictionData>();
+}
+
+winrt::event_token Prediction::DisplaySetupCallback(Windows::Foundation::EventHandler<IPredictionData> const& handler)
+{
+    return m_displaySetupCallback.add(handler);
+}
+
+void Prediction::DisplaySetupCallback(winrt::event_token const& token) noexcept
+{
+    m_displaySetupCallback.remove(token);
+}
+
+winrt::event_token Prediction::RenderSetupCallback(Windows::Foundation::EventHandler<IPredictionData> const& handler)
+{
+    return m_renderSetupCallback.add(handler);
+}
+
+void Prediction::RenderSetupCallback(winrt::event_token const& token) noexcept
+{
+    m_renderSetupCallback.remove(token);
+}
+
+winrt::event_token Prediction::RenderLoopCallback(Windows::Foundation::EventHandler<IPredictionData> const& handler)
+{
+    return m_renderLoopCallback.add(handler);
+}
+
+void Prediction::RenderLoopCallback(winrt::event_token const& token) noexcept
+{
+    m_renderLoopCallback.remove(token);
+}
 
 void PredictionRenderer::Render(const CanvasDrawingSession& drawingSession)
 {

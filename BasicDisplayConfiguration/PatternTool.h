@@ -13,7 +13,7 @@ struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools
     winrt::hstring GetConfiguration();
     void SetConfiguration(winrt::hstring configuration);
     void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput);
-    void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction);
+    void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction displayPrediction);
 
 private:
     void RenderPatternToPlane(const winrt::Microsoft::Graphics::Canvas::CanvasDrawingSession& drawingSession, uint32_t width, uint32_t height);

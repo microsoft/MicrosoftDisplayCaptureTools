@@ -6,8 +6,9 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Microsoft::Graphics::Canvas;
 
-namespace abi {
-using namespace ABI::Microsoft::Graphics::Canvas;
+namespace ABI 
+{
+    using namespace ABI::Microsoft::Graphics::Canvas;
 }
 
 namespace RenderingUtils {
@@ -28,25 +29,25 @@ export CanvasVirtualBitmap CreateVirtualBitmapFromDxgiSurface(
     D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS options)
 {
     auto dxgiSurface = GetNativeDxgiSurface(surface);
-    auto drawingSessionInterop = drawingSession.as<abi::ICanvasResourceWrapperNative>();
+    auto drawingSessionInterop = drawingSession.as<ABI::ICanvasResourceWrapperNative>();
 
     // We need to get the ID2D1DeviceContext3 from the CanvasDrawingSession
     winrt::com_ptr<ID2D1DeviceContext3> deviceContext;
     winrt::check_hresult(drawingSessionInterop->GetNativeResource(
-        drawingSession.Device().as<abi::ICanvasDevice>().get(), 0.0f, IID_PPV_ARGS(deviceContext.put())));
+        drawingSession.Device().as<ABI::ICanvasDevice>().get(), 0.0f, IID_PPV_ARGS(deviceContext.put())));
 
     // Create the image source from the DXGI surface
     winrt::com_ptr<ID2D1ImageSource> imageSource;
     IDXGISurface* surfaces[1] = {dxgiSurface.get()};
     winrt::check_hresult(deviceContext->CreateImageSourceFromDxgi(surfaces, _countof(surfaces), colorSpace, options, imageSource.put()));
 
-    // abi::ICanvasFactoryNative is on the activation factory for the CanvasDevice class
-    auto factory = winrt::get_activation_factory<CanvasDevice, abi::ICanvasFactoryNative>();
+    // ABI::ICanvasFactoryNative is on the activation factory for the CanvasDevice class
+    auto factory = winrt::get_activation_factory<CanvasDevice, ABI::ICanvasFactoryNative>();
 
     // Create the CanvasVirtualBitmap using the factory to wrap the ID2D1ImageSource
     winrt::com_ptr<::IInspectable> resultObject;
     winrt::check_hresult(factory->GetOrCreate(
-        drawingSession.Device().as<abi::ICanvasDevice>().get(), imageSource.as<::IUnknown>().get(), 0.0f, resultObject.put()));
+        drawingSession.Device().as<ABI::ICanvasDevice>().get(), imageSource.as<::IUnknown>().get(), 0.0f, resultObject.put()));
     return resultObject.as<CanvasVirtualBitmap>();
 }
 

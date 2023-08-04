@@ -22,7 +22,7 @@ struct ResolutionTool
     winrt::hstring Name(); // Special overload because this tool can have different names for the different types of ResolutionToolKind
 
     void ApplyToOutput(Display::IDisplayOutput displayOutput);
-    void ApplyToPrediction(Display::IDisplayPrediction displayPrediction);
+    void ApplyToPrediction(ConfigurationTools::IPrediction displayPrediction);
 
 private:
     const ResolutionToolKind m_kind;

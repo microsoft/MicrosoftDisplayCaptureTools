@@ -2,64 +2,6 @@ import "Framework.idl";
 
 namespace MicrosoftDisplayCaptureTools.Display
 {
-    // Represents the predicted output for the current settings of the display engine that creates it
-    interface IDisplayPredictionData
-    {
-        // GetFrameData
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Gets an object representing the data corresponding to the predicted frame.
-        //
-        MicrosoftDisplayCaptureTools.Framework.IFrameData FrameData
-        {
-            get;
-        };
-
-        // A collection of properties to go alongside the frame itself
-        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
-        {
-            get;
-        };
-    };
-
-    // Manages the predicted output of a series of tools. Analogous to the IDisplayOutput interface, but for the the
-    // predicted output rather than the actual output.
-    interface IDisplayPrediction
-    {
-        // GeneratePredictionDataAsync
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Go through and generate the predicted output data using any and all tools which have registered with
-        //     this object
-        //
-        Windows.Foundation.IAsyncOperation<IDisplayPredictionData> GeneratePredictionDataAsync();
-
-        // DisplaySetupCallback
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
-        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
-        //     rate, etc.
-        //
-        event Windows.Foundation.EventHandler<IDisplayPredictionData> DisplaySetupCallback;
-
-        // RenderSetupCallback
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
-        //     created, but before the core render loop begins.
-        //
-        event Windows.Foundation.EventHandler<IDisplayPredictionData> RenderSetupCallback;
-
-        // RenderLoopCallback
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
-        //     called for each frame, so high-latency callbacks may cause problems.
-        //
-        event Windows.Foundation.EventHandler<IDisplayPredictionData> RenderLoopCallback;
-    };
-
     // Used to set parameters for this particular output plane.
     interface IDisplayEnginePlaneProperties
     {
@@ -239,13 +181,6 @@ namespace MicrosoftDisplayCaptureTools.Display
         //     display. This is expected to be sourced from a pre-generated config file.
         //
         IDisplayOutput InitializeOutput(String target);
-
-        // CreateDisplayPrediction
-        // ------------------------------------------------------------------------------------------------------------
-        // Notes:
-        //     Creates a display prediction object, these are used by tools to create a prediction of an object
-        //
-        IDisplayPrediction CreateDisplayPrediction();
 
         // SetConfigData
         // ----------------------------------------------------------------------------------------------------------------

@@ -99,11 +99,6 @@ namespace winrt::BasicDisplayControl::implementation {
         return InitializeOutput(chosenTarget);
     }
 
-    MicrosoftDisplayCaptureTools::Display::IDisplayPrediction DisplayEngine::CreateDisplayPrediction()
-    {
-        return winrt::make<DisplayPrediction>(m_logger);
-    }
-
     // DisplayOutput
     DisplayOutput::DisplayOutput(ILogger const& logger, DisplayTarget const& target, DisplayManager const& manager) :
         m_logger(logger), m_displayTarget(target), m_displayManager(manager)
@@ -336,6 +331,8 @@ namespace winrt::BasicDisplayControl::implementation {
             m_logger.LogWarning(L"No display mode fit the selected options");
             return false;
         }
+
+        return true;
     }
 
     bool DisplayOutput::PrepareRender()
@@ -603,129 +600,6 @@ namespace winrt::BasicDisplayControl::implementation {
     void DisplayEnginePlaneProperties::SetPlaneTexture(ID3D11Texture2D* texture)
     {
         m_planeTexture.copy_from(texture);
-    }
-
-    DisplayPredictionData::DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-        m_logger(logger)
-    {
-        m_properties = winrt::single_threaded_map<hstring, IInspectable>();
-        m_frameData = MicrosoftDisplayCaptureTools::Framework::FrameData(m_logger);
-    }
-
-    MicrosoftDisplayCaptureTools::Framework::IFrameData DisplayPredictionData::FrameData()
-    {
-        return m_frameData;
-    }
-
-    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayPredictionData::Properties()
-    {
-        return m_properties;
-    }
-
-    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : m_logger(logger)
-    {
-    }
-
-    IAsyncOperation<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> DisplayPrediction::GeneratePredictionDataAsync()
-    {
-        // This operation is expected to be heavyweight, as tools are moving a lot of memory. So
-        // we return the thread control and resume this function on the thread pool.
-        co_await winrt::resume_background();
-
-        // Create the prediction data object
-        auto predictionData = winrt::make<DisplayPredictionData>(m_logger);
-
-        // Set any desired format defaults - tools may override these
-        {
-            auto formatDesc = predictionData.FrameData().FormatDescription();
-
-            formatDesc.Eotf = winrt::Windows::Devices::Display::Core::DisplayWireFormatEotf::Sdr;
-            formatDesc.PixelEncoding = winrt::Windows::Devices::Display::Core::DisplayWireFormatPixelEncoding::Rgb444;
-
-            predictionData.FrameData().FormatDescription(formatDesc);
-        }
-
-        // Invoke any tools registering as display setup (format, resolution, etc.)
-        if (m_displaySetupCallback)
-        {
-            m_displaySetupCallback(*this, predictionData);
-        }
-
-        // Perform any changes to the format description required before buffer allocation
-        {
-            auto formatDesc = predictionData.FrameData().FormatDescription();
-            formatDesc.Stride = formatDesc.BitsPerPixel * predictionData.FrameData().Resolution().Width;
-            predictionData.FrameData().FormatDescription(formatDesc);
-        }
-
-        // From the data set in the predictionData, allocate buffers
-        auto resolution = predictionData.FrameData().Resolution();
-        auto desc = predictionData.FrameData().FormatDescription();
-
-        if (resolution.Width == 0 || resolution.Height == 0)
-        {
-            std::wstringstream buf{};
-            buf << L"Resolution of (" << resolution.Width << L", " << resolution.Height << L") not valid!";
-
-            m_logger.LogError(buf.str());
-        }
-
-        if (desc.BitsPerPixel == 0 || desc.Stride == 0)
-        {
-            m_logger.LogError(L"BitsPerPixel and Stride must be defined sizes for us to reserve buffers!");
-        }
-
-        // reserve enough memory for the output frame.
-        auto pixelBuffer = winrt::Buffer(resolution.Height * desc.Stride);
-
-        predictionData.FrameData().Data(pixelBuffer);
-
-        // Invoke any tools registering as render setup
-        if (m_renderSetupCallback)
-        {
-            m_renderSetupCallback(*this, predictionData);
-        }
-
-        // Invoke any tools registering as rendering
-        if (m_renderLoopCallback)
-        {
-            m_renderLoopCallback(*this, predictionData);
-        }
-
-        co_return predictionData.as<IDisplayPredictionData>();
-    }
-
-    event_token DisplayPrediction::DisplaySetupCallback(
-        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
-    {
-        return m_displaySetupCallback.add(handler);
-    }
-
-    void DisplayPrediction::DisplaySetupCallback(event_token const& token) noexcept
-    {
-        m_displaySetupCallback.remove(token);
-    }
-
-    event_token DisplayPrediction::RenderSetupCallback(
-        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
-    {
-        return m_renderSetupCallback.add(handler);
-    }
-
-    void DisplayPrediction::RenderSetupCallback(event_token const& token) noexcept
-    {
-        m_renderSetupCallback.remove(token);
-    }
-
-    event_token DisplayPrediction::RenderLoopCallback(
-        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
-    {
-        return m_renderLoopCallback.add(handler);
-    }
-
-    void DisplayPrediction::RenderLoopCallback(event_token const& token) noexcept
-    {
-        m_renderLoopCallback.remove(token);
     }
 
     void DisplaySetupToolArgs::IsModeCompatible(bool accept)

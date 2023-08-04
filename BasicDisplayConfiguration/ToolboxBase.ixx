@@ -5,6 +5,7 @@ import "pch.h";
 using namespace winrt::Windows::Graphics;
 using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
 using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+using namespace winrt::MicrosoftDisplayCaptureTools::Display;
 
 // Contains methods which convert between configuration strings and the tool's internal data type.
 export namespace ToolConfigConversions {
@@ -70,11 +71,11 @@ export namespace ToolBase {
         {
             return m_name;
         }
-        winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category()
+        ConfigurationToolCategory Category()
         {
             return CategoryValue;
         }
-        winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements()
+        IConfigurationToolRequirements Requirements()
         {
             return nullptr;
         }
@@ -107,10 +108,10 @@ export namespace ToolBase {
 
             m_configuration = ToolConfigConversions::FromConfigString<TDataType>(configuration);
         }
-        void ApplyToOutput(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayOutput displayOutput)
+        void ApplyToOutput(IDisplayOutput displayOutput)
         {
         }
-        void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::Display::IDisplayPrediction displayPrediction)
+        void ApplyToPrediction(IPrediction displayPrediction)
         {
         }
 

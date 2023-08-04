@@ -200,9 +200,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     }
 
-    void PatternTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
+    void PatternTool::ApplyToPrediction(IPrediction displayPrediction)
     {
-        m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IDisplayPredictionData predictionData)
+        m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IPredictionData predictionData)
         {
             auto canvasDevice = CanvasDevice::GetSharedDevice();
             auto patternTarget = CanvasRenderTarget(

@@ -381,12 +381,19 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          only whichever mappings were provided by configuration file. If false and no mappings were provided via
         //          config files, an empty array will be returned.
         //      displayEngine (optional)
-        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false.
+        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false
+        //      toolbox (optional)
+        //          The ConfigurationToolbox to use when regenerating mappings, this is not used when regenerateMappings =
+        //          false. This is also not used if the displayEngine supports customized display descriptors (EDIDs or 
+        //          DisplayIDs) as those provide a faster and more reliable mapping path.
         //
         // Returns:
         //      An array of structs containing the source and sink references.
         //
-        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(Boolean regenerateMappings, MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine);
+        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(
+            Boolean regenerateMappings,
+            MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine,
+            MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox toolbox);
 
         // GetConfigurationToolboxes
         // ----------------------------------------------------------------------------------------------------------------

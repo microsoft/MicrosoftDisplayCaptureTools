@@ -13,11 +13,19 @@ bool DescriptorTests::Cleanup()
 
 void DescriptorTests::EdidManyBlocks()
 {
-
+    if (g_predictionOnly)
+    {
+        WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, "Cannot do descriptor tests in prediction-only mode.");
+        return;
+    }
 }
 
 void DescriptorTests::DisplayId2InEdid()
 {
-
+    if (g_predictionOnly)
+    {
+        WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, "Cannot do descriptor tests in prediction-only mode.");
+        return;
+    }
 }
 

@@ -13,6 +13,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
         com_array<hstring> GetSupportedTools();
         winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool GetTool(hstring const& toolName);
         void SetConfigData(winrt::Windows::Data::Json::IJsonValue data);
+        
+        MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction CreatePrediction();
 
         MicrosoftDisplayCaptureTools::Framework::Version Version()
         {
@@ -30,7 +32,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
         winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox CreateConfigurationToolbox(
             winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
     };
-    }
+}
+
 namespace winrt::BasicDisplayConfiguration::factory_implementation
 {
     struct Toolbox : ToolboxT<Toolbox, implementation::Toolbox>
