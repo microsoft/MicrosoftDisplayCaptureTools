@@ -227,7 +227,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         m_frameData.Resolution(resolution);
 
         // This is only supporting 8bpc RGB444 currently
-        FrameDataDescription desc{0};
+        FrameFormatDescription desc{0};
         desc.BitsPerPixel = 24;
         desc.Stride = resolution.Width * 3; // There is no padding with this capture
         desc.PixelFormat = DirectXPixelFormat::Unknown; // Specify that we don't have an exact match to the input DirectX formats

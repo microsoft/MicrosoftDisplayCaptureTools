@@ -294,7 +294,7 @@ namespace CaptureCardViewer.ViewModels
 					tool.ApplyToPrediction(displayPrediction);
 				}
 
-				var prediction = await displayPrediction.GeneratePredictionDataAsync();
+				var prediction = await displayPrediction.FinalizePredictionAsync();
 				var predictionBitmap = prediction.FrameData;
 
 				return (prediction, BufferToImgConv(predictionBitmap.Data, predictionBitmap.Resolution, (int)predictionBitmap.FormatDescription.Stride));

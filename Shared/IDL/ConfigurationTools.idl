@@ -135,12 +135,12 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     //
     interface IPredictionData
     {
-        // FrameData
+        // Frames
         // ------------------------------------------------------------------------------------------------------------
         // Notes:
         //     retrieves a collection of the predicted frames alongside any frame-specific metadata
         //
-        MicrosoftDisplayCaptureTools.Framework.IFrameData[] FrameData
+        MicrosoftDisplayCaptureTools.Framework.IRawFrameSet FrameSet
         {
             get;
         };
@@ -162,13 +162,13 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
     //
     interface IPrediction
     {
-        // GeneratePredictionDataAsync
+        // FinalizePredictionAsync
         // ------------------------------------------------------------------------------------------------------------
         // Notes:
         //     Go through and generate the predicted output data using any and all tools which have registered with
         //     this object
         //
-        Windows.Foundation.IAsyncOperation<IPredictionData> GeneratePredictionDataAsync();
+        Windows.Foundation.IAsyncOperation<IPredictionData> FinalizePredictionAsync();
 
         // DisplaySetupCallback
         // ------------------------------------------------------------------------------------------------------------

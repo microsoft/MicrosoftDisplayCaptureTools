@@ -57,10 +57,10 @@
   <ItemGroup>
     <None Include="TestConfig.json" />
     <None Include="cpp.hint" />
-    <None Include="packages.config" />
     <None Include="pict.exe">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="CaptureCardInputs.xml">

@@ -240,7 +240,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
         m_frameData.Resolution({capturedFrameBitmap.PixelWidth(), capturedFrameBitmap.PixelHeight()});
 
-        FrameDataDescription desc{0};
+        FrameFormatDescription desc{0};
         desc.BitsPerPixel = 32;
         desc.Stride = capturedFrameBitmap.PixelWidth() * 4;
         desc.PixelFormat = static_cast<DirectXPixelFormat>(BitmapPixelFormat::Rgba8);

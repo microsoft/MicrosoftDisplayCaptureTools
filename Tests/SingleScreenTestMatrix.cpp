@@ -171,7 +171,7 @@ void SingleScreenTestMatrix::Test()
     }
 
     // Start generating the prediction at the same time as we start outputting.
-    auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
+    auto predictionDataAsync = prediction.FinalizePredictionAsync();
 
     if (!g_predictionOnly)
     {

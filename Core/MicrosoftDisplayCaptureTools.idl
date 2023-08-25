@@ -16,11 +16,4 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Core();
         Core(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
     }
-
-    [default_interface]
-    runtimeclass FrameData : MicrosoftDisplayCaptureTools.Framework.IFrameData,
-        MicrosoftDisplayCaptureTools.Framework.IFrameDataComparisons
-    {
-        FrameData(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
-    }
 }

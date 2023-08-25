@@ -36,11 +36,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     {
         m_resolution = resolution;
     }
-    winrt::FrameDataDescription FrameData::FormatDescription()
+    winrt::FrameFormatDescription FrameData::FormatDescription()
     {
         return m_description;
     }
-    void FrameData::FormatDescription(winrt::FrameDataDescription const& description)
+    void FrameData::FormatDescription(winrt::FrameFormatDescription const& description)
     {
         m_description = description;
     }

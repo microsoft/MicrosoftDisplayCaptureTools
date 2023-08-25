@@ -17,14 +17,12 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="EDIDDescriptor.cpp" />
-    <ClCompile Include="FrameData.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="EDIDDescriptor.h" />
-    <ClInclude Include="FrameData.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>

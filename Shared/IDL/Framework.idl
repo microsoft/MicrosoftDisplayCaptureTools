@@ -4,9 +4,14 @@ import "DisplayManager.idl";
 
 namespace MicrosoftDisplayCaptureTools.Framework
 {
-    // IFrameData Implementations
-    struct FrameDataDescription
+    // 
+    // A struct describing standard 'always-required' information about a frame's format
+    //
+    struct FrameFormatDescription
     {
+        // The resolution of the frame
+        Windows.Graphics.SizeInt32 Resolution;
+
         // The number of bits to represent each pixel, regardless of subsampling mode.
         UInt32 BitsPerPixel;
 
@@ -25,64 +30,58 @@ namespace MicrosoftDisplayCaptureTools.Framework
     };
 
     //
-    // An interface representing any additional non-pixel data describing the link or pixel data (i.e. An AVI Infoframe)
+    // An interface representing a single output frame
     //
-    runtimeclass FrameMetadata
+    interface IRawFrame
     {
-        FrameMetadata(String Format, Windows.Storage.Streams.IBuffer Data);
-
-        Windows.Storage.Streams.IBuffer Data
+        // A description of how the frame and pixels are formatted
+        FrameFormatDescription FormatDescription
         {
             get;
+            set;
         };
 
-        String Name
-        {
-            get;
-        };
-    };
-
-    //
-    // An interface representing formatted pixel data
-    //
-    interface IFrameData
-    {
         // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).
         Windows.Storage.Streams.IBuffer Data
         {
             get;
-            set;
         };
 
-        // The resolution of the image
-        Windows.Graphics.SizeInt32 Resolution
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h).
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
         {
             get;
-            set;
         };
-
-        // A description of how the pixels are formatted
-        FrameDataDescription FormatDescription
-        {
-            get;
-            set;
-        };
-
-        FrameMetadata[] GetFrameMetadata();
-        void AddMetadata(FrameMetadata data);
     };
 
     //
-    // An interface representing optional extended features on top of IFrameData to assist in tooling
+    // An interface representing a set of captured or predicted frames
     //
-    interface IFrameDataComparisons
+    interface IRawFrameSet
+    {
+        // Get the frames in this frame set
+        Windows.Foundation.Collections.IVector<IRawFrame> Frames();
+
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h)
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    //
+    // An interface representing optional extended features to assist in tooling
+    //
+    interface IRawFrameRenderable
     {
         // Get an easily renderable approximation of the image data, in RGBA8 format
         Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap> GetRenderableApproximationAsync();
 
-        // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
-        // do not match.
-        IFrameDataComparisons GetImageDelta(IFrameData other);
+        // Get a string representation of a particular pixel in the frame. This should be in the original pixel format
+        // and be as close to raw data as possible.
+        String GetPixelInfo(UInt32 x, UInt32 y);
     };
 
     runtimeclass Version : Windows.Foundation.IStringable
