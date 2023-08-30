@@ -60,8 +60,7 @@ namespace PredictionRenderer {
     export enum class RenderMode { Target, SourceOnly };
 
     /// <summary>
-    /// Contains all the information describing a frame from a display source. Frame providers will implement
-    /// a class derived from this one that unlocks the frame on destruction.
+    /// The set of information describing a frame and how it can be drawn.
     /// </summary>
     export struct FrameInformation
     {
@@ -89,20 +88,28 @@ namespace PredictionRenderer {
 
         // Functions from IRawFrame
         winrt::IBuffer Data();
-        winrt::FrameFormatDescription FormatDescription();
-        void FormatDescription(winrt::FrameFormatDescription const& description);
+        winrt::DisplayWireFormat DataFormat();
         winrt::IMap<winrt::hstring, winrt::IInspectable> Properties();
+        winrt::SizeInt32 Resolution();
 
         // Functions from IRawFrameRenderable
         winrt::IAsyncOperation<winrt::SoftwareBitmap> GetRenderableApproximationAsync();
         winrt::hstring GetPixelInfo(uint32_t x, uint32_t y);
 
+        // Local-only members
+        void SetBuffer(winrt::IBuffer data);
+        void DataFormat(winrt::DisplayWireFormat const& description);
+        void Resolution(winrt::SizeInt32 const& resolution);
+
     private:
         const winrt::ILogger m_logger{nullptr};
 
         winrt::IBuffer m_data{nullptr};
-        winrt::FrameFormatDescription m_description;
+        winrt::DisplayWireFormat m_format{nullptr};
         winrt::IMap<winrt::hstring, winrt::IInspectable> m_properties;
+        winrt::SizeInt32 m_resolution;
+
+        winrt::SoftwareBitmap m_bitmap{nullptr};
     };
 
     export struct FrameSet : winrt::implements<FrameSet, winrt::IRawFrameSet>
@@ -187,6 +194,7 @@ namespace PredictionRenderer {
         // Initialize each frame with a single plane (which by default is the base plane)
         Planes = std::vector<PlaneInformation>(1);
 
+        // Initialize a default wire format for the frame
         WireFormat = winrt::DisplayWireFormat(
             winrt::DisplayWireFormatPixelEncoding::Rgb444,
             24, // bits per pixel
@@ -217,12 +225,14 @@ namespace PredictionRenderer {
     {
     }
 
+    Frame::Frame(winrt::ILogger const& logger) : m_logger(logger)
+    {
+    }
+
     // Compose the data collected for each frame into the final output frame
     winrt::IAsyncOperation<winrt::IRawFrame> RenderPredictionFrame(FrameInformation& frameInformation, winrt::CanvasDevice device, winrt::ILogger const& logger)
     {
         co_await winrt::resume_background();
-
-        auto frame = winrt::make<Frame>(logger);
 
         auto renderTarget = winrt::CanvasRenderTarget(
             device,
@@ -235,8 +245,8 @@ namespace PredictionRenderer {
         {
             auto drawingSession = renderTarget.CreateDrawingSession();
 
-            auto colorBrush = winrt::Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, frameInformation.BackgroundColor);
-            colorBrush.ColorHdr(frameInformation.BackgroundColor);
+            auto backgroundBrush = winrt::Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, frameInformation.BackgroundColor);
+            backgroundBrush.ColorHdr(frameInformation.BackgroundColor);
 
             winrt::float3x2 sourceToTarget;
 
@@ -271,7 +281,7 @@ namespace PredictionRenderer {
                 }
 
                 drawingSession.FillRectangle(
-                    winrt::Rect(0, 0, (float)frameInformation.TargetModeSize.Width, (float)frameInformation.TargetModeSize.Height), colorBrush);
+                    winrt::Rect(0, 0, (float)frameInformation.TargetModeSize.Width, (float)frameInformation.TargetModeSize.Height), backgroundBrush);
             }
             else
             {
@@ -288,7 +298,7 @@ namespace PredictionRenderer {
                 // Render the plane
                 if (plane.ColorMode == PlaneColorType::RGB)
                 {
-                    // Get a D2D bitmap for the DXGI surface
+                    // Get a Win2D bitmap for the plane's surface
                     auto planeBitmap = winrt::CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
 
                     drawingSession.DrawImage(
@@ -321,14 +331,69 @@ namespace PredictionRenderer {
             drawingSession.Close();
         }
 
-        // renderTarget is now a CanvasBitmap - it needs to be connected to the Frame object we return
+        // At this point, the prediction is a GPU-bound FP16 surface that has had the individual planes composited onto it.
+
+        // Post plane blend rendering pipeline
+        // 1. Degamma
+        // 2. Color Matrix
+        // 3. Regamma
+        // 4. Format Conversion RGB->YUV (if applicable)
+        // 5. Range Conversion Full->Studio (if applicable)
+        //
+        // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
+        {
+            // 1. Degamma
+            // TODO
+
+            // 2. Color Matrix
+            // TODO
+
+            // 3. Regamma
+            // TODO
+
+            // 4. Format Conversion RGB->YUV (if applicable)
+            // TODO
+
+            // 5. Range Conversion Full->Studio (if applicable)
+            // TODO
+        }
+        
+        // Transit GPU surface to CPU-Accessible for returning.
+        // 1. Create an output frame object
+        // 2. Copy GPU surface to the frame object for render previews
+        // 3. Copy GPU surface to CPU-accessible memory
+        // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
+        {
+            // 1. Create an output frame object
+            auto frame = winrt::make_self<Frame>(logger);
+
+            // Set the resolution to the output structure
+            frame->Resolution(winrt::SizeInt32(renderTarget.SizeInPixels().Width, renderTarget.SizeInPixels().Height));
+
+            // Set the wire format to the output structure
+            frame->DataFormat(frameInformation.WireFormat);
+
+            // 2. Copy GPU surface to the frame object for render previews
+            // TODO
+
+            // 3. Copy GPU surface to CPU-accessible memory
+            auto frameBytes = renderTarget.GetPixelBytes();
+            auto frameBytesBuffer = winrt::Buffer(frameBytes.size());
+            memcpy_s(frameBytesBuffer.data(), frameBytesBuffer.Length(), frameBytes.data(), frameBytes.size());
+            frame->SetBuffer(frameBytesBuffer);
+
+            // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
 
 
-        co_return frame;
+            co_return frame.as<winrt::IRawFrame>();
+        }
     }
 
-    // Simple function to allow co_awaiting on a collection. Note that this can be a collection of IAsyncActions _or_ IAsyncOperations,
-    // the difference being whether you have to keep the collection around for results checking.
+    /// <summary>
+    /// Allow co_awaiting on a collection. Note that this can be a collection of IAsyncActions _or_ IAsyncOperations,
+    /// the difference being whether you have to keep the collection around for results checking. Borrowed from
+    /// winrt::when_all
+    /// </summary>
     template <typename T>
     winrt::IAsyncAction when_all_container(T const& container)
     {
@@ -338,7 +403,9 @@ namespace PredictionRenderer {
     winrt::IAsyncOperation<winrt::IRawFrameSet> Prediction::FinalizePredictionAsync()
     {
         // This operation is expected to be heavyweight, as tools are moving a lot of memory. So
-        // we return the thread control and resume this function on the thread pool.
+        // we return the thread control and resume this function on the thread pool. The intent
+        // is that during actual test operation, this can be queued up and happening behind the
+        // scenes while the actual device output and capture is happening.
         co_await winrt::resume_background();
 
         // Create the prediction data object
@@ -364,6 +431,10 @@ namespace PredictionRenderer {
         auto canvasDevice = winrt::CanvasDevice::GetSharedDevice(useWarp);
 
         // TODO: add a reference to the specific underlying device back to the prediction data stuff somehow
+
+        // TODO: Should have options for per-frame and collective callbacks
+
+        // TODO: rename pattern tool to something like BasePlanPatternTool
 
         // Invoke any tools registering as display setup (format, resolution, etc.)
         if (m_displaySetupCallback)

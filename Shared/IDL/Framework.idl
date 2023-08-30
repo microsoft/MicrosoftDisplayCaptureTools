@@ -4,41 +4,21 @@ import "DisplayManager.idl";
 
 namespace MicrosoftDisplayCaptureTools.Framework
 {
-    // 
-    // A struct describing standard 'always-required' information about a frame's format
-    //
-    struct FrameFormatDescription
-    {
-        // The resolution of the frame
-        Windows.Graphics.SizeInt32 Resolution;
-
-        // The number of bits to represent each pixel, regardless of subsampling mode.
-        UInt32 BitsPerPixel;
-
-        // The number of bytes for one scanline of the image
-        UInt32 Stride;
-
-        // The DirectX pixel format of the buffer - If the pixel structure cannot be expressed with this enum, use 'Unknown' and
-        // use PixelEncoding to specify. If this value is set to anything other than 'Unknown', this is used.
-        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat;
-
-        // Pixel encoding mode - i.e. RGB444, YCC420
-        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding PixelEncoding;
-
-        // The transfer function of the pixels (essentially the gamma encoding)
-        Windows.Devices.Display.Core.DisplayWireFormatEotf Eotf;
-    };
-
     //
     // An interface representing a single output frame
     //
     interface IRawFrame
     {
         // A description of how the frame and pixels are formatted
-        FrameFormatDescription FormatDescription
+        Windows.Devices.Display.Core.DisplayWireFormat DataFormat
         {
             get;
-            set;
+        };
+        
+        // The resolution of the frame
+        Windows.Graphics.SizeInt32 Resolution
+        {
+            get;
         };
 
         // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).

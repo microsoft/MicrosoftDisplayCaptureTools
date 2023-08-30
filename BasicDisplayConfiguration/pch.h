@@ -44,6 +44,7 @@
 #include <d2d1_3.h>
 #include <d2d1_3helper.h>
 #include <d2d1_3.h>
+#include <MemoryBuffer.h>
 
 // Interop headers
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>

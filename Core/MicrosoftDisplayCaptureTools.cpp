@@ -531,8 +531,8 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                     card.Name() + L"." + input.Name());
 
                                 // Make sure that we finished generating the prediction
-                                auto prediction = predictionAsync.get();
-                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", prediction.FrameSet());
+                                auto predictedFrames = predictionAsync.get();
+                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", predictedFrames);
 
                                 if (captureResult && !suppressErrors.HasErrored())
                                 {
