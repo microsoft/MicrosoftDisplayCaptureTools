@@ -2,7 +2,7 @@ import "pch.h";
 //import PredictionRenderer;
 //import RenderingUtils;
 
-#include "PatternTool.h"
+#include "BasePlanePattern.h"
 #include "..\Shared\Inc\DisplayEngineInterop.h"
 
 #define PATTERN_SQUARE_SIZE 50.f
@@ -45,28 +45,28 @@ namespace winrt::BasicDisplayConfiguration::implementation
         { Windows::Graphics::DirectX::DirectXPixelFormat::R8G8B8A8UIntNormalized, 4 }
 	};
 
-	PatternTool::PatternTool(winrt::ILogger const& logger) :
+	BasePlanePattern::BasePlanePattern(winrt::ILogger const& logger) :
         m_currentConfig(DefaultConfiguration),
         m_logger(logger)
 	{
 	}
 
-	hstring PatternTool::Name()
+	hstring BasePlanePattern::Name()
 	{
 		return L"Pattern";
 	}
 
-	ConfigurationToolCategory PatternTool::Category()
+	ConfigurationToolCategory BasePlanePattern::Category()
 	{
 		return ConfigurationToolCategory::RenderSetup;
 	}
 
-	IConfigurationToolRequirements PatternTool::Requirements()
+	IConfigurationToolRequirements BasePlanePattern::Requirements()
 	{
 		return nullptr;
 	}
 
-	com_array<hstring> PatternTool::GetSupportedConfigurations()
+	com_array<hstring> BasePlanePattern::GetSupportedConfigurations()
 	{
 		std::vector<hstring> configs;
 		for (auto&& config : ConfigurationMap)
@@ -78,19 +78,19 @@ namespace winrt::BasicDisplayConfiguration::implementation
 		return com_array<hstring>(configs);
 	}
 
-	hstring PatternTool::GetDefaultConfiguration()
+	hstring BasePlanePattern::GetDefaultConfiguration()
     {
         hstring defaultConfig(DefaultConfiguration);
         return defaultConfig;
 	}
 
-	hstring PatternTool::GetConfiguration()
+	hstring BasePlanePattern::GetConfiguration()
     {
         hstring currentConfig(m_currentConfig);
         return currentConfig;
 	}
 
-	void PatternTool::SetConfiguration(hstring configuration)
+	void BasePlanePattern::SetConfiguration(hstring configuration)
 	{
         if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
         {
@@ -103,7 +103,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         m_currentConfig = configuration.c_str();
 	}
 
-	void PatternTool::ApplyToOutput(IDisplayOutput displayOutput)
+	void BasePlanePattern::ApplyToOutput(IDisplayOutput displayOutput)
     {
         m_drawOutputEventToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args) {
             m_logger.LogNote(L"Using " + Name() + L": " + m_currentConfig);
@@ -113,7 +113,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
             if (SupportedFormatsWithSizePerPixel.find(sourceModeFormat) == SupportedFormatsWithSizePerPixel.end())
             {
-                m_logger.LogError(L"PatternTool does not support the plane pixel format.");
+                m_logger.LogError(L"BasePlanePattern does not support the plane pixel format.");
                 return;
             }
 
@@ -176,7 +176,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         });
 	}
 
-    void PatternTool::RenderPatternToPlane(const CanvasDrawingSession& drawingSession, uint32_t width, uint32_t height)
+    void BasePlanePattern::RenderPatternToPlane(const CanvasDrawingSession& drawingSession, uint32_t width, uint32_t height)
     {
         auto& configColor = ConfigurationMap[m_currentConfig];
         Color checkerColor;
@@ -200,7 +200,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     }
 
-    void PatternTool::ApplyToPrediction(IPrediction displayPrediction)
+    void BasePlanePattern::ApplyToPrediction(IPrediction displayPrediction)
     {
         m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IPredictionData predictionData)
         {

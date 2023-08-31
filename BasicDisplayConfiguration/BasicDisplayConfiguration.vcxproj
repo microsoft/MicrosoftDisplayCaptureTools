@@ -232,7 +232,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <ClCompile Include="Prediction.cpp" />
     <ClCompile Include="RefreshRateTool.ixx" />
     <ClCompile Include="ToolboxBase.ixx" />
-    <ClInclude Include="PatternTool.h" />
+    <ClInclude Include="BasePlanePattern.h" />
     <ClCompile Include="Bitmap.ixx" />
     <ClCompile Include="pch.h">
       <CompileAs>CompileAsHeaderUnit</CompileAs>
@@ -246,7 +246,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CursorUtils.ixx" />
-    <ClCompile Include="PatternTool.cpp" />
+    <ClCompile Include="BasePlanePattern.cpp" />
     <None Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="PixelFormatTool.cpp" />

@@ -3,7 +3,7 @@ import "pch.h";
 #include "Toolbox.g.cpp"
 #include "ToolboxFactory.g.cpp"
 
-#include "PatternTool.h"
+#include "BasePlanePattern.h"
 import ResolutionTool;
 import RefreshRateTool;
 #include "PixelFormatTool.h"
@@ -81,7 +81,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         switch (MapNameToTool[toolName])
         {
         case Tools::Pattern:
-            return winrt::make<PatternTool>(m_logger);
+            return winrt::make<BasePlanePattern>(m_logger);
         case Tools::RefreshRate:
             return winrt::make<RefreshRateTool>(m_logger);
         case Tools::TargetResolution:

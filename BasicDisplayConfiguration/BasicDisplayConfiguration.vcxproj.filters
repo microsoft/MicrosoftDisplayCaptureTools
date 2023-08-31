@@ -14,7 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="PatternTool.cpp" />
+    <ClCompile Include="BasePlanePattern.cpp" />
     <ClCompile Include="ResolutionTool.cpp" />
     <ClCompile Include="RefreshRateTool.cpp" />
     <ClCompile Include="Toolbox.cpp" />
@@ -38,7 +38,7 @@
     <ClCompile Include="Prediction.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PatternTool.h" />
+    <ClInclude Include="BasePlanePattern.h" />
     <ClInclude Include="Toolbox.h" />
     <ClInclude Include="PixelFormatTool.h" />
     <ClInclude Include="Win2dRendering.h">

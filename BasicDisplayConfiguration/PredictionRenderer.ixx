@@ -15,6 +15,7 @@ namespace winrt
     using namespace winrt::Windows::Graphics::Imaging;
     using namespace winrt::Windows::Devices::Display::Core;
     using namespace winrt::Microsoft::Graphics::Canvas;
+    using namespace winrt::Microsoft::Graphics::Canvas::Effects;
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
     using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace winrt::Windows::Storage::Streams;
@@ -79,7 +80,11 @@ namespace PredictionRenderer {
         // Describes the post-blend color pipeline
         winrt::DisplayWireFormat WireFormat = nullptr;
         std::vector<float> GammaLut;
-        winrt::float4x4 ColorMatrixXyz;
+        winrt::float4x4 ColorMatrixXyz = 
+            {1.f, 0.f, 0.f, 0.f,
+             0.f, 1.f, 0.f, 0.f,
+             0.f, 0.f, 1.f, 0.f,
+             0.f, 0.f, 0.f, 1.f};
     };
 
     export struct Frame : winrt::implements<Frame, winrt::IRawFrame, winrt::IRawFrameRenderable>
@@ -100,6 +105,7 @@ namespace PredictionRenderer {
         void SetBuffer(winrt::IBuffer data);
         void DataFormat(winrt::DisplayWireFormat const& description);
         void Resolution(winrt::SizeInt32 const& resolution);
+        void SetImageApproximation(winrt::SoftwareBitmap bitmap);
 
     private:
         const winrt::ILogger m_logger{nullptr};
@@ -143,9 +149,12 @@ namespace PredictionRenderer {
 
         // Members specific to this implementation and only accessible to IConfigurationTools in this binary.
         std::vector<FrameInformation>& Frames();
+        winrt::CanvasDevice Device();
 
     private:
         const winrt::ILogger m_logger{nullptr};
+
+        winrt::CanvasDevice m_device{nullptr};
 
         winrt::IMap<winrt::hstring, winrt::IInspectable> m_properties;
         std::vector<PredictionRenderer::FrameInformation> m_frames;
@@ -221,6 +230,24 @@ namespace PredictionRenderer {
         return m_properties;
     }
 
+    winrt::CanvasDevice PredictionData::Device()
+    {
+        if (!m_device)
+        {
+            bool useWarp = false;
+            if (m_properties.HasKey(L"UseWarp"))
+            {
+                useWarp = winrt::unbox_value<bool>(m_properties.Lookup(L"UseWarp"));
+            }
+
+            m_logger.LogNote(std::format(L"Creating renderer on {} device", useWarp ? L"WARP" : L"default"));
+
+            winrt::CanvasDevice::GetSharedDevice(useWarp);
+        }
+
+        return m_device;
+    }
+
     Prediction::Prediction(winrt::ILogger const& logger) : m_logger(logger)
     {
     }
@@ -229,12 +256,33 @@ namespace PredictionRenderer {
     {
     }
 
-    // Compose the data collected for each frame into the final output frame
+    //
+    // Compose the data collected for each frame into the final output data
+    //
+    // The way this works is that we define a surface on the GPU device that represents the frame data, this is a 3-channel,
+    // 16-bits-per-channel, floating point surface that should represent a higher precision-level than required for any part
+    // of the pipeline. This surface is nominally linear gamma, and the operations of a GPU display pipeline will happen
+    // entirely in this space. Including degammma and regamma as appropriate. Configurable quantization steps will be inserted
+    // between each stage of this pipeline so that various rounding and precision behaviors can be emulated.
+    //
+    // /-------------------------------- Operations on GPU (or Software-emulated GPU) ---------------------------\/-- CPU --\
+    // |                                                                                                         ||         |
+    // Plane 0 -- Plane Composition --- Degamma --- RGB->XYZ --- Color 3x4 --- XYZ->RGB --- ReGamma --- Encoding -- masking -- output
+    //              /  /
+    //             /  /
+    // Plane 1 ----  /
+    //              /
+    //      .      /
+    //      .     /
+    //      .    /
+    //          /
+    // Plane X -
+    //
     winrt::IAsyncOperation<winrt::IRawFrame> RenderPredictionFrame(FrameInformation& frameInformation, winrt::CanvasDevice device, winrt::ILogger const& logger)
     {
         co_await winrt::resume_background();
 
-        auto renderTarget = winrt::CanvasRenderTarget(
+        auto planeCompositingTarget = winrt::CanvasRenderTarget(
             device,
             (float)frameInformation.TargetModeSize.Width,
             (float)frameInformation.TargetModeSize.Height,
@@ -243,7 +291,8 @@ namespace PredictionRenderer {
             winrt::CanvasAlphaMode::Ignore);
 
         {
-            auto drawingSession = renderTarget.CreateDrawingSession();
+            auto drawingSession = planeCompositingTarget.CreateDrawingSession();
+            drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
 
             auto backgroundBrush = winrt::Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, frameInformation.BackgroundColor);
             backgroundBrush.ColorHdr(frameInformation.BackgroundColor);
@@ -325,9 +374,7 @@ namespace PredictionRenderer {
                 }
             }
 
-            // We need to flush before we release the FrameInformation, which releases the surfaces
             drawingSession.Flush();
-
             drawingSession.Close();
         }
 
@@ -335,55 +382,131 @@ namespace PredictionRenderer {
 
         // Post plane blend rendering pipeline
         // 1. Degamma
-        // 2. Color Matrix
-        // 3. Regamma
-        // 4. Format Conversion RGB->YUV (if applicable)
-        // 5. Range Conversion Full->Studio (if applicable)
+        // 2. RGB->XYZ
+        // 3. Color Matrix
+        // 4. XYZ->RGB
+        // 6. Regamma
+        // 7. Format Conversion RGB->YUV (if applicable)
+        // 8. Range Conversion Full->Studio (if applicable)
         //
         // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
+        auto postBlendTarget = winrt::CanvasRenderTarget(
+            device,
+            (float)frameInformation.TargetModeSize.Width,
+            (float)frameInformation.TargetModeSize.Height,
+            96,
+            winrt::DirectXPixelFormat::R16G16B16A16Float,
+            winrt::CanvasAlphaMode::Ignore);
+
         {
+            auto drawingSession = postBlendTarget.CreateDrawingSession();
+            drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
+
             // 1. Degamma
+            // Input for this stage is the output of plane blending
+            auto degammaEffect = winrt::DiscreteTransferEffect();
+            degammaEffect.Source(planeCompositingTarget);
+            // TODO: define the actual gamma tables
+
+            // 2. RBG->XYZ
+            auto rgbxyzMatrixEffect = winrt::ColorMatrixEffect();
+            winrt::Matrix5x4 rgbxyz{};
+            rgbxyz.M11 = 0.4124564f; rgbxyz.M12 = 0.3575761f; rgbxyz.M13 = 0.1804375f;
+            rgbxyz.M21 = 0.2126729f; rgbxyz.M22 = 0.7151522f; rgbxyz.M23 = 0.0721750f;
+            rgbxyz.M31 = 0.0193339f; rgbxyz.M32 = 0.1191920f; rgbxyz.M33 = 0.9503041f;
+            rgbxyzMatrixEffect.ColorMatrix(rgbxyz);
+            rgbxyzMatrixEffect.Source(degammaEffect);
+
+            // 3. Color Matrix
+            auto cscMatrix = winrt::ColorMatrixEffect();
+            winrt::Matrix5x4 csc{};
+            csc.M11 = frameInformation.ColorMatrixXyz.m11;
+            csc.M12 = frameInformation.ColorMatrixXyz.m12;
+            csc.M13 = frameInformation.ColorMatrixXyz.m13;
+            csc.M21 = frameInformation.ColorMatrixXyz.m21;
+            csc.M22 = frameInformation.ColorMatrixXyz.m22;
+            csc.M23 = frameInformation.ColorMatrixXyz.m23;
+            csc.M31 = frameInformation.ColorMatrixXyz.m31;
+            csc.M32 = frameInformation.ColorMatrixXyz.m32;
+            csc.M33 = frameInformation.ColorMatrixXyz.m33;
+            cscMatrix.ColorMatrix(csc);
+            cscMatrix.Source(rgbxyzMatrixEffect);
+
+            // 2. XYZ->RGB
+            auto xyzrgbMatrixEffect = winrt::ColorMatrixEffect();
+            winrt::Matrix5x4 xyzrgb{};
+
+            xyzrgb.M11 =  3.2404542f; xyzrgb.M12 = -1.5371385f; xyzrgb.M13 = -0.4985314f;
+            xyzrgb.M21 = -0.9692660f; xyzrgb.M22 =  1.8760108f; xyzrgb.M23 =  0.0415560f;
+            xyzrgb.M31 =  0.0556434f; xyzrgb.M32 = -0.2040259f; xyzrgb.M33 =  1.0572252f;
+            xyzrgbMatrixEffect.ColorMatrix(xyzrgb);
+            xyzrgbMatrixEffect.Source(cscMatrix);
+
+            // 5. Regamma
+            auto regammaEffect = winrt::DiscreteTransferEffect();
+            regammaEffect.Source(xyzrgbMatrixEffect);
+            // TODO: define the actual gamma tables
+
+            // Commit the color pipeline
+            drawingSession.DrawImage(xyzrgbMatrixEffect);
+
+            drawingSession.Flush();
+            drawingSession.Close();
+        }
+
+        // Post color pipeline migration to wire format
+        // 1. Format Conversion RGB->YUV (if applicable)
+        // 2. Range Conversion Full->Studio (if applicable)
+        //
+        // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
+        auto wireFormatTarget = winrt::CanvasRenderTarget(
+            device,
+            (float)frameInformation.TargetModeSize.Width,
+            (float)frameInformation.TargetModeSize.Height,
+            96,
+            winrt::DirectXPixelFormat::R16G16B16A16Float,
+            winrt::CanvasAlphaMode::Ignore);
+
+        {
+            auto drawingSession = postBlendTarget.CreateDrawingSession();
+            drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
+
+            // 1. Format Conversion RGB->YUV (if applicable)
             // TODO
 
-            // 2. Color Matrix
+            // 2. Range Conversion Full->Studio (if applicable)
             // TODO
 
-            // 3. Regamma
-            // TODO
-
-            // 4. Format Conversion RGB->YUV (if applicable)
-            // TODO
-
-            // 5. Range Conversion Full->Studio (if applicable)
-            // TODO
+            drawingSession.Flush();
+            drawingSession.Close();
         }
         
         // Transit GPU surface to CPU-Accessible for returning.
         // 1. Create an output frame object
-        // 2. Copy GPU surface to the frame object for render previews
+        // 2. Start copying over a GPU surface to the frame object for render previews
         // 3. Copy GPU surface to CPU-accessible memory
         // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
+        // 5. Ensure that the copy started in 2 is finished
         {
             // 1. Create an output frame object
             auto frame = winrt::make_self<Frame>(logger);
-
-            // Set the resolution to the output structure
-            frame->Resolution(winrt::SizeInt32(renderTarget.SizeInPixels().Width, renderTarget.SizeInPixels().Height));
-
-            // Set the wire format to the output structure
+            frame->Resolution(winrt::SizeInt32(postBlendTarget.SizeInPixels().Width, postBlendTarget.SizeInPixels().Height));
             frame->DataFormat(frameInformation.WireFormat);
 
-            // 2. Copy GPU surface to the frame object for render previews
-            // TODO
+            // 2. Create a renderable preview of the post-color pipeline image to be used as preview
+            auto softwareBitmapAsync = winrt::SoftwareBitmap::CreateCopyFromSurfaceAsync(postBlendTarget);
 
             // 3. Copy GPU surface to CPU-accessible memory
-            auto frameBytes = renderTarget.GetPixelBytes();
+            auto frameBytes = postBlendTarget.GetPixelBytes();
             auto frameBytesBuffer = winrt::Buffer(frameBytes.size());
             memcpy_s(frameBytesBuffer.data(), frameBytesBuffer.Length(), frameBytes.data(), frameBytes.size());
             frame->SetBuffer(frameBytesBuffer);
 
             // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
+            // TODO
 
+            // 5. Ensure that the copy started in 2 is finished
+            frame->SetImageApproximation(softwareBitmapAsync.get());
 
             co_return frame.as<winrt::IRawFrame>();
         }
@@ -410,15 +533,8 @@ namespace PredictionRenderer {
 
         // Create the prediction data object
         auto predictionData = winrt::make_self<PredictionData>(m_logger);
-        auto iPredictionData = predictionData.as<winrt::IPredictionData>();
 
         // TODO: add a callback for test setup that sets things like whether to use warp, how many frames, etc.
-
-        bool useWarp = false;
-        if (predictionData->Properties().HasKey(L"UseWarp"))
-        {
-            useWarp = winrt::unbox_value<bool>(predictionData->Properties().Lookup(L"UseWarp"));
-        }
 
         uint32_t frameCount = 1;
         if (predictionData->Properties().HasKey(L"FrameCount"))
@@ -428,18 +544,18 @@ namespace PredictionRenderer {
 
         predictionData->Frames().resize(frameCount);
 
-        auto canvasDevice = winrt::CanvasDevice::GetSharedDevice(useWarp);
+        auto canvasDevice = predictionData->Device();
 
         // TODO: add a reference to the specific underlying device back to the prediction data stuff somehow
 
         // TODO: Should have options for per-frame and collective callbacks
 
-        // TODO: rename pattern tool to something like BasePlanPatternTool
+        // TODO: rename pattern tool to something like BasePlanBasePlanePattern
 
         // Invoke any tools registering as display setup (format, resolution, etc.)
         if (m_displaySetupCallback)
         {
-            m_displaySetupCallback(*this, iPredictionData);
+            m_displaySetupCallback(*this, predictionData.as<winrt::IPredictionData>());
         }
 
         /*
@@ -478,13 +594,13 @@ namespace PredictionRenderer {
         // Invoke any tools registering as render setup
         if (m_renderSetupCallback)
         {
-            m_renderSetupCallback(*this, iPredictionData);
+            m_renderSetupCallback(*this, predictionData.as<winrt::IPredictionData>());
         }
 
         // Invoke any tools registering as rendering
         if (m_renderLoopCallback)
         {
-            m_renderLoopCallback(*this, iPredictionData);
+            m_renderLoopCallback(*this, predictionData.as<winrt::IPredictionData>());
         }
 
         // Create the output frame collection

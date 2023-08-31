@@ -2,9 +2,9 @@
 
 namespace winrt::BasicDisplayConfiguration::implementation {
 
-struct PatternTool : implements<PatternTool, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
+struct BasePlanePattern : implements<BasePlanePattern, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 {
-    PatternTool(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    BasePlanePattern(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
     winrt::hstring Name();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
