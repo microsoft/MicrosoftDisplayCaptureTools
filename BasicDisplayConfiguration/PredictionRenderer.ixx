@@ -128,7 +128,7 @@ namespace PredictionRenderer {
     private:
         const winrt::ILogger m_logger{nullptr};
         
-        std::vector<winrt::IRawFrame> m_frames;
+        winrt::IVector<winrt::IRawFrame> m_frames;
         winrt::IMap<winrt::hstring, winrt::IInspectable> m_properties;
     };
 
@@ -254,6 +254,73 @@ namespace PredictionRenderer {
 
     Frame::Frame(winrt::ILogger const& logger) : m_logger(logger)
     {
+    }
+
+    winrt::IBuffer Frame::Data()
+    {
+        return m_data;
+    }
+
+    winrt::DisplayWireFormat Frame::DataFormat()
+    {
+        return m_format;
+    }
+
+    winrt::IMap<winrt::hstring, winrt::IInspectable> Frame::Properties()
+    {
+        return m_properties;
+    }
+
+    winrt::SizeInt32 Frame::Resolution()
+    {
+        return m_resolution;
+    }
+
+    winrt::IAsyncOperation<winrt::SoftwareBitmap> Frame::GetRenderableApproximationAsync()
+    {
+        co_return m_bitmap;
+    }
+
+    winrt::hstring Frame::GetPixelInfo(uint32_t x, uint32_t y)
+    {
+        // TODO: implement this - the intent is that because the above returns only an approximation, this should return a description
+        // in string form of what the original pixel values are for a given address.
+        throw winrt::hresult_not_implemented();
+    }
+
+    void Frame::SetBuffer(winrt::IBuffer buffer)
+    {
+        m_data = buffer;
+    }
+
+    void Frame::DataFormat(winrt::DisplayWireFormat const& description)
+    {
+        m_format = description;
+    }
+
+    void Frame::Resolution(winrt::SizeInt32 const& resolution)
+    {
+        m_resolution = resolution;
+    }
+
+    void Frame::SetImageApproximation(winrt::SoftwareBitmap bitmap)
+    {
+        m_bitmap = bitmap;
+    }
+
+    FrameSet::FrameSet(winrt::ILogger const& logger) : m_logger(logger)
+    {
+        m_frames = winrt::single_threaded_vector<winrt::IRawFrame>();
+    }
+
+    winrt::IVector<winrt::IRawFrame> FrameSet::Frames()
+    {
+        return m_frames;
+    }
+
+    winrt::IMap<winrt::hstring, winrt::IInspectable> FrameSet::Properties()
+    {
+        return m_properties;
     }
 
     //
