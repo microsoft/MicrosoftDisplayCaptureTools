@@ -16,7 +16,7 @@ struct BasePlanePattern : implements<BasePlanePattern, winrt::MicrosoftDisplayCa
     void ApplyToPrediction(winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction displayPrediction);
 
 private:
-    void RenderPatternToPlane(const winrt::Microsoft::Graphics::Canvas::CanvasDrawingSession& drawingSession, uint32_t width, uint32_t height);
+    void RenderPatternToPlane(const winrt::Microsoft::Graphics::Canvas::CanvasDrawingSession& drawingSession, float width, float height);
 
 private:
     std::wstring m_currentConfig;

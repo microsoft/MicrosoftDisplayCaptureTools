@@ -1,5 +1,5 @@
 import "pch.h";
-//import PredictionRenderer;
+import PredictionRenderer;
 //import RenderingUtils;
 
 #include "BasePlanePattern.h"
@@ -16,6 +16,7 @@ namespace winrt
 	using namespace Windows::Graphics::Imaging;
 	using namespace Microsoft::Graphics::Canvas;
 	using namespace Windows::UI;
+    using namespace winrt::Windows::Graphics::DirectX;
 }
 
 namespace winrt::BasicDisplayConfiguration::implementation
@@ -114,6 +115,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
             if (SupportedFormatsWithSizePerPixel.find(sourceModeFormat) == SupportedFormatsWithSizePerPixel.end())
             {
                 m_logger.LogError(L"BasePlanePattern does not support the plane pixel format.");
+                throw winrt::hresult_invalid_argument();
                 return;
             }
 
@@ -176,7 +178,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         });
 	}
 
-    void BasePlanePattern::RenderPatternToPlane(const CanvasDrawingSession& drawingSession, uint32_t width, uint32_t height)
+    void BasePlanePattern::RenderPatternToPlane(const CanvasDrawingSession& drawingSession, float width, float height)
     {
         auto& configColor = ConfigurationMap[m_currentConfig];
         Color checkerColor;
@@ -197,38 +199,78 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
             indent = !indent;
         }
+    }
 
+    static DirectXPixelFormat PixelFormatFromPlaneInformation(const PredictionRenderer::PlaneInformation& plane)
+    {
+        if (plane.ColorType == PredictionRenderer::PlaneColorType::RGB)
+        {
+            switch (plane.ColorSpace)
+            {
+            case DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709:
+                return DirectXPixelFormat::R8G8B8A8UIntNormalizedSrgb;
+            }
+        }
+
+        // TODO: this needs to support more formats - should I drop into D2D/D3D directly to handle YUV formats?
+        return DirectXPixelFormat::Unknown;
     }
 
     void BasePlanePattern::ApplyToPrediction(IPrediction displayPrediction)
     {
         m_drawPredictionEventToken = displayPrediction.RenderSetupCallback([this](const auto&, IPredictionData predictionData)
         {
-            auto canvasDevice = CanvasDevice::GetSharedDevice();
-            auto patternTarget = CanvasRenderTarget(
-                canvasDevice,
-                (float)predictionData.FrameData().Resolution().Width,
-                (float)predictionData.FrameData().Resolution().Height,
-                96,
-                predictionData.FrameData().FormatDescription().PixelFormat,
-                CanvasAlphaMode::Ignore);
+            // IPredictionData is the generic interface, this tool requires the underlying type to be PredictionData from this binary
+            auto prediction = predictionData.as<PredictionRenderer::PredictionData>();
 
+            for (auto& frame : prediction->Frames())
             {
-                auto drawingSession = patternTarget.CreateDrawingSession();
+                int basePlanesPerFrame = 0;
+                for (auto& plane : frame.Planes)
+                {
+                    if (plane.Type == PredictionRenderer::PlaneType::BasePlane)
+                    {
+                        basePlanesPerFrame++;
 
-                RenderPatternToPlane(
-                    drawingSession, predictionData.FrameData().Resolution().Width, predictionData.FrameData().Resolution().Height);
+                        if (basePlanesPerFrame > 1)
+                        {
+                            m_logger.LogError(Name() + L": More than one plane has been designated the 'base' plane per frame!");
+                            throw winrt::hresult_invalid_argument();
+                        }
 
-                drawingSession.Close();
+                        auto pixelFormat = PixelFormatFromPlaneInformation(plane);
+                        if (pixelFormat == DirectXPixelFormat::Unknown)
+                        {
+                            m_logger.LogError(Name() + L": The plane format configuration (color type and color space) is not supported by this tool!");
+                            throw winrt::hresult_invalid_argument();
+                        }
+
+                        auto canvasDevice = prediction->Device();
+                        auto patternTarget = CanvasRenderTarget(
+                            canvasDevice,
+                            frame.SourceModeSize.Width,
+                            frame.SourceModeSize.Height,
+                            96, pixelFormat,
+                            CanvasAlphaMode::Ignore);
+
+                        {
+                            auto drawingSession = patternTarget.CreateDrawingSession();
+
+                            RenderPatternToPlane(
+                                drawingSession,
+                                frame.SourceModeSize.Width,
+                                frame.SourceModeSize.Height);
+
+                            drawingSession.Flush();
+                            drawingSession.Close();
+                        }
+
+                        // Transfer the rendered plane to the prediction plane surface - which will be composed.
+                        plane.Surface = patternTarget.as<winrt::Direct3D11::IDirect3DSurface>();
+                    }
+
+                }
             }
-
-            patternTarget.GetPixelBytes(
-                predictionData.FrameData().Data(),
-                0,
-                0,
-                patternTarget.SizeInPixels().Width,
-                patternTarget.SizeInPixels().Height);
         });
-
     }
 }

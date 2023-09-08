@@ -1,6 +1,8 @@
 import "pch.h";
 #include "PixelFormatTool.h"
 
+import PredictionRenderer;
+
 namespace winrt
 {
     using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
@@ -8,6 +10,7 @@ namespace winrt
     using namespace MicrosoftDisplayCaptureTools::Framework;
     using namespace winrt::Windows::Graphics;
     using namespace winrt::Windows::Graphics::DirectX;
+    using namespace winrt::Windows::Devices::Display::Core;
 } // namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation
@@ -23,7 +26,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     std::map<std::wstring, Configuration> ConfigurationMap
     {
-        {L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo", {false, false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 32}}
+        {L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo", {false, false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 24}}
     };
 
     PixelFormatTool::PixelFormatTool(PixelFormatToolKind kind, winrt::ILogger const& logger) :
@@ -115,10 +118,17 @@ namespace winrt::BasicDisplayConfiguration::implementation
     {
         m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IPredictionData predictionData)
         {
-            auto desc = predictionData.FrameData().FormatDescription();
-            desc.BitsPerPixel = ConfigurationMap[m_currentConfig].BitsPerPixel;
-            desc.PixelFormat = ConfigurationMap[m_currentConfig].SourceFormat;
-            predictionData.FrameData().FormatDescription(desc);
+            auto prediction = predictionData.as<PredictionRenderer::PredictionData>();
+
+            for (auto& frame : prediction->Frames())
+            {
+                frame.WireFormat = winrt::DisplayWireFormat(
+                    winrt::DisplayWireFormatPixelEncoding::Rgb444,
+                    24, // bits per pixel
+                    winrt::DisplayWireFormatColorSpace::BT709,
+                    winrt::DisplayWireFormatEotf::Sdr,
+                    winrt::DisplayWireFormatHdrMetadata::None);
+            }
         });
     }
 } // namespace winrt::BasicDisplayConfiguration::implementation

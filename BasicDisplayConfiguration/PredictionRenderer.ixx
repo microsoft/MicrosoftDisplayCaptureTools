@@ -41,7 +41,7 @@ namespace PredictionRenderer {
         PlaneType Type = PlaneType::BasePlane;
         winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface Surface = nullptr;
         winrt::CanvasAlphaMode AlphaMode = winrt::CanvasAlphaMode::Ignore;
-        PlaneColorType ColorMode = PlaneColorType::RGB;
+        PlaneColorType ColorType = PlaneColorType::RGB;
         DXGI_COLOR_SPACE_TYPE ColorSpace = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
         winrt::float3x2 TransformMatrix = winrt::float3x2::identity();
         std::optional<winrt::Rect> SourceRect = {};
@@ -264,6 +264,9 @@ namespace PredictionRenderer {
     // of the pipeline. This surface is nominally linear gamma, and the operations of a GPU display pipeline will happen
     // entirely in this space. Including degammma and regamma as appropriate. Configurable quantization steps will be inserted
     // between each stage of this pipeline so that various rounding and precision behaviors can be emulated.
+    // 
+    // Note: This represents an idealized WDDM-specified pipeline. It is known that physical hardware may have variations from
+    //       the pipeline here, but the end result should exactly match.
     //
     // /-------------------------------- Operations on GPU (or Software-emulated GPU) ---------------------------\/-- CPU --\
     // |                                                                                                         ||         |
@@ -289,7 +292,6 @@ namespace PredictionRenderer {
             96,
             winrt::DirectXPixelFormat::R16G16B16A16Float,
             winrt::CanvasAlphaMode::Ignore);
-
         {
             auto drawingSession = planeCompositingTarget.CreateDrawingSession();
             drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
@@ -345,7 +347,7 @@ namespace PredictionRenderer {
                 CanvasAutoTransform PlaneTransform(drawingSession, plane.TransformMatrix);
 
                 // Render the plane
-                if (plane.ColorMode == PlaneColorType::RGB)
+                if (plane.ColorType == PlaneColorType::RGB)
                 {
                     // Get a Win2D bitmap for the plane's surface
                     auto planeBitmap = winrt::CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
@@ -386,8 +388,6 @@ namespace PredictionRenderer {
         // 3. Color Matrix
         // 4. XYZ->RGB
         // 6. Regamma
-        // 7. Format Conversion RGB->YUV (if applicable)
-        // 8. Range Conversion Full->Studio (if applicable)
         //
         // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
         auto postBlendTarget = winrt::CanvasRenderTarget(
@@ -397,14 +397,14 @@ namespace PredictionRenderer {
             96,
             winrt::DirectXPixelFormat::R16G16B16A16Float,
             winrt::CanvasAlphaMode::Ignore);
-
         {
             auto drawingSession = postBlendTarget.CreateDrawingSession();
             drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
 
             // 1. Degamma
-            // Input for this stage is the output of plane blending
             auto degammaEffect = winrt::DiscreteTransferEffect();
+
+            // Input for this stage is the output of plane blending
             degammaEffect.Source(planeCompositingTarget);
             // TODO: define the actual gamma tables
 
@@ -498,12 +498,12 @@ namespace PredictionRenderer {
 
             // 3. Copy GPU surface to CPU-accessible memory
             auto frameBytes = postBlendTarget.GetPixelBytes();
-            auto frameBytesBuffer = winrt::Buffer(frameBytes.size());
-            memcpy_s(frameBytesBuffer.data(), frameBytesBuffer.Length(), frameBytes.data(), frameBytes.size());
-            frame->SetBuffer(frameBytesBuffer);
 
             // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
-            // TODO
+            auto frameBytesBuffer = winrt::Buffer(frameBytes.size());
+            memcpy_s(frameBytesBuffer.data(), frameBytesBuffer.Length(), frameBytes.data(), frameBytes.size());
+            // TODO: allocate only what's actually needed for the output values, this will need to involve defining a 2-byte float -> integer function
+            frame->SetBuffer(frameBytesBuffer);
 
             // 5. Ensure that the copy started in 2 is finished
             frame->SetImageApproximation(softwareBitmapAsync.get());

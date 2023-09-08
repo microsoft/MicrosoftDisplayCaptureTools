@@ -36,7 +36,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction Toolbox::CreatePrediction()
     {
-        return winrt::make<Prediction>(m_logger);
+        return winrt::make<PredictionRenderer::Prediction>(m_logger);
     }
 
 

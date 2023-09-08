@@ -1,4 +1,5 @@
 module ResolutionTool;
+import PredictionRenderer;
 
 import "pch.h";
 
@@ -56,9 +57,17 @@ void ResolutionTool::ApplyToPrediction(IPrediction displayPrediction)
 {
     if (m_kind == ResolutionToolKind::TargetResolution)
     {
-        m_eventTokens[L"PredictionEvent"] = displayPrediction.DisplaySetupCallback(
-            [this](const auto&, IPredictionData predictionData) {
-            predictionData.FrameData().Resolution(m_configuration);
+        m_eventTokens[L"PredictionEvent"] = displayPrediction.DisplaySetupCallback([this](const auto&, IPredictionData predictionData) 
+        {
+            auto prediction = predictionData.as<PredictionRenderer::PredictionData>();
+
+            for (auto& frame : prediction->Frames())
+            {
+                frame.TargetModeSize.Width = static_cast<float>(m_configuration.Width);
+                frame.TargetModeSize.Height = static_cast<float>(m_configuration.Height);
+                frame.SourceModeSize.Width = static_cast<float>(m_configuration.Width);
+                frame.SourceModeSize.Height = static_cast<float>(m_configuration.Height);
+            }
         });
     }
 }

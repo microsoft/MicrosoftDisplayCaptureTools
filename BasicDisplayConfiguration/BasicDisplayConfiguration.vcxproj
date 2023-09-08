@@ -229,7 +229,6 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Prediction.cpp" />
     <ClCompile Include="RefreshRateTool.ixx" />
     <ClCompile Include="ToolboxBase.ixx" />
     <ClInclude Include="BasePlanePattern.h" />
