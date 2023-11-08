@@ -297,6 +297,8 @@ namespace winrt::BasicDisplayControl::implementation {
         if (m_properties->RequeryMode())
         {
             auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
+
+            // TODO: remove modeListVec - it's just for experimenting with a debugger.
             std::vector<DisplayModeInfo> modeListVec;
 
             for (auto&& mode : modeList)
@@ -327,7 +329,8 @@ namespace winrt::BasicDisplayControl::implementation {
             }
 
             // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
-            // to auto-configure. So log a warning instead of an error to assist the user.
+            // to auto-configure. So log a warning instead of an error to assist the user. If this is an actual error case, 
+            // later operations will fail from this case and log the error.
             m_logger.LogWarning(L"No display mode fit the selected options");
             return false;
         }

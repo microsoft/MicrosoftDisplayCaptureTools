@@ -51,6 +51,7 @@ void SingleScreenTestMatrix::Test()
         if (displayEngines.empty())
         {
             g_logger.LogAssert(L"No DisplayEngines loaded.");
+            return;
         }
 
         // This test only supports a single screen and so can only load a single DisplayEngine,
@@ -70,10 +71,11 @@ void SingleScreenTestMatrix::Test()
     if (toolboxes.empty())
     {
         g_logger.LogAssert(L"No ConfigurationToolboxes loaded.");
+        return;
     }
 
-    // This test only supports a single screen and so can only load a single DisplayEngine,
-    // so select the highest version one installed.
+    // Only a single toolbox can be used for a single display test run currently, so select
+    // the highest version toolbox installed.
     toolbox = toolboxes[0];
     for (auto&& box : toolboxes)
     {
@@ -120,6 +122,7 @@ void SingleScreenTestMatrix::Test()
             g_logger.LogError(winrt::hstring(L"Requested input name: ") + winrt::hstring(inputName) + winrt::hstring(L" was not found!"));
             return;
         }
+
         auto displayOutputTarget = mapping.Source();
         displayInput = mapping.Sink();
 
@@ -143,15 +146,14 @@ void SingleScreenTestMatrix::Test()
     }
 
     winrt::hstring testName = L"";
-
-    if (!g_predictionOnly)
-    {
-        testName = testName + displayInput.Name() + L"_";
-    }
+    testName = testName + (g_predictionOnly ? L"" : displayInput.Name()) + L"_";
 
     // All tools need to be run in order of their category
     constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
-        winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
+        winrt::ConfigurationToolCategory::DisplaySetup,
+        winrt::ConfigurationToolCategory::RenderSetup,
+        winrt::ConfigurationToolCategory::Render
+    };
 
     for (auto& category : categoryOrder)
     {
@@ -170,7 +172,6 @@ void SingleScreenTestMatrix::Test()
                 if (!g_predictionOnly) tool.ApplyToOutput(displayOutput);
                 tool.ApplyToPrediction(prediction);
                 testName = testName + tool.GetConfiguration() + L"_";
-
             }
         }
     }
@@ -207,10 +208,13 @@ void SingleScreenTestMatrix::Test()
 
             capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
         }
+
+        // TODO: optionally save comparison data to disk
     }
     else
     {
         auto predictionFrameSet = predictionDataAsync.get();
-
+        
+        // TODO: optionally save prediction data to disk
     }
 }
