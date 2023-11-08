@@ -142,7 +142,12 @@ void SingleScreenTestMatrix::Test()
         return;
     }
 
-    winrt::hstring testName = displayInput.Name() + L"_";
+    winrt::hstring testName = L"";
+
+    if (!g_predictionOnly)
+    {
+        testName = testName + displayInput.Name() + L"_";
+    }
 
     // All tools need to be run in order of their category
     constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
@@ -205,6 +210,7 @@ void SingleScreenTestMatrix::Test()
     }
     else
     {
-        //TODO: dump the prediction to disk
+        auto predictionFrameSet = predictionDataAsync.get();
+
     }
 }

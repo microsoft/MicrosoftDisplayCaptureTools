@@ -61,7 +61,7 @@ void ResolutionTool::ApplyToPrediction(IPrediction displayPrediction)
         {
             auto prediction = predictionData.as<PredictionRenderer::PredictionData>();
 
-            for (auto& frame : prediction->Frames())
+            for (auto&& frame : prediction->Frames())
             {
                 frame.TargetModeSize.Width = static_cast<float>(m_configuration.Width);
                 frame.TargetModeSize.Height = static_cast<float>(m_configuration.Height);

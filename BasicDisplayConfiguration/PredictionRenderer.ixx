@@ -242,7 +242,7 @@ namespace PredictionRenderer {
 
             m_logger.LogNote(std::format(L"Creating renderer on {} device", useWarp ? L"WARP" : L"default"));
 
-            winrt::CanvasDevice::GetSharedDevice(useWarp);
+            m_device = winrt::CanvasDevice::GetSharedDevice(useWarp);
         }
 
         return m_device;
@@ -406,40 +406,43 @@ namespace PredictionRenderer {
                 sourceToTarget = winrt::float3x2::identity();
             }
 
-            CanvasAutoTransform FrameTransform(drawingSession, sourceToTarget);
-
-            // Render the target bounds in the background color first
-            for (auto& plane : frameInformation.Planes)
             {
-                CanvasAutoTransform PlaneTransform(drawingSession, plane.TransformMatrix);
+                CanvasAutoTransform FrameTransform(drawingSession, sourceToTarget);
 
-                // Render the plane
-                if (plane.ColorType == PlaneColorType::RGB)
+                // Render the target bounds in the background color first
+                for (auto& plane : frameInformation.Planes)
                 {
-                    // Get a Win2D bitmap for the plane's surface
-                    auto planeBitmap = winrt::CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
+                    CanvasAutoTransform PlaneTransform(drawingSession, plane.TransformMatrix);
 
-                    drawingSession.DrawImage(
-                        planeBitmap,
-                        plane.DestinationRect.has_value() ? plane.DestinationRect.value()
-                                                          : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
-                        plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), planeBitmap.Size()),
-                        1.0F,
-                        plane.InterpolationMode);
-                }
-                else
-                {
-                    // Create an image source, which knows how to perform certain color-space conversions
-                    auto planeSource = CreateVirtualBitmapFromDxgiSurface(
-                        drawingSession, plane.Surface, plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION);
+                    // Render the plane
+                    if (plane.ColorType == PlaneColorType::RGB)
+                    {
+                        // Get a Win2D bitmap for the plane's surface
+                        auto planeBitmap =
+                            winrt::CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
 
-                    drawingSession.DrawImage(
-                        planeSource,
-                        plane.DestinationRect.has_value() ? plane.DestinationRect.value()
-                                                          : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
-                        plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), planeSource.Size()),
-                        1.0F,
-                        plane.InterpolationMode);
+                        drawingSession.DrawImage(
+                            planeBitmap,
+                            plane.DestinationRect.has_value() ? plane.DestinationRect.value()
+                                                              : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
+                            plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), planeBitmap.Size()),
+                            1.0F,
+                            plane.InterpolationMode);
+                    }
+                    else
+                    {
+                        // Create an image source, which knows how to perform certain color-space conversions
+                        auto planeSource = CreateVirtualBitmapFromDxgiSurface(
+                            drawingSession, plane.Surface, plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION);
+
+                        drawingSession.DrawImage(
+                            planeSource,
+                            plane.DestinationRect.has_value() ? plane.DestinationRect.value()
+                                                              : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
+                            plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), planeSource.Size()),
+                            1.0F,
+                            plane.InterpolationMode);
+                    }
                 }
             }
 
@@ -567,10 +570,11 @@ namespace PredictionRenderer {
             auto frameBytes = postBlendTarget.GetPixelBytes();
 
             // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
-            auto frameBytesBuffer = winrt::Buffer(frameBytes.size());
-            memcpy_s(frameBytesBuffer.data(), frameBytesBuffer.Length(), frameBytes.data(), frameBytes.size());
+            auto frameBytesBufferWriter = winrt::DataWriter();
+            frameBytesBufferWriter.WriteBytes(frameBytes);
+
             // TODO: allocate only what's actually needed for the output values, this will need to involve defining a 2-byte float -> integer function
-            frame->SetBuffer(frameBytesBuffer);
+            frame->SetBuffer(frameBytesBufferWriter.DetachBuffer());
 
             // 5. Ensure that the copy started in 2 is finished
             frame->SetImageApproximation(softwareBitmapAsync.get());
