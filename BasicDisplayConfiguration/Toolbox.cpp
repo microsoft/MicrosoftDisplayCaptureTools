@@ -39,7 +39,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
         return winrt::make<PredictionRenderer::Prediction>(m_logger);
     }
 
-
     enum class Tools
     {
         Pattern,
