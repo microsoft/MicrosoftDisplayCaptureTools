@@ -5,6 +5,7 @@ import "pch.h";
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Microsoft::Graphics::Canvas;
+using namespace winrt::Microsoft::Graphics::Canvas::Effects;
 
 namespace ABI 
 {
@@ -12,6 +13,75 @@ namespace ABI
 }
 
 namespace RenderingUtils {
+
+enum class GammaType {G10, G22, G2084, GHLG, G24};
+
+GammaType GetGammaTypeForColorSpace(const DXGI_COLOR_SPACE_TYPE colorSpace)
+{
+    switch (colorSpace)
+    {
+    case DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709:
+        return GammaType::G10;
+    case DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709:
+    case DXGI_COLOR_SPACE_RGB_STUDIO_G22_NONE_P709:
+    case DXGI_COLOR_SPACE_RGB_STUDIO_G22_NONE_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601:
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709:
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_TOPLEFT_P2020:
+    case DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P2020:
+        return GammaType::G22;
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020:
+    case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_LEFT_P2020:
+    case DXGI_COLOR_SPACE_RGB_STUDIO_G2084_NONE_P2020:
+        return GammaType::G2084;
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_GHLG_TOPLEFT_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020:
+        return GammaType::GHLG;
+    case DXGI_COLOR_SPACE_RGB_STUDIO_G24_NONE_P709:
+    case DXGI_COLOR_SPACE_RGB_STUDIO_G24_NONE_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P709:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P2020:
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_TOPLEFT_P2020:
+        return GammaType::G24;
+    default:
+        throw winrt::hresult_invalid_argument();
+    }
+}
+
+export ICanvasEffect CreateGammaTransferEffect(
+    const DXGI_COLOR_SPACE_TYPE sourceColorSpace,
+    const DXGI_COLOR_SPACE_TYPE destColorSpace,
+    const unsigned long destBitDepth)
+{
+    auto sourceGamma = GetGammaTypeForColorSpace(sourceColorSpace);
+    auto destGamma = GetGammaTypeForColorSpace(destColorSpace);
+
+    if (sourceGamma == GammaType::G10)
+    {
+        // Re-gamma operation
+        auto gamma = DiscreteTransferEffect();
+
+        return gamma;
+    }
+    else if (destGamma == GammaType::G10)
+    {
+        // De-gamma operation
+        auto gamma = DiscreteTransferEffect();
+
+        return gamma;
+    }
+    else
+    {
+        // Right now this explicitly only supports going to/from linear
+        throw winrt::hresult_invalid_argument();
+    }
+}
 
 export winrt::com_ptr<IDXGISurface> GetNativeDxgiSurface(const winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface& surface)
 {

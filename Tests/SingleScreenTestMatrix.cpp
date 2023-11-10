@@ -19,11 +19,62 @@ namespace winrt
     using namespace Windows::Devices::Display;
     using namespace Windows::Devices::Display::Core;
     using namespace Windows::Graphics::Imaging;
+    using namespace Windows::Storage;
     using namespace MicrosoftDisplayCaptureTools;
     using namespace MicrosoftDisplayCaptureTools::Display;
     using namespace MicrosoftDisplayCaptureTools::Framework;
     using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
+}
+
+namespace MicrosoftDisplayCaptureTools::Tests
+{
+    winrt::IAsyncAction SaveFrameToDisk(winrt::IRawFrame frame, winrt::StorageFolder folder, winrt::hstring fileNamePrefix)
+    {
+        {
+            auto filePathRaw = fileNamePrefix + L".hwhlk";
+            auto file = co_await folder.CreateFileAsync(filePathRaw, winrt::CreationCollisionOption::ReplaceExisting);
+
+            co_await winrt::FileIO::WriteBufferAsync(file, frame.Data());
+        }
+
+        auto renderableFrame = frame.try_as<winrt::IRawFrameRenderable>();
+        if (renderableFrame)
+        {
+            auto softwareBitmap = co_await renderableFrame.GetRenderableApproximationAsync();
+
+            auto filePathImage = fileNamePrefix + L".png";
+            auto file = co_await folder.CreateFileAsync(filePathImage, winrt::CreationCollisionOption::ReplaceExisting);
+            auto encoder = co_await winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
+                winrt::Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(), co_await file.OpenAsync(winrt::FileAccessMode::ReadWrite));
+            encoder.SetSoftwareBitmap(softwareBitmap);
+            co_await encoder.FlushAsync();
+        }
+
+        co_return;
+    }
+
+    winrt::IAsyncAction SaveFrameSetToDisk(winrt::IRawFrameSet frameset, winrt::hstring resultFolderPath, winrt::hstring testName)
+    {
+        auto cwd = co_await winrt::StorageFolder::GetFolderFromPathAsync(resultFolderPath);
+        auto resultsFolder = co_await cwd.CreateFolderAsync(L"Results", winrt::CreationCollisionOption::OpenIfExists);
+
+        unsigned long frameCounter = 0;
+        std::vector<winrt::IAsyncAction> frameSaveActions;
+        for (auto frame : frameset.Frames())
+        {
+            auto filePrefix = winrt::hstring(String().Format(L"Prediction_Frame_%d_Setting%s", frameCounter++, testName.c_str()));
+
+             frameSaveActions.push_back(SaveFrameToDisk(frame, resultsFolder, filePrefix));
+        }
+
+        for (auto& frameSave : frameSaveActions)
+        {
+             co_await frameSave;
+        }
+
+        co_return;
+    }
 }
 
 bool SingleScreenTestMatrix::Setup()
@@ -33,6 +84,9 @@ bool SingleScreenTestMatrix::Setup()
 
 bool SingleScreenTestMatrix::Cleanup()
 {
+    for (auto& action : fileOperationsVector)
+        action.get();
+
     return __super::Cleanup();
 }
 
@@ -181,6 +235,7 @@ void SingleScreenTestMatrix::Test()
 
     // Start generating the prediction at the same time as we start outputting.
     auto predictionDataAsync = prediction.FinalizePredictionAsync();
+    winrt::IRawFrameSet predictionFrameSet = nullptr;
 
     if (!g_predictionOnly)
     {
@@ -209,43 +264,19 @@ void SingleScreenTestMatrix::Test()
                 return;
             }
 
-            capturedFrame.CompareCaptureToPrediction(testName, predictionDataAsync.get());
+            predictionFrameSet = predictionDataAsync.get();
+            capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
         }
-
-        // TODO: optionally save comparison data to disk
     }
-    else
+
+    // Save prediction data to disk
     {
-        auto predictionFrameSet = predictionDataAsync.get();
-
-        for (auto frame : predictionFrameSet.Frames())
+        if (!predictionFrameSet)
         {
-            auto cwd =
-                winrt::Windows::Storage::StorageFolder::GetFolderFromPathAsync(std::wstring(std::filesystem::current_path())).get();
-
-            {
-                auto filePathRaw = L"Prediction" + testName + L".dat";
-                auto file = cwd.CreateFileAsync(filePathRaw, winrt::Windows::Storage::CreationCollisionOption::ReplaceExisting).get();
-
-                winrt::Windows::Storage::FileIO::WriteBufferAsync(file, frame.Data()).get();
-            }
-
-            auto renderableFrame = frame.try_as<winrt::IRawFrameRenderable>();
-            if (renderableFrame)
-            {
-                auto softwareBitmap = renderableFrame.GetRenderableApproximationAsync().get();
-
-                auto filePathImage = L"Prediction" + testName + L".png";
-                auto file = cwd.CreateFileAsync(filePathImage, winrt::Windows::Storage::CreationCollisionOption::ReplaceExisting).get();
-                auto encoder = winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
-                                   winrt::Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(),
-                                   file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite).get())
-                                   .get();
-                encoder.SetSoftwareBitmap(softwareBitmap);
-                encoder.FlushAsync().get();
-            }
+            predictionFrameSet = predictionDataAsync.get();
         }
-        
-        // TODO: optionally save prediction data to disk
+
+        auto resultFolderPath = winrt::hstring(std::wstring(std::filesystem::current_path()));
+        fileOperationsVector.push_back(SaveFrameSetToDisk(predictionFrameSet, resultFolderPath, testName));
     }
 }

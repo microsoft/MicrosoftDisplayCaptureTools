@@ -209,7 +209,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
             switch (plane.ColorSpace)
             {
             case DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709:
-                return DirectXPixelFormat::R16G16B16A16Float;//R8G8B8A8UIntNormalizedSrgb;
+                return DirectXPixelFormat::R8G8B8A8UIntNormalizedSrgb;
             }
         }
 

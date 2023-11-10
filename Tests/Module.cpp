@@ -24,7 +24,7 @@ namespace MicrosoftDisplayCaptureTools::Tests {
 BEGIN_MODULE()
     MODULE_PROPERTY(L"Area", L"Graphics")
     MODULE_PROPERTY(L"SubArea", L"Display")
-    MODULE_PROPERTY(L"RunAs", L"Elevated")
+    //MODULE_PROPERTY(L"RunAs", L"Elevated")
 END_MODULE()
 
 MODULE_SETUP(ModuleSetup)

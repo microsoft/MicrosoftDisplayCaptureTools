@@ -240,7 +240,7 @@ namespace PredictionRenderer {
                 useWarp = winrt::unbox_value<bool>(m_properties.Lookup(L"UseWarp"));
             }
 
-            m_logger.LogNote(std::format(L"Creating renderer on {} device", useWarp ? L"WARP" : L"default"));
+            m_logger.LogNote(std::format(L"Creating prediction renderer on {} device", useWarp ? L"WARP" : L"default"));
 
             m_device = winrt::CanvasDevice::GetSharedDevice(useWarp);
         }
@@ -455,11 +455,10 @@ namespace PredictionRenderer {
         // At this point, the prediction is a GPU-bound FP16 surface that has had the individual planes composited onto it.
 
         // Post plane blend rendering pipeline
-        // 1. Degamma
-        // 2. RGB->XYZ
-        // 3. Color Matrix
-        // 4. XYZ->RGB
-        // 6. Regamma
+        // 1. RGB->XYZ
+        // 2. Color Matrix
+        // 3. XYZ->RGB
+        // 4. Regamma
         //
         // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
         auto postBlendTarget = winrt::CanvasRenderTarget(
@@ -473,23 +472,23 @@ namespace PredictionRenderer {
             auto drawingSession = postBlendTarget.CreateDrawingSession();
             drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
 
-            // 1. Degamma
-            auto degammaEffect = winrt::DiscreteTransferEffect();
+            auto backgroundBrush = winrt::Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, {0.F, 0.F, 0.F, 1.F});
+            drawingSession.FillRectangle(
+                winrt::Rect(0, 0, (float)frameInformation.TargetModeSize.Width, (float)frameInformation.TargetModeSize.Height), backgroundBrush);
 
-            // Input for this stage is the output of plane blending
-            degammaEffect.Source(planeCompositingTarget);
-            // TODO: define the actual gamma tables
-
-            // 2. RBG->XYZ
+            // 1. RBG->XYZ
             auto rgbxyzMatrixEffect = winrt::ColorMatrixEffect();
             winrt::Matrix5x4 rgbxyz{};
-            rgbxyz.M11 = 0.4124564f; rgbxyz.M12 = 0.3575761f; rgbxyz.M13 = 0.1804375f;
-            rgbxyz.M21 = 0.2126729f; rgbxyz.M22 = 0.7151522f; rgbxyz.M23 = 0.0721750f;
-            rgbxyz.M31 = 0.0193339f; rgbxyz.M32 = 0.1191920f; rgbxyz.M33 = 0.9503041f;
-            rgbxyzMatrixEffect.ColorMatrix(rgbxyz);
-            rgbxyzMatrixEffect.Source(degammaEffect);
 
-            // 3. Color Matrix
+            rgbxyz.M11 = 0.4124564f; rgbxyz.M12 = 0.3575761f; rgbxyz.M13 = 0.1804375f; rgbxyz.M14 = 0.f; 
+            rgbxyz.M21 = 0.2126729f; rgbxyz.M22 = 0.7151522f; rgbxyz.M23 = 0.0721750f; rgbxyz.M24 = 0.f;
+            rgbxyz.M31 = 0.0193339f; rgbxyz.M32 = 0.1191920f; rgbxyz.M33 = 0.9503041f; rgbxyz.M34 = 0.f;
+            rgbxyz.M41 = 0.f;        rgbxyz.M42 = 0.f;        rgbxyz.M43 = 0.f;        rgbxyz.M44 = 1.f;
+
+            rgbxyzMatrixEffect.ColorMatrix(rgbxyz);
+            rgbxyzMatrixEffect.Source(planeCompositingTarget);
+
+            // 2. Color Matrix
             auto cscMatrix = winrt::ColorMatrixEffect();
             winrt::Matrix5x4 csc{};
             csc.M11 = frameInformation.ColorMatrixXyz.m11;
@@ -501,20 +500,23 @@ namespace PredictionRenderer {
             csc.M31 = frameInformation.ColorMatrixXyz.m31;
             csc.M32 = frameInformation.ColorMatrixXyz.m32;
             csc.M33 = frameInformation.ColorMatrixXyz.m33;
+            csc.M44 = 1.f;
             cscMatrix.ColorMatrix(csc);
             cscMatrix.Source(rgbxyzMatrixEffect);
 
-            // 2. XYZ->RGB
+            // 3. XYZ->RGB
             auto xyzrgbMatrixEffect = winrt::ColorMatrixEffect();
             winrt::Matrix5x4 xyzrgb{};
 
-            xyzrgb.M11 =  3.2404542f; xyzrgb.M12 = -1.5371385f; xyzrgb.M13 = -0.4985314f;
-            xyzrgb.M21 = -0.9692660f; xyzrgb.M22 =  1.8760108f; xyzrgb.M23 =  0.0415560f;
-            xyzrgb.M31 =  0.0556434f; xyzrgb.M32 = -0.2040259f; xyzrgb.M33 =  1.0572252f;
+            xyzrgb.M11 =  3.2404542f; xyzrgb.M12 = -1.5371385f; xyzrgb.M13 = -0.4985314f; xyzrgb.M14 = 0.f;
+            xyzrgb.M21 = -0.9692660f; xyzrgb.M22 =  1.8760108f; xyzrgb.M23 =  0.0415560f; xyzrgb.M24 = 0.f;
+            xyzrgb.M31 =  0.0556434f; xyzrgb.M32 = -0.2040259f; xyzrgb.M33 =  1.0572252f; xyzrgb.M34 = 0.f;
+            xyzrgb.M41 =  0.f;        xyzrgb.M42 =  0.f;        xyzrgb.M43 =  0.f;        xyzrgb.M44 = 1.f;
+
             xyzrgbMatrixEffect.ColorMatrix(xyzrgb);
             xyzrgbMatrixEffect.Source(cscMatrix);
 
-            // 5. Regamma
+            // 4. Regamma
             auto regammaEffect = winrt::DiscreteTransferEffect();
             regammaEffect.Source(xyzrgbMatrixEffect);
             // TODO: define the actual gamma tables
@@ -575,7 +577,7 @@ namespace PredictionRenderer {
                     winrt::CanvasAlphaMode::Premultiplied);
                 {
                     auto drawingSession = renderablePreview.CreateDrawingSession();
-                    drawingSession.DrawImage(planeCompositingTarget); // postBlendTarget);
+                    drawingSession.DrawImage(postBlendTarget);
 
                     drawingSession.Flush();
                     drawingSession.Close();
@@ -597,7 +599,7 @@ namespace PredictionRenderer {
             auto softwareBitmapAsync = CreateSoftwareBitmapAsync();
 
             // 3. Copy GPU surface to CPU-accessible memory
-            auto frameBytes = planeCompositingTarget.GetPixelBytes();//postBlendTarget.GetPixelBytes();
+            auto frameBytes = postBlendTarget.GetPixelBytes();
 
             // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
             auto frameBytesBufferWriter = winrt::DataWriter();
@@ -660,39 +662,6 @@ namespace PredictionRenderer {
             m_displaySetupCallback(*this, predictionData.as<winrt::IPredictionData>());
         }
 
-        /*
-        // Perform any changes to the format description required before buffer allocation
-        {
-            auto formatDesc = predictionData->FrameData().FormatDescription();
-            formatDesc.Stride = formatDesc.BitsPerPixel * predictionData->FrameData().Resolution().Width;
-            predictionData->FrameData().FormatDescription(formatDesc);
-        }
-
-        // From the data set in the predictionData, allocate buffers
-        auto resolution = predictionData->FrameData().Resolution();
-        auto desc = predictionData->FrameData().FormatDescription();
-
-        if (resolution.Width == 0 || resolution.Height == 0)
-        {
-            std::wstringstream buf{};
-            buf << L"Resolution of (" << resolution.Width << L", " << resolution.Height << L") not valid!";
-
-            m_logger.LogError(buf.str());
-        }
-
-        if (desc.BitsPerPixel == 0 || desc.Stride == 0)
-        {
-            m_logger.LogError(L"BitsPerPixel and Stride must be defined sizes for us to reserve buffers!");
-        }
-
-        // reserve enough memory for the output frame.
-        auto pixelBuffer = winrt::Buffer(resolution.Height * desc.Stride);
-        pixelBuffer.
-
-        predictionData->FrameSet().Data(pixelBuffer);
-
-        */
-
         // Invoke any tools registering as render setup
         if (m_renderSetupCallback)
         {
@@ -718,8 +687,6 @@ namespace PredictionRenderer {
             }
 
             // Wait for all of the render tasks to complete and collect the results
-            //co_await when_all_container(frameRenderTasks);
-
             for (auto& frameRenderTask : frameRenderTasks)
             {
                 auto frame = co_await frameRenderTask;

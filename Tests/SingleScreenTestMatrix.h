@@ -13,4 +13,7 @@ class SingleScreenTestMatrix : public CaptureFrameworkTestBase
         TEST_METHOD_PROPERTY(L"DataSource", L"Table:CaptureCardInputs.xml#Inputs")
         TEST_METHOD_PROPERTY(L"DataSource", L"pict:SimplePICT.txt")
     END_TEST_METHOD();
+
+private:
+    std::vector<winrt::Windows::Foundation::IAsyncAction> fileOperationsVector;
 };
