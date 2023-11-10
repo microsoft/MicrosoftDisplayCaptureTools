@@ -40,7 +40,7 @@ namespace PredictionRenderer {
     {
         PlaneType Type = PlaneType::BasePlane;
         winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface Surface = nullptr;
-        winrt::CanvasAlphaMode AlphaMode = winrt::CanvasAlphaMode::Ignore;
+        winrt::CanvasAlphaMode AlphaMode = winrt::CanvasAlphaMode::Premultiplied;
         PlaneColorType ColorType = PlaneColorType::RGB;
         DXGI_COLOR_SPACE_TYPE ColorSpace = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
         winrt::float3x2 TransformMatrix = winrt::float3x2::identity();
@@ -72,8 +72,8 @@ namespace PredictionRenderer {
         std::vector<PlaneInformation> Planes;
 
         // Describes the current mode for transformation
-        winrt::Size TargetModeSize = {480, 640};
-        winrt::Size SourceModeSize = {480, 640};
+        winrt::Size TargetModeSize = {640, 480};
+        winrt::Size SourceModeSize = {640, 480};
         StretchMode SourceToTargetStretch = StretchMode::Identity;
         RenderMode RenderMode = RenderMode::Target;
 
@@ -278,6 +278,8 @@ namespace PredictionRenderer {
 
     winrt::IAsyncOperation<winrt::SoftwareBitmap> Frame::GetRenderableApproximationAsync()
     {
+        // In this implementation, this approximation is created as a side effect of rendering the prediction. So here the result can
+        // just be returned.
         co_return m_bitmap;
     }
 
@@ -358,7 +360,7 @@ namespace PredictionRenderer {
             (float)frameInformation.TargetModeSize.Height,
             96,
             winrt::DirectXPixelFormat::R16G16B16A16Float,
-            winrt::CanvasAlphaMode::Ignore);
+            winrt::CanvasAlphaMode::Premultiplied);
         {
             auto drawingSession = planeCompositingTarget.CreateDrawingSession();
             drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
@@ -420,7 +422,7 @@ namespace PredictionRenderer {
                         // Get a Win2D bitmap for the plane's surface
                         auto planeBitmap =
                             winrt::CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
-
+                        
                         drawingSession.DrawImage(
                             planeBitmap,
                             plane.DestinationRect.has_value() ? plane.DestinationRect.value()
@@ -466,7 +468,7 @@ namespace PredictionRenderer {
             (float)frameInformation.TargetModeSize.Height,
             96,
             winrt::DirectXPixelFormat::R16G16B16A16Float,
-            winrt::CanvasAlphaMode::Ignore);
+            winrt::CanvasAlphaMode::Premultiplied);
         {
             auto drawingSession = postBlendTarget.CreateDrawingSession();
             drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
@@ -535,8 +537,7 @@ namespace PredictionRenderer {
             (float)frameInformation.TargetModeSize.Height,
             96,
             winrt::DirectXPixelFormat::R16G16B16A16Float,
-            winrt::CanvasAlphaMode::Ignore);
-
+            winrt::CanvasAlphaMode::Premultiplied);
         {
             auto drawingSession = postBlendTarget.CreateDrawingSession();
             drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
@@ -564,10 +565,39 @@ namespace PredictionRenderer {
             frame->DataFormat(frameInformation.WireFormat);
 
             // 2. Create a renderable preview of the post-color pipeline image to be used as preview
-            auto softwareBitmapAsync = winrt::SoftwareBitmap::CreateCopyFromSurfaceAsync(postBlendTarget);
+            auto CreateSoftwareBitmapAsync = [&]() -> winrt::IAsyncOperation<winrt::SoftwareBitmap> {
+                auto renderablePreview = winrt::CanvasRenderTarget(
+                    device,
+                    (float)frameInformation.TargetModeSize.Width,
+                    (float)frameInformation.TargetModeSize.Height,
+                    96,
+                    winrt::DirectXPixelFormat::R8G8B8A8UIntNormalizedSrgb,
+                    winrt::CanvasAlphaMode::Premultiplied);
+                {
+                    auto drawingSession = renderablePreview.CreateDrawingSession();
+                    drawingSession.DrawImage(planeCompositingTarget); // postBlendTarget);
+
+                    drawingSession.Flush();
+                    drawingSession.Close();
+                }
+
+                auto buffer =
+                    winrt::Windows::Security::Cryptography::CryptographicBuffer::CreateFromByteArray(renderablePreview.GetPixelBytes());
+
+                auto softwareBitmap = winrt::SoftwareBitmap::CreateCopyFromBuffer(
+                    buffer,
+                    winrt::BitmapPixelFormat::Rgba8,
+                    frameInformation.TargetModeSize.Width,
+                    frameInformation.TargetModeSize.Height);
+
+                // Return the SoftwareBitmap
+                co_return softwareBitmap;
+            };
+
+            auto softwareBitmapAsync = CreateSoftwareBitmapAsync();
 
             // 3. Copy GPU surface to CPU-accessible memory
-            auto frameBytes = postBlendTarget.GetPixelBytes();
+            auto frameBytes = planeCompositingTarget.GetPixelBytes();//postBlendTarget.GetPixelBytes();
 
             // 4. Slice CPU-accessible pixel data to the destination type (starting from 16 bit-per-channel floats)
             auto frameBytesBufferWriter = winrt::DataWriter();
@@ -579,7 +609,8 @@ namespace PredictionRenderer {
             // 5. Ensure that the copy started in 2 is finished
             frame->SetImageApproximation(softwareBitmapAsync.get());
 
-            co_return frame.as<winrt::IRawFrame>();
+            auto rawFrame = frame.as<winrt::IRawFrame>();
+            co_return rawFrame;
         }
     }
 
@@ -687,11 +718,12 @@ namespace PredictionRenderer {
             }
 
             // Wait for all of the render tasks to complete and collect the results
-            co_await when_all_container(frameRenderTasks);
+            //co_await when_all_container(frameRenderTasks);
 
-            for (auto& frame : frameRenderTasks)
+            for (auto& frameRenderTask : frameRenderTasks)
             {
-                predictedFrames.Frames().Append(frame.GetResults());
+                auto frame = co_await frameRenderTask;
+                predictedFrames.Frames().Append(frame);
             }
         }
 

@@ -4,6 +4,9 @@
 // Shared Utilities
 #include "BinaryLoader.h"
 
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Graphics.Imaging.h>
+
 using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
@@ -214,6 +217,34 @@ void SingleScreenTestMatrix::Test()
     else
     {
         auto predictionFrameSet = predictionDataAsync.get();
+
+        for (auto frame : predictionFrameSet.Frames())
+        {
+            auto cwd =
+                winrt::Windows::Storage::StorageFolder::GetFolderFromPathAsync(std::wstring(std::filesystem::current_path())).get();
+
+            {
+                auto filePathRaw = L"Prediction" + testName + L".dat";
+                auto file = cwd.CreateFileAsync(filePathRaw, winrt::Windows::Storage::CreationCollisionOption::ReplaceExisting).get();
+
+                winrt::Windows::Storage::FileIO::WriteBufferAsync(file, frame.Data()).get();
+            }
+
+            auto renderableFrame = frame.try_as<winrt::IRawFrameRenderable>();
+            if (renderableFrame)
+            {
+                auto softwareBitmap = renderableFrame.GetRenderableApproximationAsync().get();
+
+                auto filePathImage = L"Prediction" + testName + L".png";
+                auto file = cwd.CreateFileAsync(filePathImage, winrt::Windows::Storage::CreationCollisionOption::ReplaceExisting).get();
+                auto encoder = winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
+                                   winrt::Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(),
+                                   file.OpenAsync(winrt::Windows::Storage::FileAccessMode::ReadWrite).get())
+                                   .get();
+                encoder.SetSoftwareBitmap(softwareBitmap);
+                encoder.FlushAsync().get();
+            }
+        }
         
         // TODO: optionally save prediction data to disk
     }

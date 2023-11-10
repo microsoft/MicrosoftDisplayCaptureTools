@@ -180,21 +180,22 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
     void BasePlanePattern::RenderPatternToPlane(const CanvasDrawingSession& drawingSession, float width, float height)
     {
+        drawingSession.Clear(Colors::Black());
+
         auto& configColor = ConfigurationMap[m_currentConfig];
         Color checkerColor;
         checkerColor.A = 255;
         checkerColor.R = static_cast<uint8_t>(255 * configColor.Red);
         checkerColor.G = static_cast<uint8_t>(255 * configColor.Green);
         checkerColor.B = static_cast<uint8_t>(255 * configColor.Blue);
-
-        drawingSession.Clear(Colors::Black());
+        auto checkerColorBrush = winrt::Brushes::CanvasSolidColorBrush::CreateHdr(drawingSession, {configColor.Red, configColor.Green, configColor.Blue, 1.0f});
 
         bool indent = false;
         for (float x = 0; x < width; x += PATTERN_SQUARE_SIZE)
         {
             for (float y = indent ? PATTERN_SQUARE_SIZE : 0.f; y < height; y += 2 * PATTERN_SQUARE_SIZE)
             {
-                drawingSession.FillRectangle(x, y, PATTERN_SQUARE_SIZE, PATTERN_SQUARE_SIZE, checkerColor);
+                drawingSession.FillRectangle(x, y, PATTERN_SQUARE_SIZE, PATTERN_SQUARE_SIZE, checkerColorBrush);
             }
 
             indent = !indent;
@@ -208,7 +209,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
             switch (plane.ColorSpace)
             {
             case DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709:
-                return DirectXPixelFormat::R8G8B8A8UIntNormalizedSrgb;
+                return DirectXPixelFormat::R16G16B16A16Float;//R8G8B8A8UIntNormalizedSrgb;
             }
         }
 
@@ -251,7 +252,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
                             frame.SourceModeSize.Width,
                             frame.SourceModeSize.Height,
                             96, pixelFormat,
-                            CanvasAlphaMode::Ignore);
+                            CanvasAlphaMode::Premultiplied);
 
                         {
                             auto drawingSession = patternTarget.CreateDrawingSession();
