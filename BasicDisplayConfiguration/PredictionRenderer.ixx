@@ -415,6 +415,20 @@ namespace PredictionRenderer {
                 for (auto& plane : frameInformation.Planes)
                 {
                     CanvasAutoTransform PlaneTransform(drawingSession, plane.TransformMatrix);
+                    winrt::Size sourceSize = {};
+
+                    // Per-Plane de-gamma
+                    auto degammaEffect = winrt::DiscreteTransferEffect();
+
+                    auto degammaCurve = RenderingUtils::CreateGammaTransferCurve(
+                        GetGammaTypeForColorSpace(plane.ColorSpace),
+                        RenderingUtils::GammaType::G10,
+                        256);
+                    // TODO: source gamma stops parameter from GPU caps?
+
+                    degammaEffect.RedTable(degammaCurve);
+                    degammaEffect.GreenTable(degammaCurve);
+                    degammaEffect.BlueTable(degammaCurve);
 
                     // Render the plane
                     if (plane.ColorType == PlaneColorType::RGB)
@@ -422,29 +436,27 @@ namespace PredictionRenderer {
                         // Get a Win2D bitmap for the plane's surface
                         auto planeBitmap =
                             winrt::CanvasBitmap::CreateFromDirect3D11Surface(drawingSession, plane.Surface, 96, plane.AlphaMode);
-                        
-                        drawingSession.DrawImage(
-                            planeBitmap,
-                            plane.DestinationRect.has_value() ? plane.DestinationRect.value()
-                                                              : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
-                            plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), planeBitmap.Size()),
-                            1.0F,
-                            plane.InterpolationMode);
+                        sourceSize = planeBitmap.Size();
+
+                        degammaEffect.Source(planeBitmap);
                     }
                     else
                     {
                         // Create an image source, which knows how to perform certain color-space conversions
                         auto planeSource = CreateVirtualBitmapFromDxgiSurface(
                             drawingSession, plane.Surface, plane.ColorSpace, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION);
+                        sourceSize = planeSource.Size();
 
-                        drawingSession.DrawImage(
-                            planeSource,
-                            plane.DestinationRect.has_value() ? plane.DestinationRect.value()
-                                                              : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
-                            plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), planeSource.Size()),
-                            1.0F,
-                            plane.InterpolationMode);
+                        degammaEffect.Source(planeSource);
                     }
+                    
+                    drawingSession.DrawImage(
+                        degammaEffect,
+                        plane.DestinationRect.has_value() ? plane.DestinationRect.value()
+                                                          : winrt::Rect(winrt::Point(), frameInformation.SourceModeSize),
+                        plane.SourceRect.has_value() ? plane.SourceRect.value() : winrt::Rect(winrt::Point(), sourceSize),
+                        1.0F,
+                        plane.InterpolationMode);
                 }
             }
 
@@ -519,10 +531,20 @@ namespace PredictionRenderer {
             // 4. Regamma
             auto regammaEffect = winrt::DiscreteTransferEffect();
             regammaEffect.Source(xyzrgbMatrixEffect);
-            // TODO: define the actual gamma tables
+
+            auto regammaCurve = RenderingUtils::CreateGammaTransferCurve(
+                RenderingUtils::GammaType::G10,
+                RenderingUtils::GetGammaTypeForEotf(frameInformation.WireFormat.Eotf()),
+                256);
+            // TODO: source gamma stops parameter from GPU caps?
+
+            //regammaEffect.AlphaDisable(true);
+            regammaEffect.RedTable(regammaCurve);
+            regammaEffect.GreenTable(regammaCurve);
+            regammaEffect.BlueTable(regammaCurve);
 
             // Commit the color pipeline
-            drawingSession.DrawImage(xyzrgbMatrixEffect);
+            drawingSession.DrawImage(regammaEffect);
 
             drawingSession.Flush();
             drawingSession.Close();

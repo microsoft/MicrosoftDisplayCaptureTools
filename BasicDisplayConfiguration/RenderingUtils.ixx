@@ -4,6 +4,8 @@ import "pch.h";
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Foundation::Numerics;
+using namespace winrt::Windows::Devices::Display;
+using namespace winrt::Windows::Devices::Display::Core;
 using namespace winrt::Microsoft::Graphics::Canvas;
 using namespace winrt::Microsoft::Graphics::Canvas::Effects;
 
@@ -14,9 +16,22 @@ namespace ABI
 
 namespace RenderingUtils {
 
-enum class GammaType {G10, G22, G2084, GHLG, G24};
+export enum class GammaType {G10, G22, G2084, GHLG, G24};
 
-GammaType GetGammaTypeForColorSpace(const DXGI_COLOR_SPACE_TYPE colorSpace)
+export GammaType GetGammaTypeForEotf(const DisplayWireFormatEotf eotf)
+{
+    switch (eotf)
+    {
+    case DisplayWireFormatEotf::HdrSmpte2084:
+        return GammaType::G2084;
+    case DisplayWireFormatEotf::Sdr:
+        return GammaType::G22;
+    default:
+        throw winrt::hresult_invalid_argument();
+    }
+}
+
+export GammaType GetGammaTypeForColorSpace(const DXGI_COLOR_SPACE_TYPE colorSpace)
 {
     switch (colorSpace)
     {
@@ -54,33 +69,66 @@ GammaType GetGammaTypeForColorSpace(const DXGI_COLOR_SPACE_TYPE colorSpace)
     }
 }
 
-export ICanvasEffect CreateGammaTransferEffect(
-    const DXGI_COLOR_SPACE_TYPE sourceColorSpace,
-    const DXGI_COLOR_SPACE_TYPE destColorSpace,
-    const unsigned long destBitDepth)
+export std::vector<float> CreateGammaTransferCurve(
+    const GammaType sourceGamma, 
+    const GammaType destGamma,
+    unsigned long gammaStops)
 {
-    auto sourceGamma = GetGammaTypeForColorSpace(sourceColorSpace);
-    auto destGamma = GetGammaTypeForColorSpace(destColorSpace);
+    auto gammaArray = std::vector<float>(gammaStops);
 
     if (sourceGamma == GammaType::G10)
     {
         // Re-gamma operation
-        auto gamma = DiscreteTransferEffect();
-
-        return gamma;
+        switch (destGamma)
+        {
+        case GammaType::G10:
+            for (unsigned int i = 0; i < gammaStops; i++)
+            {
+                gammaArray[i] = (float)i / (gammaStops - 1);
+            }
+            break;
+        case GammaType::G22:
+            for (unsigned int i = 0; i < gammaStops; i++)
+            {
+                float stop = (float)i / (gammaStops - 1);
+                gammaArray[i] = stop <= 0.0031308f ? stop * 12.92f : 1.055f * std::powf(stop, 1.0f/2.4f) - 0.055f;
+            }
+            break;
+        default:
+            // Right now this explicitly only supports linear and 2.2
+            throw winrt::hresult_invalid_argument();
+        }
     }
     else if (destGamma == GammaType::G10)
     {
         // De-gamma operation
-        auto gamma = DiscreteTransferEffect();
-
-        return gamma;
+        switch (sourceGamma)
+        {
+        case GammaType::G10:
+            for (auto i = 0; i < gammaStops; i++)
+            {
+                gammaArray[i] = (float)i / (gammaStops - 1);
+            }
+            break;
+        case GammaType::G22:
+            for (auto i = 0; i < gammaStops; i++)
+            {
+                float stop = (float)i / (gammaStops - 1);
+                gammaArray[i] = stop <= 0.04045f ? stop / 12.92f : std::powf((stop + 0.055f) / 1.055f, 2.4f);
+            }
+            break;
+        default:
+            // Right now this explicitly only supports linear and 2.2
+            throw winrt::hresult_invalid_argument();
+        }
     }
     else
     {
         // Right now this explicitly only supports going to/from linear
         throw winrt::hresult_invalid_argument();
     }
+
+    return gammaArray;
 }
 
 export winrt::com_ptr<IDXGISurface> GetNativeDxgiSurface(const winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface& surface)
