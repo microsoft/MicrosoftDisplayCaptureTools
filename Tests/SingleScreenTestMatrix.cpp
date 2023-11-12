@@ -273,6 +273,9 @@ void SingleScreenTestMatrix::Test()
     {
         if (!predictionFrameSet)
         {
+            // We synchronize on the data being generated, so that any errors that happen there will be flagged
+            // synchronously in this test method. However, by default we will save the data asynchronously - to
+            // make best use of the testing time with the physical devices.
             predictionFrameSet = predictionDataAsync.get();
         }
 

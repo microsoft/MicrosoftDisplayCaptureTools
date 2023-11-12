@@ -423,7 +423,7 @@ namespace PredictionRenderer {
                     auto degammaCurve = RenderingUtils::CreateGammaTransferCurve(
                         GetGammaTypeForColorSpace(plane.ColorSpace),
                         RenderingUtils::GammaType::G10,
-                        256);
+                        1024);
                     // TODO: source gamma stops parameter from GPU caps?
 
                     degammaEffect.RedTable(degammaCurve);
@@ -450,6 +450,7 @@ namespace PredictionRenderer {
                         degammaEffect.Source(planeSource);
                     }
                     
+                    // Draw the plane into the main linear surface
                     drawingSession.DrawImage(
                         degammaEffect,
                         plane.DestinationRect.has_value() ? plane.DestinationRect.value()
@@ -535,10 +536,9 @@ namespace PredictionRenderer {
             auto regammaCurve = RenderingUtils::CreateGammaTransferCurve(
                 RenderingUtils::GammaType::G10,
                 RenderingUtils::GetGammaTypeForEotf(frameInformation.WireFormat.Eotf()),
-                256);
+                1024);
             // TODO: source gamma stops parameter from GPU caps?
 
-            //regammaEffect.AlphaDisable(true);
             regammaEffect.RedTable(regammaCurve);
             regammaEffect.GreenTable(regammaCurve);
             regammaEffect.BlueTable(regammaCurve);
