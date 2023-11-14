@@ -17,7 +17,7 @@ enum class ResolutionToolKind
 struct ResolutionTool
     : ToolBase::SizeTool<ResolutionTool>
 {
-    ResolutionTool(ResolutionToolKind kind, Framework::ILogger const& logger);
+    ResolutionTool(ResolutionToolKind kind);
 
     winrt::hstring Name(); // Special overload because this tool can have different names for the different types of ResolutionToolKind
 

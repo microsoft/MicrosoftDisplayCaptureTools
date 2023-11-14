@@ -19,6 +19,8 @@ winrt::Framework::ILogger g_logger{nullptr};
 winrt::IVector<winrt::Framework::ISourceToSinkMapping> g_displayMap;
 bool g_predictionOnly = false;
 
+winrt::Framework::IRuntimeSettings g_runtimeSettings{nullptr};
+
 namespace MicrosoftDisplayCaptureTools::Tests {
 
 BEGIN_MODULE()
@@ -33,9 +35,10 @@ MODULE_SETUP(ModuleSetup)
 
     // Create WEX logger to log tests/results/errors
     g_logger = winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>();
+    g_runtimeSettings = winrt::make<RuntimeSettings::RuntimeSettings>();
 
     // Load the framework
-    g_framework = winrt::Framework::Core(g_logger);
+    g_framework = winrt::Framework::Core(g_logger, g_runtimeSettings);
 
     if (SUCCEEDED(RuntimeParameters::TryGetValue(RunPredictionOnlyRuntimeParameter, g_predictionOnly)) && g_predictionOnly)
     {

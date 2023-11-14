@@ -164,6 +164,25 @@ namespace MicrosoftDisplayCaptureTools.Framework
     };
 
     //
+    // A small interface which the executable should implement and use to provide runtime setting overrides to the various
+    // components
+    //
+    interface IRuntimeSettings
+    {
+        IInspectable GetSettingValue(String settingName);
+        Boolean GetSettingValueAsBool(String settingName);
+        String GetSettingValueAsString(String settingsName);
+    };
+
+    runtimeclass Runtime
+    {
+        static Runtime GetRuntime();
+
+        IRuntimeSettings RuntimeSettings();
+        ILogger Logger();
+    }
+
+    //
     // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
     // descriptor from the framework - plugins are largely expected to only need the memory block.
     //
@@ -229,12 +248,6 @@ namespace MicrosoftDisplayCaptureTools.Framework
     {
         // Get the version, in Major.Minor.Patch format
         MicrosoftDisplayCaptureTools.Framework.Version Version
-        {
-            get;
-        };
-
-        // Get the logger for this instance
-        ILogger Logger
         {
             get;
         };

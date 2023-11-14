@@ -7,8 +7,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
     struct Toolbox : ToolboxT<Toolbox>
     {
         Toolbox();
-        Toolbox(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
+        // MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox
         hstring Name();
         com_array<hstring> GetSupportedTools();
         winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool GetTool(hstring const& toolName);
@@ -21,16 +21,16 @@ namespace winrt::BasicDisplayConfiguration::implementation
             return MicrosoftDisplayCaptureTools::Framework::Version(0, 1, 0);
         };
 
+
     private:
-        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_runtimeSettings;
     };
 
     struct ToolboxFactory : ToolboxFactoryT<ToolboxFactory>
     {
         ToolboxFactory() = default;
 
-        winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox CreateConfigurationToolbox(
-            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolbox CreateConfigurationToolbox();
     };
 }
 

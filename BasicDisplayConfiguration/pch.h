@@ -28,6 +28,8 @@
 #include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 
+#include "TestRuntime.h"
+
 #include <map>
 #include <vector>
 #include <cstdlib>

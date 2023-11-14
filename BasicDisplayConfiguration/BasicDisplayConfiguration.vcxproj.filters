@@ -35,6 +35,7 @@
     <ClCompile Include="ToolboxBase.ixx" />
     <ClCompile Include="ResolutionTool.ixx" />
     <ClCompile Include="RefreshRateTool.ixx" />
+    <ClCompile Include="..\Shared\Modules\RuntimeSettings.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasePlanePattern.h" />

@@ -276,6 +276,7 @@
     <ClInclude Include="CaptureFrameworkTestBase.h" />
     <ClInclude Include="DescriptorTests.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="RuntimeSettings.h" />
     <ClInclude Include="SingleScreenTestMatrix.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="TestSettings.h" />
@@ -284,6 +285,7 @@
     <ClCompile Include="CaptureFrameworkTestBase.cpp" />
     <ClCompile Include="DescriptorTests.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="RuntimeSettings.cpp" />
     <ClCompile Include="SingleScreenTestMatrix.cpp" />
     <ClCompile Include="Module.cpp" />
     <ClCompile Include="pch.cpp">
@@ -331,7 +333,7 @@
   <PropertyGroup>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommand>$(SolutionDir)$(Platform)\$(Configuration)\TE.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>$(OutDir)$(TargetFileName) -inproc -enablewttlogging -p:OnlyPredictions=true</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(OutDir)$(TargetFileName) -inproc -enablewttlogging -p:OnlyPredictions=true -p:RenderOnHardware=true</LocalDebuggerCommandArguments>
     <LocalDebuggerMergeEnvironment>false</LocalDebuggerMergeEnvironment>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)$(Platform)\$(Configuration)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

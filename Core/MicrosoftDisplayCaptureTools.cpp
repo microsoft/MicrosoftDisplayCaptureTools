@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "MicrosoftDisplayCaptureTools.h"
 #include "Framework.Core.g.cpp"
+#include "Utils.h"
 
 namespace winrt
 {
@@ -25,15 +26,16 @@ namespace std
 }
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
-// Constructor that uses the default logger
-Core::Core() : m_logger(winrt::make<winrt::Logger>().as<ILogger>())
-{
-    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
-}
+// Constructor that uses the default logger and no runtime settings
+Core::Core() : Core(winrt::make<winrt::Logger>().as<ILogger>(), nullptr) {}
 
-// Constructor taking a caller-defined logging class
-Core::Core(ILogger const& logger) : m_logger(logger)
+// Constructor taking a caller-defined logging class and a runtime settings object (which can be null)
+Core::Core(ILogger const& logger, IRuntimeSettings const& settings) : m_logger(logger), m_runtimeSettings(settings)
 {
+    Runtime::CreateRuntime(logger, settings);
+
+    auto predict = Runtime::GetRuntime().RuntimeSettings().GetSettingValueAsBool(L"OnlyPredictions");
+
     m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
 }
 
@@ -49,7 +51,7 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& cl
     // Load the capture card from the provided path.
     auto captureCardFactory = LoadInterfaceFromPath<IControllerFactory>(pluginPath, className);
 
-    auto captureCardController = captureCardFactory.CreateController(m_logger);
+    auto captureCardController = captureCardFactory.CreateController();
 
     m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version().ToString());
 
@@ -75,7 +77,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
     // Load the toolbox from the provided path.
     auto toolboxFactory = LoadInterfaceFromPath<IConfigurationToolboxFactory>(toolboxPath, className);
 
-    auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
+    auto toolbox = toolboxFactory.CreateConfigurationToolbox();
 
     m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version().ToString());
 
@@ -105,7 +107,7 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring
     
     try
     {
-        displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
+        displayEngine = displayEngineFactory.CreateDisplayEngine();
     }
     catch (...)
     {

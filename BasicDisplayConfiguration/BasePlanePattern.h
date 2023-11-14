@@ -4,7 +4,7 @@ namespace winrt::BasicDisplayConfiguration::implementation {
 
 struct BasePlanePattern : implements<BasePlanePattern, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationTool>
 {
-    BasePlanePattern(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    BasePlanePattern();
     winrt::hstring Name();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::ConfigurationToolCategory Category();
     winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IConfigurationToolRequirements Requirements();
@@ -20,8 +20,6 @@ private:
 
 private:
     std::wstring m_currentConfig;
-
-    const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 
     winrt::event_token m_drawOutputEventToken, m_drawPredictionEventToken;
 };

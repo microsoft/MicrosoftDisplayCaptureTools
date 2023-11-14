@@ -9,7 +9,7 @@ export namespace winrt::BasicDisplayConfiguration::implementation {
 
     struct RefreshRateTool : ToolBase::IntTool<RefreshRateTool>
     {
-        RefreshRateTool(Framework::ILogger const& logger);
+        RefreshRateTool();
 
         void ApplyToOutput(Display::IDisplayOutput displayOutput);
     };

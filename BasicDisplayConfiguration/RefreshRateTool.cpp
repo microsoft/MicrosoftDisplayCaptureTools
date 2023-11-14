@@ -2,6 +2,7 @@ module RefreshRateTool;
 
 import "pch.h";
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt
 {
 	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
@@ -13,8 +14,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
 {
 	static const winrt::hstring DefaultConfiguration = L"60";
 
-	RefreshRateTool::RefreshRateTool(winrt::ILogger const& logger) :
-        ToolBase::IntTool<RefreshRateTool>(L"RefreshRate", DefaultConfiguration, {L"30", L"60", L"100", L"120"}, logger)
+	RefreshRateTool::RefreshRateTool() :
+        ToolBase::IntTool<RefreshRateTool>(L"RefreshRate", DefaultConfiguration, {L"30", L"60", L"100", L"120"})
 	{}
 
 	void RefreshRateTool::ApplyToOutput(IDisplayOutput displayOutput)
@@ -29,6 +30,6 @@ namespace winrt::BasicDisplayConfiguration::implementation
             args.IsModeCompatible(fabs(presentationRate - m_configuration) < sc_refreshRateEpsilon);
         });
 
-        m_logger.LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
+        Logger().LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
 	}
 }

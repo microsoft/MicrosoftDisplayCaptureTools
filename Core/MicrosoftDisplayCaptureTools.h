@@ -60,7 +60,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     struct Core : CoreT<Core>
     {
         Core();
-        Core(Framework::ILogger const& logger);
+        Core(Framework::ILogger const& logger, Framework::IRuntimeSettings const& runtimeSettings);
 
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath);
@@ -90,11 +90,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             return MicrosoftDisplayCaptureTools::Framework::Version(0, 1, 0);
         };
 
-        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger Logger()
-        {
-            return m_logger;
-        }
-
     private:
 
         bool IsFrameworkLocked()
@@ -123,6 +118,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // The logging system for this framework instance
         const ILogger m_logger;
+
+        // The runtime settings wrapper for this framework instance
+        const IRuntimeSettings m_runtimeSettings;
 
         // Has a test locked components
         std::atomic_int32_t m_lockCount = 0;

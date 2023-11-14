@@ -3,6 +3,7 @@ import "pch.h";
 
 import PredictionRenderer;
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt
 {
     using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
@@ -29,10 +30,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
         {L"R8G8B8A8UIntNormalized_NotInterlaced_NotStereo", {false, false, DirectXPixelFormat::R8G8B8A8UIntNormalized, 24}}
     };
 
-    PixelFormatTool::PixelFormatTool(PixelFormatToolKind kind, winrt::ILogger const& logger) :
+    PixelFormatTool::PixelFormatTool(PixelFormatToolKind kind) :
         m_kind(kind),
-        m_currentConfig(DefaultConfiguration),
-        m_logger(logger)
+        m_currentConfig(DefaultConfiguration)
     {
     }
 
@@ -87,7 +87,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
         {
             // An invalid configuration was asked for
-            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+            Logger().LogError(L"An invalid configuration was requested: " + configuration);
 
             throw winrt::hresult_invalid_argument();
         }
@@ -111,7 +111,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
             }
         });
 
-        m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
+        Logger().LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
     }
 
     void PixelFormatTool::ApplyToPrediction(IPrediction displayPrediction)

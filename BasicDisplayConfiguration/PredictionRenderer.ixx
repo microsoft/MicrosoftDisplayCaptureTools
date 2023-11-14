@@ -4,6 +4,7 @@ import "pch.h";
 import RenderingUtils;
 
 using namespace RenderingUtils;
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 
 namespace winrt
 {
@@ -89,7 +90,7 @@ namespace PredictionRenderer {
 
     export struct Frame : winrt::implements<Frame, winrt::IRawFrame, winrt::IRawFrameRenderable>
     {
-        Frame(winrt::ILogger const& logger);
+        Frame();
 
         // Functions from IRawFrame
         winrt::IBuffer Data();
@@ -108,8 +109,6 @@ namespace PredictionRenderer {
         void SetImageApproximation(winrt::SoftwareBitmap bitmap);
 
     private:
-        const winrt::ILogger m_logger{nullptr};
-
         winrt::IBuffer m_data{nullptr};
         winrt::DisplayWireFormat m_format{nullptr};
         winrt::IMap<winrt::hstring, winrt::IInspectable> m_properties;
@@ -120,21 +119,19 @@ namespace PredictionRenderer {
 
     export struct FrameSet : winrt::implements<FrameSet, winrt::IRawFrameSet>
     {
-        FrameSet(winrt::ILogger const& logger);
+        FrameSet();
 
         winrt::IVector<winrt::IRawFrame> Frames();
         winrt::IMap<winrt::hstring, winrt::IInspectable> Properties();
 
     private:
-        const winrt::ILogger m_logger{nullptr};
-        
         winrt::IVector<winrt::IRawFrame> m_frames;
         winrt::IMap<winrt::hstring, winrt::IInspectable> m_properties;
     };
 
     export struct PredictionData : winrt::implements<PredictionData, winrt::IPredictionData>
     {
-        PredictionData(winrt::ILogger const& logger);
+        PredictionData();
 
         // IPredictionData implementation
 
@@ -152,8 +149,6 @@ namespace PredictionRenderer {
         winrt::CanvasDevice Device();
 
     private:
-        const winrt::ILogger m_logger{nullptr};
-
         winrt::CanvasDevice m_device{nullptr};
 
         winrt::IMap<winrt::hstring, winrt::IInspectable> m_properties;
@@ -171,7 +166,7 @@ namespace PredictionRenderer {
     /// </summary>
     export struct Prediction : winrt::implements<Prediction, winrt::IPrediction>
     {
-        Prediction(winrt::ILogger const& logger);
+        Prediction();
 
         winrt::IAsyncOperation<winrt::IRawFrameSet> FinalizePredictionAsync();
 
@@ -186,8 +181,6 @@ namespace PredictionRenderer {
         
 
     private:
-        const winrt::ILogger m_logger{nullptr};
-
         winrt::event<winrt::EventHandler<winrt::IPredictionData>> m_displaySetupCallback;
         winrt::event<winrt::EventHandler<winrt::IPredictionData>> m_renderSetupCallback;
         winrt::event<winrt::EventHandler<winrt::IPredictionData>> m_renderLoopCallback;
@@ -212,7 +205,7 @@ namespace PredictionRenderer {
             winrt::DisplayWireFormatHdrMetadata::None);
     }
 
-    PredictionData::PredictionData(winrt::ILogger const& logger) : m_logger(logger)
+    PredictionData::PredictionData()
     {
         m_properties = winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>();
 
@@ -234,13 +227,10 @@ namespace PredictionRenderer {
     {
         if (!m_device)
         {
-            bool useWarp = false;
-            if (m_properties.HasKey(L"UseWarp"))
-            {
-                useWarp = winrt::unbox_value<bool>(m_properties.Lookup(L"UseWarp"));
-            }
+            // Runtime parameters can specify that we should be running on hardware or WARP
+            bool useWarp = !RuntimeSettings().GetSettingValueAsBool(L"RenderOnHardware");
 
-            m_logger.LogNote(std::format(L"Creating prediction renderer on {} device", useWarp ? L"WARP" : L"default"));
+            Logger().LogNote(std::format(L"Creating prediction renderer on {} device", useWarp ? L"WARP" : L"hardware"));
 
             m_device = winrt::CanvasDevice::GetSharedDevice(useWarp);
         }
@@ -248,11 +238,11 @@ namespace PredictionRenderer {
         return m_device;
     }
 
-    Prediction::Prediction(winrt::ILogger const& logger) : m_logger(logger)
+    Prediction::Prediction()
     {
     }
 
-    Frame::Frame(winrt::ILogger const& logger) : m_logger(logger)
+    Frame::Frame()
     {
     }
 
@@ -310,7 +300,7 @@ namespace PredictionRenderer {
         m_bitmap = bitmap;
     }
 
-    FrameSet::FrameSet(winrt::ILogger const& logger) : m_logger(logger)
+    FrameSet::FrameSet()
     {
         m_frames = winrt::single_threaded_vector<winrt::IRawFrame>();
     }
@@ -350,7 +340,7 @@ namespace PredictionRenderer {
     //          /
     // Plane X -
     //
-    winrt::IAsyncOperation<winrt::IRawFrame> RenderPredictionFrame(FrameInformation& frameInformation, winrt::CanvasDevice device, winrt::ILogger const& logger)
+    winrt::IAsyncOperation<winrt::IRawFrame> RenderPredictionFrame(FrameInformation& frameInformation, winrt::CanvasDevice device)
     {
         co_await winrt::resume_background();
 
@@ -584,7 +574,7 @@ namespace PredictionRenderer {
         // 5. Ensure that the copy started in 2 is finished
         {
             // 1. Create an output frame object
-            auto frame = winrt::make_self<Frame>(logger);
+            auto frame = winrt::make_self<Frame>();
             frame->Resolution(winrt::SizeInt32(postBlendTarget.SizeInPixels().Width, postBlendTarget.SizeInPixels().Height));
             frame->DataFormat(frameInformation.WireFormat);
 
@@ -611,8 +601,8 @@ namespace PredictionRenderer {
                 auto softwareBitmap = winrt::SoftwareBitmap::CreateCopyFromBuffer(
                     buffer,
                     winrt::BitmapPixelFormat::Rgba8,
-                    frameInformation.TargetModeSize.Width,
-                    frameInformation.TargetModeSize.Height);
+                    (int32_t)frameInformation.TargetModeSize.Width,
+                    (int32_t)frameInformation.TargetModeSize.Height);
 
                 // Return the SoftwareBitmap
                 co_return softwareBitmap;
@@ -658,7 +648,7 @@ namespace PredictionRenderer {
         co_await winrt::resume_background();
 
         // Create the prediction data object
-        auto predictionData = winrt::make_self<PredictionData>(m_logger);
+        auto predictionData = winrt::make_self<PredictionData>();
 
         // TODO: add a callback for test setup that sets things like whether to use warp, how many frames, etc.
 
@@ -671,8 +661,6 @@ namespace PredictionRenderer {
         predictionData->Frames().resize(frameCount);
 
         auto canvasDevice = predictionData->Device();
-
-        // TODO: add a reference to the specific underlying device back to the prediction data stuff somehow
 
         // TODO: Should have options for per-frame and collective callbacks
 
@@ -697,7 +685,7 @@ namespace PredictionRenderer {
         }
 
         // Create the output frame collection
-        auto predictedFrames = winrt::make<FrameSet>(m_logger);
+        auto predictedFrames = winrt::make<FrameSet>();
         predictedFrames.Frames().Clear();
 
         {
@@ -705,7 +693,7 @@ namespace PredictionRenderer {
             std::vector<winrt::IAsyncOperation<winrt::IRawFrame>> frameRenderTasks;
             for (auto& frame : predictionData->Frames())
             {
-                frameRenderTasks.push_back(RenderPredictionFrame(frame, canvasDevice, m_logger));
+                frameRenderTasks.push_back(RenderPredictionFrame(frame, canvasDevice));
             }
 
             // Wait for all of the render tasks to complete and collect the results

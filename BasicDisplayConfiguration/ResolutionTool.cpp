@@ -3,18 +3,20 @@ import PredictionRenderer;
 
 import "pch.h";
 
-namespace winrt {
-using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
-using namespace MicrosoftDisplayCaptureTools::Display;
-using namespace MicrosoftDisplayCaptureTools::Framework;
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
+namespace winrt
+{
+    using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
+    using namespace MicrosoftDisplayCaptureTools::Display;
+    using namespace MicrosoftDisplayCaptureTools::Framework;
 } // namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation {
 
 static const winrt::hstring DefaultConfiguration = L"1920x1080";
 
-ResolutionTool::ResolutionTool(ResolutionToolKind kind, winrt::ILogger const& logger) :
-    ToolBase::SizeTool<ResolutionTool>(L"Resolution", DefaultConfiguration, {L"1600x900", L"1920x1080", L"3840x2160"}, logger),
+ResolutionTool::ResolutionTool(ResolutionToolKind kind) :
+    ToolBase::SizeTool<ResolutionTool>(L"Resolution", DefaultConfiguration, {L"1600x900", L"1920x1080", L"3840x2160"}),
     m_kind(kind)
 {
 }
@@ -50,7 +52,7 @@ void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
         }
     });
 
-    m_logger.LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
+    Logger().LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
 }
 
 void ResolutionTool::ApplyToPrediction(IPrediction displayPrediction)

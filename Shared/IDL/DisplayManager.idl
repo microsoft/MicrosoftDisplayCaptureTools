@@ -205,9 +205,9 @@ namespace MicrosoftDisplayCaptureTools.Display
         // Create
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //     Creates an IDisplayEngine implementation instance with a defined logger.
+        //     Creates an IDisplayEngine implementation instance
         //
-        IDisplayEngine CreateDisplayEngine(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        IDisplayEngine CreateDisplayEngine();
     };
 
 } // namespace MicrosoftDisplayCaptureTools. Display

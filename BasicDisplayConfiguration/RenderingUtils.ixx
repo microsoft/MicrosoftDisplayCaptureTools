@@ -105,13 +105,13 @@ export std::vector<float> CreateGammaTransferCurve(
         switch (sourceGamma)
         {
         case GammaType::G10:
-            for (auto i = 0; i < gammaStops; i++)
+            for (unsigned long i = 0; i < gammaStops; i++)
             {
                 gammaArray[i] = (float)i / (gammaStops - 1);
             }
             break;
         case GammaType::G22:
-            for (auto i = 0; i < gammaStops; i++)
+            for (unsigned long i = 0; i < gammaStops; i++)
             {
                 float stop = (float)i / (gammaStops - 1);
                 gammaArray[i] = stop <= 0.04045f ? stop / 12.92f : std::powf((stop + 0.055f) / 1.055f, 2.4f);

@@ -216,6 +216,12 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
             get;
         };
 
+        // Get the runtime settings of this implementation
+        MicrosoftDisplayCaptureTools.Framework.IRuntimeSettings RuntimeSettings
+        {
+            get;
+        };
+
         // EnumerateDisplayInputs
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
@@ -249,9 +255,9 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         // Create
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //     Creates an IController implementation instance with a defined logger.
+        //     Creates an IController implementation instance
         //
-        IController CreateController(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        IController CreateController();
     };
 
     enum ControllerFirmwareState

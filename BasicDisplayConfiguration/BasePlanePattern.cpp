@@ -7,6 +7,7 @@ import PredictionRenderer;
 
 #define PATTERN_SQUARE_SIZE 50.f
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt
 {
 	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
@@ -46,9 +47,8 @@ namespace winrt::BasicDisplayConfiguration::implementation
         { Windows::Graphics::DirectX::DirectXPixelFormat::R8G8B8A8UIntNormalized, 4 }
 	};
 
-	BasePlanePattern::BasePlanePattern(winrt::ILogger const& logger) :
-        m_currentConfig(DefaultConfiguration),
-        m_logger(logger)
+	BasePlanePattern::BasePlanePattern() :
+        m_currentConfig(DefaultConfiguration)
 	{
 	}
 
@@ -96,7 +96,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
         if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
         {
             // An invalid configuration was asked for
-            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+            Logger().LogError(L"An invalid configuration was requested: " + configuration);
 
             throw winrt::hresult_invalid_argument();
         }
@@ -107,14 +107,14 @@ namespace winrt::BasicDisplayConfiguration::implementation
 	void BasePlanePattern::ApplyToOutput(IDisplayOutput displayOutput)
     {
         m_drawOutputEventToken = displayOutput.RenderSetupCallback([this](const auto&, IRenderSetupToolArgs args) {
-            m_logger.LogNote(L"Using " + Name() + L": " + m_currentConfig);
+            Logger().LogNote(L"Using " + Name() + L": " + m_currentConfig);
 
             auto sourceModeFormat = args.Properties().ActiveMode().SourcePixelFormat();
             auto sourceModeResolution = args.Properties().ActiveMode().SourceResolution();
 
             if (SupportedFormatsWithSizePerPixel.find(sourceModeFormat) == SupportedFormatsWithSizePerPixel.end())
             {
-                m_logger.LogError(L"BasePlanePattern does not support the plane pixel format.");
+                Logger().LogError(L"BasePlanePattern does not support the plane pixel format.");
                 throw winrt::hresult_invalid_argument();
                 return;
             }
@@ -128,7 +128,7 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
                 if (!planePropertiesInterop)
                 {
-                    m_logger.LogError(Name() + L": this tool requires the DisplayEngine to expose IDisplayEnginePlanePropertiesInterop.");
+                    Logger().LogError(Name() + L": this tool requires the DisplayEngine to expose IDisplayEnginePlanePropertiesInterop.");
                     throw winrt::hresult_class_not_available();
                 }
 
@@ -235,14 +235,14 @@ namespace winrt::BasicDisplayConfiguration::implementation
 
                         if (basePlanesPerFrame > 1)
                         {
-                            m_logger.LogError(Name() + L": More than one plane has been designated the 'base' plane per frame!");
+                            Logger().LogError(Name() + L": More than one plane has been designated the 'base' plane per frame!");
                             throw winrt::hresult_invalid_argument();
                         }
 
                         auto pixelFormat = PixelFormatFromPlaneInformation(plane);
                         if (pixelFormat == DirectXPixelFormat::Unknown)
                         {
-                            m_logger.LogError(Name() + L": The plane format configuration (color type and color space) is not supported by this tool!");
+                            Logger().LogError(Name() + L": The plane format configuration (color type and color space) is not supported by this tool!");
                             throw winrt::hresult_invalid_argument();
                         }
 

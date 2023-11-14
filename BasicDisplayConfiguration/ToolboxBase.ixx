@@ -6,6 +6,7 @@ using namespace winrt::Windows::Graphics;
 using namespace winrt::MicrosoftDisplayCaptureTools::ConfigurationTools;
 using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 using namespace winrt::MicrosoftDisplayCaptureTools::Display;
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 
 // Contains methods which convert between configuration strings and the tool's internal data type.
 export namespace ToolConfigConversions {
@@ -57,14 +58,12 @@ export namespace ToolBase {
         BasicToolBase(
             winrt::hstring name,
             winrt::hstring defaultConfig,
-            std::initializer_list<winrt::hstring> supportedConfigs,
-            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger)
+            std::initializer_list<winrt::hstring> supportedConfigs)
         {
             m_name = name;
             m_defaultConfig = ToolConfigConversions::FromConfigString<TDataType>(defaultConfig);
             m_configuration = m_defaultConfig;
             m_supportedConfigs = supportedConfigs;
-            m_logger = logger;
         }
 
         winrt::hstring Name()
@@ -101,7 +100,7 @@ export namespace ToolBase {
             if (std::end(m_supportedConfigs) == std::find(m_supportedConfigs.begin(), m_supportedConfigs.end(), configuration))
             {
                 // An invalid configuration was asked for
-                m_logger.LogError(L"An invalid configuration was requested: " + configuration);
+                Logger().LogError(L"An invalid configuration was requested: " + configuration);
 
                 throw winrt::hresult_invalid_argument();
             }
@@ -120,7 +119,6 @@ export namespace ToolBase {
         TDataType m_defaultConfig;
         TDataType m_configuration;
         std::vector<winrt::hstring> m_supportedConfigs;
-        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
         std::map<winrt::hstring, winrt::event_token> m_eventTokens;
     };
 
@@ -152,12 +150,11 @@ export namespace ToolBase {
     struct ToolFactory<int, TDerived>
     {
         IConfigurationTool CreateTool(
-            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
             PCWSTR name,
             winrt::hstring defaultConfig,
             std::initializer_list<winrt::hstring> supportedConfigs)
         {
-            return winrt::make<IntTool<TDerived>>(name, defaultConfig, supportedConfigs, logger);
+            return winrt::make<IntTool<TDerived>>(name, defaultConfig, supportedConfigs);
         }
     };
 
@@ -165,12 +162,11 @@ export namespace ToolBase {
     struct ToolFactory<SizeInt32, TDerived>
     {
         IConfigurationTool CreateTool(
-            winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
             PCWSTR name,
             winrt::hstring defaultConfig,
             std::initializer_list<winrt::hstring> supportedConfigs)
         {
-            return winrt::make<SizeTool<TDerived>>(name, defaultConfig, supportedConfigs, logger);
+            return winrt::make<SizeTool<TDerived>>(name, defaultConfig, supportedConfigs);
         }
     };
 } // namespace ToolBase

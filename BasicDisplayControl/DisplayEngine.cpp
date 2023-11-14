@@ -5,6 +5,7 @@
 
 import MonitorControl;
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt {
     // Standard WinRT inclusions
     using namespace winrt::Windows::Foundation;
@@ -36,20 +37,14 @@ namespace winrt {
 #pragma warning(disable : 4100)
 
 namespace winrt::BasicDisplayControl::implementation {
-    winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
+    winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine()
     {
-        return winrt::make<DisplayEngine>(logger);
-    }
-
-    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) : m_logger(logger)
-    {
-        m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
+        return winrt::make<DisplayEngine>();
     }
 
     DisplayEngine::DisplayEngine()
     {
-        // Throw - callers should explicitly instantiate through the factory
-        throw winrt::hresult_illegal_method_call();
+        m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
     }
 
     DisplayEngine::~DisplayEngine()
@@ -64,13 +59,13 @@ namespace winrt::BasicDisplayControl::implementation {
     {
         try
         {
-            auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+            auto output = winrt::make<DisplayOutput>(target, m_displayManager);
 
             return output;
         }
         catch (...)
         {
-            m_logger.LogError(L"Unable to initialize display output.");
+            Logger().LogError(L"Unable to initialize display output.");
             return nullptr;
         }
     }
@@ -92,7 +87,7 @@ namespace winrt::BasicDisplayControl::implementation {
         if (!chosenTarget)
         {
             // The chosen target was not found - was the config file generated for this machine?
-            m_logger.LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
+            Logger().LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -100,8 +95,8 @@ namespace winrt::BasicDisplayControl::implementation {
     }
 
     // DisplayOutput
-    DisplayOutput::DisplayOutput(ILogger const& logger, DisplayTarget const& target, DisplayManager const& manager) :
-        m_logger(logger), m_displayTarget(target), m_displayManager(manager)
+    DisplayOutput::DisplayOutput(DisplayTarget const& target, DisplayManager const& manager) :
+        m_displayTarget(target), m_displayManager(manager)
     {
         // Refresh the display target
         RefreshTarget();
@@ -109,7 +104,7 @@ namespace winrt::BasicDisplayControl::implementation {
         if (!target)
         {
             // The chosen target was not found - was the config file generated for this machine?
-            m_logger.LogError(L"Attempted to initialize with a null display target.");
+            Logger().LogError(L"Attempted to initialize with a null display target.");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -117,7 +112,7 @@ namespace winrt::BasicDisplayControl::implementation {
         if (m_displayTarget.UsageKind() != winrt::DisplayMonitorUsageKind::SpecialPurpose)
         {
             m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
-                MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
+                MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId());
 
             // If we change the UsageKind for the displayTarget, make sure to go refresh the target
             DisplayTarget refreshedTarget = nullptr;
@@ -132,7 +127,7 @@ namespace winrt::BasicDisplayControl::implementation {
 
             if (!refreshedTarget)
             {
-                m_logger.LogError(L"Unable to locate the target display after marking it as 'Specialized'");
+                Logger().LogError(L"Unable to locate the target display after marking it as 'Specialized'");
                 throw winrt::hresult_changed_state();
             }
 
@@ -142,10 +137,10 @@ namespace winrt::BasicDisplayControl::implementation {
         ConnectTarget();
 
         // Instantiate properties object
-        m_properties = winrt::make_self<DisplayEngineProperties>(m_logger);
+        m_properties = winrt::make_self<DisplayEngineProperties>();
 
         // This DisplayEngine implementation only supports 1 plane
-        auto planeProperties = winrt::make_self<DisplayEnginePlaneProperties>(m_logger);
+        auto planeProperties = winrt::make_self<DisplayEnginePlaneProperties>();
         m_properties->m_planeProperties.push_back(planeProperties);
 
         // Mark the base plane as active
@@ -232,7 +227,7 @@ namespace winrt::BasicDisplayControl::implementation {
             }
 
             // The selected target is no longer showing up as current or connected!
-            m_logger.LogError(L"The selected target can no longer be found. Selected Target: " + m_displayTarget.StableMonitorId());
+            Logger().LogError(L"The selected target can no longer be found. Selected Target: " + m_displayTarget.StableMonitorId());
             throw winrt::hresult_changed_state();
         }
     }
@@ -266,7 +261,7 @@ namespace winrt::BasicDisplayControl::implementation {
         if (result.ErrorCode() != winrt::DisplayManagerResult::Success)
         {
             // We failed to acquire control of the target.
-            m_logger.LogError(
+            Logger().LogError(
                 winrt::hstring(L"Failed to acquire control of the target. Error: ") + winrt::to_hstring(result.ExtendedErrorCode()));
             throw result.ExtendedErrorCode();
         }
@@ -279,7 +274,7 @@ namespace winrt::BasicDisplayControl::implementation {
     // Rendering
     void DisplayOutput::StopRender()
     {
-        m_logger.LogNote(L"Stopping Renderer Thread");
+        Logger().LogNote(L"Stopping Renderer Thread");
 
         if (m_valid)
         {
@@ -313,14 +308,14 @@ namespace winrt::BasicDisplayControl::implementation {
                 if (m_displaySetupCallback)
                 {
                     auto displaySetupArgs =
-                        winrt::make_self<DisplaySetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>(), mode);
+                        winrt::make_self<DisplaySetupToolArgs>(m_properties.as<IDisplayEngineProperties>(), mode);
 
                     m_displaySetupCallback(*this, displaySetupArgs.as<IDisplaySetupToolArgs>());
 
                     if (displaySetupArgs->Compatible())
                     {
                         // we have a mode matching the requirements.
-                        m_logger.LogNote(L"Found an acceptable mode.");
+                        Logger().LogNote(L"Found an acceptable mode.");
 
                         m_properties->ActiveMode(mode);
                         return true;
@@ -331,7 +326,7 @@ namespace winrt::BasicDisplayControl::implementation {
             // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
             // to auto-configure. So log a warning instead of an error to assist the user. If this is an actual error case, 
             // later operations will fail from this case and log the error.
-            m_logger.LogWarning(L"No display mode fit the selected options");
+            Logger().LogWarning(L"No display mode fit the selected options");
             return false;
         }
 
@@ -340,7 +335,7 @@ namespace winrt::BasicDisplayControl::implementation {
 
     bool DisplayOutput::PrepareRender()
     {
-        m_logger.LogNote(L"Preparing Renderer Thread");
+        Logger().LogNote(L"Preparing Renderer Thread");
 
         m_presenting = false;
 
@@ -354,7 +349,7 @@ namespace winrt::BasicDisplayControl::implementation {
 
         if (result.Status() != DisplayStateOperationStatus::Success)
         {
-            m_logger.LogError(L"Applying modes to the display failed.");
+            Logger().LogError(L"Applying modes to the display failed.");
         }
 
         m_renderThread = std::thread(&DisplayOutput::RenderLoop, this);
@@ -372,7 +367,7 @@ namespace winrt::BasicDisplayControl::implementation {
     {
         winrt::init_apartment();
 
-        m_logger.LogNote(L"Starting Render");
+        Logger().LogNote(L"Starting Render");
 
         uint64_t frameCounter = 0;
 
@@ -470,12 +465,12 @@ namespace winrt::BasicDisplayControl::implementation {
 
         // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
         // actual scan out starts.
-        auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
+        auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_properties.as<IDisplayEngineProperties>());
         if (m_renderSetupCallback)
             m_renderSetupCallback(*this, renderSetupArgs);
 
         // Create the callback args object for per-frame rendering tools
-        auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
+        auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_properties.as<IDisplayEngineProperties>());
 
         // Render and present until termination is signaled
         while (m_valid)
@@ -499,12 +494,12 @@ namespace winrt::BasicDisplayControl::implementation {
             renderLoopArgs->FrameNumber(++frameCounter);
         }
 
-        m_logger.LogNote(L"Stopping Render");
+        Logger().LogNote(L"Stopping Render");
     }
 
     // DisplayEngineProperties
-    DisplayEngineProperties::DisplayEngineProperties(winrt::ILogger const& logger) :
-        m_resolution({0, 0}), m_refreshRate(0.), m_mode(nullptr), m_requeryMode(true), m_logger(logger)
+    DisplayEngineProperties::DisplayEngineProperties() :
+        m_resolution({0, 0}), m_refreshRate(0.), m_mode(nullptr), m_requeryMode(true)
     {
     }
 
@@ -561,8 +556,8 @@ namespace winrt::BasicDisplayControl::implementation {
         return m_requeryMode;
     }
 
-    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-        m_logger(logger), m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
+    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties() :
+        m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
     {
     }
 

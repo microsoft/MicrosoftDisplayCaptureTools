@@ -10,6 +10,7 @@ import RefreshRateTool;
 
 import PredictionRenderer;
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt
 {
     using namespace winrt::Windows::Data::Json;
@@ -19,24 +20,18 @@ namespace winrt
 
 namespace winrt::BasicDisplayConfiguration::implementation
 {
-    winrt::IConfigurationToolbox ToolboxFactory::CreateConfigurationToolbox(winrt::ILogger const& logger)
+    winrt::IConfigurationToolbox ToolboxFactory::CreateConfigurationToolbox()
     {
-        return winrt::make<Toolbox>(logger);
+        return winrt::make<Toolbox>();
     }
 
     Toolbox::Toolbox()
-    {
-        // Throw - callers should explicitly instantiate through the factory
-        throw winrt::hresult_illegal_method_call();
-    }
-
-    Toolbox::Toolbox(winrt::ILogger const& logger) : m_logger(logger)
     {
     }
 
     MicrosoftDisplayCaptureTools::ConfigurationTools::IPrediction Toolbox::CreatePrediction()
     {
-        return winrt::make<PredictionRenderer::Prediction>(m_logger);
+        return winrt::make<PredictionRenderer::Prediction>();
     }
 
     enum class Tools
@@ -80,23 +75,23 @@ namespace winrt::BasicDisplayConfiguration::implementation
         switch (MapNameToTool[toolName])
         {
         case Tools::Pattern:
-            return winrt::make<BasePlanePattern>(m_logger);
+            return winrt::make<BasePlanePattern>();
         case Tools::RefreshRate:
-            return winrt::make<RefreshRateTool>(m_logger);
+            return winrt::make<RefreshRateTool>();
         case Tools::TargetResolution:
-            return winrt::make<ResolutionTool>(ResolutionToolKind::TargetResolution, m_logger);
+            return winrt::make<ResolutionTool>(ResolutionToolKind::TargetResolution);
         case Tools::SourceResolution:
-            return winrt::make<ResolutionTool>(ResolutionToolKind::SourceResolution, m_logger);
+            return winrt::make<ResolutionTool>(ResolutionToolKind::SourceResolution);
         case Tools::PlaneResolution:
-            return winrt::make<ResolutionTool>(ResolutionToolKind::PlaneResolution, m_logger);
+            return winrt::make<ResolutionTool>(ResolutionToolKind::PlaneResolution);
         case Tools::SourcePixelFormat:
-            return winrt::make<PixelFormatTool>(PixelFormatToolKind::SourcePixelFormat, m_logger);
+            return winrt::make<PixelFormatTool>(PixelFormatToolKind::SourcePixelFormat);
         case Tools::SurfacePixelFormat:
-            return winrt::make<PixelFormatTool>(PixelFormatToolKind::PlanePixelFormat, m_logger);
+            return winrt::make<PixelFormatTool>(PixelFormatToolKind::PlanePixelFormat);
         }
 
         // The caller has asked for a tool that is not exposed from this toolbox
-        m_logger.LogAssert(Name() + L"::GetTool was called with invalid tool name: " + toolName);
+        Logger().LogAssert(Name() + L"::GetTool was called with invalid tool name: " + toolName);
         throw winrt::hresult_invalid_argument();
     }
 

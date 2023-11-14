@@ -250,17 +250,18 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
 
     //
     // The required static initializer for IConfigurationToolbox implementations. This is how other components of this
-    // project will instantiate IController implementations.
+    // project will instantiate IConfigurationToolbox implementations.
     //
     // This is to be implemented by toolbox producer.
     //
     interface IConfigurationToolboxFactory
     {
-        // Create
+
+        // CreateConfigurationToolbox
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //     Creates an IController implementation instance with a defined logger.
+        //     Creates an IConfigurationToolbox implementation instance
         //
-        IConfigurationToolbox CreateConfigurationToolbox(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        IConfigurationToolbox CreateConfigurationToolbox();
     };
 } // namespace MicrosoftDisplayCaptureTools. ConfigurationTools

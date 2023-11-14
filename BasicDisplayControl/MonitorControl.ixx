@@ -5,6 +5,7 @@ module;
 
 export module MonitorControl;
 
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt {
     // Standard WinRT inclusions
     using namespace winrt::Windows::Foundation;
@@ -26,8 +27,8 @@ export LUID LuidFromAdapterId(winrt::Windows::Graphics::DisplayAdapterId id)
 export class MonitorControl
 {
 public:
-    MonitorControl(LUID adapterId, UINT targetId, winrt::ILogger const& logger) :
-        m_luid(adapterId), m_targetId(targetId), m_removeSpecializationOnExit(true), m_logger(logger)
+    MonitorControl(LUID adapterId, UINT targetId) :
+        m_luid(adapterId), m_targetId(targetId), m_removeSpecializationOnExit(true)
     {
         DISPLAYCONFIG_GET_MONITOR_SPECIALIZATION getSpecialization{};
         getSpecialization.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_SPECIALIZATION;
@@ -39,7 +40,7 @@ public:
 
         if (0 == getSpecialization.isSpecializationAvailableForSystem)
         {
-            m_logger.LogError(L"Monitor specialization is not available - have you enabled test signing?");
+            Logger().LogError(L"Monitor specialization is not available - have you enabled test signing?");
             throw winrt::hresult_error();
         }
 

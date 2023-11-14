@@ -32,7 +32,7 @@ namespace MicrosoftDisplayCaptureTools::Tests
     winrt::IAsyncAction SaveFrameToDisk(winrt::IRawFrame frame, winrt::StorageFolder folder, winrt::hstring fileNamePrefix)
     {
         {
-            auto filePathRaw = fileNamePrefix + L".hwhlk";
+            auto filePathRaw = fileNamePrefix + L"raw.hwhlk";
             auto file = co_await folder.CreateFileAsync(filePathRaw, winrt::CreationCollisionOption::ReplaceExisting);
 
             co_await winrt::FileIO::WriteBufferAsync(file, frame.Data());
@@ -43,7 +43,7 @@ namespace MicrosoftDisplayCaptureTools::Tests
         {
             auto softwareBitmap = co_await renderableFrame.GetRenderableApproximationAsync();
 
-            auto filePathImage = fileNamePrefix + L".png";
+            auto filePathImage = fileNamePrefix + L"approximate.png";
             auto file = co_await folder.CreateFileAsync(filePathImage, winrt::CreationCollisionOption::ReplaceExisting);
             auto encoder = co_await winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
                 winrt::Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(), co_await file.OpenAsync(winrt::FileAccessMode::ReadWrite));
@@ -249,7 +249,7 @@ void SingleScreenTestMatrix::Test()
             auto renderer = displayOutput.StartRender();
             if (!renderer)
             {
-                WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, "Could not run this test due to mode incompatibilities.");
+                Log::Result(TestResults::Blocked, "Could not run this test due to mode incompatibilities.");
                 return;
             }
 
@@ -274,8 +274,8 @@ void SingleScreenTestMatrix::Test()
         if (!predictionFrameSet)
         {
             // We synchronize on the data being generated, so that any errors that happen there will be flagged
-            // synchronously in this test method. However, by default we will save the data asynchronously - to
-            // make best use of the testing time with the physical devices.
+            // synchronously in this test method. However, by default we will save the data asynchronously. This
+            // helps make best use of the testing time with the physical devices.
             predictionFrameSet = predictionDataAsync.get();
         }
 
