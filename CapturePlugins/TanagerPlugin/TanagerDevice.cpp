@@ -21,8 +21,7 @@ namespace winrt::TanagerPlugin::implementation
 {
 const unsigned char it68051i2cAddress = 0x48;
 
-TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger const& logger) :
-    m_logger(logger),
+TanagerDevice::TanagerDevice() :
     m_usbDevice(nullptr),
     m_deviceId(deviceId),
     hdmiChip(
@@ -60,7 +59,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         m_fpga.SysReset(); // Blocks until FPGA is ready
 		hdmiChip.Initialize();
 
-        m_logger.LogNote(L"Initializing Tanager Device: " + m_deviceId);
+        Logger().LogNote(L"Initializing Tanager Device: " + m_deviceId);
 	}
 
 	TanagerDevice::~TanagerDevice()
@@ -71,8 +70,8 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 	{
 		return std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
 		{
-			winrt::make<TanagerDisplayInputHdmi>(this->weak_from_this(), m_logger),
-			winrt::make<TanagerDisplayInputDisplayPort>(this->weak_from_this(), m_logger)
+			winrt::make<TanagerDisplayInputHdmi>(this->weak_from_this()),
+			winrt::make<TanagerDisplayInputDisplayPort>(this->weak_from_this())
 		};
 	}
 
@@ -179,16 +178,15 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
     TanagerDisplayCapture::TanagerDisplayCapture(
         std::vector<byte> rawCaptureData,
         winrt::Windows::Graphics::SizeInt32 resolution,
-        winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps,
-        winrt::ILogger const& logger) :
-        m_extendedProps(extendedProps), m_logger(logger)
+        winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
+        m_extendedProps(extendedProps)
     {
         if (rawCaptureData.size() == 0)
         {
             throw hresult_invalid_argument();
         }
 
-        m_frameData = FrameData(m_logger);
+        m_frameData = FrameData();
 
         // TODO: isolate this into a header supporting different masks
         typedef struct
@@ -244,7 +242,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
         if (predictedFrameData.Resolution().Height != m_frameData.Resolution().Height || 
             predictedFrameData.Resolution().Width != m_frameData.Resolution().Width)
         {
-            m_logger.LogError(winrt::hstring(L"Predicted resolution (") + 
+            Logger().LogError(winrt::hstring(L"Predicted resolution (") + 
                 to_hstring(predictedFrameData.Resolution().Width) + L"," +
                 to_hstring(predictedFrameData.Resolution().Height) + L"), Captured Resolution(" + 
                 to_hstring(m_frameData.Resolution().Width) + L"," +
@@ -256,17 +254,17 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
 
         if (captureBuffer.Length() < predictBuffer.Length())
         {
-            m_logger.LogError(
+            Logger().LogError(
                 winrt::hstring(L"Capture should be at least as large as prediction") + std::to_wstring(captureBuffer.Length()) +
                 L", Predicted=" + std::to_wstring(predictBuffer.Length()));
         }
         else if (0 == memcmp(captureBuffer.data(), predictBuffer.data(), predictBuffer.Length()))
         {
-            m_logger.LogNote(L"Capture and Prediction perfectly match!");
+            Logger().LogNote(L"Capture and Prediction perfectly match!");
         }
         else
         {
-            m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+            Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
 
             {
                 auto filename = name + L"_Captured";
@@ -294,7 +292,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Saving captured data here: " + filename);
+                Logger().LogNote(L"Saving captured data here: " + filename);
             }
             {
                 auto filename = name + L"_Predicted";
@@ -330,7 +328,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Saving predicted data here: " + filename);
+                Logger().LogNote(L"Saving predicted data here: " + filename);
             }
 
             struct PixelStruct
@@ -363,7 +361,7 @@ TanagerDevice::TanagerDevice(winrt::param::hstring deviceId, winrt::ILogger cons
             {
                 std::wstring msg;
                 std::format_to(std::back_inserter(msg), "{:.2f}% of sampled pixels did not match!", diff*100);
-                m_logger.LogError(msg);
+                Logger().LogError(msg);
 
                 return false;
             }

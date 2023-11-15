@@ -12,7 +12,6 @@ struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptur
 {
     DisplayCapture(
         winrt::Windows::Media::Capture::CapturedFrame frame,
-        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps);
 
     bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IPredictionData prediction);
@@ -21,7 +20,6 @@ struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptur
 
 private:
     winrt::MicrosoftDisplayCaptureTools::Framework::FrameData m_frameData{nullptr};
-    const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_extendedProps{nullptr};
 };
 
@@ -58,7 +56,7 @@ struct CaptureCapabilities : implements<CaptureCapabilities, winrt::MicrosoftDis
 
 struct DisplayInput : implements<DisplayInput, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
 {
-    DisplayInput(winrt::hstring deviceId, winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    DisplayInput(winrt::hstring deviceId);
 
     winrt::hstring Name();
 
@@ -71,7 +69,7 @@ struct DisplayInput : implements<DisplayInput, winrt::MicrosoftDisplayCaptureToo
     // Methods that this particular capture card can't support
     void SetDescriptor(winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor descriptor)
     {
-        m_logger.LogAssert(L"SetDescriptor not available for this capture card.");
+        Logger().LogAssert(L"SetDescriptor not available for this capture card.");
     }
 
 private:
@@ -83,14 +81,11 @@ private:
     winrt::com_ptr<DisplayCapture> m_capture;
 
     winrt::Windows::Media::Capture::MediaCapture m_mediaCapture{nullptr};
-
-    const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
 };
 
 struct Controller : ControllerT<Controller>
 {
     Controller();
-    Controller(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
     hstring Name();
     com_array<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
@@ -105,15 +100,13 @@ private:
     std::vector<winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
 
     winrt::hstring m_usbIdFromConfigFile = L"";
-
-    const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
 };
 
 struct ControllerFactory : ControllerFactoryT<ControllerFactory>
 {
     ControllerFactory() = default;
 
-    winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController CreateController(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+    winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController CreateController();
 };
 } // namespace winrt::GenericCaptureCardPlugin::implementation
 

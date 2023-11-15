@@ -34,7 +34,7 @@ namespace winrt::TanagerPlugin::implementation
         // If no board is detected, this object will not be valid.
         if (m_captureBoards.size() == 0)
         {
-            m_logger.LogWarning(L"No board detected!");
+            Logger().LogWarning(L"No board detected!");
             throw winrt::hresult_access_denied();
         }
 

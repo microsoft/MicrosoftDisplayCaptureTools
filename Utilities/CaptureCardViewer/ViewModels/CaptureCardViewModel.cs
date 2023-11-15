@@ -48,7 +48,7 @@ namespace CaptureCardViewer.ViewModels
 
 		public ReadOnlyObservableCollection<DisplayInputViewModel> Inputs { get; }
 
-		[ICommand]
+		[RelayCommand]
 		async void UpdateFirmware()
 		{
 			if (Firmware == null)

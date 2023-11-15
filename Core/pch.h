@@ -21,6 +21,7 @@
 
 // Shared Utilities
 #include "BinaryLoader.h"
+#include "TestRuntime.h"
 
 // Component Headers
 #include "winrt/MicrosoftDisplayCaptureTools.Framework.h"

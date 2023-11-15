@@ -4,20 +4,20 @@ using namespace WEX::Common;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
-namespace winrt {
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-using namespace MicrosoftDisplayCaptureTools;
-using namespace Windows::Devices::Display;
-using namespace Windows::Devices::Display::Core;
-using namespace Windows::Graphics::Imaging;
-using namespace MicrosoftDisplayCaptureTools::Tests::Logging;
+namespace winrt
+{
+    using namespace Windows::Foundation;
+    using namespace Windows::Foundation::Collections;
+    using namespace MicrosoftDisplayCaptureTools;
+    using namespace Windows::Devices::Display;
+    using namespace Windows::Devices::Display::Core;
+    using namespace Windows::Graphics::Imaging;
+    using namespace MicrosoftDisplayCaptureTools::Tests::Logging;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 } // namespace winrt
 
 winrt::Framework::Core g_framework{nullptr};
-winrt::Framework::ILogger g_logger{nullptr};
 winrt::IVector<winrt::Framework::ISourceToSinkMapping> g_displayMap;
-bool g_predictionOnly = false;
 
 winrt::Framework::IRuntimeSettings g_runtimeSettings{nullptr};
 
@@ -26,6 +26,7 @@ namespace MicrosoftDisplayCaptureTools::Tests {
 BEGIN_MODULE()
     MODULE_PROPERTY(L"Area", L"Graphics")
     MODULE_PROPERTY(L"SubArea", L"Display")
+    // TODO: Re-enable this
     //MODULE_PROPERTY(L"RunAs", L"Elevated")
 END_MODULE()
 
@@ -33,16 +34,13 @@ MODULE_SETUP(ModuleSetup)
 {
     winrt::init_apartment();
 
-    // Create WEX logger to log tests/results/errors
-    g_logger = winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>();
-    g_runtimeSettings = winrt::make<RuntimeSettings::RuntimeSettings>();
+    // Load the framework with new instances of the logger and runtime settings types from this module.
+    g_framework = winrt::Framework::Core(
+        winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>(), winrt::make<RuntimeSettings::RuntimeSettings>());
 
-    // Load the framework
-    g_framework = winrt::Framework::Core(g_logger, g_runtimeSettings);
-
-    if (SUCCEEDED(RuntimeParameters::TryGetValue(RunPredictionOnlyRuntimeParameter, g_predictionOnly)) && g_predictionOnly)
+    if (winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
-        g_logger.LogNote(L"Running tests in prediction-only mode.");
+        winrt::Logger().LogNote(L"Running tests in prediction-only mode.");
     }
 
     // If the user specified a particular configuration file in the test command, use it. Otherwise,
@@ -59,7 +57,7 @@ MODULE_SETUP(ModuleSetup)
     winrt::Display::IDisplayEngine displayEngineForMapping = nullptr;
     winrt::ConfigurationTools::IConfigurationToolbox toolboxForMapping = nullptr;
 
-    if (!g_predictionOnly)
+    if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         auto displayEngines = g_framework.GetDisplayEngines();
 
@@ -80,9 +78,9 @@ MODULE_SETUP(ModuleSetup)
         }
     }
 
-    g_logger.LogNote(L"Loaded plugins");
+    winrt::Logger().LogNote(L"Loaded plugins");
 
-    if (!g_predictionOnly)
+    if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         bool disableFirmwareUpdate = false;
         RuntimeParameters::TryGetValue(DisableFirmwareUpdateRuntimeParameter, disableFirmwareUpdate);
@@ -96,19 +94,19 @@ MODULE_SETUP(ModuleSetup)
                 auto firmwareState = firmwareInterface.FirmwareState();
                 auto firmwareVersion = firmwareInterface.FirmwareVersion();
 
-                g_logger.LogNote((std::wstring(L"Firmware version detected:\n") + firmwareVersion).c_str());
+                winrt::Logger().LogNote((std::wstring(L"Firmware version detected:\n") + firmwareVersion).c_str());
 
                 if (!disableFirmwareUpdate)
                 {
                     switch (firmwareState)
                     {
                     case winrt::CaptureCard::ControllerFirmwareState::ManualUpdateNeeded:
-                        g_logger.LogError(L"The capture device requires a manual firmware update, or the firmware version cannot "
+                        winrt::Logger().LogError(L"The capture device requires a manual firmware update, or the firmware version cannot "
                                           L"be identified.");
                         return false;
 
                     case winrt::CaptureCard::ControllerFirmwareState::UpdateRequired:
-                        g_logger.LogNote(L"The capture device requires a firmware update. Starting update...");
+                        winrt::Logger().LogNote(L"The capture device requires a firmware update. Starting update...");
 
                         try
                         {
@@ -116,11 +114,11 @@ MODULE_SETUP(ModuleSetup)
                             firmwareInterface.UpdateFirmwareAsync().get();
 
                             firmwareVersion = firmwareInterface.FirmwareVersion();
-                            g_logger.LogNote((std::wstring(L"Successfully updated to new firmware version:\n") + firmwareVersion).c_str());
+                            winrt::Logger().LogNote((std::wstring(L"Successfully updated to new firmware version:\n") + firmwareVersion).c_str());
                         }
                         catch (...)
                         {
-                            g_logger.LogError(
+                            winrt::Logger().LogError(
                                 L"Failed to update capture device firmware. Please manually update the firmware and restart "
                                 L"the test.");
                             return false;
@@ -128,13 +126,13 @@ MODULE_SETUP(ModuleSetup)
                         break;
 
                     case winrt::CaptureCard::ControllerFirmwareState::UpdateAvailable:
-                        g_logger.LogWarning(L"A newer firmware version is available for the capture device but is not required. "
+                        winrt::Logger().LogWarning(L"A newer firmware version is available for the capture device but is not required. "
                                             L"For best results, "
                                             L"consider upgrading firmware.");
                         break;
 
                     case winrt::CaptureCard::ControllerFirmwareState::UpToDate:
-                        g_logger.LogNote(L"The capture device firmware is up to date!");
+                        winrt::Logger().LogNote(L"The capture device firmware is up to date!");
                         break;
                     }
                 }
@@ -145,16 +143,16 @@ MODULE_SETUP(ModuleSetup)
     auto frameworkLock = g_framework.LockFramework();
     if (!frameworkLock)
     {
-        g_logger.LogError(L"Unable to lock the framework during test setup.");
+        winrt::Logger().LogError(L"Unable to lock the framework during test setup.");
     }
 
-    if (!g_predictionOnly)
+    if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         // First see if the config file contained any display mappings, if so we will use these.
         g_displayMap = g_framework.GetSourceToSinkMappings(false, displayEngineForMapping, toolboxForMapping);
         if (g_displayMap.Size() == 0)
         {
-            g_logger.LogNote(
+            winrt::Logger().LogNote(
                 L"No display output to display capture device mapping from the configuration file - attempting to auto-map.");
 
             // if no display mappings were in the config file - attempt to figure out the mappings automatically
@@ -163,7 +161,7 @@ MODULE_SETUP(ModuleSetup)
 
             if (g_displayMap.Size() == 0)
             {
-                g_logger.LogError(
+                winrt::Logger().LogError(
                     L"Unable to determine any display output to display capture device mappings - tests cannot continue.");
             }
         }
@@ -177,7 +175,6 @@ MODULE_CLEANUP(ModuleCleanup)
     // enforce the order of main object cleanup
     g_displayMap = nullptr;
     g_framework = nullptr;
-    g_logger = nullptr;
 
     return true;
 }

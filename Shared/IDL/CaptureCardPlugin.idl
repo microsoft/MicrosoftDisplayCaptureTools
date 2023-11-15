@@ -216,12 +216,6 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
             get;
         };
 
-        // Get the runtime settings of this implementation
-        MicrosoftDisplayCaptureTools.Framework.IRuntimeSettings RuntimeSettings
-        {
-            get;
-        };
-
         // EnumerateDisplayInputs
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:

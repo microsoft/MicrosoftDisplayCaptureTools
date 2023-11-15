@@ -35,7 +35,7 @@ namespace CaptureCardViewer.ViewModels
 
 		public WorkspaceViewModel()
 		{
-			testFramework = new Core(Logger);
+			testFramework = new Core(Logger, null);
 			dispatcher = Dispatcher.CurrentDispatcher;
 			var command = this.LoadFromConfigFileCommand;
 
@@ -91,7 +91,7 @@ namespace CaptureCardViewer.ViewModels
 				.ForEach((engine) => DisplayEngines.Add(engine));
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void LoadFromConfigFile()
 		{
 			var dialog = new OpenFileDialog(); //file picker
@@ -103,7 +103,7 @@ namespace CaptureCardViewer.ViewModels
 					await Task.Run(() =>
 					{
 						// Create a new framework from scratch
-						var newInstance = new Core(Logger);
+						var newInstance = new Core(Logger, null);
 						newInstance.LoadConfigFile(dialog.FileName);
 
 						// Now that the configuration was successfully loaded, update the view models
@@ -120,7 +120,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Loading Display Manager file
-		[ICommand]
+		[RelayCommand]
 		async Task LoadDisplayEngineFromFile()
 		{
 			var dialog = new OpenFileDialog(); //file picker
@@ -145,7 +145,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Loading Capture Plugin file
-		[ICommand]
+		[RelayCommand]
 		async Task LoadCaptureCardFromFile()
 		{
 			var dialog = new OpenFileDialog();
@@ -173,7 +173,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Loading Toolbox file
-		[ICommand]
+		[RelayCommand]
 		async Task LoadToolboxFromFile()
 		{
 			var dialog = new OpenFileDialog();

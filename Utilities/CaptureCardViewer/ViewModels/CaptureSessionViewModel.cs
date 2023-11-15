@@ -106,7 +106,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 			}
 
-			[ICommand]
+			[RelayCommand]
 			void Connect()
 			{
 				try
@@ -181,7 +181,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Displaying frames & properties from the plugin
-		[ICommand]
+		[RelayCommand]
 		async void CaptureSingleFrame()
 		{
 			var displayOutput = SelectedEngineOutput;
@@ -208,19 +208,19 @@ namespace CaptureCardViewer.ViewModels
 			FramesCaptured += 1;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StartLiveCapture()
 		{
 			FramesCaptured = 0;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StopLiveCapture()
 		{
 			IsRunningLiveCapture = false;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StartOutputRender()
 		{
 			await Task.Run(() =>
@@ -258,7 +258,7 @@ namespace CaptureCardViewer.ViewModels
 			});
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StopOutputRender()
 		{
 			await Task.Run(() =>
@@ -274,7 +274,7 @@ namespace CaptureCardViewer.ViewModels
 			});
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void RenderPrediction()
 		{
 			var displayPrediction = Engine.CreatePrediction();
@@ -304,7 +304,7 @@ namespace CaptureCardViewer.ViewModels
 			PredictionSource = predictedBitmap;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void CompareCapture()
 		{
 			// Snap the current frames in case they change while we're comparing

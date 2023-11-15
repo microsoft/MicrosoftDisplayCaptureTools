@@ -50,7 +50,7 @@ namespace CaptureCardViewer.ViewModels
 			Capabilities = input.GetCapabilities();
 		}
 
-		[ICommand]
+		[RelayCommand]
 		void CreateCaptureSession()
 		{
 			if (Workspace.DisplayEngines.Count == 0)
@@ -64,7 +64,7 @@ namespace CaptureCardViewer.ViewModels
 			Workspace.Documents.Add(newSession);
 		}
 
-		[ICommand]
+		[RelayCommand]
 		void SetDescriptorFromFile()
 		{
 			var openDialog = new OpenFileDialog();

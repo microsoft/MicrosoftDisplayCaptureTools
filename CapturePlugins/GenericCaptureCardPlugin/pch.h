@@ -30,3 +30,7 @@
 
 // Include the headers for the displayengine components of these tools
 #include "winrt\MicrosoftDisplayCaptureTools.Display.h"
+
+// Include the header for the current test runtime
+#include "TestRuntime.h"
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;

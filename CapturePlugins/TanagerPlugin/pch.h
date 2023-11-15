@@ -19,6 +19,8 @@
 #include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
 #include "winrt/MicrosoftDisplayCaptureTools.Display.h"
 
+#include "TestRuntime.h"
+
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -27,10 +29,11 @@
 #include <iterator>
 
 #include "IteIt68051.h"
-
 #include "Controller.h"
 #include "TanagerDevice.h"
 #include "DisplayHelpers.h"
 
 #define TCA6416A_BANK_0 0
 #define TCA6416A_BANK_1 1
+
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;

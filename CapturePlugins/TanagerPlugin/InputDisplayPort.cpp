@@ -68,10 +68,10 @@ private:
     winrt::event_token m_displayOutputValidationToken;
 };
 
-TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> parent, winrt::ILogger const& logger) :
-    m_parent(parent), m_logger(logger)
+TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> parent) :
+    m_parent(parent)
 {
-    m_logger.LogNote(winrt::hstring(L"Initializing Tanager input: ") + Name());
+    Logger().LogNote(winrt::hstring(L"Initializing Tanager input: ") + Name());
 
     // Make sure that the HPD line is low to start with
     if (auto parent = m_parent.lock())
@@ -83,7 +83,7 @@ TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<Tan
 
 TanagerDisplayInputDisplayPort::~TanagerDisplayInputDisplayPort()
 {
-    m_logger.LogNote(winrt::hstring(L"Cleaning up Tanager input: ") + Name());
+    Logger().LogNote(winrt::hstring(L"Cleaning up Tanager input: ") + Name());
 
     // HPD out
     if (auto parent = m_parent.lock())
@@ -106,7 +106,7 @@ void TanagerDisplayInputDisplayPort::SetDescriptor(MicrosoftDisplayCaptureTools:
 
     if (descriptor.Type() != MicrosoftDisplayCaptureTools::Framework::MonitorDescriptorType::EDID)
     {
-        m_logger.LogAssert(L"Only EDID descriptors are currently supported.");
+        Logger().LogAssert(L"Only EDID descriptors are currently supported.");
     }
 
     auto edidDataView = descriptor.Data();
@@ -130,7 +130,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     auto parent = m_parent.lock();
     if (!parent)
     {
-        m_logger.LogError(L"Cannot obtain reference to Tanager device.");
+        Logger().LogError(L"Cannot obtain reference to Tanager device.");
         return nullptr;
     }
 
@@ -142,13 +142,13 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
 
     if (video_register_vector.empty())
     {
-        m_logger.LogError(L"Failed to read DRAM controller registers.");
+        Logger().LogError(L"Failed to read DRAM controller registers.");
         return nullptr;
     }
 
     if ((video_register_vector[0] & 0x01) == 0)
     {
-        m_logger.LogError(L"DRAM controller register reset bit not set.");
+        Logger().LogError(L"DRAM controller register reset bit not set.");
         return nullptr;
     }
 
@@ -163,7 +163,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     }
     if ((video_register_vector[0] & 0x03) != 0x03)
     {
-        m_logger.LogError(L"DRAM controller did not reset in time allowed.");
+        Logger().LogError(L"DRAM controller did not reset in time allowed.");
         return nullptr;
     }
 
@@ -172,7 +172,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     video_register_vector = parent->FpgaRead(0x30, 1);
     if (video_register_vector[0] != 0)
     {
-        m_logger.LogError(L"DRAM controller register did not zero.");
+        Logger().LogError(L"DRAM controller register did not zero.");
         return nullptr;
     }
 
@@ -180,7 +180,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     auto locked = parent->IsVideoLocked();
     if (!locked)
     {
-        m_logger.LogError(L"Video is not locked - check this capture card input's compatibility with the selected display mode.");
+        Logger().LogError(L"Video is not locked - check this capture card input's compatibility with the selected display mode.");
         return nullptr;
     }
 
@@ -198,12 +198,12 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
 
     if (video_register_vector.size() == 0)
     {
-        m_logger.LogError(L"Zero bytes of data returned from FpgaRead.");
+        Logger().LogError(L"Zero bytes of data returned from FpgaRead.");
         return nullptr;
     }
     if (loopCount >= loopLimit)
     {
-        m_logger.LogError(L"Timeout while waiting for video frame capture to complete.");
+        Logger().LogError(L"Timeout while waiting for video frame capture to complete.");
         return nullptr;
     }
 
@@ -261,7 +261,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     auto resolution = winrt::Windows::Graphics::SizeInt32();
     resolution = {timing.hActive, timing.vActive};
 
-    return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps, m_logger);
+    return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps);
 }
 
 void TanagerDisplayInputDisplayPort::FinalizeDisplayState()
@@ -271,12 +271,12 @@ void TanagerDisplayInputDisplayPort::FinalizeDisplayState()
         if (m_hasDescriptorChanged || !m_strongParent)
         {
             auto lock = std::scoped_lock(parent->SelectDisplayPort());
-            m_logger.LogNote(L"Hotplugging, this may take a few seconds...");
+            Logger().LogNote(L"Hotplugging, this may take a few seconds...");
 
             if (m_strongParent)
             {
                 // If this input has already been HPD'd in by this test - HPD out so that we start from a clean baseline
-                m_logger.LogNote(L"Input has been previously used in this test pass, hotplugging out first.");
+                Logger().LogNote(L"Input has been previously used in this test pass, hotplugging out first.");
                 auto hasDeviceChanged = WaitForDisplayDevicesChange();
                 parent->FpgaWrite(0x6, std::vector<byte>({0x12})); // HPD low
 
@@ -297,13 +297,13 @@ void TanagerDisplayInputDisplayPort::FinalizeDisplayState()
 
             if (AsyncStatus::Completed != hasDeviceChanged.wait_for(std::chrono::seconds(8)))
             {
-                m_logger.LogError(L"Did not detect a new device being plugged in after hotplugging DisplayPort.");
+                Logger().LogError(L"Did not detect a new device being plugged in after hotplugging DisplayPort.");
             }
         }
     }
     else
     {
-        m_logger.LogAssert(L"Cannot obtain reference to Tanager object.");
+        Logger().LogAssert(L"Cannot obtain reference to Tanager object.");
     }
 }
 
@@ -312,13 +312,13 @@ void TanagerDisplayInputDisplayPort::SetEdid(std::vector<byte> edid)
     // EDIDs are made of a series of 128-byte blocks
     if (edid.empty() || edid.size() % 128 != 0)
     {
-        m_logger.LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
+        Logger().LogError(L"SetEdid provided edid of invalid size=" + to_hstring(edid.size()));
     }
 
     // Ensure under max descriptor size
     if (edid.size() > MaxDescriptorByteSize)
     {
-        m_logger.LogError(L"SetEdid provided a too large edid, size=" + to_hstring(edid.size()));
+        Logger().LogError(L"SetEdid provided a too large edid, size=" + to_hstring(edid.size()));
     }
 
     if (auto parent = m_parent.lock())

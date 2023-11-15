@@ -32,18 +32,12 @@ struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novta
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
-    winrt::IController ControllerFactory::CreateController(winrt::ILogger const& logger)
+    winrt::IController ControllerFactory::CreateController()
     {
-        return winrt::make<Controller>(logger);
+        return winrt::make<Controller>();
     }
 
     Controller::Controller()
-    {
-        // Throw - callers should explicitly instantiate through the factory
-        throw winrt::hresult_illegal_method_call();
-    }
-
-    Controller::Controller(winrt::ILogger const& logger) : m_logger(logger)
     {
     }
 
@@ -57,7 +51,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // Only try and get the input specified by config file
         if (m_usbIdFromConfigFile != L"")
         {
-            m_displayInputs.push_back(*make_self<DisplayInput>(m_usbIdFromConfigFile, m_logger));
+            m_displayInputs.push_back(*make_self<DisplayInput>(m_usbIdFromConfigFile));
         }
         else // Attempt to get all possible inputs
         {
@@ -65,7 +59,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
             for (auto&& captureDevice : captureDevices)
             {
-                m_displayInputs.push_back(*make_self<DisplayInput>(captureDevice.Id(), m_logger));
+                m_displayInputs.push_back(*make_self<DisplayInput>(captureDevice.Id()));
             }
         }
 
@@ -92,7 +86,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         }
         catch (winrt::hresult_error const& ex)
         {
-            m_logger.LogError(Name() + L" was provided configuration data, but was unable to parse it. Error: " + ex.message());
+            Logger().LogError(Name() + L" was provided configuration data, but was unable to parse it. Error: " + ex.message());
         }
     }
 
@@ -153,9 +147,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_time = time;
     }
 
-    DisplayInput::DisplayInput(hstring deviceId, winrt::ILogger const& logger) :
-        m_deviceId(deviceId),
-        m_logger(logger)
+    DisplayInput::DisplayInput(hstring deviceId) :
+        m_deviceId(deviceId)
     {
         hstring cameraId;
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
@@ -211,11 +204,11 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
             extendedProps.Insert(L"Timestamp", winrt::box_value(winrt::DateTime(winrt::clock::now())));
 
-            m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger, extendedProps);
+            m_capture = make_self<DisplayCapture>(photo.Frame(), extendedProps);
         }
         catch (...)
         {
-            m_logger.LogError(L"Unable to get pixels for input: " + Name());
+            Logger().LogError(L"Unable to get pixels for input: " + Name());
             m_capture = nullptr;
             return nullptr;
         }
@@ -223,17 +216,17 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         return *m_capture;
     }
 
-    DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::ILogger const& logger, winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
-        m_logger(logger), m_extendedProps(extendedProps)
+    DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
+        m_extendedProps(extendedProps)
     {
         // Ensure that we can actually read the provided frame
         if (!frame.CanRead())
         {
-            m_logger.LogError(L"Cannot read pixel data from frame.");
+            Logger().LogError(L"Cannot read pixel data from frame.");
             throw winrt::hresult_invalid_argument();
         }
 
-        m_frameData = FrameData(m_logger);
+        m_frameData = FrameData();
 
         // Copy the new data over to the FrameData object
         auto capturedFrameBitmap = SoftwareBitmap::Convert(frame.SoftwareBitmap(), BitmapPixelFormat::Rgba8);
@@ -260,14 +253,14 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto capturedFrameDesc = m_frameData.FormatDescription();
         if (m_frameData.Data().Length() < predictedFrame.Data().Length())
         {
-            m_logger.LogError(
+            Logger().LogError(
                 winrt::hstring(L"Capture should be at least as large as prediction") +
                 std::to_wstring(m_frameData.Data().Length()) +
                 L", Predicted=" + std::to_wstring(predictedFrame.Data().Length()));
         }
         else if (0 != memcmp(m_frameData.Data().data(), predictedFrame.Data().data(), predictedFrame.Data().Length()))
         {
-            m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+            Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
             {
                 auto filename = name + L"_Captured.bin";
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
@@ -277,7 +270,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
+                Logger().LogNote(L"Dumping captured data here: " + filename);
             }
             {
                 auto filename = name + L"_Predicted.bin";
@@ -288,7 +281,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 stream.FlushAsync().get();
                 stream.Close();
 
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
+                Logger().LogNote(L"Dumping captured data here: " + filename);
             }
 
             struct PixelStruct
@@ -319,7 +312,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             {
                 std::wstring msg;
                 std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
-                m_logger.LogError(msg);
+                Logger().LogError(msg);
 
                 return false;
             }

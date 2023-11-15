@@ -12,7 +12,6 @@ using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 
 using namespace MicrosoftDisplayCaptureTools::Tests;
-
 namespace winrt
 {
     using namespace Windows::Foundation;
@@ -25,6 +24,7 @@ namespace winrt
     using namespace MicrosoftDisplayCaptureTools::Framework;
     using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
+    using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 }
 
 namespace MicrosoftDisplayCaptureTools::Tests
@@ -101,14 +101,14 @@ void SingleScreenTestMatrix::Test()
     winrt::IDisplayOutput displayOutput = nullptr;
     winrt::IDisplayInput displayInput = nullptr;
 
-    if (!g_predictionOnly)
+    if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         auto displayEngines = g_framework.GetDisplayEngines();
 
         if (displayEngines.empty())
         {
-            g_logger.LogAssert(L"No DisplayEngines loaded.");
-            return;
+             winrt::Logger().LogAssert(L"No DisplayEngines loaded.");
+             return;
         }
 
         // This test only supports a single screen and so can only load a single DisplayEngine,
@@ -116,10 +116,10 @@ void SingleScreenTestMatrix::Test()
         displayEngine = displayEngines[0];
         for (auto&& engine : displayEngines)
         {
-            if (engine.Version().IsHigherVersion(displayEngine.Version()))
-            {
-                displayEngine = engine;
-            }
+             if (engine.Version().IsHigherVersion(displayEngine.Version()))
+             {
+                 displayEngine = engine;
+             }
         }
     }
 
@@ -127,7 +127,7 @@ void SingleScreenTestMatrix::Test()
 
     if (toolboxes.empty())
     {
-        g_logger.LogAssert(L"No ConfigurationToolboxes loaded.");
+        winrt::Logger().LogAssert(L"No ConfigurationToolboxes loaded.");
         return;
     }
 
@@ -138,7 +138,7 @@ void SingleScreenTestMatrix::Test()
     {
         if (box.Version().IsHigherVersion(toolbox.Version()))
         {
-            toolbox = box;
+             toolbox = box;
         }
     }
 
@@ -149,35 +149,35 @@ void SingleScreenTestMatrix::Test()
 
         for (auto toolName : toolList)
         {
-            tools.push_back(toolbox.GetTool(toolName));
+             tools.push_back(toolbox.GetTool(toolName));
         }
     }
 
-    if (!g_predictionOnly)
+    if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         // Pick the display - capture pair to use for this test.
         VERIFY_IS_GREATER_THAN(g_displayMap.Size(), (uint32_t)0);
         String inputName;
         if (FAILED(TestData::TryGetValue(CaptureBoardInputSourceTableName, inputName)))
         {
-            g_logger.LogError(L"This test requires a TAEF table data source with names for the target inputs.");
-            return;
+             winrt::Logger().LogError(L"This test requires a TAEF table data source with names for the target inputs.");
+             return;
         }
 
         winrt::ISourceToSinkMapping mapping = nullptr;
         for (auto&& map : g_displayMap)
         {
-            if (0 == inputName.CompareNoCase(map.Sink().Name().c_str()))
-            {
-                mapping = map;
-                break;
-            }
+             if (0 == inputName.CompareNoCase(map.Sink().Name().c_str()))
+             {
+                 mapping = map;
+                 break;
+             }
         }
 
         if (!mapping)
         {
-            g_logger.LogError(winrt::hstring(L"Requested input name: ") + winrt::hstring(inputName) + winrt::hstring(L" was not found!"));
-            return;
+             winrt::Logger().LogError(winrt::hstring(L"Requested input name: ") + winrt::hstring(inputName) + winrt::hstring(L" was not found!"));
+             return;
         }
 
         auto displayOutputTarget = mapping.Source();
@@ -186,10 +186,10 @@ void SingleScreenTestMatrix::Test()
         displayOutput = displayEngine.InitializeOutput(displayOutputTarget);
         if (!displayOutput)
         {
-            // We could not initialize the display output for whatever reason, there is no
-            // point in testing this mapping.
-            Log::Result(TestResults::Blocked);
-            return;
+             // We could not initialize the display output for whatever reason, there is no
+             // point in testing this mapping.
+             Log::Result(TestResults::Blocked);
+             return;
         }
     }
 
@@ -203,33 +203,32 @@ void SingleScreenTestMatrix::Test()
     }
 
     winrt::hstring testName = L"";
-    testName = testName + (g_predictionOnly ? L"" : displayInput.Name()) + L"_";
+    testName =
+        testName + (winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter) ? L"" : displayInput.Name()) + L"_";
 
     // All tools need to be run in order of their category
     constexpr winrt::ConfigurationToolCategory categoryOrder[] = {
-        winrt::ConfigurationToolCategory::DisplaySetup,
-        winrt::ConfigurationToolCategory::RenderSetup,
-        winrt::ConfigurationToolCategory::Render
-    };
+        winrt::ConfigurationToolCategory::DisplaySetup, winrt::ConfigurationToolCategory::RenderSetup, winrt::ConfigurationToolCategory::Render};
 
     for (auto& category : categoryOrder)
     {
         for (auto tool : tools)
         {
-            if (tool.Category() != category)
-                continue;
+             if (tool.Category() != category)
+                 continue;
 
-            String toolSetting;
-            if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
-            {
-                String output = L"";
+             String toolSetting;
+             if (SUCCEEDED(TestData::TryGetValue(tool.Name().c_str(), toolSetting)))
+             {
+                 String output = L"";
 
-                // Setting the tool value
-                tool.SetConfiguration(winrt::hstring(toolSetting));
-                if (!g_predictionOnly) tool.ApplyToOutput(displayOutput);
-                tool.ApplyToPrediction(prediction);
-                testName = testName + tool.GetConfiguration() + L"_";
-            }
+                 // Setting the tool value
+                 tool.SetConfiguration(winrt::hstring(toolSetting));
+                 if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
+                     tool.ApplyToOutput(displayOutput);
+                 tool.ApplyToPrediction(prediction);
+                 testName = testName + tool.GetConfiguration() + L"_";
+             }
         }
     }
 
@@ -237,7 +236,7 @@ void SingleScreenTestMatrix::Test()
     auto predictionDataAsync = prediction.FinalizePredictionAsync();
     winrt::IRawFrameSet predictionFrameSet = nullptr;
 
-    if (!g_predictionOnly)
+    if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         // Make sure the capture card is ready
         displayInput.FinalizeDisplayState();
@@ -268,7 +267,7 @@ void SingleScreenTestMatrix::Test()
             capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
         }
     }
-
+    
     // Save prediction data to disk
     {
         if (!predictionFrameSet)
@@ -280,6 +279,15 @@ void SingleScreenTestMatrix::Test()
         }
 
         auto resultFolderPath = winrt::hstring(std::wstring(std::filesystem::current_path()));
-        fileOperationsVector.push_back(SaveFrameSetToDisk(predictionFrameSet, resultFolderPath, testName));
+        auto savePredictionTask = SaveFrameSetToDisk(predictionFrameSet, resultFolderPath, testName);
+
+        if (winrt::RuntimeSettings().GetSettingValueAsBool(SynchronizeSavingPredictionToDisk))
+        {
+            savePredictionTask.get();
+        }
+        else
+        {
+            fileOperationsVector.push_back(savePredictionTask);
+        }
     }
 }
