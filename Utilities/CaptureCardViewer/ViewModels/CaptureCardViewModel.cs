@@ -26,10 +26,10 @@ namespace CaptureCardViewer.ViewModels
 		public string FirmwareVersion => Firmware?.FirmwareVersion ?? "Unknown";
 		public bool CanUpdateFirmware => (NeedsFirmwareUpdate == true) && !IsUpdatingFirmware;
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanUpdateFirmware))]
-		[AlsoNotifyChangeFor(nameof(FirmwareVersion))]
-		[AlsoNotifyChangeFor(nameof(FirmwareStatus))]
-		[AlsoNotifyChangeFor(nameof(NeedsFirmwareUpdate))]
+		[NotifyPropertyChangedFor(nameof(CanUpdateFirmware))]
+		[NotifyPropertyChangedFor(nameof(FirmwareVersion))]
+		[NotifyPropertyChangedFor(nameof(FirmwareStatus))]
+		[NotifyPropertyChangedFor(nameof(NeedsFirmwareUpdate))]
 		bool isUpdatingFirmware;
 		#endregion
 

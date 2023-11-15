@@ -42,27 +42,27 @@ namespace CaptureCardViewer.ViewModels
 		public IDisplayEngine Engine { get; }
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(SelectedEngineOutputName))]
-		[AlsoNotifyChangeFor(nameof(CanStartOutputRender))]
+		[NotifyPropertyChangedFor(nameof(SelectedEngineOutputName))]
+		[NotifyPropertyChangedFor(nameof(CanStartOutputRender))]
 		IDisplayOutput? selectedEngineOutput;
 		public string SelectedEngineOutputName => SelectedEngineOutput?.Target.StableMonitorId ?? "None";
 
 		IDisposable? selectedEngineOutputRenderer;
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanCompare))]
+		[NotifyPropertyChangedFor(nameof(CanCompare))]
 		IDisplayCapture? lastCapturedFrame;
 
 		[ObservableProperty]
 		ObservableCollection<MetadataViewModel> lastCapturedFrameMetadata = new ObservableCollection<MetadataViewModel>();
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanCompare))]
+		[NotifyPropertyChangedFor(nameof(CanCompare))]
 		IPredictionData? lastPredictedFrame;
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]
-		[AlsoNotifyChangeFor(nameof(IsComparisonPassed))]
+		[NotifyPropertyChangedFor(nameof(IsComparisonFailed))]
+		[NotifyPropertyChangedFor(nameof(IsComparisonPassed))]
 		bool? lastComparisonResult;
 
 		public bool CanCompare => lastCapturedFrame != null && lastPredictedFrame != null;
@@ -81,7 +81,7 @@ namespace CaptureCardViewer.ViewModels
 			public DisplayTarget Target { get; }
 
 			[ObservableProperty]
-			[AlsoNotifyChangeFor(nameof(Name))]
+			[NotifyPropertyChangedFor(nameof(Name))]
 			string adapterFriendlyName = "";
 
 			public string Name => $"{Monitor?.DisplayName ?? Target.StableMonitorId} ({Monitor?.PhysicalConnector} port on {AdapterFriendlyName})";
@@ -135,9 +135,9 @@ namespace CaptureCardViewer.ViewModels
 		/// The live capture async task sets this to trigger the UI to update.
 		/// </summary>
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanStartLiveCapture))]
-		[AlsoNotifyChangeFor(nameof(CanStopLiveCapture))]
-		[AlsoNotifyChangeFor(nameof(CanSingleFrameCapture))]
+		[NotifyPropertyChangedFor(nameof(CanStartLiveCapture))]
+		[NotifyPropertyChangedFor(nameof(CanStopLiveCapture))]
+		[NotifyPropertyChangedFor(nameof(CanSingleFrameCapture))]
 		bool isRunningLiveCapture = false;
 
 		public bool CanStartLiveCapture => CaptureInput != null && !isRunningLiveCapture;
@@ -149,9 +149,9 @@ namespace CaptureCardViewer.ViewModels
 		/// The output render task uses this to reflect the buttons
 		/// </summary>
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanStopOutputRender))]
-		[AlsoNotifyChangeFor(nameof(CanStartOutputRender))]
-		[AlsoNotifyChangeFor(nameof(IsNotRendering))]
+		[NotifyPropertyChangedFor(nameof(CanStopOutputRender))]
+		[NotifyPropertyChangedFor(nameof(CanStartOutputRender))]
+		[NotifyPropertyChangedFor(nameof(IsNotRendering))]
 		bool isRenderingOutput = false;
 
 		public bool IsNotRendering => !isRenderingOutput;
