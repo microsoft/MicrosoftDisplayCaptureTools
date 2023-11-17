@@ -353,9 +353,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                         for (auto j = start; j < end; j++)
                         {
                             PixelStruct translatedPrediction = {
-								static_cast<uint8_t>(pre[j].r * 255.0f),
-								static_cast<uint8_t>(pre[j].g * 255.0f),
-								static_cast<uint8_t>(pre[j].b * 255.0f),
+                                static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].r) * 255.0f),
+								static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].g) * 255.0f),
+								static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].b) * 255.0f),
 								255};
 
                             if (cap[j].r != translatedPrediction.r || 
