@@ -63,9 +63,9 @@ namespace MicrosoftDisplayCaptureTools::Tests
         std::vector<winrt::IAsyncAction> frameSaveActions;
         for (auto frame : frameset.Frames())
         {
-            auto filePrefix = winrt::hstring(String().Format(L"Prediction_Frame_%d_Setting%s", frameCounter++, testName.c_str()));
+            auto filePrefix = winrt::hstring(String().Format(L"%s_Frame_%d", testName.c_str(), frameCounter++));
 
-             frameSaveActions.push_back(SaveFrameToDisk(frame, resultsFolder, filePrefix));
+            frameSaveActions.push_back(SaveFrameToDisk(frame, resultsFolder, filePrefix));
         }
 
         for (auto& frameSave : frameSaveActions)
@@ -245,49 +245,71 @@ void SingleScreenTestMatrix::Test()
         inputCaps.ValidateAgainstDisplayOutput(displayOutput);
 
         {
-            auto renderer = displayOutput.StartRender();
-            if (!renderer)
-            {
-                Log::Result(TestResults::Blocked, "Could not run this test due to mode incompatibilities.");
-                return;
-            }
+             auto renderer = displayOutput.StartRender();
+             if (!renderer)
+             {
+                 Log::Result(TestResults::Blocked, "Could not run this test due to mode incompatibilities.");
+                 return;
+             }
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+             std::this_thread::sleep_for(std::chrono::seconds(1));
 
-            // Capture the frame.
-            auto capturedFrame = displayInput.CaptureFrame();
-            if (!capturedFrame)
-            {
-                // CaptureFrame should log errors if there are any non-continuable issues.
-                Log::Error(L"Failed to capture a frame");
-                return;
-            }
+             // Capture the frame.
+             auto capturedFrame = displayInput.CaptureFrame();
+             if (!capturedFrame)
+             {
+                 // CaptureFrame should log errors if there are any non-continuable issues.
+                 Log::Error(L"Failed to capture a frame");
+                 return;
+             }
 
-            predictionFrameSet = predictionDataAsync.get();
-            capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
+             predictionFrameSet = predictionDataAsync.get();
+
+             auto captureResult = capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
+
+             auto resultsSaveSetting = winrt::RuntimeSettings().GetSettingValueAsString(L"SaveResults");
+             if (resultsSaveSetting.empty() || L"OnError" == resultsSaveSetting)
+             {
+                 // Default mode - save data out on failure
+                 if (!captureResult)
+                 {
+                     SaveOutput(predictionFrameSet, testName + L"_Prediction");
+                     SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
+                 }
+             }
+             else if (L"All" == resultsSaveSetting)
+             {
+                 // Save all results, regardless of success/failure
+                 SaveOutput(predictionFrameSet, testName + L"_Prediction");
+                 SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
+             }
         }
     }
-    
-    // Save prediction data to disk
+    else
     {
         if (!predictionFrameSet)
         {
-            // We synchronize on the data being generated, so that any errors that happen there will be flagged
-            // synchronously in this test method. However, by default we will save the data asynchronously. This
-            // helps make best use of the testing time with the physical devices.
-            predictionFrameSet = predictionDataAsync.get();
+             // We synchronize on the data being generated, so that any errors that happen there will be flagged
+             // synchronously in this test method. However, by default we will save the data asynchronously. This
+             // helps make best use of the testing time with the physical devices.
+             predictionFrameSet = predictionDataAsync.get();
         }
 
-        auto resultFolderPath = winrt::hstring(std::wstring(std::filesystem::current_path()));
-        auto savePredictionTask = SaveFrameSetToDisk(predictionFrameSet, resultFolderPath, testName);
+        SaveOutput(predictionFrameSet, testName + L"_Prediction");
+    }
+}
 
-        if (winrt::RuntimeSettings().GetSettingValueAsBool(SynchronizeSavingPredictionToDisk))
-        {
-            savePredictionTask.get();
-        }
-        else
-        {
-            fileOperationsVector.push_back(savePredictionTask);
-        }
+void SingleScreenTestMatrix::SaveOutput(winrt::IRawFrameSet frames, winrt::hstring name)
+{
+    auto resultFolderPath = winrt::hstring(std::wstring(std::filesystem::current_path()));
+    auto savePredictionTask = SaveFrameSetToDisk(frames, resultFolderPath, name);
+
+    if (winrt::RuntimeSettings().GetSettingValueAsBool(SynchronizeSavingPredictionToDisk))
+    {
+        savePredictionTask.get();
+    }
+    else
+    {
+        fileOperationsVector.push_back(savePredictionTask);
     }
 }

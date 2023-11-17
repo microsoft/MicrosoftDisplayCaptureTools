@@ -15,5 +15,6 @@ class SingleScreenTestMatrix : public CaptureFrameworkTestBase
     END_TEST_METHOD();
 
 private:
+    void SaveOutput(winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet data, winrt::hstring name);
     std::vector<winrt::Windows::Foundation::IAsyncAction> fileOperationsVector;
 };

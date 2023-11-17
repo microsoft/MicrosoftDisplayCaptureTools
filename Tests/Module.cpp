@@ -35,8 +35,8 @@ MODULE_SETUP(ModuleSetup)
     winrt::init_apartment();
 
     // Load the framework with new instances of the logger and runtime settings types from this module.
-    g_framework = winrt::Framework::Core(
-        winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>(), winrt::make<RuntimeSettings::RuntimeSettings>());
+    auto runtime = winrt::make<RuntimeSettings::RuntimeSettings>();
+    g_framework = winrt::Framework::Core(winrt::make<winrt::WEXLogger>().as<winrt::Framework::ILogger>(), runtime);
 
     if (winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {

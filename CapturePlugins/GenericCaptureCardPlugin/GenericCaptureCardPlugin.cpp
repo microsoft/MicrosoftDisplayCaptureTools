@@ -200,6 +200,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     IDisplayCapture DisplayInput::CaptureFrame()
     {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
         try
         {
             auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));

@@ -106,8 +106,9 @@ namespace winrt::BasicDisplayConfiguration::implementation
                 auto sourceFormat = args.Mode().SourcePixelFormat();
 
                 auto& configValues = ConfigurationMap[m_currentConfig];
-                args.IsModeCompatible(
-                    interlaced == configValues.Interlaced && stereo == configValues.Stereo && sourceFormat == configValues.SourceFormat);
+                const bool compatible = interlaced == configValues.Interlaced && stereo == configValues.Stereo &&
+                                        sourceFormat == configValues.SourceFormat;
+                args.IsModeCompatible(compatible);
             }
         });
 
