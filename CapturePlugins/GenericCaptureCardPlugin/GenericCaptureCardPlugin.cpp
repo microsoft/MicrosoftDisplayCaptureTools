@@ -4,6 +4,9 @@
 #include "ControllerFactory.g.cpp"
 #include <filesystem>
 
+// included for translations of the half data format of the prediction
+#include <DirectXPackedVector.h>
+
 namespace winrt
 {
     using namespace Windows::Foundation;
@@ -240,7 +243,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // Populate the frame format description, which for this capture card can only be 24bpc SDR RGB444.
         auto wireFormat = winrt::DisplayWireFormat(
             winrt::DisplayWireFormatPixelEncoding::Rgb444,
-            24, // bits per pixel
+            24, // bits per pixel (minus alpha)
             winrt::DisplayWireFormatColorSpace::BT709,
             winrt::DisplayWireFormatEotf::Sdr,
             winrt::DisplayWireFormatHdrMetadata::None);
@@ -277,7 +280,6 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         auto predictedFrameFormat = predictedFrame.DataFormat();
         auto capturedFrameFormat = capturedFrame.DataFormat();
         if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding() ||
-            predictedFrameFormat.BitsPerChannel() != capturedFrameFormat.BitsPerChannel() ||
             predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace() ||
             predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf() ||
             predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
@@ -286,18 +288,12 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 			return false;
 		}
 
-        // Compare the frame buffer sizes
-        auto predictedFrameSize = predictedFrame.Data().Length();
-        auto capturedFrameSize = capturedFrame.Data().Length();
-        if (predictedFrameSize != capturedFrameSize)
-        {
-			Logger().LogError(winrt::hstring(L"Capture size did not match prediction"));
-        }
-
         // At this point, both frames should be identical in terms of resolution and format. Now we can compare the actual pixel data.
         if (0 != memcmp(predictedFrame.Data().data(), capturedFrame.Data().data(), predictedFrame.Data().Length()))
         {
             Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
+
+            // TODO: remove this saving logic, it isn't needed and is only for debugging
             {
                 auto filename = name + L"_Captured.bin";
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
@@ -327,8 +323,13 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 uint8_t r, g, b, a;
             };
 
+            struct PixelStruct16
+            {
+                ::DirectX::PackedVector::HALF r, g, b, a;
+			};
+
             PixelStruct* cap = reinterpret_cast<PixelStruct*>(capturedFrame.Data().data());
-            PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictedFrame.Data().data());
+            PixelStruct16* pre = reinterpret_cast<PixelStruct16*>(predictedFrame.Data().data());
 
             auto differenceCount = 0;
 
@@ -351,14 +352,22 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
                         for (auto j = start; j < end; j++)
                         {
-                            if (cap[j].r != pre[j].r || cap[j].g != pre[j].g || cap[j].b != pre[j].b)
+                            PixelStruct translatedPrediction = {
+								static_cast<uint8_t>(pre[j].r * 255.0f),
+								static_cast<uint8_t>(pre[j].g * 255.0f),
+								static_cast<uint8_t>(pre[j].b * 255.0f),
+								255};
+
+                            if (cap[j].r != translatedPrediction.r || 
+                                cap[j].g != translatedPrediction.g ||
+                                cap[j].b != translatedPrediction.b)
                             {
-								differenceCount++;
+                                differenceCount++;
 
                                 PixelDiff diff = {
-                                    abs(cap[j].r - pre[j].r) / 255.0f,
-                                    abs(cap[j].g - pre[j].g) / 255.0f,
-                                    abs(cap[j].b - pre[j].b) / 255.0f};
+                                    abs(cap[j].r - translatedPrediction.r) / 255.0f,
+                                    abs(cap[j].g - translatedPrediction.g) / 255.0f,
+                                    abs(cap[j].b - translatedPrediction.b) / 255.0f};
 
                                 threadPeakDiffs[i] = {
 									max(threadPeakDiffs[i].r, diff.r),
