@@ -26,8 +26,7 @@ namespace MicrosoftDisplayCaptureTools::Tests {
 BEGIN_MODULE()
     MODULE_PROPERTY(L"Area", L"Graphics")
     MODULE_PROPERTY(L"SubArea", L"Display")
-    // TODO: Re-enable this
-    //MODULE_PROPERTY(L"RunAs", L"Elevated")
+    MODULE_PROPERTY(L"RunAs", L"Elevated")
 END_MODULE()
 
 MODULE_SETUP(ModuleSetup)
@@ -45,10 +44,10 @@ MODULE_SETUP(ModuleSetup)
 
     // If the user specified a particular configuration file in the test command, use it. Otherwise,
     // the framework will auto-discover installed components.
-    String configFile;
-    if (SUCCEEDED(RuntimeParameters::TryGetValue<String>(ConfigFileRuntimeParameter, configFile)) && !String::IsNullOrEmpty(configFile))
+    auto configFile = winrt::RuntimeSettings().GetSettingValueAsString(ConfigFileRuntimeParameter);
+    if (!configFile.empty())
     {
-        g_framework.LoadConfigFile(static_cast<const wchar_t*>(configFile));
+        g_framework.LoadConfigFile(configFile);
     }
 
     // DiscoverInstalledPlugins will only discover plugin categories that are not specified via configuration file.

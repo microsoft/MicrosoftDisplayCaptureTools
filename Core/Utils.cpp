@@ -51,7 +51,7 @@ void Runtime::CreateRuntime(
     winrt::MicrosoftDisplayCaptureTools::Framework::ILogger logger, winrt::MicrosoftDisplayCaptureTools::Framework::IRuntimeSettings settings)
 {
     auto runtime = winrt::make<Runtime>(logger, settings);
-    auto runtimeRaw = runtime.as<IUnknown>()->AddRef();
+    runtime.as<IUnknown>()->AddRef(); // Add a reference to the runtime so it doesn't get destroyed when the caller releases it.
     auto processProperties = CoreApplication::Properties();
     processProperties.Insert(L"MicrosoftDisplayCaptureToolsRuntimeStore", runtime);
 }

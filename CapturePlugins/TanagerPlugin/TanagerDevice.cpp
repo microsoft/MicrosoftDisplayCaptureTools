@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <filesystem>
+#include <DirectXPackedVector.h>
 
 namespace winrt 
 {
@@ -7,6 +8,7 @@ namespace winrt
     using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Devices::Enumeration;
     using namespace winrt::Windows::Devices::Usb;
+    using namespace Windows::Graphics;
     using namespace winrt::Windows::Graphics::Imaging;
     using namespace winrt::Windows::Graphics::DirectX;
     using namespace winrt::Windows::Devices::Display;
@@ -21,7 +23,7 @@ namespace winrt::TanagerPlugin::implementation
 {
 const unsigned char it68051i2cAddress = 0x48;
 
-TanagerDevice::TanagerDevice() :
+TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
     m_usbDevice(nullptr),
     m_deviceId(deviceId),
     hdmiChip(
@@ -186,7 +188,8 @@ TanagerDevice::TanagerDevice() :
             throw hresult_invalid_argument();
         }
 
-        m_frameData = FrameData();
+        m_frameSet = winrt::make<FrameSet>();
+        auto newFrame = winrt::make<Frame>();
 
         // TODO: isolate this into a header supporting different masks
         typedef struct
@@ -221,148 +224,161 @@ TanagerDevice::TanagerDevice() :
             rgbData++;
         }
 
-        m_frameData.Data(pixelDataWriter.DetachBuffer());
-        m_frameData.Resolution(resolution);
+        newFrame.as<Frame>()->SetBuffer(pixelDataWriter.DetachBuffer());
+        newFrame.as<Frame>()->Resolution(resolution);
 
-        // This is only supporting 8bpc RGB444 currently
-        FrameFormatDescription desc{0};
-        desc.BitsPerPixel = 24;
-        desc.Stride = resolution.Width * 3; // There is no padding with this capture
-        desc.PixelFormat = DirectXPixelFormat::Unknown; // Specify that we don't have an exact match to the input DirectX formats
-        desc.PixelEncoding = DisplayWireFormatPixelEncoding::Rgb444;
-        desc.Eotf = DisplayWireFormatEotf::Sdr;
+        // Populate the frame format description, which for this capture card can only be 24bpc SDR RGB444.
+        auto wireFormat = winrt::DisplayWireFormat(
+            winrt::DisplayWireFormatPixelEncoding::Rgb444,
+            24, // bits per pixel (minus alpha)
+            winrt::DisplayWireFormatColorSpace::BT709,
+            winrt::DisplayWireFormatEotf::Sdr,
+            winrt::DisplayWireFormatHdrMetadata::None);
 
-        m_frameData.FormatDescription(desc);
+        newFrame.as<Frame>()->DataFormat(wireFormat);
+
+        m_frameSet.Frames().Append(newFrame);
     }
 
-    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IPredictionData prediction)
+    bool TanagerDisplayCapture::CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet prediction)
     {
-        auto predictedFrameData = prediction.FrameData();
+        // TODO: this needs to support multiple frames in a set.
+        auto predictedFrame = prediction.Frames().GetAt(0);
+        auto capturedFrame = m_frameSet.Frames().GetAt(0);
 
-        if (predictedFrameData.Resolution().Height != m_frameData.Resolution().Height || 
-            predictedFrameData.Resolution().Width != m_frameData.Resolution().Width)
-        {
-            Logger().LogError(winrt::hstring(L"Predicted resolution (") + 
-                to_hstring(predictedFrameData.Resolution().Width) + L"," +
-                to_hstring(predictedFrameData.Resolution().Height) + L"), Captured Resolution(" + 
-                to_hstring(m_frameData.Resolution().Width) + L"," +
-                to_hstring(m_frameData.Resolution().Height) + L")");
-        }
-
-        auto captureBuffer = m_frameData.Data();
-        auto predictBuffer = predictedFrameData.Data();
-
-        if (captureBuffer.Length() < predictBuffer.Length())
+        // Compare the frame resolutions
+        auto predictedFrameRes = predictedFrame.Resolution();
+        auto capturedFrameRes = capturedFrame.Resolution();
+        if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
         {
             Logger().LogError(
-                winrt::hstring(L"Capture should be at least as large as prediction") + std::to_wstring(captureBuffer.Length()) +
-                L", Predicted=" + std::to_wstring(predictBuffer.Length()));
+                winrt::hstring(L"Capture resolution did not match prediction") + std::to_wstring(capturedFrameRes.Width) + L"x" +
+                std::to_wstring(capturedFrameRes.Height) + L", Predicted=" + std::to_wstring(predictedFrameRes.Width) + L"x" +
+                std::to_wstring(predictedFrameRes.Height));
+            return false;
         }
-        else if (0 == memcmp(captureBuffer.data(), predictBuffer.data(), predictBuffer.Length()))
+
+        // Compare the frame formats
+        auto predictedFrameFormat = predictedFrame.DataFormat();
+        auto capturedFrameFormat = capturedFrame.DataFormat();
+        if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding() ||
+            predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace() ||
+            predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf() ||
+            predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
         {
-            Logger().LogNote(L"Capture and Prediction perfectly match!");
+            Logger().LogError(winrt::hstring(L"Capture format did not match prediction"));
+            return false;
         }
-        else
+
+        // At this point, both frames should be identical in terms of resolution and format. Now we can compare the actual pixel data.
+        if (predictedFrame.Data().Length() != capturedFrame.Data().Length() ||
+            0 != memcmp(predictedFrame.Data().data(), capturedFrame.Data().data(), predictedFrame.Data().Length()))
         {
             Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
 
-            {
-                auto filename = name + L"_Captured";
-                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-
-                // Attempt to extract a renderable approximation of the frame
-                auto bitmap = m_frameData.GetRenderableApproximationAsync().get();
-                filename = filename + (bitmap ? L".png" : L".bin");
-
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::ReplaceExisting).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-
-                if (bitmap)
-                {
-                    // We could extract a valid bitmap from the data, save that way
-                    auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::PngEncoderId(), stream).get();
-                    encoder.SetSoftwareBitmap(bitmap);
-                }
-                else
-                {
-                    // We could not extract a valid bitmap from the data, just save the binary to disk
-                    stream.WriteAsync(captureBuffer).get();
-                }
-
-                stream.FlushAsync().get();
-                stream.Close();
-
-                Logger().LogNote(L"Saving captured data here: " + filename);
-            }
-            {
-                auto filename = name + L"_Predicted";
-                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-
-                // Attempt to extract a renderable approximation of the frame
-                SoftwareBitmap bitmap{nullptr};
-                auto predictedFrameDataComparisons = predictedFrameData.as<IFrameDataComparisons>();
-                if (predictedFrameDataComparisons && (bitmap = predictedFrameDataComparisons.GetRenderableApproximationAsync().get()))
-                {
-                    filename = filename + L".png";
-                }
-                else 
-                {
-                    filename = filename + L".bin";
-                }
-
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::ReplaceExisting).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-
-                if (bitmap)
-                {
-                    // We could extract a valid bitmap from the data, save that way
-                    auto encoder = BitmapEncoder::CreateAsync(BitmapEncoder::PngEncoderId(), stream).get();
-                    encoder.SetSoftwareBitmap(bitmap);
-                }
-                else
-                {
-                    // We could not extract a valid bitmap from the data, just save the binary to disk
-                    stream.WriteAsync(predictBuffer).get();
-                }
-
-                stream.FlushAsync().get();
-                stream.Close();
-
-                Logger().LogNote(L"Saving predicted data here: " + filename);
-            }
-
+            // This capture plugin only supports 8bpc SDR RGB444, so we can do a direct comparison of the pixel data.
             struct PixelStruct
             {
                 uint8_t r, g, b, a;
             };
 
+            struct PixelStruct16
+            {
+                ::DirectX::PackedVector::HALF r, g, b, a;
+            };
+
+            PixelStruct* cap = reinterpret_cast<PixelStruct*>(capturedFrame.Data().data());
+            PixelStruct16* pre = reinterpret_cast<PixelStruct16*>(predictedFrame.Data().data());
+
             auto differenceCount = 0;
 
-            PixelStruct* cap = reinterpret_cast<PixelStruct*>(captureBuffer.data());
-            PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictBuffer.data());
-
-            // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
-            const int samples = 10000;
-            const int pixelCount = m_frameData.Resolution().Width * m_frameData.Resolution().Height;
-            for (auto i = 0; i < samples; i++)
+            struct PixelDiff
             {
-                auto index = rand() % pixelCount;
+                float r, g, b;
+            } PeakDiffPercentage{}, AverageDiffPercentage{};
 
-                if (cap[index].r != pre[index].r ||
-                    cap[index].g != pre[index].g ||
-                    cap[index].b != pre[index].b)
-                {
-                    differenceCount++;
-                }
+            const int threadCount = 8;
+            const int pixelCount = capturedFrameRes.Width * capturedFrameRes.Height;
+            auto threads = std::vector<std::thread>(threadCount);
+            auto threadPeakDiffs = std::vector<PixelDiff>(threadCount);
+            auto threadTotalDiffs = std::vector<PixelDiff>(threadCount);
+            for (auto i = 0; i < threadCount; i++)
+            {
+                threads[i] = std::thread([&, i]() {
+                    auto start = i * pixelCount / threadCount;
+                    auto end = (i + 1) * pixelCount / threadCount;
+
+                    for (auto j = start; j < end; j++)
+                    {
+                        PixelStruct translatedPrediction = {
+                            static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].r) * 255.0f),
+                            static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].g) * 255.0f),
+                            static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].b) * 255.0f),
+                            255};
+
+                        if (cap[j].r != translatedPrediction.r || cap[j].g != translatedPrediction.g ||
+                            cap[j].b != translatedPrediction.b)
+                        {
+                            differenceCount++;
+
+                            PixelDiff diff = {
+                                abs(cap[j].r - translatedPrediction.r) / 255.0f,
+                                abs(cap[j].g - translatedPrediction.g) / 255.0f,
+                                abs(cap[j].b - translatedPrediction.b) / 255.0f};
+
+                            threadPeakDiffs[i] = {
+                                max(threadPeakDiffs[i].r, diff.r), max(threadPeakDiffs[i].g, diff.g), max(threadPeakDiffs[i].b, diff.b)};
+
+                            threadTotalDiffs[i].r += diff.r;
+                            threadTotalDiffs[i].g += diff.g;
+                            threadTotalDiffs[i].b += diff.b;
+                        }
+                    }
+                });
             }
 
-            float diff = (float)differenceCount / (float)samples;
-            if (diff > 0.10f)
+            // Join the comparing threads
+            for (auto& thread : threads)
             {
-                std::wstring msg;
-                std::format_to(std::back_inserter(msg), "{:.2f}% of sampled pixels did not match!", diff*100);
-                Logger().LogError(msg);
+                thread.join();
+            }
 
+            // Combine the results from the threads
+            for (auto i = 0; i < threadCount; i++)
+            {
+                PeakDiffPercentage.r = max(PeakDiffPercentage.r, threadPeakDiffs[i].r);
+                PeakDiffPercentage.g = max(PeakDiffPercentage.g, threadPeakDiffs[i].g);
+                PeakDiffPercentage.b = max(PeakDiffPercentage.b, threadPeakDiffs[i].b);
+
+                AverageDiffPercentage.r += threadTotalDiffs[i].r;
+                AverageDiffPercentage.g += threadTotalDiffs[i].g;
+                AverageDiffPercentage.b += threadTotalDiffs[i].b;
+            }
+
+            AverageDiffPercentage.r /= pixelCount;
+            AverageDiffPercentage.g /= pixelCount;
+            AverageDiffPercentage.b /= pixelCount;
+
+            std::wstring msg;
+            std::format_to(
+                std::back_inserter(msg),
+                L"\n\tPeak Diff: R = {:.4}%%, G = {:.4}%%, B = {:.4}%%\n",
+                PeakDiffPercentage.r * 100.0f,
+                PeakDiffPercentage.g * 100.0f,
+                PeakDiffPercentage.b * 100.0f);
+            std::format_to(
+                std::back_inserter(msg),
+                L"\tAverage Diff: R = {:.4}%%, G = {:.4}%%, B = {:.4}%%\n",
+                AverageDiffPercentage.r * 100.0f,
+                AverageDiffPercentage.g * 100.0f,
+                AverageDiffPercentage.b * 100.0f);
+            std::format_to(std::back_inserter(msg), L"\tPercent of different pixels = {:.4}%%\n\n", (double)differenceCount / pixelCount * 100.);
+            Logger().LogNote(msg);
+
+            // If the difference is too great, then the capture is considered a failure.
+            if (AverageDiffPercentage.r > 0.10f || AverageDiffPercentage.g > 0.10f || AverageDiffPercentage.b > 0.10f)
+            {
+                Logger().LogError(L"Average difference between prediction and capture too high.");
                 return false;
             }
         }
@@ -370,14 +386,88 @@ TanagerDevice::TanagerDevice() :
         return true;
     }
 
-    winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData TanagerDisplayCapture::GetFrameData()
+    winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet TanagerDisplayCapture::GetFrameData()
     {
-        return m_frameData;
+        return m_frameSet;
     }
 
     winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> TanagerDisplayCapture::ExtendedProperties()
     {
         return m_extendedProps.GetView();
+    }
+
+    Frame::Frame() : m_data(nullptr), m_format(nullptr), m_resolution({0, 0}), m_bitmap(nullptr)
+    {
+        m_properties = winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>();
+    }
+
+    winrt::IBuffer Frame::Data()
+    {
+        return m_data;
+    }
+
+    winrt::DisplayWireFormat Frame::DataFormat()
+    {
+        return m_format;
+    }
+
+    winrt::IMap<winrt::hstring, winrt::IInspectable> Frame::Properties()
+    {
+        return m_properties;
+    }
+
+    winrt::SizeInt32 Frame::Resolution()
+    {
+        return m_resolution;
+    }
+
+    winrt::IAsyncOperation<winrt::SoftwareBitmap> Frame::GetRenderableApproximationAsync()
+    {
+        // In this implementation, this approximation is created as a side effect of rendering the prediction. So here the result
+        // can just be returned.
+        co_return m_bitmap;
+    }
+
+    winrt::hstring Frame::GetPixelInfo(uint32_t x, uint32_t y)
+    {
+        // TODO: implement this - the intent is that because the above returns only an approximation, this should return a
+        // description in string form of what the original pixel values are for a given address.
+        throw winrt::hresult_not_implemented();
+    }
+
+    void Frame::SetBuffer(winrt::IBuffer buffer)
+    {
+        m_data = buffer;
+    }
+
+    void Frame::DataFormat(winrt::DisplayWireFormat const& description)
+    {
+        m_format = description;
+    }
+
+    void Frame::Resolution(winrt::SizeInt32 const& resolution)
+    {
+        m_resolution = resolution;
+    }
+
+    void Frame::SetImageApproximation(winrt::SoftwareBitmap bitmap)
+    {
+        m_bitmap = bitmap;
+    }
+
+    FrameSet::FrameSet()
+    {
+        m_frames = winrt::single_threaded_vector<winrt::IRawFrame>();
+    }
+
+    winrt::IVector<winrt::IRawFrame> FrameSet::Frames()
+    {
+        return m_frames;
+    }
+
+    winrt::IMap<winrt::hstring, winrt::IInspectable> FrameSet::Properties()
+    {
+        return m_properties;
     }
 
 } // namespace winrt::TanagerPlugin::implementation

@@ -98,11 +98,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildPipelines", "BuildPipe
 		BuildPipelines\OneBranch.ToWindows.yml = BuildPipelines\OneBranch.ToWindows.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{9709B214-FBE0-4D25-B91A-DD83DAE08471}"
-	ProjectSection(SolutionItems) = preProject
-		Shared\Modules\RuntimeSettings.ixx = Shared\Modules\RuntimeSettings.ixx
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -186,7 +181,6 @@ Global
 		{88F5A7C8-5119-45BF-A8B5-040203DDD094} = {893F8111-A827-4191-B800-D2526D28BDDA}
 		{55634F59-DDCC-4A52-8823-7F0BB88131C3} = {899FC13F-08CF-4C8E-8035-A9AA49DC0F6B}
 		{05176BF1-848B-4235-A0E0-60290181A9BF} = {899FC13F-08CF-4C8E-8035-A9AA49DC0F6B}
-		{9709B214-FBE0-4D25-B91A-DD83DAE08471} = {899FC13F-08CF-4C8E-8035-A9AA49DC0F6B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {586F889A-04F1-4A85-9B2D-7BEBEAAED003}

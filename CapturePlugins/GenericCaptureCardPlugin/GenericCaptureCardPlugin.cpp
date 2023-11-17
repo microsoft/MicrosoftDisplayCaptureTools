@@ -291,33 +291,10 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 		}
 
         // At this point, both frames should be identical in terms of resolution and format. Now we can compare the actual pixel data.
-        if (0 != memcmp(predictedFrame.Data().data(), capturedFrame.Data().data(), predictedFrame.Data().Length()))
+        if (predictedFrame.Data().Length() != capturedFrame.Data().Length() ||
+            0 != memcmp(predictedFrame.Data().data(), capturedFrame.Data().data(), predictedFrame.Data().Length()))
         {
             Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
-
-            // TODO: remove this saving logic, it isn't needed and is only for debugging
-            {
-                auto filename = name + L"_Captured.bin";
-                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(capturedFrame.Data()).get();
-                stream.FlushAsync().get();
-                stream.Close();
-
-                Logger().LogNote(L"Dumping captured data here: " + filename);
-            }
-            {
-                auto filename = name + L"_Predicted.bin";
-                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(predictedFrame.Data()).get();
-                stream.FlushAsync().get();
-                stream.Close();
-
-                Logger().LogNote(L"Dumping captured data here: " + filename);
-            }
 
             // This capture plugin only supports 8bpc SDR RGB444, so we can do a direct comparison of the pixel data.
             struct PixelStruct
@@ -433,8 +410,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         return m_extendedProps.GetView();
     }
 
-    Frame::Frame()
+    Frame::Frame() : m_data(nullptr), m_format(nullptr), m_resolution({0, 0}), m_bitmap(nullptr)
     {
+		m_properties = winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>();
     }
 
     winrt::IBuffer Frame::Data()

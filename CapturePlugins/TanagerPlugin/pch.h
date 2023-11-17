@@ -27,6 +27,7 @@
 #include <numeric>
 #include <ranges>
 #include <iterator>
+#include <mutex>
 
 #include "IteIt68051.h"
 #include "Controller.h"

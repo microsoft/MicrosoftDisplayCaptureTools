@@ -34,7 +34,7 @@ private:
     winrt::Windows::Storage::Streams::IBuffer m_data{nullptr};
     winrt::Windows::Devices::Display::Core::DisplayWireFormat m_format{nullptr};
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties;
-    winrt::Windows::Graphics::SizeInt32 m_resolution;
+    winrt::Windows::Graphics::SizeInt32 m_resolution{0, 0};
 
     winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
 };
