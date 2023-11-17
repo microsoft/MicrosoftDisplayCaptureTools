@@ -333,7 +333,7 @@
   <PropertyGroup>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommand>$(SolutionDir)$(Platform)\$(Configuration)\TE.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>$(OutDir)$(TargetFileName) -inproc -enablewttlogging -p:OnlyPredictions=true -p:RenderOnHardware=true</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(OutDir)$(TargetFileName) -inproc -enablewttlogging -p:RenderOnHardware=true</LocalDebuggerCommandArguments>
     <LocalDebuggerMergeEnvironment>false</LocalDebuggerMergeEnvironment>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)$(Platform)\$(Configuration)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
