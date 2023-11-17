@@ -139,7 +139,6 @@ namespace PredictionRenderer {
         //
         // Name         Type     Default     Note
         // --------------------------------------------------------------------------------------------------------
-        // UseWarp      bool     false       indicates if the drawing system will use WARP or on a physical device
         // FrameCount   int      1           how many frames to allocate
         //
         winrt::IMap<winrt::hstring, winrt::IInspectable> Properties();

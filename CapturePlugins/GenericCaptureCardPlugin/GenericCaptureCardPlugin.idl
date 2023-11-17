@@ -3,7 +3,7 @@ namespace GenericCaptureCardPlugin
     [default_interface]
     runtimeclass Controller : MicrosoftDisplayCaptureTools.CaptureCard.IController
     {
-        Controller(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        Controller();
     }
 
     [default_interface]

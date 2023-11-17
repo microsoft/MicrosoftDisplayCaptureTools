@@ -8,18 +8,61 @@ namespace winrt::GenericCaptureCardPlugin::implementation {
 // I have on my desk right now compresses the stream like crazy)
 constexpr uint8_t ColorChannelTolerance = 20;
 
+struct Frame
+    : winrt::implements<Frame, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame,
+    winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameRenderable>
+{
+    Frame();
+
+    // Functions from IRawFrame
+    winrt::Windows::Storage::Streams::IBuffer Data();
+    winrt::Windows::Devices::Display::Core::DisplayWireFormat DataFormat();
+    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> Properties();
+    winrt::Windows::Graphics::SizeInt32 Resolution();
+
+    // Functions from IRawFrameRenderable
+    winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Graphics::Imaging::SoftwareBitmap> GetRenderableApproximationAsync();
+    winrt::hstring GetPixelInfo(uint32_t x, uint32_t y);
+
+    // Local-only members
+    void SetBuffer(winrt::Windows::Storage::Streams::IBuffer data);
+    void DataFormat(winrt::Windows::Devices::Display::Core::DisplayWireFormat const& description);
+    void Resolution(winrt::Windows::Graphics::SizeInt32 const& resolution);
+    void SetImageApproximation(winrt::Windows::Graphics::Imaging::SoftwareBitmap bitmap);
+
+private:
+    winrt::Windows::Storage::Streams::IBuffer m_data{nullptr};
+    winrt::Windows::Devices::Display::Core::DisplayWireFormat m_format{nullptr};
+    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties;
+    winrt::Windows::Graphics::SizeInt32 m_resolution;
+
+    winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
+};
+
+struct FrameSet : winrt::implements<FrameSet, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet>
+{
+    FrameSet();
+
+    winrt::Windows::Foundation::Collections::IVector<winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame> Frames();
+    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> Properties();
+
+private:
+    winrt::Windows::Foundation::Collections::IVector<winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame> m_frames;
+    winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties;
+};
+
 struct DisplayCapture : implements<DisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
 {
     DisplayCapture(
         winrt::Windows::Media::Capture::CapturedFrame frame,
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps);
 
-    bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::ConfigurationTools::IPredictionData prediction);
-    winrt::MicrosoftDisplayCaptureTools::Framework::IFrameData GetFrameData();
+    bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet prediction);
+    winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet GetFrameData();
     winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
 
 private:
-    winrt::MicrosoftDisplayCaptureTools::Framework::FrameData m_frameData{nullptr};
+    winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet m_frameSet{nullptr};
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_extendedProps{nullptr};
 };
 

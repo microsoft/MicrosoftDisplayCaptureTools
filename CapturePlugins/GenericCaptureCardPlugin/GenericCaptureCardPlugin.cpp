@@ -19,6 +19,8 @@ namespace winrt
     using namespace Windows::Graphics::Imaging;
     using namespace Windows::Graphics::DirectX;
     using namespace Windows::Devices::Enumeration;
+    using namespace Windows::Devices::Display::Core;
+
 
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
     using namespace MicrosoftDisplayCaptureTools::Display;
@@ -219,6 +221,8 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
         m_extendedProps(extendedProps)
     {
+        // TODO: this needs to support multiple frames in a set.
+
         // Ensure that we can actually read the provided frame
         if (!frame.CanRead())
         {
@@ -226,39 +230,72 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             throw winrt::hresult_invalid_argument();
         }
 
-        m_frameData = FrameData();
+        m_frameSet = winrt::make<FrameSet>();
+        auto newFrame = winrt::make<Frame>();
 
         // Copy the new data over to the FrameData object
         auto capturedFrameBitmap = SoftwareBitmap::Convert(frame.SoftwareBitmap(), BitmapPixelFormat::Rgba8);
+        newFrame.as<Frame>()->SetImageApproximation(SoftwareBitmap::Copy(capturedFrameBitmap));
 
-        m_frameData.Resolution({capturedFrameBitmap.PixelWidth(), capturedFrameBitmap.PixelHeight()});
+        // Populate the frame format description, which for this capture card can only be 24bpc SDR RGB444.
+        auto wireFormat = winrt::DisplayWireFormat(
+            winrt::DisplayWireFormatPixelEncoding::Rgb444,
+            24, // bits per pixel
+            winrt::DisplayWireFormatColorSpace::BT709,
+            winrt::DisplayWireFormatEotf::Sdr,
+            winrt::DisplayWireFormatHdrMetadata::None);
 
-        FrameFormatDescription desc{0};
-        desc.BitsPerPixel = 32;
-        desc.Stride = capturedFrameBitmap.PixelWidth() * 4;
-        desc.PixelFormat = static_cast<DirectXPixelFormat>(BitmapPixelFormat::Rgba8);
-        m_frameData.FormatDescription(desc);
+        newFrame.as<Frame>()->DataFormat(wireFormat);
+        newFrame.as<Frame>()->Resolution({capturedFrameBitmap.PixelWidth(), capturedFrameBitmap.PixelHeight()});
 
         auto buffer = Buffer(static_cast<uint32_t>(frame.Size()));
         capturedFrameBitmap.CopyToBuffer(buffer);
-        m_frameData.Data(buffer);
+        newFrame.as<Frame>()->SetBuffer(buffer);
+
+        m_frameSet.Frames().Append(newFrame);
     }
 
-    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::ConfigurationTools::IPredictionData prediction)
+    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Framework::IRawFrameSet prediction)
     {
-        auto predictedFrame = prediction.FrameData();
+        // TODO: this needs to support multiple frames in a set.
+        auto predictedFrame = prediction.Frames().GetAt(0);
+        auto capturedFrame = m_frameSet.Frames().GetAt(0);
 
-        // Compare descriptions
-        auto predictedFrameDesc = predictedFrame.FormatDescription();
-        auto capturedFrameDesc = m_frameData.FormatDescription();
-        if (m_frameData.Data().Length() < predictedFrame.Data().Length())
+        // Compare the frame resolutions
+        auto predictedFrameRes = predictedFrame.Resolution();
+        auto capturedFrameRes = capturedFrame.Resolution();
+        if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
         {
             Logger().LogError(
-                winrt::hstring(L"Capture should be at least as large as prediction") +
-                std::to_wstring(m_frameData.Data().Length()) +
-                L", Predicted=" + std::to_wstring(predictedFrame.Data().Length()));
+				winrt::hstring(L"Capture resolution did not match prediction") +
+				std::to_wstring(capturedFrameRes.Width) + L"x" + std::to_wstring(capturedFrameRes.Height) +
+				L", Predicted=" + std::to_wstring(predictedFrameRes.Width) + L"x" + std::to_wstring(predictedFrameRes.Height));
+			return false;
+		}
+
+        // Compare the frame formats
+        auto predictedFrameFormat = predictedFrame.DataFormat();
+        auto capturedFrameFormat = capturedFrame.DataFormat();
+        if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding() ||
+            predictedFrameFormat.BitsPerChannel() != capturedFrameFormat.BitsPerChannel() ||
+            predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace() ||
+            predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf() ||
+            predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
+        {
+            Logger().LogError(winrt::hstring(L"Capture format did not match prediction"));
+			return false;
+		}
+
+        // Compare the frame buffer sizes
+        auto predictedFrameSize = predictedFrame.Data().Length();
+        auto capturedFrameSize = capturedFrame.Data().Length();
+        if (predictedFrameSize != capturedFrameSize)
+        {
+			Logger().LogError(winrt::hstring(L"Capture size did not match prediction"));
         }
-        else if (0 != memcmp(m_frameData.Data().data(), predictedFrame.Data().data(), predictedFrame.Data().Length()))
+
+        // At this point, both frames should be identical in terms of resolution and format. Now we can compare the actual pixel data.
+        if (0 != memcmp(predictedFrame.Data().data(), capturedFrame.Data().data(), predictedFrame.Data().Length()))
         {
             Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
             {
@@ -266,7 +303,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
                 auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
                 auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(m_frameData.Data()).get();
+                stream.WriteAsync(capturedFrame.Data()).get();
                 stream.FlushAsync().get();
                 stream.Close();
 
@@ -284,6 +321,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 Logger().LogNote(L"Dumping captured data here: " + filename);
             }
 
+            // This capture plugin only supports 8bpc SDR RGB444, so we can do a direct comparison of the pixel data.
             struct PixelStruct
             {
                 uint8_t r, g, b, a;
@@ -291,12 +329,12 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
             auto differenceCount = 0;
 
-            PixelStruct* cap = reinterpret_cast<PixelStruct*>(m_frameData.Data().data());
+            PixelStruct* cap = reinterpret_cast<PixelStruct*>(capturedFrame.Data().data());
             PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictedFrame.Data().data());
 
             // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
             const int samples = 10000;
-            const int pixelCount = m_frameData.Resolution().Width * m_frameData.Resolution().Height;
+            const int pixelCount = capturedFrameRes.Width * capturedFrameRes.Height;
             for (auto i = 0; i < samples; i++)
             {
                 auto index = rand() % pixelCount;
@@ -321,13 +359,86 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         return true;
     }
 
-    winrt::IFrameData DisplayCapture::GetFrameData()
+    winrt::IRawFrameSet DisplayCapture::GetFrameData()
     {
-        return m_frameData;
+        return m_frameSet;
     }
 
     winrt::IMapView<winrt::hstring, winrt::IInspectable> DisplayCapture::ExtendedProperties()
     {
         return m_extendedProps.GetView();
+    }
+
+    Frame::Frame()
+    {
+    }
+
+    winrt::IBuffer Frame::Data()
+    {
+        return m_data;
+    }
+
+    winrt::DisplayWireFormat Frame::DataFormat()
+    {
+        return m_format;
+    }
+
+    winrt::IMap<winrt::hstring, winrt::IInspectable> Frame::Properties()
+    {
+        return m_properties;
+    }
+
+    winrt::SizeInt32 Frame::Resolution()
+    {
+        return m_resolution;
+    }
+
+    winrt::IAsyncOperation<winrt::SoftwareBitmap> Frame::GetRenderableApproximationAsync()
+    {
+        // In this implementation, this approximation is created as a side effect of rendering the prediction. So here the result
+        // can just be returned.
+        co_return m_bitmap;
+    }
+
+    winrt::hstring Frame::GetPixelInfo(uint32_t x, uint32_t y)
+    {
+        // TODO: implement this - the intent is that because the above returns only an approximation, this should return a
+        // description in string form of what the original pixel values are for a given address.
+        throw winrt::hresult_not_implemented();
+    }
+
+    void Frame::SetBuffer(winrt::IBuffer buffer)
+    {
+        m_data = buffer;
+    }
+
+    void Frame::DataFormat(winrt::DisplayWireFormat const& description)
+    {
+        m_format = description;
+    }
+
+    void Frame::Resolution(winrt::SizeInt32 const& resolution)
+    {
+        m_resolution = resolution;
+    }
+
+    void Frame::SetImageApproximation(winrt::SoftwareBitmap bitmap)
+    {
+        m_bitmap = bitmap;
+    }
+
+    FrameSet::FrameSet()
+    {
+        m_frames = winrt::single_threaded_vector<winrt::IRawFrame>();
+    }
+
+    winrt::IVector<winrt::IRawFrame> FrameSet::Frames()
+    {
+        return m_frames;
+    }
+
+    winrt::IMap<winrt::hstring, winrt::IInspectable> FrameSet::Properties()
+    {
+        return m_properties;
     }
 }

@@ -16,7 +16,7 @@
 	<file src="MicrosoftDisplayCaptureTools.FrameDebugger.win10.targets" target="build\win10\MicrosoftDisplayCaptureTools.FrameDebugger.targets"/>
 	<file src="MicrosoftDisplayCaptureTools.FrameDebugger.common.targets" target="build\MicrosoftDisplayCaptureTools.FrameDebugger.common.targets"/>
 
-    <file src="Utilities\CaptureCardViewer\bin\x64\Debug\publish\CaptureCardViewer.*" target="runtimes\win10-x64\native" />
-    <file src="Utilities\CaptureCardViewer\bin\x64\Debug\publish\WinRT.*" target="runtimes\win10-x64\native" />
+    <file src="Utilities\CaptureCardViewer\bin\x64\Debug\publish\CaptureCardViewer.*" target="runtimes\win-x64\native" />
+    <file src="Utilities\CaptureCardViewer\bin\x64\Debug\publish\WinRT.*" target="runtimes\win-x64\native" />
   </files>
 </package>

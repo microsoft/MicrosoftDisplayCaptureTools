@@ -34,8 +34,6 @@ Core::Core(ILogger const& logger, IRuntimeSettings const& settings) : m_logger(l
 {
     Runtime::CreateRuntime(logger, settings);
 
-    auto predict = Runtime::GetRuntime().RuntimeSettings().GetSettingValueAsBool(L"OnlyPredictions");
-
     m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
 }
 
