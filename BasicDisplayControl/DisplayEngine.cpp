@@ -293,17 +293,8 @@ namespace winrt::BasicDisplayControl::implementation {
         {
             auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
 
-            // TODO: remove modeListVec - it's just for experimenting with a debugger.
-            std::vector<DisplayModeInfo> modeListVec;
-
             for (auto&& mode : modeList)
             {
-                if (mode.SourceResolution().Width == 3840 && 5 > fabs(
-                                                                     ((double)mode.PresentationRate().VerticalSyncRate.Numerator /
-                                                                      (double)mode.PresentationRate().VerticalSyncRate.Denominator) -
-                                                                     60))
-                    modeListVec.push_back(mode);
-
                 // Check to see if this mode is acceptable
                 if (m_displaySetupCallback)
                 {

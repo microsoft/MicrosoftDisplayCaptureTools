@@ -267,8 +267,8 @@ void SingleScreenTestMatrix::Test()
 
              auto captureResult = capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
 
-             auto resultsSaveSetting = winrt::RuntimeSettings().GetSettingValueAsString(L"SaveResults");
-             if (resultsSaveSetting.empty() || L"OnError" == resultsSaveSetting)
+             auto resultsSaveSetting = winrt::RuntimeSettings().GetSettingValueAsString(SaveResultsSelection);
+             if (resultsSaveSetting.empty() || SaveResultsSelectionOnError == resultsSaveSetting)
              {
                  // Default mode - save data out on failure
                  if (!captureResult)
@@ -277,7 +277,7 @@ void SingleScreenTestMatrix::Test()
                      SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
                  }
              }
-             else if (L"All" == resultsSaveSetting)
+             else if (SaveResultsSelectionAll == resultsSaveSetting)
              {
                  // Save all results, regardless of success/failure
                  SaveOutput(predictionFrameSet, testName + L"_Prediction");
