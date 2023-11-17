@@ -327,33 +327,85 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 uint8_t r, g, b, a;
             };
 
-            auto differenceCount = 0;
-
             PixelStruct* cap = reinterpret_cast<PixelStruct*>(capturedFrame.Data().data());
             PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictedFrame.Data().data());
 
-            // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
-            const int samples = 10000;
+            auto differenceCount = 0;
+
+            struct PixelDiff
+            {
+				float r, g, b;
+            } PeakDiffPercentage{}, AverageDiffPercentage{};
+
+            const int threadCount = 8;
             const int pixelCount = capturedFrameRes.Width * capturedFrameRes.Height;
-            for (auto i = 0; i < samples; i++)
+            auto threads = std::vector<std::thread>(threadCount);
+            auto threadPeakDiffs = std::vector<PixelDiff>(threadCount);
+            auto threadTotalDiffs = std::vector<PixelDiff>(threadCount);
+            for (auto i = 0; i < threadCount; i++)
             {
-                auto index = rand() % pixelCount;
+                threads[i] = std::thread([&, i]()
+                    {
+                        auto start = i * pixelCount / threadCount;
+                        auto end = (i + 1) * pixelCount / threadCount;
 
-                if (cap[index].r != pre[index].r || cap[index].g != pre[index].g || cap[index].b != pre[index].b)
-                {
-                    differenceCount++;
-                }
-            }
+                        for (auto j = start; j < end; j++)
+                        {
+                            if (cap[j].r != pre[j].r || cap[j].g != pre[j].g || cap[j].b != pre[j].b)
+                            {
+								differenceCount++;
 
-            float diff = (float)differenceCount / (float)pixelCount;
-            if (diff > 0.10f)
+                                PixelDiff diff = {
+                                    abs(cap[j].r - pre[j].r) / 255.0f,
+                                    abs(cap[j].g - pre[j].g) / 255.0f,
+                                    abs(cap[j].b - pre[j].b) / 255.0f};
+
+                                threadPeakDiffs[i] = {
+									max(threadPeakDiffs[i].r, diff.r),
+									max(threadPeakDiffs[i].g, diff.g),
+									max(threadPeakDiffs[i].b, diff.b)};
+
+								threadTotalDiffs[i].r += diff.r;
+                                threadTotalDiffs[i].g += diff.g;
+                                threadTotalDiffs[i].b += diff.b;
+							}
+						}
+					});
+			}
+
+            // Join the comparing threads
+            for (auto& thread : threads)
             {
-                std::wstring msg;
-                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
-                Logger().LogError(msg);
+				thread.join();
+			}
 
-                return false;
-            }
+			// Combine the results from the threads
+			for (auto i = 0; i < threadCount; i++)
+			{
+				PeakDiffPercentage.r = max(PeakDiffPercentage.r, threadPeakDiffs[i].r);
+				PeakDiffPercentage.g = max(PeakDiffPercentage.g, threadPeakDiffs[i].g);
+				PeakDiffPercentage.b = max(PeakDiffPercentage.b, threadPeakDiffs[i].b);
+
+				AverageDiffPercentage.r += threadTotalDiffs[i].r;
+				AverageDiffPercentage.g += threadTotalDiffs[i].g;
+				AverageDiffPercentage.b += threadTotalDiffs[i].b;
+			}
+
+			AverageDiffPercentage.r /= pixelCount;
+			AverageDiffPercentage.g /= pixelCount;
+			AverageDiffPercentage.b /= pixelCount;
+
+			std::wstring msg;
+			std::format_to(std::back_inserter(msg), L"\n\tPeak Diff = %2.2f%%, %2.2f%%, %2.2f%%\n", PeakDiffPercentage.r * 100.0f, PeakDiffPercentage.g * 100.0f, PeakDiffPercentage.b * 100.0f);
+			std::format_to(std::back_inserter(msg), L"\tAverage Diff = %2.2f%%, %2.2f%%, %2.2f%%\n", AverageDiffPercentage.r * 100.0f, AverageDiffPercentage.g * 100.0f, AverageDiffPercentage.b * 100.0f);
+			std::format_to(std::back_inserter(msg), L"\tTotal Diff = %d\n\n", differenceCount);
+			Logger().LogError(msg);
+
+			// If the difference is too great, then the capture is considered a failure.
+			if (PeakDiffPercentage.r > 0.10f || PeakDiffPercentage.g > 0.10f || PeakDiffPercentage.b > 0.10f)
+			{
+				return false;
+			}
         }
 
         return true;
