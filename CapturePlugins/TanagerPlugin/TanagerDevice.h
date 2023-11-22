@@ -123,6 +123,7 @@ namespace winrt::TanagerPlugin::implementation
 
     struct TanagerDisplayCapture : implements<TanagerDisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture>
     {
+        // Constructor for creating a single-frame capture
         TanagerDisplayCapture(
             std::vector<byte> pixels,
             winrt::Windows::Graphics::SizeInt32 resolution,
@@ -138,10 +139,21 @@ namespace winrt::TanagerPlugin::implementation
     };
 
     // TODO: move this to a module
+    struct FramePixelDesc
+    {
+        FramePixelDesc(winrt::Windows::Storage::Streams::IBuffer infoFrame, uint32_t bitsPerPixel);
+        uint8_t bitsPerComponent = 8;
+        winrt::Windows::Devices::Display::Core::DisplayWireFormatPixelEncoding pixelEncoding = winrt::Windows::Devices::Display::Core::DisplayWireFormatPixelEncoding::Rgb444;
+        bool limitedRange = false;
+	};
+
     struct Frame
         : winrt::implements<Frame, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameRenderable>
     {
-        Frame();
+        Frame(FramePixelDesc desc);
+
+        // TODO: change the buffer name to pixeldata or pixelbuffer
+        //       add some utility to save out the data as json or something
 
         // Functions from IRawFrame
         winrt::Windows::Storage::Streams::IBuffer Data();
@@ -160,6 +172,8 @@ namespace winrt::TanagerPlugin::implementation
         void SetImageApproximation(winrt::Windows::Graphics::Imaging::SoftwareBitmap bitmap);
 
     private:
+        FramePixelDesc m_desc;
+
         winrt::Windows::Storage::Streams::IBuffer m_data{nullptr};
         winrt::Windows::Devices::Display::Core::DisplayWireFormat m_format{nullptr};
         winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties;

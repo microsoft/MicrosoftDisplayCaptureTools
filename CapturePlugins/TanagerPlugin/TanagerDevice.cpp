@@ -119,11 +119,17 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
 
     void TanagerDevice::I2cWriteData(uint16_t i2cAddress, uint8_t address, std::vector<byte> data)
     {
-        // Send this down in chunks
-        const size_t writeBlockSize = 0x20;
-        for (size_t i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
+        if (data.size() > UINT8_MAX)
         {
-            size_t amountToWrite = min(writeBlockSize, remaining);
+            Logger().LogAssert(L"Cannot write more than 255 bytes at a time.");
+			throw winrt::hresult_invalid_argument();
+		}
+
+        // Send this down in chunks
+        const uint8_t writeBlockSize = 0x20;
+        for (uint8_t i = 0, remaining = static_cast<uint8_t>(data.size()); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
+        {
+            uint8_t amountToWrite = min(writeBlockSize, remaining);
             m_pDriver->writeRegister(i2cAddress, address + i, static_cast<uint32_t>(amountToWrite), data.data() + i);
             Sleep(100);
         }
@@ -189,7 +195,9 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         }
 
         m_frameSet = winrt::make<FrameSet>();
-        auto newFrame = winrt::make<Frame>();
+
+        // Retrieve the infoframe from the extended properties
+        auto infoframe = winrt::unbox_value<winrt::Buffer>(extendedProps.Lookup(L"Infoframe"));
 
         // TODO: isolate this into a header supporting different masks
         typedef struct
@@ -224,6 +232,9 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
             rgbData++;
         }
 
+        FramePixelDesc pixelDesc(infoframe, 24);
+
+        auto newFrame = winrt::make<Frame>(pixelDesc);
         newFrame.as<Frame>()->SetBuffer(pixelDataWriter.DetachBuffer());
         newFrame.as<Frame>()->Resolution(resolution);
 
@@ -396,7 +407,7 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         return m_extendedProps.GetView();
     }
 
-    Frame::Frame() : m_data(nullptr), m_format(nullptr), m_resolution({0, 0}), m_bitmap(nullptr)
+    Frame::Frame(FramePixelDesc desc) : m_desc(desc), m_data(nullptr), m_format(nullptr), m_resolution({0, 0}), m_bitmap(nullptr)
     {
         m_properties = winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>();
     }
@@ -468,6 +479,91 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
     winrt::IMap<winrt::hstring, winrt::IInspectable> FrameSet::Properties()
     {
         return m_properties;
+    }
+
+    FramePixelDesc::FramePixelDesc(winrt::IBuffer infoFrame, uint32_t bitsPerPixel)
+    {
+        switch (bitsPerPixel)
+        {
+            case 24:
+				bitsPerComponent = 8;
+				break;
+            case 30:
+                bitsPerComponent = 10;
+                break;
+            case 36:
+				bitsPerComponent = 12;
+				break;
+            case 48:
+                bitsPerComponent = 16;
+                break;
+            default:
+                Logger().LogAssert(L"Unsupported bits per pixel.");
+                throw winrt::hresult_invalid_argument();
+        }
+
+        if (infoFrame.Length() < 14)
+        {
+            Logger().LogAssert(L"Infoframe buffer is too small.");
+			throw winrt::hresult_invalid_argument();
+		}
+
+        auto infoFrameData = infoFrame.data();
+
+        bool Y1 = (infoFrameData[1] & 0x40) != 0;
+        bool Y0 = (infoFrameData[1] & 0x20) != 0;
+
+        if (Y1 && Y0)
+        {
+            Logger().LogAssert(L"Infoframe Y0=Y1=1 is reserved!");
+            throw winrt::hresult_invalid_argument();
+		}
+        else if (Y1 && !Y0)
+        {
+			pixelEncoding = winrt::DisplayWireFormatPixelEncoding::Ycc444;
+		}
+        else if (!Y1 && Y0)
+        {
+			pixelEncoding = winrt::DisplayWireFormatPixelEncoding::Ycc422;
+		}
+        else
+        {
+			pixelEncoding = winrt::DisplayWireFormatPixelEncoding::Rgb444;
+		}
+
+        // TODO: support over/under-scan
+
+		bool Q1 = (infoFrameData[3] & 0x08) != 0;
+        bool Q0 = (infoFrameData[3] & 0x04) != 0;
+
+        if (Q1 && Q0)
+        {
+			Logger().LogAssert(L"Infoframe Q0=Q1=1 is reserved!");
+			throw winrt::hresult_invalid_argument();
+        }
+        else if (Q1 && !Q0)
+        {
+            limitedRange = false;
+        }
+        else if (!Q1 && Q0)
+        {
+            limitedRange = true;
+		}
+        else
+        {
+            // We have to determine the quantization range from the video format
+            if (pixelEncoding != winrt::DisplayWireFormatPixelEncoding::Rgb444)
+            {
+                // YCC formats are always limited range
+                limitedRange = true;
+            }
+            else
+            {
+                // TODO: limited range for RGB CE formats (480p, 480i, 576p, 576i, 240p, 288p) (section 5.1)
+                //       limited range for 1080p, 1080i, 720p (section 5.2)
+                //       full range for RGB IT formats (section 5.4)
+            }
+		}
     }
 
 } // namespace winrt::TanagerPlugin::implementation
