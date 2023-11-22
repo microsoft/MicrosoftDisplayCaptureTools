@@ -245,9 +245,9 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
     extendedProps.Insert(L"vBackPorch", winrt::box_value(timing.vBackPorch));
 
     auto aviInfoFrame = parent->GetAviInfoframe();
-    winrt::Buffer infoFrameBuffer(ARRAYSIZE(aviInfoFrame.data));
+    winrt::IBuffer infoFrameBuffer = winrt::Buffer(ARRAYSIZE(aviInfoFrame.data));
     memcpy(infoFrameBuffer.data(), aviInfoFrame.data, infoFrameBuffer.Capacity());
-    extendedProps.Insert(L"InfoFrame", infoFrameBuffer);
+    extendedProps.Insert(L"infoframe", infoFrameBuffer.as<winrt::IInspectable>());
 
     auto resolution = winrt::Windows::Graphics::SizeInt32();
     resolution = {timing.hActive, timing.vActive};

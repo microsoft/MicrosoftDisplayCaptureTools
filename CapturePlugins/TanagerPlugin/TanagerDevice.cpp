@@ -119,15 +119,9 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
 
     void TanagerDevice::I2cWriteData(uint16_t i2cAddress, uint8_t address, std::vector<byte> data)
     {
-        if (data.size() > UINT8_MAX)
-        {
-            Logger().LogAssert(L"Cannot write more than 255 bytes at a time.");
-			throw winrt::hresult_invalid_argument();
-		}
-
         // Send this down in chunks
         const uint8_t writeBlockSize = 0x20;
-        for (uint8_t i = 0, remaining = static_cast<uint8_t>(data.size()); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
+        for (uint8_t i = 0, remaining = data.size(); remaining > 0; i += writeBlockSize, remaining -= min(writeBlockSize, remaining))
         {
             uint8_t amountToWrite = min(writeBlockSize, remaining);
             m_pDriver->writeRegister(i2cAddress, address + i, static_cast<uint32_t>(amountToWrite), data.data() + i);
@@ -197,7 +191,7 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         m_frameSet = winrt::make<FrameSet>();
 
         // Retrieve the infoframe from the extended properties
-        auto infoframe = winrt::unbox_value<winrt::Buffer>(extendedProps.Lookup(L"Infoframe"));
+        auto infoframe = extendedProps.Lookup(L"infoframe").as<winrt::Buffer>();
 
         // TODO: isolate this into a header supporting different masks
         typedef struct
@@ -502,7 +496,7 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
                 throw winrt::hresult_invalid_argument();
         }
 
-        if (infoFrame.Length() < 14)
+        if (infoFrame.Capacity() < 14)
         {
             Logger().LogAssert(L"Infoframe buffer is too small.");
 			throw winrt::hresult_invalid_argument();

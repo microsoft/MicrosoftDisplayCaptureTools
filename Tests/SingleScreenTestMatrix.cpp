@@ -42,6 +42,12 @@ namespace MicrosoftDisplayCaptureTools::Tests
         if (renderableFrame)
         {
             auto softwareBitmap = co_await renderableFrame.GetRenderableApproximationAsync();
+            
+            // TODO: remove this, if IRawFrameRenderable is implemented this should never return null
+            if (!softwareBitmap)
+            {
+                co_return;
+            }
 
             auto filePathImage = fileNamePrefix + L"approximate.png";
             auto file = co_await folder.CreateFileAsync(filePathImage, winrt::CreationCollisionOption::ReplaceExisting);
