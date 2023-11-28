@@ -28,4 +28,14 @@
   <ItemGroup>
     <Text Include="readme.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Compute Shaders">
+      <UniqueIdentifier>{22c49885-8290-4bc8-b8df-531c808016b8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="ComputeShaders\RGB_444_8bpc_Full.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
 </Project>

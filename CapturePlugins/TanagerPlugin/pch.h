@@ -5,6 +5,7 @@
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Graphics.h>
 #include <winrt/Windows.Graphics.DirectX.h>
+#include <winrt\Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Devices.Display.h>
 #include <winrt/Windows.Devices.Display.Core.h>
 #include <winrt/Windows.Storage.h>
@@ -18,6 +19,12 @@
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 #include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
 #include "winrt/MicrosoftDisplayCaptureTools.Display.h"
+
+#include <Windows.Graphics.DirectX.Direct3D11.interop.h>
+#include <DirectXMath.h>
+#include <dxgi.h>
+#include <d3d11.h>
+#include <d3d11shader.h>
 
 #include "TestRuntime.h"
 

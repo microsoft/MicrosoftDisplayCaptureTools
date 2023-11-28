@@ -46,6 +46,7 @@ namespace MicrosoftDisplayCaptureTools::Tests
             // TODO: remove this, if IRawFrameRenderable is implemented this should never return null
             if (!softwareBitmap)
             {
+                winrt::Logger().LogAssert(L"GetRenderableApproximationAsync returned null but the frame class implemets IRawFrameRenderable.");
                 co_return;
             }
 

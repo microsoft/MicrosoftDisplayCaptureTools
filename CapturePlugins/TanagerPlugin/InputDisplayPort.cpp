@@ -261,7 +261,15 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     auto resolution = winrt::Windows::Graphics::SizeInt32();
     resolution = {timing.hActive, timing.vActive};
 
-    return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps);
+    if (auto parent = m_parent.lock())
+    {
+        return winrt::make<TanagerDisplayCapture>(parent->GetD3D(), frameData, resolution, extendedProps);
+    }
+    else
+    {
+        Logger().LogAssert(L"Cannot obtain reference to Tanager object.");
+        throw winrt::hresult_error(E_FAIL);
+    }
 }
 
 void TanagerDisplayInputDisplayPort::FinalizeDisplayState()
