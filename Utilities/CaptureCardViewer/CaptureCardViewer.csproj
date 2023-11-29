@@ -11,17 +11,12 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>x64;ARM64</Platforms>
 		<StartupObject>CaptureCardViewer.App</StartupObject>
-		<!--<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-		<CompilerGeneratedFilesOutputPath>obj\SourceGenerated</CompilerGeneratedFilesOutputPath>-->
 
 		<IncludePluginsInOutput>false</IncludePluginsInOutput>
 		<IncludePluginsInOutput Condition="$(BuildingInVisualStudio) == 'true'">true</IncludePluginsInOutput>
 	</PropertyGroup>
 
-	<!-- Generates a C# projection of WinRT types (see https://docs.microsoft.com/en-us/windows/uwp/csharp-winrt/net-projection-from-cppwinrt-component)-->
 	<PropertyGroup>
-		<CsWinRTIncludes>MicrosoftDisplayCaptureTools</CsWinRTIncludes>
-		<CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 		<Description>A UI wrapping the capabilities of the Microsoft Display Capture Tools project.</Description>
 		<Title>Microsoft Display Capture Tools Utilities</Title>
@@ -89,7 +84,7 @@
 		</ProjectReference>
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Core\MicrosoftDisplayCaptureTools.vcxproj" />
+		<ProjectReference Include="..\MicrosoftDisplayCaptureTools.NET\MicrosoftDisplayCaptureTools.NET.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

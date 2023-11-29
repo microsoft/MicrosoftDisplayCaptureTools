@@ -6,6 +6,7 @@ using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
 using MicrosoftDisplayCaptureTools.Framework;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
@@ -33,9 +34,29 @@ namespace CaptureCardViewer.ViewModels
 
 		public ObservableCollection<object> Documents { get; } = new();
 
+		class UiRuntimeSettings : IRuntimeSettings
+		{
+			Dictionary<string, object> values = new();
+
+			public object GetSettingValue(string settingName)
+			{
+				return values.TryGetValue(settingName, out var value) ? value : null;
+			}
+
+			public bool GetSettingValueAsBool(string settingName)
+			{
+				return values.TryGetValue(settingName, out var value) ? (value as bool? ?? false) : false;
+			}
+
+			public string GetSettingValueAsString(string settingName)
+			{
+				return values.TryGetValue(settingName, out var value) ? value as string : null;
+			}
+		}
+
 		public WorkspaceViewModel()
 		{
-			testFramework = new Core(Logger, null);
+			testFramework = new Core(Logger, new UiRuntimeSettings());
 			dispatcher = Dispatcher.CurrentDispatcher;
 			var command = this.LoadFromConfigFileCommand;
 

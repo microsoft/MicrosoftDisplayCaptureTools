@@ -60,7 +60,7 @@ namespace CaptureCardViewer.ViewModels
 			}
 
 			// TODO: Allow selecting a specific render engine
-			var newSession = new CaptureSessionViewModel(Workspace, Workspace.DisplayEngines.First().Engine, CaptureCard, Input);
+			var newSession = new CaptureSessionViewModel(Workspace, Workspace.DisplayEngines.First().Engine, CaptureCard, Input, Workspace.Toolboxes.First());
 			Workspace.Documents.Add(newSession);
 		}
 

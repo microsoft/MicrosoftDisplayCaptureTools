@@ -98,6 +98,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildPipelines", "BuildPipe
 		BuildPipelines\OneBranch.ToWindows.yml = BuildPipelines\OneBranch.ToWindows.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicrosoftDisplayCaptureTools.NET", "Utilities\MicrosoftDisplayCaptureTools.NET\MicrosoftDisplayCaptureTools.NET.csproj", "{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -164,6 +166,14 @@ Global
 		{D007AA97-B58A-47D6-9FD3-F1B24757F53B}.Release|ARM64.Build.0 = Release|ARM64
 		{D007AA97-B58A-47D6-9FD3-F1B24757F53B}.Release|x64.ActiveCfg = Release|x64
 		{D007AA97-B58A-47D6-9FD3-F1B24757F53B}.Release|x64.Build.0 = Release|x64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Debug|ARM64.Build.0 = Debug|ARM64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Debug|x64.ActiveCfg = Debug|x64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Debug|x64.Build.0 = Debug|x64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Release|ARM64.ActiveCfg = Release|ARM64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Release|ARM64.Build.0 = Release|ARM64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Release|x64.ActiveCfg = Release|x64
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -181,6 +191,7 @@ Global
 		{88F5A7C8-5119-45BF-A8B5-040203DDD094} = {893F8111-A827-4191-B800-D2526D28BDDA}
 		{55634F59-DDCC-4A52-8823-7F0BB88131C3} = {899FC13F-08CF-4C8E-8035-A9AA49DC0F6B}
 		{05176BF1-848B-4235-A0E0-60290181A9BF} = {899FC13F-08CF-4C8E-8035-A9AA49DC0F6B}
+		{77A357C6-A889-4B73-87BA-A2DE4D2EFB49} = {F76BF6A1-2F2C-4037-B47A-69440C789E35}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {586F889A-04F1-4A85-9B2D-7BEBEAAED003}

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using MicrosoftDisplayCaptureTools.CaptureCard;
 using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
+using MicrosoftDisplayCaptureTools.Framework;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -41,6 +42,8 @@ namespace CaptureCardViewer.ViewModels
 		/// </summary>
 		public IDisplayEngine Engine { get; }
 
+		public ToolboxViewModel Toolbox { get; }
+
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(SelectedEngineOutputName))]
 		[NotifyPropertyChangedFor(nameof(CanStartOutputRender))]
@@ -58,16 +61,16 @@ namespace CaptureCardViewer.ViewModels
 
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(CanCompare))]
-		IPredictionData? lastPredictedFrame;
+		IRawFrameSet? lastPredictedFrame;
 
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(IsComparisonFailed))]
 		[NotifyPropertyChangedFor(nameof(IsComparisonPassed))]
 		bool? lastComparisonResult;
 
-		public bool CanCompare => lastCapturedFrame != null && lastPredictedFrame != null;
-		public bool IsComparisonPassed => lastComparisonResult.HasValue && lastComparisonResult == true;
-		public bool IsComparisonFailed => lastComparisonResult.HasValue && lastComparisonResult == false;
+		public bool CanCompare => LastCapturedFrame != null && LastPredictedFrame != null;
+		public bool IsComparisonPassed => LastComparisonResult.HasValue && LastComparisonResult == true;
+		public bool IsComparisonFailed => LastComparisonResult.HasValue && LastComparisonResult == false;
 		public bool IsComparisonDetailsAvailable => false;
 
 		/// <summary>
@@ -140,7 +143,7 @@ namespace CaptureCardViewer.ViewModels
 		[NotifyPropertyChangedFor(nameof(CanSingleFrameCapture))]
 		bool isRunningLiveCapture = false;
 
-		public bool CanStartLiveCapture => CaptureInput != null && !isRunningLiveCapture;
+		public bool CanStartLiveCapture => CaptureInput != null && !IsRunningLiveCapture;
 		[ObservableProperty]
 		bool canStopLiveCapture = false;
 		public bool CanSingleFrameCapture => CanStartLiveCapture;
@@ -154,18 +157,19 @@ namespace CaptureCardViewer.ViewModels
 		[NotifyPropertyChangedFor(nameof(IsNotRendering))]
 		bool isRenderingOutput = false;
 
-		public bool IsNotRendering => !isRenderingOutput;
+		public bool IsNotRendering => !IsRenderingOutput;
 
-		public bool CanStartOutputRender => selectedEngineOutput != null && !isRenderingOutput;
-		public bool CanStopOutputRender => isRenderingOutput;
+		public bool CanStartOutputRender => SelectedEngineOutput != null && !IsRenderingOutput;
+		public bool CanStopOutputRender => IsRenderingOutput;
 
 
-		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, CaptureCardViewModel captureCard, IDisplayInput input)
+		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, CaptureCardViewModel captureCard, IDisplayInput input, ToolboxViewModel toolbox)
 		{
 			Workspace = workspace;
 			Engine = engine;
 			CaptureInput = input;
 			CaptureCard = captureCard;
+			Toolbox = toolbox;
 
 			// Enumerate available targets
 			var dispManager = DisplayManager.Create(DisplayManagerOptions.None)!;
@@ -188,15 +192,20 @@ namespace CaptureCardViewer.ViewModels
 
 			// Display & Capture of frames 
 			(var capturedFrame, var capturedBitmap, var capturedMetadata) =
-				await Task.Run(() =>
+				await Task.Run(async () =>
 			{
 				// Captured frames from the tanager board
 				var captureInput = CaptureInput;
 				captureInput.FinalizeDisplayState();
 
 				var capturedFrame = captureInput.CaptureFrame();
-				var capPixelBuffer = capturedFrame.GetFrameData();
-				var capturedBitmap = BufferToImgConv(capPixelBuffer.Data, capPixelBuffer.Resolution, (int)capPixelBuffer.FormatDescription.Stride);
+				var capPixelBuffer = capturedFrame.GetFrameData().Frames()[0];
+
+				BitmapSource capturedBitmap = null;
+				if (capPixelBuffer is IRawFrameRenderable capPixelBufferRenderable)
+				{
+					capturedBitmap = BufferToImgConv(await capPixelBufferRenderable.GetRenderableApproximationAsync());
+				}
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
 			});
@@ -277,7 +286,7 @@ namespace CaptureCardViewer.ViewModels
 		[RelayCommand]
 		async void RenderPrediction()
 		{
-			var displayPrediction = Engine.CreatePrediction();
+			var displayPrediction = Toolbox.Toolbox.CreatePrediction();
 
 			// TODO: Encapsulate the active tools into a sub-property of this CaptureSessionViewModel
 			var activeTools =
@@ -295,9 +304,13 @@ namespace CaptureCardViewer.ViewModels
 				}
 
 				var prediction = await displayPrediction.FinalizePredictionAsync();
-				var predictionBitmap = prediction.FrameData;
+				var predictionBitmap = prediction.Frames()[0];
 
-				return (prediction, BufferToImgConv(predictionBitmap.Data, predictionBitmap.Resolution, (int)predictionBitmap.FormatDescription.Stride));
+				if (predictionBitmap is IRawFrameRenderable predictionBitmapRenderable)
+				{
+					return (prediction, BufferToImgConv(await predictionBitmapRenderable.GetRenderableApproximationAsync()));
+				}
+				return (prediction, BufferToImgConv(predictionBitmap.Data, predictionBitmap.Resolution, predictionBitmap.DataFormat));
 			});
 
 			LastPredictedFrame = predictedFrame;
@@ -321,8 +334,11 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Converting buffer to image source
-		private static BitmapSource BufferToImgConv(IBuffer pixelBuffer, Windows.Graphics.SizeInt32 resolution, int stride)
+		private static BitmapSource BufferToImgConv(IBuffer pixelBuffer, Windows.Graphics.SizeInt32 resolution, DisplayWireFormat dataFormat)
 		{
+			int stride = resolution.Width * 3;
+			// TODO: Implement other data formats
+
 			BitmapSource imgSource;
 			unsafe
 			{
@@ -335,6 +351,33 @@ namespace CaptureCardViewer.ViewModels
 
 			imgSource.Freeze();
 			return imgSource;
+		}
+
+		// Convert SoftwareBitmap to a WPF BitmapSource
+		private unsafe static BitmapSource BufferToImgConv(SoftwareBitmap bitmap)
+		{
+			BitmapSource imgSource;
+
+			var pixelFormat = bitmap.BitmapPixelFormat switch
+			{
+				BitmapPixelFormat.Rgba8 => PixelFormats.Bgr32,
+				_ => throw new Exception($"Unsupported preview bitmap format {bitmap.BitmapPixelFormat}")
+			};
+
+			using (var lockedBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.Read))
+			using (var memRef = lockedBuffer.CreateReference())
+			{
+				var memRefAccess = memRef.As<IMemoryBufferByteAccess>();
+				memRefAccess.GetBuffer(out var buffer, out var capacity);
+
+				var description = lockedBuffer.GetPlaneDescription(0);
+				
+				imgSource = BitmapSource.Create(description.Width, description.Height, 96, 96, pixelFormat, null, (nint)buffer, (int)capacity, description.Stride);
+			}
+
+			imgSource.Freeze();
+			return imgSource;
+
 		}
 	}
 }
