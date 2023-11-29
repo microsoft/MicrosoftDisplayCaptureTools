@@ -204,7 +204,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
             get;
         };
 
-        // The main data of the descriptor is returned in a read only vector to make
+        // The main data of the descriptor is returned in a read only vector
         IVectorView<UInt8> Data
         {
             get;
@@ -220,6 +220,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
 
         Boolean IsSame(IMonitorDescriptor other);
     };
+
+    runtimeclass MonitorDescriptorLoader
+    {
+        static IMonitorDescriptor LoadDescriptorFromFile(String filePath);
+        static IMonitorDescriptor LoadDescriptorFromBuffer(Windows.Storage.Streams.IBuffer data);
+        static IMonitorDescriptor LoadDescriptorFromVectorView(IVectorView<UInt8> data);
+	};
 
     //
     // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection

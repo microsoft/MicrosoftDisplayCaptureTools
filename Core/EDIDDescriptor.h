@@ -8,6 +8,7 @@ struct EDIDDescriptor : winrt::implements<EDIDDescriptor, winrt::MicrosoftDispla
 {
     // Create the EDID with predefined data
     EDIDDescriptor(std::vector<uint8_t> data);
+    EDIDDescriptor(winrt::Windows::Foundation::Collections::IVectorView<uint8_t> data);
     EDIDDescriptor(winrt::com_array<uint8_t> data);
 
     // IMonitorDescriptor APIs
@@ -21,6 +22,7 @@ struct EDIDDescriptor : winrt::implements<EDIDDescriptor, winrt::MicrosoftDispla
     uint32_t SerialNumber();
     void SerialNumber(uint32_t number);
     bool IsSame(winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor other);
+    winrt::Windows::Foundation::Collections::IVector<uint8_t> GetRawData();
 
     static winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor CreateStandardEDID();
     static winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor CreateEDIDFromFile(hstring filePath);

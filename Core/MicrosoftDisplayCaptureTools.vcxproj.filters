@@ -18,12 +18,14 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="EDIDDescriptor.cpp" />
     <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="Framework.MonitorDescriptorLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="EDIDDescriptor.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="Framework.MonitorDescriptorLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="MicrosoftDisplayCaptureTools.idl" />

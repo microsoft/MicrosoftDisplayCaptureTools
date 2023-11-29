@@ -2,11 +2,13 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using MicrosoftDisplayCaptureTools.CaptureCard;
+using MicrosoftDisplayCaptureTools.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CaptureCardViewer.ViewModels
 {
@@ -65,7 +67,7 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		[RelayCommand]
-		void SetDescriptorFromFile()
+		async void SetDescriptorFromFile()
 		{
 			var openDialog = new OpenFileDialog();
 			openDialog.Filter = "ASCII Hex Files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
@@ -102,10 +104,12 @@ namespace CaptureCardViewer.ViewModels
 						descriptorData = File.ReadAllBytes(openDialog.FileName);
 					}
 
-					//IMonitorDescriptor descriptor;
-					//Input.SetDescriptor(descriptor);
+					await Task.Run(async () =>
+					{
+						var descriptor = MonitorDescriptorLoader.LoadDescriptorFromVectorView(descriptorData);
 
-					throw new Exception("This feature isn't implemented yet. We need a constructible RuntimeClass for IMonitorDescriptor.");
+						Input.SetDescriptor(descriptor);
+					});
 				}
 				catch (Exception ex)
 				{
