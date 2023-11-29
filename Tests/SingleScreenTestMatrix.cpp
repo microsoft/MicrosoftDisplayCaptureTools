@@ -32,7 +32,7 @@ namespace MicrosoftDisplayCaptureTools::Tests
     winrt::IAsyncAction SaveFrameToDisk(winrt::IRawFrame frame, winrt::StorageFolder folder, winrt::hstring fileNamePrefix)
     {
         {
-            auto filePathRaw = fileNamePrefix + L"raw.hwhlk";
+            auto filePathRaw = fileNamePrefix + L"_raw.hwhlk";
             auto file = co_await folder.CreateFileAsync(filePathRaw, winrt::CreationCollisionOption::ReplaceExisting);
 
             co_await winrt::FileIO::WriteBufferAsync(file, frame.Data());
@@ -50,7 +50,7 @@ namespace MicrosoftDisplayCaptureTools::Tests
                 co_return;
             }
 
-            auto filePathImage = fileNamePrefix + L"approximate.png";
+            auto filePathImage = fileNamePrefix + L"_approximate.png";
             auto file = co_await folder.CreateFileAsync(filePathImage, winrt::CreationCollisionOption::ReplaceExisting);
             auto encoder = co_await winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
                 winrt::Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(), co_await file.OpenAsync(winrt::FileAccessMode::ReadWrite));

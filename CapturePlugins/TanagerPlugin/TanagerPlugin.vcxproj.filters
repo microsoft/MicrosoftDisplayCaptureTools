@@ -34,7 +34,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ComputeShaders\RGB_444_8bpc_Full.hlsl">
+    <FxCompile Include="ComputeShaders\RGB_444_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\RGB_444_10bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\YCbCr_444_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\YCbCr_444_10bpc.hlsl">
       <Filter>Compute Shaders</Filter>
     </FxCompile>
   </ItemGroup>

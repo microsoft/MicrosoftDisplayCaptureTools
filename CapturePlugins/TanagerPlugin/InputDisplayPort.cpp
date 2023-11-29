@@ -68,8 +68,8 @@ private:
     winrt::event_token m_displayOutputValidationToken;
 };
 
-TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> parent) :
-    m_parent(parent)
+TanagerDisplayInputDisplayPort::TanagerDisplayInputDisplayPort(std::weak_ptr<TanagerDevice> tanagerDevice) :
+    m_parent(tanagerDevice)
 {
     Logger().LogNote(winrt::hstring(L"Initializing Tanager input: ") + Name());
 
@@ -261,15 +261,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputDi
     auto resolution = winrt::Windows::Graphics::SizeInt32();
     resolution = {timing.hActive, timing.vActive};
 
-    if (auto parent = m_parent.lock())
-    {
-        return winrt::make<TanagerDisplayCapture>(parent->GetD3D(), frameData, resolution, extendedProps);
-    }
-    else
-    {
-        Logger().LogAssert(L"Cannot obtain reference to Tanager object.");
-        throw winrt::hresult_error(E_FAIL);
-    }
+    return winrt::make<TanagerDisplayCapture>(parent->GetD3D(), frameData, resolution, extendedProps);
 }
 
 void TanagerDisplayInputDisplayPort::FinalizeDisplayState()

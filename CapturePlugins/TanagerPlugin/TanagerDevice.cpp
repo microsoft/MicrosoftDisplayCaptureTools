@@ -22,7 +22,10 @@ using namespace IteIt68051Plugin;
 
 namespace Shaders
 {
-    #include "ComputeShaders/RGB_444_8bpc_Full.h"
+    #include "ComputeShaders/RGB_444_8bpc.h"
+    #include "ComputeShaders/RGB_444_10bpc.h"
+    #include "ComputeShaders/YCbCr_444_8bpc.h"
+    #include "ComputeShaders/YCbCr_444_10bpc.h"
 }
 
 namespace winrt::TanagerPlugin::implementation
@@ -242,41 +245,6 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         buffer.Length(rawCaptureData.size());
         memcpy(buffer.data(), rawCaptureData.data(), rawCaptureData.size());
 
-        /*
-        // TODO: isolate this into a header supporting different masks
-        typedef struct
-        {
-            uint64_t pad1 : 2;
-            uint64_t red1 : 8;
-            uint64_t pad2 : 2;
-            uint64_t green1 : 8;
-            uint64_t pad3 : 2;
-            uint64_t blue1 : 8;
-            uint64_t pad4 : 2;
-            uint64_t red2 : 8;
-            uint64_t pad5 : 2;
-            uint64_t green2 : 8;
-            uint64_t pad6 : 2;
-            uint64_t blue2 : 8;
-            uint64_t rsvd : 4;
-        } rgbDataType;
-
-        auto pixelDataWriter = DataWriter();
-        rgbDataType* rgbData = (rgbDataType*)rawCaptureData.data();
-        while ((void*)rgbData < (void*)(rawCaptureData.data() + rawCaptureData.size()))
-        {
-            pixelDataWriter.WriteByte(rgbData->red1);
-            pixelDataWriter.WriteByte(rgbData->green1);
-            pixelDataWriter.WriteByte(rgbData->blue1);
-            pixelDataWriter.WriteByte(0xFF); // Alpha padding
-            pixelDataWriter.WriteByte(rgbData->red2);
-            pixelDataWriter.WriteByte(rgbData->green2);
-            pixelDataWriter.WriteByte(rgbData->blue2);
-            pixelDataWriter.WriteByte(0xFF); // Alpha padding
-            rgbData++;
-        }
-        */
-
         HdmiRawCaptureFormats pixelFormat = GetFormatFromInfoFrame(infoframe, 24);
 
         // Populate the frame format description, which for this capture card can only be 24bpc SDR RGB444.
@@ -424,17 +392,17 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
                 std::wstring msg;
                 std::format_to(
                     std::back_inserter(msg),
-                    L"\n\tPeak Diff: R = {:.4}%%, G = {:.4}%%, B = {:.4}%%\n",
+                    L"\n\tPeak Diff: R = {:.4}\%, G = {:.4}\%, B = {:.4}\%\n",
                     PeakDiffPercentage.r * 100.0f,
                     PeakDiffPercentage.g * 100.0f,
                     PeakDiffPercentage.b * 100.0f);
                 std::format_to(
                     std::back_inserter(msg),
-                    L"\tAverage Diff: R = {:.4}%%, G = {:.4}%%, B = {:.4}%%\n",
+                    L"\tAverage Diff: R = {:.4}/%, G = {:.4}/%, B = {:.4}/%\n",
                     AverageDiffPercentage.r * 100.0f,
                     AverageDiffPercentage.g * 100.0f,
                     AverageDiffPercentage.b * 100.0f);
-                std::format_to(std::back_inserter(msg), L"\tPercent of different pixels = {:.4}%%\n\n", (double)differenceCount / pixelCount * 100.);
+                std::format_to(std::back_inserter(msg), L"\tPercent of different pixels = {:.4}/%\n\n", (double)differenceCount / pixelCount * 100.);
                 Logger().LogNote(msg);
 
                 // If the difference is too great, then the capture is considered a failure.
@@ -669,8 +637,6 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         {
             case 24:
             case 30:
-            case 36:
-            case 48:
                 break;
             default:
                 Logger().LogAssert(L"Unsupported bits per pixel.");
@@ -835,12 +801,41 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
 
         switch (type)
         {
-            case HdmiRawCaptureFormats::RGB_444_8bpc_Full:
-                winrt::check_hresult(m_d3dDevice->CreateComputeShader(Shaders::RGB_444_8bpc_Full, sizeof(Shaders::RGB_444_8bpc_Full), nullptr, shader.put()));
-				break;
-            default:
-				Logger().LogAssert(L"Unsupported raw capture format.");
-				throw winrt::hresult_invalid_argument();
+        case HdmiRawCaptureFormats::RGB_444_8bpc_Full:
+        case HdmiRawCaptureFormats::RGB_444_8bpc_Limited:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                Shaders::RGB_444_8bpc, sizeof(Shaders::RGB_444_8bpc), nullptr, shader.put()));
+            break;
+        case HdmiRawCaptureFormats::RGB_444_10bpc_Full:
+        case HdmiRawCaptureFormats::RGB_444_10bpc_Limited:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                Shaders::RGB_444_10bpc, sizeof(Shaders::RGB_444_10bpc), nullptr, shader.put()));
+            break;
+        case HdmiRawCaptureFormats::YCbCr_444_8bpc_Limited:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                Shaders::YCbCr_444_8bpc, sizeof(Shaders::YCbCr_444_8bpc), nullptr, shader.put()));
+            break;
+        case HdmiRawCaptureFormats::YCbCr_444_10bpc_Limited:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                Shaders::YCbCr_444_10bpc, sizeof(Shaders::YCbCr_444_10bpc), nullptr, shader.put()));
+            break;
+        case HdmiRawCaptureFormats::YCbCr_422_8bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_420_8bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_422_10bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_420_10bpc_Limited:
+        case HdmiRawCaptureFormats::RGB_444_12bpc_Full:
+        case HdmiRawCaptureFormats::RGB_444_12bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_444_12bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_422_12bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_420_12bpc_Limited:
+        case HdmiRawCaptureFormats::RGB_444_16bpc_Full:
+        case HdmiRawCaptureFormats::RGB_444_16bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_444_16bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_422_16bpc_Limited:
+        case HdmiRawCaptureFormats::YCbCr_420_16bpc_Limited:
+        default:
+			Logger().LogAssert(L"Unsupported raw capture format.");
+			throw winrt::hresult_invalid_argument();
         }
 
         m_computeShaderCache[type] = shader;

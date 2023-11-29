@@ -384,9 +384,9 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 			AverageDiffPercentage.b /= pixelCount;
 
 			std::wstring msg;
-			std::format_to(std::back_inserter(msg),L"\n\tPeak Diff: R = {:.4}%%, G = {:.4}%%, B = {:.4}%%\n", PeakDiffPercentage.r * 100.0f, PeakDiffPercentage.g * 100.0f, PeakDiffPercentage.b * 100.0f);
-			std::format_to(std::back_inserter(msg),L"\tAverage Diff: R = {:.4}%%, G = {:.4}%%, B = {:.4}%%\n", AverageDiffPercentage.r * 100.0f, AverageDiffPercentage.g * 100.0f, AverageDiffPercentage.b * 100.0f);
-			std::format_to(std::back_inserter(msg),L"\tPercent of different pixels = {:.4}%%\n\n", (double)differenceCount / pixelCount * 100.);
+			std::format_to(std::back_inserter(msg),L"\n\tPeak Diff: R = {:.4}/%, G = {:.4}/%, B = {:.4}/%\n", PeakDiffPercentage.r * 100.0f, PeakDiffPercentage.g * 100.0f, PeakDiffPercentage.b * 100.0f);
+			std::format_to(std::back_inserter(msg),L"\tAverage Diff: R = {:.4}/%, G = {:.4}/%, B = {:.4}/%\n", AverageDiffPercentage.r * 100.0f, AverageDiffPercentage.g * 100.0f, AverageDiffPercentage.b * 100.0f);
+			std::format_to(std::back_inserter(msg),L"\tPercent of different pixels = {:.4}/%\n\n", (double)differenceCount / pixelCount * 100.);
 			Logger().LogNote(msg);
 
 			// If the difference is too great, then the capture is considered a failure.

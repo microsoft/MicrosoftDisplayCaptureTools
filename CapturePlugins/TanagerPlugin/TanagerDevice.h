@@ -5,6 +5,11 @@ namespace winrt::TanagerPlugin::implementation
     // This is a temporary limit while we're bringing up some of the hardware on board.
     constexpr uint32_t MaxDescriptorByteSize = 512;
 
+    // The Tanager device has two display inputs: HDMI and DisplayPort. However these inputs are both
+    // put through a single ITE chip, which exposes the data as HDMI to the host from either input. 
+    // This means that we only need to handle HDMI data formats, which are enumerated below. These 
+    // formats each correspond to different data packet structures that we will load compute shaders
+    // to translate into a common RGB or YUV floating point format.
     enum class HdmiRawCaptureFormats
     {
         RGB_444_8bpc_Full,

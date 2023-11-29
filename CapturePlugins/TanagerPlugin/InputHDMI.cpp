@@ -59,8 +59,8 @@ struct HDMICapabilities : implements<HDMICapabilities, winrt::MicrosoftDisplayCa
     }
 };
 
-TanagerDisplayInputHdmi::TanagerDisplayInputHdmi(std::weak_ptr<TanagerDevice> parent) :
-    m_parent(parent)
+TanagerDisplayInputHdmi::TanagerDisplayInputHdmi(std::weak_ptr<TanagerDevice> tanagerDevice) :
+    m_parent(tanagerDevice)
 {
     Logger().LogNote(winrt::hstring(L"Inizializing Tanager input: ") + Name());
 
@@ -254,15 +254,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
     auto resolution = winrt::Windows::Graphics::SizeInt32();
     resolution = {timing.hActive, timing.vActive};
 
-    if (auto parent = m_parent.lock())
-    {
-        return winrt::make<TanagerDisplayCapture>(parent->GetD3D(), frameData, resolution, extendedProps);
-    }
-    else
-    {
-        Logger().LogAssert(L"Cannot obtain reference to Tanager object.");
-        throw winrt::hresult_error(E_FAIL);
-    }
+    return winrt::make<TanagerDisplayCapture>(parent->GetD3D(), frameData, resolution, extendedProps);
 }
 
 void TanagerDisplayInputHdmi::FinalizeDisplayState()
