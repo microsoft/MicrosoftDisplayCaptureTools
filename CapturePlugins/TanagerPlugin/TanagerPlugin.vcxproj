@@ -153,8 +153,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">stdcpplatest</LanguageStandard>
@@ -234,8 +234,8 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">stdcpplatest</LanguageStandard>
