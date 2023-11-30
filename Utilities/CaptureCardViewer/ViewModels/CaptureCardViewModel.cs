@@ -38,10 +38,14 @@ namespace CaptureCardViewer.ViewModels
 			Workspace = workspace;
 			Controller = controller;
 
-			foreach (var input in controller.EnumerateDisplayInputs())
-				inputs.Add(new DisplayInputViewModel(workspace, this, input));
+			var controllerInputs = controller.EnumerateDisplayInputs();
+			if (controllerInputs != null)
+			{
+				foreach (var input in controllerInputs)
+					inputs.Add(new DisplayInputViewModel(workspace, this, input));
 
-			Inputs = new ReadOnlyObservableCollection<DisplayInputViewModel>(inputs);
+				Inputs = new ReadOnlyObservableCollection<DisplayInputViewModel>(inputs);
+			}
 
 			Firmware = Controller as IControllerWithFirmware;
 		}

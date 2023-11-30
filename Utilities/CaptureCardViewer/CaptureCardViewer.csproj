@@ -20,6 +20,7 @@
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 		<Description>A UI wrapping the capabilities of the Microsoft Display Capture Tools project.</Description>
 		<Title>Microsoft Display Capture Tools Utilities</Title>
+		<BaseOutputPath>\\daspr-dev\hwhlk\Utilities\CaptureCardViewer\bin</BaseOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>

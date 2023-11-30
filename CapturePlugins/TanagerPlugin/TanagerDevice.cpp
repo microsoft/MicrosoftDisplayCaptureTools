@@ -814,6 +814,7 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         case HdmiRawCaptureFormats::YCbCr_444_8bpc_Limited:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 Shaders::YCbCr_444_8bpc, sizeof(Shaders::YCbCr_444_8bpc), nullptr, shader.put()));
+            Logger().LogNote(L"Using YCbCr 444 8bpc.");
             break;
         case HdmiRawCaptureFormats::YCbCr_444_10bpc_Limited:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
