@@ -11,5 +11,5 @@ namespace CaptureCardViewer.Controls
 		{
 			InitializeComponent();
 		}
-	}
+    }
 }

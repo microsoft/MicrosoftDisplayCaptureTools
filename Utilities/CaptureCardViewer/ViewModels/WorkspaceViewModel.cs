@@ -11,7 +11,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
+using Windows.Web.AtomPub;
 
 namespace CaptureCardViewer.ViewModels
 {
@@ -30,9 +32,54 @@ namespace CaptureCardViewer.ViewModels
 		public ObservableCollection<CaptureCardViewModel> CaptureCards { get; } = new();
 		public ObservableCollection<DisplayEngineViewModel> DisplayEngines { get; } = new();
 
+		[ObservableProperty]
+		public DisplayEngineViewModel selectedDisplayEngine;
+
+		[ObservableProperty]
+		public ToolboxViewModel selectedToolbox;
+
+		[ObservableProperty]
+		public DisplayInputViewModel selectedDisplayInput;
+
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(SelectedDisplayInput))]
+		public CaptureCardViewModel selectedCaptureCard;
+
 		public RichTextLogger Logger { get; } = new RichTextLogger();
 
 		public ObservableCollection<object> Documents { get; } = new();
+
+		[RelayCommand]
+		async void CreateCaptureSession()
+		{
+			if (SelectedToolbox == null || SelectedDisplayEngine == null || SelectedDisplayInput == null)
+			{
+				ModernWpf.MessageBox.Show("You must select a DisplayEngine, Toolbox, Capture Card and Input.");
+				return;
+			}
+
+			var mapping = await Task.Run(() =>
+				Framework.GetSourceToSinkMappings(
+					true,
+					SelectedDisplayEngine.Engine,
+					SelectedToolbox.Toolbox,
+					SelectedCaptureCard.Controller,
+					SelectedDisplayInput.Name));
+
+			if (mapping.Count == 0)
+			{
+				ModernWpf.MessageBox.Show("Unable to map the display outputs to the captured inputs for these selections.");
+				return;
+			}
+			if (mapping.Count != 1)
+			{
+				ModernWpf.MessageBox.Show("Multiple display outputs were mapped to the same capture input. Please double check your setup.");
+				return;
+			}
+
+			var newSession = new CaptureSessionViewModel(this, SelectedDisplayEngine.Engine, mapping.First(), SelectedToolbox);
+			Documents.Add(newSession);
+		}
 
 		class UiRuntimeSettings : IRuntimeSettings
 		{
@@ -63,7 +110,7 @@ namespace CaptureCardViewer.ViewModels
 			Documents.Add(this);
 
 			// Start the discovery async
-			DiscoverInstalledPlugins();
+			_ = Task.Run(async () => await DiscoverInstalledPlugins());
 		}
 
 		public async Task DiscoverInstalledPlugins()
@@ -75,23 +122,22 @@ namespace CaptureCardViewer.ViewModels
 
 			try
 			{
-				await RefreshAllPlugins();
+				Application.Current.Dispatcher.Invoke(async () =>
+				{
+					await RefreshAllPlugins();
+				});
 			}
 			catch (Exception ex)
 			{
 				ModernWpf.MessageBox.Show("Failed to load discovered plugins.\r\n" + ex.Message);
 			}
-
-#if DEBUG
-			// Add a mock controller for UI testing
-			CaptureCards.Add(new CaptureCardViewModel(this, new MockController()));
-#endif
 		}
 
 		private async Task RefreshAllPlugins()
 		{
 			CaptureCards.Clear();
 			Toolboxes.Clear();
+			DisplayEngines.Clear();
 
 			// For each type of plugin, intialize the view models on a background thread and
 			// then add them to the ObservableCollections on the UI thread
@@ -110,6 +156,28 @@ namespace CaptureCardViewer.ViewModels
 				.Select((engine) => new DisplayEngineViewModel(engine))?
 				.ToList()))?
 				.ForEach((engine) => DisplayEngines.Add(engine));
+
+
+			// Add a mock controller for Non-Capture Testing
+			CaptureCards.Add(new CaptureCardViewModel(this, new MockController()));
+
+			// Select the first capture card
+			SelectedToolbox = Toolboxes.FirstOrDefault();
+			SelectedDisplayEngine = DisplayEngines.FirstOrDefault();
+
+			// Select the first input on the first capture card
+			foreach (var card in CaptureCards)
+			{
+				if (card.Inputs.Count > 0)
+				{
+					SelectedDisplayInput = card.Inputs.FirstOrDefault();
+					SelectedCaptureCard = card;
+					break;
+				}
+			}
+
+			if (SelectedCaptureCard == null)
+				SelectedCaptureCard = CaptureCards.FirstOrDefault();
 		}
 
 		[RelayCommand]
@@ -131,7 +199,10 @@ namespace CaptureCardViewer.ViewModels
 						testFramework = newInstance;
 					});
 
-					await RefreshAllPlugins();
+					await Application.Current.Dispatcher.Invoke(async () =>
+					{
+						await RefreshAllPlugins();
+					});
 				}
 				catch (Exception ex)
 				{

@@ -385,6 +385,15 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          The ConfigurationToolbox to use when regenerating mappings, this is not used when regenerateMappings =
         //          false. This is also not used if the displayEngine supports customized display descriptors (EDIDs or 
         //          DisplayIDs) as those provide a faster and more reliable mapping path.
+        //      captureCard (optional)
+        //          The specific capture card to use when regenerating mappings, this is not used when regenerateMappings =
+        //          false. If this is not provided, the framework will attempt to map using all loaded capture cards. Mappings
+        //          will be generated for all inputs on the capture card unless displayInput is provided.
+        //      displayInput (optional)
+        //          The specific capture card input map the input-output for, this is not used when regenerateMappings = false.
+        //          If this is not provided, the framework will attempt to map using the inputs from all capture cards or any
+        //          specfic capture card provided with captureCard. If this is provided, captureCard must also be provided, and 
+        //          this displayInput must be a valid input on the specific captureCard.
         //
         // Returns:
         //      An array of structs containing the source and sink references.
@@ -392,7 +401,9 @@ namespace MicrosoftDisplayCaptureTools.Framework
         IVector<ISourceToSinkMapping> GetSourceToSinkMappings(
             Boolean regenerateMappings,
             MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine,
-            MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox toolbox);
+            MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox toolbox,
+            MicrosoftDisplayCaptureTools.CaptureCard.IController captureCard,
+            String displayInput);
 
         // GetConfigurationToolboxes
         // ----------------------------------------------------------------------------------------------------------------

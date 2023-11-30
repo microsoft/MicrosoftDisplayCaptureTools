@@ -55,15 +55,10 @@ namespace CaptureCardViewer.ViewModels
 		[RelayCommand]
 		void CreateCaptureSession()
 		{
-			if (Workspace.DisplayEngines.Count == 0)
-			{
-				ModernWpf.MessageBox.Show("You must load at least one Render Engine before creating a capture session.");
-				return;
-			}
+			Workspace.SelectedCaptureCard = CaptureCard;
+			Workspace.SelectedDisplayInput = this;
 
-			// TODO: Allow selecting a specific render engine
-			var newSession = new CaptureSessionViewModel(Workspace, Workspace.DisplayEngines.First().Engine, CaptureCard, Input, Workspace.Toolboxes.First());
-			Workspace.Documents.Add(newSession);
+			Workspace.CreateCaptureSessionCommand.Execute(null);
 		}
 
 		[RelayCommand]

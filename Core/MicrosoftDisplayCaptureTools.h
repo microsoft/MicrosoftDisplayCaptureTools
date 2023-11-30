@@ -83,7 +83,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         com_array<Display::IDisplayEngine> GetDisplayEngines();
         
         winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(
-            bool regenerateMappings, Display::IDisplayEngine displayEngine, ConfigurationTools::IConfigurationToolbox toolbox);
+            bool regenerateMappings,
+            Display::IDisplayEngine displayEngine,
+            ConfigurationTools::IConfigurationToolbox toolbox,
+            CaptureCard::IController captureCard,
+            winrt::hstring displayInput);
 
         MicrosoftDisplayCaptureTools::Framework::Version Version()
         {

@@ -128,9 +128,6 @@ namespace CaptureCardViewer.ViewModels
 		[ObservableProperty]
 		ImageSource? captureSource;
 
-		ObservableCollection<AvailableEngineOutput> availableEngineOutputs = new();
-		public ReadOnlyObservableCollection<AvailableEngineOutput> AvailableEngineOutputs { get; }
-
 		[ObservableProperty]
 		int framesCaptured = 0;
 
@@ -163,25 +160,19 @@ namespace CaptureCardViewer.ViewModels
 		public bool CanStopOutputRender => IsRenderingOutput;
 
 
-		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, CaptureCardViewModel captureCard, IDisplayInput input, ToolboxViewModel toolbox)
+		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, ISourceToSinkMapping inputOutputMapping, ToolboxViewModel toolbox)
 		{
 			Workspace = workspace;
 			Engine = engine;
-			CaptureInput = input;
-			CaptureCard = captureCard;
 			Toolbox = toolbox;
+			CaptureInput = inputOutputMapping.Sink;
+			SelectedEngineOutput = Engine.InitializeOutput(inputOutputMapping.Source);
 
-			// Enumerate available targets
-			var dispManager = DisplayManager.Create(DisplayManagerOptions.None)!;
-			foreach (var target in dispManager.GetCurrentTargets())
+			if (SelectedEngineOutput == null)
 			{
-				if (target.IsConnected)
-				{
-					availableEngineOutputs.Add(new AvailableEngineOutput(this, target));
-				}
+				ModernWpf.MessageBox.Show("Could not take control of the mapped output.");
+				return;
 			}
-
-			AvailableEngineOutputs = new ReadOnlyObservableCollection<AvailableEngineOutput>(availableEngineOutputs);
 		}
 
 		// Displaying frames & properties from the plugin

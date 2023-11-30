@@ -341,7 +341,12 @@ com_array<IDisplayEngine> Core::GetDisplayEngines()
     return com_array<IDisplayEngine>(m_displayEngines);
 }
 
-IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings, IDisplayEngine displayEngine, IConfigurationToolbox toolbox)
+IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(
+    bool regenerateMappings,
+    IDisplayEngine displayEngine,
+    IConfigurationToolbox toolbox,
+    IController captureCard,
+    winrt::hstring displayInput)
 {
     // Prevent component changes while we are attempting configuration
     auto lock = LockFramework();
@@ -350,11 +355,11 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
     if (regenerateMappings)
     {
-        // If the framework is requested to regenerate display-to-capture mappings, a display capture plugin and a display engine
-        // are both required.
-        if (m_captureCards.empty() || !displayEngine)
+        // If the framework is requested to regenerate display-to-capture mappings, a display capture plugin, a display engine,
+        // and a toolbox must be provided.
+        if ((m_captureCards.empty() && !captureCard) || !displayEngine || !toolbox)
         {
-            m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine and a capture card.");
+            m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine, capture card, and toolbox.");
             return mappings;
         }
 
@@ -364,10 +369,26 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
             // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
             std::list<std::tuple<winrt::IController, winrt::IDisplayInput>> unassignedInputs_EDID, unassignedInputs_NoEDID;
-            for (auto&& card : m_captureCards)
+            std::vector<IController> captureCardsToUse;
+
+            if (captureCard)
+            {
+				captureCardsToUse.push_back(captureCard);
+			}
+            else
+            {
+				captureCardsToUse = m_captureCards;
+			}
+
+            for (auto&& card : captureCardsToUse)
             {
                 for (auto&& input : card.EnumerateDisplayInputs())
                 {
+                    if (captureCard && !displayInput.empty() && input.Name() != displayInput)
+                    {
+						continue;
+					}
+
                     if (input.GetCapabilities().CanConfigureEDID() && input.GetCapabilities().CanHotPlug())
                     {
                         // This input can HPD with a specified EDID
@@ -434,28 +455,28 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                 serialNum++;
             }
 
-            // If a capture card input cannot hotplug in a display with a custom descriptor, the next mechanism is to take control of each 
-            // display and setup a scanout and prediction - similar to how a basic test works, just with all default options. 
-            // 
-            // NOTE: We will not remove any displays from composition for this - to prevent a user accidentally making their system unusable.
-            //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
-            //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
-            //       device. For the latter case, this auto-config method will print out the possible display IDs.
-            auto toolList = GetAllTools(toolbox);
-            if (toolList.empty())
-            {
-                m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
-                                    L"- capture input mapping.");
-            }
-
-            m_logger.LogNote(L"Using default values for all tools.");
-
             // For all still unassigned targets
             //    Initialize the displayengine's output and use default tool settings to generate an output/prediction.
             //    For every still unassigned inputs
             //        Pass prediction to input until one succeeds.
             if (unassignedInputs_NoEDID.size() > 0)
             {
+                // If a capture card input cannot hotplug in a display with a custom descriptor, the next mechanism is to take control of each
+                // display and setup a scanout and prediction - similar to how a basic test works, just with all default options.
+                //
+                // NOTE: We will not remove any displays from composition for this - to prevent a user accidentally making their system unusable.
+                //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
+                //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
+                //       device. For the latter case, this auto-config method will print out the possible display IDs.
+                auto toolList = GetAllTools(toolbox);
+                if (toolList.empty())
+                {
+                    m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
+                                        L"- capture input mapping.");
+                }
+
+                m_logger.LogNote(L"Using default values for all tools.");
+
                 auto targets = manager.GetCurrentTargets();
                 for (auto&& target : targets)
                 {

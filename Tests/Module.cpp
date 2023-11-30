@@ -148,7 +148,7 @@ MODULE_SETUP(ModuleSetup)
     if (!winrt::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
         // First see if the config file contained any display mappings, if so we will use these.
-        g_displayMap = g_framework.GetSourceToSinkMappings(false, displayEngineForMapping, toolboxForMapping);
+        g_displayMap = g_framework.GetSourceToSinkMappings(false, displayEngineForMapping, toolboxForMapping, nullptr, L"");
         if (g_displayMap.Size() == 0)
         {
             winrt::Logger().LogNote(
@@ -156,7 +156,7 @@ MODULE_SETUP(ModuleSetup)
 
             // if no display mappings were in the config file - attempt to figure out the mappings automatically
             // This uses the normal test mechanisms to control and render to displays - so if this fails normally it can be safely ignored.
-            g_displayMap = g_framework.GetSourceToSinkMappings(true, displayEngineForMapping, toolboxForMapping);
+            g_displayMap = g_framework.GetSourceToSinkMappings(true, displayEngineForMapping, toolboxForMapping, nullptr, L"");
 
             if (g_displayMap.Size() == 0)
             {
