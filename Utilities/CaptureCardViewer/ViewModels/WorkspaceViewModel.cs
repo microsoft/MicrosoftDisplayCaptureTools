@@ -64,7 +64,7 @@ namespace CaptureCardViewer.ViewModels
 					SelectedDisplayEngine.Engine,
 					SelectedToolbox.Toolbox,
 					SelectedCaptureCard.Controller,
-					SelectedDisplayInput.Name));
+					SelectedDisplayInput.Input));
 
 			if (mapping.Count == 0)
 			{
@@ -122,7 +122,7 @@ namespace CaptureCardViewer.ViewModels
 
 			try
 			{
-				Application.Current.Dispatcher.Invoke(async () =>
+				await Application.Current.Dispatcher.Invoke(async () =>
 				{
 					await RefreshAllPlugins();
 				});
@@ -168,7 +168,7 @@ namespace CaptureCardViewer.ViewModels
 			// Select the first input on the first capture card
 			foreach (var card in CaptureCards)
 			{
-				if (card.Inputs.Count > 0)
+				if (card.Inputs != null && card.Inputs.Count > 0)
 				{
 					SelectedDisplayInput = card.Inputs.FirstOrDefault();
 					SelectedCaptureCard = card;

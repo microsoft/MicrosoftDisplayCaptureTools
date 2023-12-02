@@ -52,6 +52,8 @@ namespace winrt::TanagerPlugin::implementation
 
         winrt::com_ptr<ID3D11ComputeShader> GetRawDataTranslateShader(HdmiRawCaptureFormats const& type);
 
+        winrt::com_ptr<ID3D11ComputeShader> GetDiffSumShader();
+
         winrt::com_ptr<ID3D11Device> GetDevice()
         {
 			return m_d3dDevice;
@@ -64,6 +66,8 @@ namespace winrt::TanagerPlugin::implementation
 
     private:
         std::map<HdmiRawCaptureFormats, winrt::com_ptr<ID3D11ComputeShader>> m_computeShaderCache;
+
+        winrt::com_ptr<ID3D11ComputeShader> m_diffSumShader;
         winrt::com_ptr<ID3D11Device> m_d3dDevice{nullptr};
         winrt::com_ptr<ID3D11DeviceContext> m_d3dDeviceContext{nullptr};
         std::mutex m_d3dRenderingMutex;

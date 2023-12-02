@@ -26,6 +26,8 @@ namespace Shaders
     #include "ComputeShaders/RGB_444_10bpc.h"
     #include "ComputeShaders/YCbCr_444_8bpc.h"
     #include "ComputeShaders/YCbCr_444_10bpc.h"
+
+    #include "ComputeShaders/scRGB_Bucket_Sum.h"
 }
 
 namespace winrt::TanagerPlugin::implementation
@@ -47,23 +49,6 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
 		{
 			throw_hresult(E_FAIL);
 		}
-
-        // Attempt to reboot the Tanager device
-        /* {
-            auto rebootPacket = winrt::UsbSetupPacket();
-            auto rebootPacketRequestType = winrt::UsbControlRequestType();
-            rebootPacketRequestType.AsByte(0x40);
-            rebootPacket.RequestType(rebootPacketRequestType);
-            rebootPacket.Request(0xc6);
-
-            auto ret = m_usbDevice.SendControlOutTransferAsync(rebootPacket).get();
-
-            if (0 == ret)
-            {
-                // If the command to start a board reset succeeded - Sleep for a few seconds to let the board come back up.
-                Sleep(10000);
-            }
-        }*/
 
 		m_fpga.SetUsbDevice(m_usbDevice);
 		m_pDriver = std::make_shared<I2cDriver>(m_usbDevice);
@@ -276,142 +261,81 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
             auto predictedFrame = prediction.Frames().GetAt(index);
             auto capturedFrame = m_frames.GetAt(index);
 
-            // Compare the frame resolutions
-            auto predictedFrameRes = predictedFrame.Resolution();
-            auto capturedFrameRes = capturedFrame.Resolution();
-            if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
             {
-                Logger().LogError(
-                    winrt::hstring(L"Capture resolution did not match prediction") + std::to_wstring(capturedFrameRes.Width) +
-                    L"x" + std::to_wstring(capturedFrameRes.Height) + L", Predicted=" + std::to_wstring(predictedFrameRes.Width) +
-                    L"x" + std::to_wstring(predictedFrameRes.Height));
-                return false;
-            }
+                bool formatMismatch = false;
 
-            // Compare the frame formats
-            auto predictedFrameFormat = predictedFrame.DataFormat();
-            auto capturedFrameFormat = capturedFrame.DataFormat();
-            if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding() ||
-                predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace() ||
-                predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf() ||
-                predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
-            {
-                Logger().LogError(winrt::hstring(L"Capture format did not match prediction"));
-                return false;
-            }
-
-            // At this point, both frames should be identical in terms of resolution and format. Now we can compare the actual pixel data.
-            if (predictedFrame.Data().Length() != capturedFrame.Data().Length() ||
-                0 != memcmp(predictedFrame.Data().data(), capturedFrame.Data().data(), predictedFrame.Data().Length()))
-            {
-                Logger().LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
-
-                // This capture plugin only supports 8bpc SDR RGB444, so we can do a direct comparison of the pixel data.
-                struct PixelStruct
+                // Compare the frame resolutions
+                auto predictedFrameRes = predictedFrame.Resolution();
+                auto capturedFrameRes = capturedFrame.Resolution();
+                if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
                 {
-                    uint8_t r, g, b, a;
-                };
-
-                struct PixelStruct16
-                {
-                    ::DirectX::PackedVector::HALF r, g, b, a;
-                };
-
-                PixelStruct* cap = reinterpret_cast<PixelStruct*>(capturedFrame.Data().data());
-                PixelStruct16* pre = reinterpret_cast<PixelStruct16*>(predictedFrame.Data().data());
-
-                auto differenceCount = 0;
-
-                struct PixelDiff
-                {
-                    float r, g, b;
-                } PeakDiffPercentage{}, AverageDiffPercentage{};
-
-                const int threadCount = 8;
-                const int pixelCount = capturedFrameRes.Width * capturedFrameRes.Height;
-                auto threads = std::vector<std::thread>(threadCount);
-                auto threadPeakDiffs = std::vector<PixelDiff>(threadCount);
-                auto threadTotalDiffs = std::vector<PixelDiff>(threadCount);
-                for (auto i = 0; i < threadCount; i++)
-                {
-                    threads[i] = std::thread([&, i]() {
-                        auto start = i * pixelCount / threadCount;
-                        auto end = (i + 1) * pixelCount / threadCount;
-
-                        for (auto j = start; j < end; j++)
-                        {
-                            PixelStruct translatedPrediction = {
-                                static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].r) * 255.0f),
-                                static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].g) * 255.0f),
-                                static_cast<uint8_t>(::DirectX::PackedVector::XMConvertHalfToFloat(pre[j].b) * 255.0f),
-                                255};
-
-                            if (cap[j].r != translatedPrediction.r || cap[j].g != translatedPrediction.g ||
-                                cap[j].b != translatedPrediction.b)
-                            {
-                                differenceCount++;
-
-                                PixelDiff diff = {
-                                    abs(cap[j].r - translatedPrediction.r) / 255.0f,
-                                    abs(cap[j].g - translatedPrediction.g) / 255.0f,
-                                    abs(cap[j].b - translatedPrediction.b) / 255.0f};
-
-                                threadPeakDiffs[i] = {
-                                    max(threadPeakDiffs[i].r, diff.r), max(threadPeakDiffs[i].g, diff.g), max(threadPeakDiffs[i].b, diff.b)};
-
-                                threadTotalDiffs[i].r += diff.r;
-                                threadTotalDiffs[i].g += diff.g;
-                                threadTotalDiffs[i].b += diff.b;
-                            }
-                        }
-                    });
+                    Logger().LogError(
+                        winrt::hstring(L"Capture resolution did not match prediction. Captured=") + std::to_wstring(capturedFrameRes.Width) +
+                        L"x" + std::to_wstring(capturedFrameRes.Height) + L", Predicted=" +
+                        std::to_wstring(predictedFrameRes.Width) + L"x" + std::to_wstring(predictedFrameRes.Height));
+                    formatMismatch = true;
                 }
 
-                // Join the comparing threads
-                for (auto& thread : threads)
+                // Compare the frame formats
+                auto predictedFrameFormat = predictedFrame.DataFormat();
+                auto capturedFrameFormat = capturedFrame.DataFormat();
+
+                if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding())
                 {
-                    thread.join();
+                    Logger().LogError(
+                        winrt::hstring(L"Capture pixel format did not match prediction"));
+                    formatMismatch = true;
                 }
 
-                // Combine the results from the threads
-                for (auto i = 0; i < threadCount; i++)
+                if (predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace())
                 {
-                    PeakDiffPercentage.r = max(PeakDiffPercentage.r, threadPeakDiffs[i].r);
-                    PeakDiffPercentage.g = max(PeakDiffPercentage.g, threadPeakDiffs[i].g);
-                    PeakDiffPercentage.b = max(PeakDiffPercentage.b, threadPeakDiffs[i].b);
-
-                    AverageDiffPercentage.r += threadTotalDiffs[i].r;
-                    AverageDiffPercentage.g += threadTotalDiffs[i].g;
-                    AverageDiffPercentage.b += threadTotalDiffs[i].b;
+                    Logger().LogError(winrt::hstring(L"Capture color space did not match prediction"));
+                    formatMismatch = true;
                 }
 
-                AverageDiffPercentage.r /= pixelCount;
-                AverageDiffPercentage.g /= pixelCount;
-                AverageDiffPercentage.b /= pixelCount;
-
-                std::wstring msg;
-                std::format_to(
-                    std::back_inserter(msg),
-                    L"\n\tPeak Diff: R = {:.4}\%, G = {:.4}\%, B = {:.4}\%\n",
-                    PeakDiffPercentage.r * 100.0f,
-                    PeakDiffPercentage.g * 100.0f,
-                    PeakDiffPercentage.b * 100.0f);
-                std::format_to(
-                    std::back_inserter(msg),
-                    L"\tAverage Diff: R = {:.4}/%, G = {:.4}/%, B = {:.4}/%\n",
-                    AverageDiffPercentage.r * 100.0f,
-                    AverageDiffPercentage.g * 100.0f,
-                    AverageDiffPercentage.b * 100.0f);
-                std::format_to(std::back_inserter(msg), L"\tPercent of different pixels = {:.4}/%\n\n", (double)differenceCount / pixelCount * 100.);
-                Logger().LogNote(msg);
-
-                // If the difference is too great, then the capture is considered a failure.
-                if (AverageDiffPercentage.r > 0.10f || AverageDiffPercentage.g > 0.10f || AverageDiffPercentage.b > 0.10f)
+                if (predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf())
                 {
-                    Logger().LogError(L"Average difference between prediction and capture too high.");
+                    Logger().LogError(winrt::hstring(L"Capture EOTF did not match prediction"));
+                    formatMismatch = true;
+                }
+
+                if (predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
+                {
+                    Logger().LogError(winrt::hstring(L"Capture HDR metadata format did not match prediction"));
+                    formatMismatch = true;
+                }
+
+                if (predictedFrameFormat.BitsPerChannel() != capturedFrameFormat.BitsPerChannel())
+                {
+                    Logger().LogError(winrt::hstring(L"Capture bits per channel did not match prediction. Captured=") +
+                        std::to_wstring(capturedFrameFormat.BitsPerChannel()) + L", Predicted=" + 
+                        std::to_wstring(predictedFrameFormat.BitsPerChannel()));
+                    formatMismatch = true;
+                }
+
+                if (formatMismatch)
+                {
                     return false;
                 }
             }
+
+            // The frame formats match, so we can compare the actual pixel data.
+
+            // TODO: Create the input textures
+
+            // TODO: Create the output buffer
+
+            // TODO: Create the views
+
+            // TODO: Dispatch the shader
+
+            // TODO: Clear the shader pipeline
+
+            // TODO: Sum the output items
+
+            // TODO: Compute the PSNR in dB
+
+            // TODO: Log the PSNR and report success/failure
 		}
 
         return true;
@@ -841,6 +765,19 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
 
         m_computeShaderCache[type] = shader;
         return shader;
+    }
+
+    winrt::com_ptr<ID3D11ComputeShader> TanagerD3D::GetDiffSumShader()
+    {
+        if (m_diffSumShader)
+        {
+            return m_diffSumShader;
+        }
+
+        winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+            Shaders::scRGB_Bucket_Sum, sizeof(Shaders::scRGB_Bucket_Sum), nullptr, m_diffSumShader.put()));
+
+        return m_diffSumShader;
     }
 
 } // namespace winrt::TanagerPlugin::implementation

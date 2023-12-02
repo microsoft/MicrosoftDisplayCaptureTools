@@ -87,7 +87,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             Display::IDisplayEngine displayEngine,
             ConfigurationTools::IConfigurationToolbox toolbox,
             CaptureCard::IController captureCard,
-            winrt::hstring displayInput);
+            CaptureCard::IDisplayInput displayInput);
 
         MicrosoftDisplayCaptureTools::Framework::Version Version()
         {

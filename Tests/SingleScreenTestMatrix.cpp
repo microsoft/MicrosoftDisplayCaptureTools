@@ -251,6 +251,8 @@ void SingleScreenTestMatrix::Test()
         auto inputCaps = displayInput.GetCapabilities();
         inputCaps.ValidateAgainstDisplayOutput(displayOutput);
 
+        winrt::IDisplayCapture capturedFrame = nullptr;
+
         {
              auto renderer = displayOutput.StartRender();
              if (!renderer)
@@ -262,34 +264,34 @@ void SingleScreenTestMatrix::Test()
              std::this_thread::sleep_for(std::chrono::seconds(1));
 
              // Capture the frame.
-             auto capturedFrame = displayInput.CaptureFrame();
+             capturedFrame = displayInput.CaptureFrame();
              if (!capturedFrame)
              {
                  // CaptureFrame should log errors if there are any non-continuable issues.
                  Log::Error(L"Failed to capture a frame");
                  return;
              }
+        }
 
-             predictionFrameSet = predictionDataAsync.get();
+        predictionFrameSet = predictionDataAsync.get();
 
-             auto captureResult = capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
+        auto captureResult = capturedFrame.CompareCaptureToPrediction(testName, predictionFrameSet);
 
-             auto resultsSaveSetting = winrt::RuntimeSettings().GetSettingValueAsString(SaveResultsSelection);
-             if (resultsSaveSetting.empty() || SaveResultsSelectionOnError == resultsSaveSetting)
-             {
-                 // Default mode - save data out on failure
-                 if (!captureResult)
-                 {
-                     SaveOutput(predictionFrameSet, testName + L"_Prediction");
-                     SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
-                 }
-             }
-             else if (SaveResultsSelectionAll == resultsSaveSetting)
-             {
-                 // Save all results, regardless of success/failure
-                 SaveOutput(predictionFrameSet, testName + L"_Prediction");
-                 SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
-             }
+        auto resultsSaveSetting = winrt::RuntimeSettings().GetSettingValueAsString(SaveResultsSelection);
+        if (resultsSaveSetting.empty() || SaveResultsSelectionOnError == resultsSaveSetting)
+        {
+            // Default mode - save data out on failure
+            if (!captureResult)
+            {
+                SaveOutput(predictionFrameSet, testName + L"_Prediction");
+                SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
+            }
+        }
+        else if (SaveResultsSelectionAll == resultsSaveSetting)
+        {
+            // Save all results, regardless of success/failure
+            SaveOutput(predictionFrameSet, testName + L"_Prediction");
+            SaveOutput(capturedFrame.GetFrameData(), testName + L"_Capture");
         }
     }
     else

@@ -155,7 +155,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     DisplayInput::DisplayInput(hstring deviceId) :
         m_deviceId(deviceId)
     {
-        hstring cameraId;
+       hstring cameraId;
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
         for (auto&& captureDevice : captureDevices)
         {

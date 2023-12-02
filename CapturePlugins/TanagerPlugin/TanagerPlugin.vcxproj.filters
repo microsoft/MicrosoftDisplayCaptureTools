@@ -46,5 +46,8 @@
     <FxCompile Include="ComputeShaders\YCbCr_444_10bpc.hlsl">
       <Filter>Compute Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="ComputeShaders\scRGB_Bucket_Sum.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

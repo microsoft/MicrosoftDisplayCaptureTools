@@ -166,6 +166,7 @@ namespace CaptureCardViewer.ViewModels
 			Engine = engine;
 			Toolbox = toolbox;
 			CaptureInput = inputOutputMapping.Sink;
+
 			SelectedEngineOutput = Engine.InitializeOutput(inputOutputMapping.Source);
 
 			if (SelectedEngineOutput == null)
@@ -179,17 +180,15 @@ namespace CaptureCardViewer.ViewModels
 		[RelayCommand]
 		async void CaptureSingleFrame()
 		{
-			var displayOutput = SelectedEngineOutput;
-
 			// Display & Capture of frames 
 			(var capturedFrame, var capturedBitmap, var capturedMetadata) =
 				await Task.Run(async () =>
 			{
-				// Captured frames from the tanager board
+				// Ensure that the capture card is ready to capture
 				var captureInput = CaptureInput;
-				captureInput.FinalizeDisplayState();
 
 				var capturedFrame = captureInput.CaptureFrame();
+
 				var capPixelBuffer = capturedFrame.GetFrameData().Frames()[0];
 
 				BitmapSource capturedBitmap = null;
@@ -226,7 +225,7 @@ namespace CaptureCardViewer.ViewModels
 			await Task.Run(() =>
 			{
 				// Start the render
-				if (selectedEngineOutput != null)
+				if (SelectedEngineOutput != null)
 				{
 					var activeTools =
 						this.Workspace.Toolboxes
@@ -246,12 +245,19 @@ namespace CaptureCardViewer.ViewModels
 						{
 							if (tool.Category == category)
 							{
-								tool.ApplyToOutput(selectedEngineOutput);
+								tool.ApplyToOutput(SelectedEngineOutput);
 							}
 						}
 					}
+					var captureInput = CaptureInput;
 
-					selectedEngineOutputRenderer = selectedEngineOutput.StartRender();
+					CaptureInput.FinalizeDisplayState();
+
+					// Ensure that the capture card can actually handle the output
+					var caps = captureInput.GetCapabilities();
+					caps.ValidateAgainstDisplayOutput(SelectedEngineOutput);
+
+					selectedEngineOutputRenderer = SelectedEngineOutput?.StartRender();
 				}
 
 				IsRenderingOutput = true;
@@ -312,8 +318,8 @@ namespace CaptureCardViewer.ViewModels
 		async void CompareCapture()
 		{
 			// Snap the current frames in case they change while we're comparing
-			var lastCapture = this.lastCapturedFrame;
-			var lastPrediction = this.lastPredictedFrame;
+			var lastCapture = this.LastCapturedFrame;
+			var lastPrediction = this.LastPredictedFrame;
 
 			if (lastCapture == null || lastPrediction == null)
 				return;

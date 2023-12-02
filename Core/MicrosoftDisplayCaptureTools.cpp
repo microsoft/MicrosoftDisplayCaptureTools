@@ -346,7 +346,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(
     IDisplayEngine displayEngine,
     IConfigurationToolbox toolbox,
     IController captureCard,
-    winrt::hstring displayInput)
+    IDisplayInput displayInput)
 {
     // Prevent component changes while we are attempting configuration
     auto lock = LockFramework();
@@ -380,15 +380,27 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(
 				captureCardsToUse = m_captureCards;
 			}
 
+            if (displayInput)
+            {
+                if (displayInput.GetCapabilities().CanConfigureEDID() && displayInput.GetCapabilities().CanHotPlug())
+                {
+                    // This input can HPD with a specified EDID
+                    unassignedInputs_EDID.push_back({captureCard, displayInput});
+                }
+                else
+                {
+                    // This input cannot HPD with a specified EDID
+                    unassignedInputs_NoEDID.push_back({captureCard, displayInput});
+                }
+
+                // We have already found the input we want to use, so we don't need to iterate through the rest of the inputs
+                captureCardsToUse.clear();
+            }
+
             for (auto&& card : captureCardsToUse)
             {
                 for (auto&& input : card.EnumerateDisplayInputs())
                 {
-                    if (captureCard && !displayInput.empty() && input.Name() != displayInput)
-                    {
-						continue;
-					}
-
                     if (input.GetCapabilities().CanConfigureEDID() && input.GetCapabilities().CanHotPlug())
                     {
                         // This input can HPD with a specified EDID

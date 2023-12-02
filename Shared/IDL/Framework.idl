@@ -390,7 +390,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          false. If this is not provided, the framework will attempt to map using all loaded capture cards. Mappings
         //          will be generated for all inputs on the capture card unless displayInput is provided.
         //      displayInput (optional)
-        //          The specific capture card input map the input-output for, this is not used when regenerateMappings = false.
+        //          The specific capture card input to map the input-output for, this is not used when regenerateMappings = false.
         //          If this is not provided, the framework will attempt to map using the inputs from all capture cards or any
         //          specfic capture card provided with captureCard. If this is provided, captureCard must also be provided, and 
         //          this displayInput must be a valid input on the specific captureCard.
@@ -403,7 +403,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
             MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine,
             MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox toolbox,
             MicrosoftDisplayCaptureTools.CaptureCard.IController captureCard,
-            String displayInput);
+            MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput displayInput);
 
         // GetConfigurationToolboxes
         // ----------------------------------------------------------------------------------------------------------------
