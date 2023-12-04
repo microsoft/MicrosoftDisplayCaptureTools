@@ -355,13 +355,10 @@ namespace CaptureCardViewer.ViewModels
 		{
 			BitmapSource imgSource;
 
-			var pixelFormat = bitmap.BitmapPixelFormat switch
-			{
-				BitmapPixelFormat.Rgba8 => PixelFormats.Bgr32,
-				_ => throw new Exception($"Unsupported preview bitmap format {bitmap.BitmapPixelFormat}")
-			};
+			// Fix the bitmap format to work with WPF's BitmapSource.
+			var bgra32Bitmap = SoftwareBitmap.Convert(bitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
 
-			using (var lockedBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.Read))
+			using (var lockedBuffer = bgra32Bitmap.LockBuffer(BitmapBufferAccessMode.Read))
 			using (var memRef = lockedBuffer.CreateReference())
 			{
 				var memRefAccess = memRef.As<IMemoryBufferByteAccess>();
@@ -369,7 +366,7 @@ namespace CaptureCardViewer.ViewModels
 
 				var description = lockedBuffer.GetPlaneDescription(0);
 				
-				imgSource = BitmapSource.Create(description.Width, description.Height, 96, 96, pixelFormat, null, (nint)buffer, (int)capacity, description.Stride);
+				imgSource = BitmapSource.Create(description.Width, description.Height, 96, 96, PixelFormats.Bgra32, null, (nint)buffer, (int)capacity, description.Stride);
 			}
 
 			imgSource.Freeze();
