@@ -135,21 +135,19 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         return m_changingPortsLocked;
     }
 
-    IteIt68051Plugin::VideoTiming TanagerDevice::GetVideoTiming()
+    std::unique_ptr<IteIt68051Plugin::VideoTiming> TanagerDevice::GetVideoTiming()
     {
         return hdmiChip.GetVideoTiming();
     }
 
-    IteIt68051Plugin::aviInfoframe TanagerDevice::GetAviInfoframe()
+    std::unique_ptr<IteIt68051Plugin::AviInfoframe> TanagerDevice::GetAviInfoframe()
     {
         return hdmiChip.GetAviInfoframe();
     }
 
-    IteIt68051Plugin::ColorInformation TanagerDevice::GetColorInformation()
+    std::unique_ptr<IteIt68051Plugin::ColorInformation> TanagerDevice::GetColorInformation()
     {
-        IteIt68051Plugin::ColorInformation colorInformation{};
-        hdmiChip.GetColorInformation(&colorInformation);
-        return colorInformation;
+        return hdmiChip.GetColorInformation();
     }
 
     std::shared_ptr<TanagerD3D> TanagerDevice::GetD3D()

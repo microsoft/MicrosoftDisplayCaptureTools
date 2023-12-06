@@ -104,10 +104,10 @@ namespace winrt::TanagerPlugin::implementation
         bool IsVideoLocked();
         std::mutex& SelectHdmi();
         std::mutex& SelectDisplayPort();
-        IteIt68051Plugin::VideoTiming GetVideoTiming();
 
-        IteIt68051Plugin::aviInfoframe GetAviInfoframe();
-        IteIt68051Plugin::ColorInformation GetColorInformation();
+        std::unique_ptr<IteIt68051Plugin::VideoTiming> GetVideoTiming();
+        std::unique_ptr<IteIt68051Plugin::AviInfoframe> GetAviInfoframe();
+        std::unique_ptr<IteIt68051Plugin::ColorInformation> GetColorInformation();
 
         std::shared_ptr<TanagerD3D> GetD3D();
 
