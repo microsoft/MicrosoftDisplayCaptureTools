@@ -222,9 +222,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         auto transferFunction = GetShader(GetTransferFunctionShader(timing, aviInfoframe, colorInfo));
         auto colorspace       = GetShader(GetColorspaceShader(timing, aviInfoframe, colorInfo));
 
-        // The buffer and SRV that will be used to hold the input data
+        // The buffer and SRV that will be used to hold the input data and 
+        // the texture and UAV to hold the sampled data (16-bpc uint 444)
         winrt::com_ptr<ID3D11Buffer> inputBuffer{nullptr};
         winrt::com_ptr<ID3D11ShaderResourceView> inputBufferView{nullptr};
+        winrt::com_ptr<ID3D11Texture2D> sampledTexture{nullptr};
+        winrt::com_ptr<ID3D11UnorderedAccessView> sampledTextureView{nullptr};
         {
             D3D11_BUFFER_DESC desc = {};
             desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
@@ -243,12 +246,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             srvDesc.BufferEx.NumElements = desc.ByteWidth / desc.StructureByteStride;
 
             winrt::check_hresult(m_d3dDevice->CreateShaderResourceView(inputBuffer.get(), &srvDesc, inputBufferView.put()));
-        }
 
-        // The texture and UAV to hold the sampled data (16-bpc uint 444)
-        winrt::com_ptr<ID3D11Texture2D> sampledTexture{nullptr};
-        winrt::com_ptr<ID3D11UnorderedAccessView> sampledTextureView{nullptr};
-        {
             D3D11_TEXTURE2D_DESC textureDesc = {};
             textureDesc.Width = timing->hActive;
             textureDesc.Height = timing->vActive;
@@ -271,41 +269,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sampledTexture.get(), &uavDesc, sampledTextureView.put()));
         }
 
-        // The constant buffer for the dequantizer shader
+        // The constant buffer for the dequantizer shader and the texture/UAV
+        // to hold the dequantized data (16-bpc uint 444)
         winrt::com_ptr<ID3D11Buffer> dequantizerConstantBuffer{nullptr};
-        {
-            // The constant buffer definition for the dequantizer shader indicates how many levels there are for
-            // each channel, what the peak value is, and what the minimum quantized value is.
-            //
-            // Peak = 2^N (where N is the bit depth)
-            // Levels = how many levels has the output been quantized to (Generally 219*N^(N-8))
-            // Min = what is the minimum value that the output has been quantized to (generally 16*N^(N-8))
-            struct DequantizerConstantBuffer
-            {
-                uint32_t A_max, A_min, A_levels; 
-                uint32_t B_max, B_min, B_levels;
-                uint32_t C_max, C_min, C_levels;
-            } ConstantBuffer;
-
-            // TODO: Set the constant levels
-
-			D3D11_BUFFER_DESC desc = {};
-			desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-			desc.ByteWidth = sizeof(DequantizerConstantBuffer);
-			desc.MiscFlags = 0;
-			desc.StructureByteStride = 0;
-
-            D3D11_SUBRESOURCE_DATA InitData = {};
-            InitData.pSysMem = &ConstantBuffer;
-            InitData.SysMemPitch = 0;
-            InitData.SysMemSlicePitch = 0;
-            winrt::check_hresult(m_d3dDevice->CreateBuffer(&desc, &InitData, dequantizerConstantBuffer.put()));
-		}
-
-        // The texture and UAV to hold the dequantized data (16-bpc uint 444)
         winrt::com_ptr<ID3D11Texture2D> dequantizedData{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> dequantizedDataView{nullptr};
+        if (dequantizer != nullptr)
         {
             D3D11_TEXTURE2D_DESC textureDesc = {};
             textureDesc.Width = timing->hActive;
@@ -327,11 +296,48 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(dequantizedData.get(), &uavDesc, dequantizedDataView.put()));
+
+            // The constant buffer definition for the dequantizer shader indicates how many levels there are for
+            // each channel, what the peak value is, and what the minimum quantized value is.
+            //
+            // Peak = 2^N (where N is the bit depth)
+            // Levels = how many levels has the output been quantized to (Generally 219*N^(N-8))
+            // Min = what is the minimum value that the output has been quantized to (generally 16*N^(N-8))
+            struct DequantizerConstantBuffer
+            {
+                uint32_t A_max, A_min, A_levels;
+                uint32_t B_max, B_min, B_levels;
+                uint32_t C_max, C_min, C_levels;
+            } ConstantBuffer;
+
+            // TODO: Set the constant levels
+
+            D3D11_BUFFER_DESC desc = {};
+            desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            desc.ByteWidth = sizeof(DequantizerConstantBuffer);
+            desc.MiscFlags = 0;
+            desc.StructureByteStride = 0;
+
+            D3D11_SUBRESOURCE_DATA InitData = {};
+            InitData.pSysMem = &ConstantBuffer;
+            InitData.SysMemPitch = 0;
+            InitData.SysMemSlicePitch = 0;
+            winrt::check_hresult(m_d3dDevice->CreateBuffer(&desc, &InitData, dequantizerConstantBuffer.put()));
+
+            // TODO: Run the shader
+        }
+        else
+        {
+            // We skipped the dequantization stage, so just use the sampled data as the dequantized data.
+            dequantizedData = sampledTexture;
+            dequantizedDataView = sampledTextureView;
         }
 
         // The texture and UAV to hold the R'G'B' data (16-bpc uint 444 R'G'B')
         winrt::com_ptr<ID3D11Texture2D> rgbPrime{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbPrimeView{nullptr};
+        if (colorFormat != nullptr)
         {
             D3D11_TEXTURE2D_DESC textureDesc = {};
             textureDesc.Width = timing->hActive;
@@ -353,11 +359,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(rgbPrime.get(), &uavDesc, rgbPrimeView.put()));
+
+            // TODO: run the shader
+        }
+        else
+        {
+            // We skipped the color format stage, so just use the dequantized data as the R'G'B' data.
+			rgbPrime = dequantizedData;
+			rgbPrimeView = dequantizedDataView;
         }
 
         // The texture and UAV to hold the RGB data (16-bpc uint 444 RGB)
         winrt::com_ptr<ID3D11Texture2D> rgbLinear{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbLinearView{nullptr};
+        if (transferFunction != nullptr)
         {
             D3D11_TEXTURE2D_DESC textureDesc = {};
             textureDesc.Width = timing->hActive;
@@ -379,61 +394,82 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(rgbLinear.get(), &uavDesc, rgbLinearView.put()));
+
+            // TODO: run the shader
+        }
+        else
+        {
+            // We skipped the transfer function stage, so just use the RGB' data as the RGB data.
+            rgbLinear = rgbPrime;
+            rgbLinearView = rgbPrimeView;
         }
 
-        // The texture and UAV to hold the scRGB data (16-bpc float 444 scRGB)
+        // The texture and UAV to hold the scRGB data (16-bpc float 444 scRGB) and 
+        // the texture and UAV to hold the sRGB data (8-bpc uint 444 sRGB)
         winrt::com_ptr<ID3D11Texture2D> scRGB{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> scRGBView{nullptr};
-        {
-            D3D11_TEXTURE2D_DESC textureDesc = {};
-            textureDesc.Width = timing->hActive;
-            textureDesc.Height = timing->vActive;
-            textureDesc.MipLevels = 1;
-            textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-            textureDesc.SampleDesc.Count = 1;
-            textureDesc.SampleDesc.Quality = 0;
-            textureDesc.Usage = D3D11_USAGE_DEFAULT;
-            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-            textureDesc.CPUAccessFlags = 0;
-            textureDesc.MiscFlags = 0;
-            winrt::check_hresult(m_d3dDevice->CreateTexture2D(&textureDesc, 0, scRGB.put()));
-
-            // Create output buffer UAV
-            D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-            uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-            uavDesc.Texture2D.MipSlice = 0;
-            winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(scRGB.get(), &uavDesc, scRGBView.put()));
-        }
-
-        // The texture and UAV to hold the sRGB data (8-bpc uint 444 sRGB)
         winrt::com_ptr<ID3D11Texture2D> sRGB{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> sRGBView{nullptr};
-        winrt::SoftwareBitmap renderableApproximation{nullptr};
+        if (colorspace != nullptr)
         {
-            D3D11_TEXTURE2D_DESC textureDesc = {};
-            textureDesc.Width = timing->hActive;
-            textureDesc.Height = timing->vActive;
-            textureDesc.MipLevels = 1;
-            textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
-            textureDesc.SampleDesc.Count = 1;
-            textureDesc.SampleDesc.Quality = 0;
-            textureDesc.Usage = D3D11_USAGE_DEFAULT;
-            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-            textureDesc.CPUAccessFlags = 0;
-            textureDesc.MiscFlags = 0;
-            winrt::check_hresult(m_d3dDevice->CreateTexture2D(&textureDesc, 0, sRGB.put()));
+            {
+                D3D11_TEXTURE2D_DESC textureDesc = {};
+                textureDesc.Width = timing->hActive;
+                textureDesc.Height = timing->vActive;
+                textureDesc.MipLevels = 1;
+                textureDesc.ArraySize = 1;
+                textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                textureDesc.SampleDesc.Count = 1;
+                textureDesc.SampleDesc.Quality = 0;
+                textureDesc.Usage = D3D11_USAGE_DEFAULT;
+                textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+                textureDesc.CPUAccessFlags = 0;
+                textureDesc.MiscFlags = 0;
+                winrt::check_hresult(m_d3dDevice->CreateTexture2D(&textureDesc, 0, scRGB.put()));
 
-            // Create output buffer UAV
-            D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-            uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
-            uavDesc.Texture2D.MipSlice = 0;
-            winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sRGB.get(), &uavDesc, sRGBView.put()));
+                // Create output buffer UAV
+                D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+                uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+                uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                uavDesc.Texture2D.MipSlice = 0;
+                winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(scRGB.get(), &uavDesc, scRGBView.put()));
+            }
+            {
+                D3D11_TEXTURE2D_DESC textureDesc = {};
+                textureDesc.Width = timing->hActive;
+                textureDesc.Height = timing->vActive;
+                textureDesc.MipLevels = 1;
+                textureDesc.ArraySize = 1;
+                textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+                textureDesc.SampleDesc.Count = 1;
+                textureDesc.SampleDesc.Quality = 0;
+                textureDesc.Usage = D3D11_USAGE_DEFAULT;
+                textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+                textureDesc.CPUAccessFlags = 0;
+                textureDesc.MiscFlags = 0;
+                winrt::check_hresult(m_d3dDevice->CreateTexture2D(&textureDesc, 0, sRGB.put()));
+
+                // Create output buffer UAV
+                D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+                uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+                uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+                uavDesc.Texture2D.MipSlice = 0;
+                winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sRGB.get(), &uavDesc, sRGBView.put()));
+            }
+        }
+        else
+        {
+            // We skipped the colorspace stage, so just use the RGB data as the scRGB data.
+			scRGB = rgbLinear;
+			scRGBView = rgbLinearView;
         }
 
+        // The SoftwareBitmap to transfer the sRGB data to
+        winrt::SoftwareBitmap renderableApproximation{nullptr};
+
+        // TODO: copy the sRGB data to the SoftwareBitmap
+        // TODO: copy the scRGB data to a CPU buffer
+        // TODO: create and return the frame object
     }
 
     double FrameProcessor::ComputePSNR(winrt::IRawFrame target, winrt::IRawFrame capture)
