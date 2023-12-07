@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "FrameProcessor.h"
 #include <filesystem>
 
 namespace winrt
@@ -16,6 +17,7 @@ namespace winrt
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
 	using namespace winrt::MicrosoftDisplayCaptureTools::Display;
     using namespace winrt::TanagerPlugin::DisplayHelpers;
+    using namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing;
 }
 
 namespace winrt::TanagerPlugin::implementation
@@ -232,36 +234,10 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
     // turn off read sequencer
     parent->FpgaWrite(0x10, std::vector<byte>({3}));
 
-    // Add any extended properties that aren't directly exposable in the IDisplayCapture* interfaces yet
-    auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
-    extendedProps.Insert(L"pixelClock", winrt::box_value(timing->pixelClock));
-    extendedProps.Insert(L"hTotal", winrt::box_value(timing->hTotal));
-    extendedProps.Insert(L"hFrontPorch", winrt::box_value(timing->hFrontPorch));
-    extendedProps.Insert(L"hSyncWidth", winrt::box_value(timing->hSyncWidth));
-    extendedProps.Insert(L"hBackPorch", winrt::box_value(timing->hBackPorch));
-    extendedProps.Insert(L"vTotal", winrt::box_value(timing->vTotal));
-    extendedProps.Insert(L"vFrontPorch", winrt::box_value(timing->vFrontPorch));
-    extendedProps.Insert(L"vSyncWidth", winrt::box_value(timing->vSyncWidth));
-    extendedProps.Insert(L"vBackPorch", winrt::box_value(timing->vBackPorch));
-
-    auto aviInfoFrame = parent->GetAviInfoframe();
-    winrt::array_view<const byte> infoFrameData(aviInfoFrame->data);
-    winrt::IBuffer infoFrameBuffer = winrt::Buffer(aviInfoFrame->data.size());
-    memcpy(infoFrameBuffer.data(), aviInfoFrame->data.data(), infoFrameBuffer.Capacity());
-    extendedProps.Insert(L"infoframe", infoFrameBuffer.as<winrt::IInspectable>());
-
-    auto colorFormat = aviInfoFrame->GetColorFormat();
-    auto range = aviInfoFrame->GetPixelRange();
-    auto colorimetry = aviInfoFrame->GetColorimetry();
-    auto vic = aviInfoFrame->GetVIC();
-    auto formatSpec = aviInfoFrame->GetFormatSpec();
-
+    auto aviInfoframe = parent->GetAviInfoframe();
     auto colorData = parent->GetColorInformation();
 
-    auto resolution = winrt::Windows::Graphics::SizeInt32();
-    resolution = {timing->hActive, timing->vActive};
-
-    return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps);
+    return winrt::make<winrt::TanagerDisplayCapture>(frameData, timing.get(), aviInfoframe.get(), colorData.get());
 }
 
 void TanagerDisplayInputHdmi::FinalizeDisplayState()

@@ -105,6 +105,7 @@ private:
     FrameProcessor& operator=(const FrameProcessor&) = delete;
 
     winrt::com_ptr<ID3D11ComputeShader> GetShader(ComputeShaders shaderToLoad);
+    void ClearShaderState();
 
     static ComputeShaders GetSamplerShader(IteIt68051Plugin::VideoTiming* timing,
         								   IteIt68051Plugin::AviInfoframe* aviInfoframe,
