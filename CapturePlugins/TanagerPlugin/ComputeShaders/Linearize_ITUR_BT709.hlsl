@@ -1,36 +1,14 @@
-struct InputBufferStruct
-{
-    uint upper;
-    uint lower;
-};
-
-StructuredBuffer<InputBufferStruct> InBuf : register(t0);
-RWTexture2D<uint4> outputTextureRgba8 : register(u0); // RGBA8 texture
-RWTexture2D<float4> outputTextureFp16 : register(u1); // 16-bit float per channel texture
+RWTexture2D<uint4> inputTexture : register(u0); // 16bpc uint 444 texture
+RWTexture2D<uint4> outputTexture : register(u1); // 16bpc uint 444 texture
 
 [numthreads(1, 1, 1)]
 void main(uint3 DTid : SV_DispatchThreadID)
 {
-    uint width;
-    uint height;
-    outputTextureRgba8.GetDimensions(width, height);
+    float4 color = inputTexture[DTid.xy];
     
-    uint4 color = uint4(0, 0, 0, 255);
-
-    // Calculate the index in the structured buffer
-    uint pixelIndex = DTid.y * width + DTid.x;
-    InputBufferStruct inputColor = InBuf[pixelIndex / 2];
-    if (pixelIndex % 2 == 0)
-    {
-        uint upper = inputColor.upper;
-        color = uint4((upper & 0x000003FC) >> 2, (upper & 0x000FF000) >> 12, (upper & 0x3FC00000) >> 22, 255);
-    }
-    else
-    {
-        uint lower = inputColor.lower;
-        color = uint4((lower & 0x000000FF) >> 0, (lower & 0x0003FC00) >> 10, (lower & 0x0FF00000) >> 20, 255);
-    }
-
-    outputTextureRgba8[DTid.xy] = color;
-    outputTextureFp16[DTid.xy] = (float4) (color) / 255.0;
+    color.x = color.x < 0.081 ? color.x / 4.5 : pow((color.x + 0.099) / 1.099, 1.0 / 0.45);
+    color.y = color.y < 0.081 ? color.y / 4.5 : pow((color.y + 0.099) / 1.099, 1.0 / 0.45);
+    color.z = color.z < 0.081 ? color.z / 4.5 : pow((color.z + 0.099) / 1.099, 1.0 / 0.45);
+    
+    outputTexture[DTid.xy]= color;
 }

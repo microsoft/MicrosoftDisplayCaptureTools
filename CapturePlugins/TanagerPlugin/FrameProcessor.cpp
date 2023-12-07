@@ -223,7 +223,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         auto colorspace       = GetShader(GetColorspaceShader(timing, aviInfoframe, colorInfo));
 
         // The buffer and SRV that will be used to hold the input data and 
-        // the texture and UAV to hold the sampled data (16-bpc uint 444)
+        // the texture and UAV to hold the sampled data (16-bpc float 444)
         winrt::com_ptr<ID3D11Buffer> inputBuffer{nullptr};
         winrt::com_ptr<ID3D11ShaderResourceView> inputBufferView{nullptr};
         winrt::com_ptr<ID3D11Texture2D> sampledTexture{nullptr};
@@ -252,7 +252,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             textureDesc.Height = timing->vActive;
             textureDesc.MipLevels = 1;
             textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             textureDesc.SampleDesc.Count = 1;
             textureDesc.SampleDesc.Quality = 0;
             textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -264,13 +264,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // Create output buffer UAV
             D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sampledTexture.get(), &uavDesc, sampledTextureView.put()));
         }
 
         // The constant buffer for the dequantizer shader and the texture/UAV
-        // to hold the dequantized data (16-bpc uint 444)
+        // to hold the dequantized data (16-bpc float 444)
         winrt::com_ptr<ID3D11Buffer> dequantizerConstantBuffer{nullptr};
         winrt::com_ptr<ID3D11Texture2D> dequantizedData{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> dequantizedDataView{nullptr};
@@ -281,7 +281,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             textureDesc.Height = timing->vActive;
             textureDesc.MipLevels = 1;
             textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             textureDesc.SampleDesc.Count = 1;
             textureDesc.SampleDesc.Quality = 0;
             textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -293,7 +293,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // Create output buffer UAV
             D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(dequantizedData.get(), &uavDesc, dequantizedDataView.put()));
 
@@ -334,7 +334,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             dequantizedDataView = sampledTextureView;
         }
 
-        // The texture and UAV to hold the R'G'B' data (16-bpc uint 444 R'G'B')
+        // The texture and UAV to hold the R'G'B' data (16-bpc float 444 R'G'B')
         winrt::com_ptr<ID3D11Texture2D> rgbPrime{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbPrimeView{nullptr};
         if (colorFormat != nullptr)
@@ -344,7 +344,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             textureDesc.Height = timing->vActive;
             textureDesc.MipLevels = 1;
             textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             textureDesc.SampleDesc.Count = 1;
             textureDesc.SampleDesc.Quality = 0;
             textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -356,7 +356,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // Create output buffer UAV
             D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(rgbPrime.get(), &uavDesc, rgbPrimeView.put()));
 
@@ -365,11 +365,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         else
         {
             // We skipped the color format stage, so just use the dequantized data as the R'G'B' data.
-			rgbPrime = dequantizedData;
-			rgbPrimeView = dequantizedDataView;
+            rgbPrime = dequantizedData;
+            rgbPrimeView = dequantizedDataView;
         }
 
-        // The texture and UAV to hold the RGB data (16-bpc uint 444 RGB)
+        // The texture and UAV to hold the RGB data (16-bpc float 444 RGB)
         winrt::com_ptr<ID3D11Texture2D> rgbLinear{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbLinearView{nullptr};
         if (transferFunction != nullptr)
@@ -379,7 +379,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             textureDesc.Height = timing->vActive;
             textureDesc.MipLevels = 1;
             textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             textureDesc.SampleDesc.Count = 1;
             textureDesc.SampleDesc.Quality = 0;
             textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -391,7 +391,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // Create output buffer UAV
             D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(rgbLinear.get(), &uavDesc, rgbLinearView.put()));
 
@@ -405,7 +405,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         }
 
         // The texture and UAV to hold the scRGB data (16-bpc float 444 scRGB) and 
-        // the texture and UAV to hold the sRGB data (8-bpc uint 444 sRGB)
+        // the texture and UAV to hold the sRGB data (8-bpc float 444 sRGB)
         winrt::com_ptr<ID3D11Texture2D> scRGB{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> scRGBView{nullptr};
         winrt::com_ptr<ID3D11Texture2D> sRGB{nullptr};

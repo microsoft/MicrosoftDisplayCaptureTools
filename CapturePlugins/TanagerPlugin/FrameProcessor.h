@@ -25,9 +25,9 @@ enum class ComputeShaders
     // De-Quantization shaders
     // -------------------------------------------
     // This shader will take the incoming data and will scale it based upon per-channel paramaters in a constant buffer.
-    // This is to be used for making limited-range data full-range. This shader will be skipped for full-range data.
+    // This is to be used for making limited-range data full-range. This also scales the data from 0-2^(N-1) to 0-1.
     // 
-    // The output of this shader should be gamma-encoded RGB or YCbCr 444, 16+ bpc uints with full range.
+    // The output of this shader should be gamma-encoded RGB or YCbCr 444, 16+ bpc floats with full range.
     //
     Dequantizer,
 
@@ -36,7 +36,7 @@ enum class ComputeShaders
     // These shaders will convert incoming data from YCbCr to RGB based on the standard conversion matrices, and will
     // be skipped for RGB data.
     // 
-    // The output of these shaders should be gamma-encoded RGB 444, 16+ bpc uints with full range.
+    // The output of these shaders should be gamma-encoded RGB 444, 16+ bpc floats with full range.
     //
     Ycbcr_ITUR_BT601,
     Ycbcr_ITUR_BT709,
@@ -46,7 +46,7 @@ enum class ComputeShaders
     // -------------------------------------------
     // These shaders will convert incoming data from the specified transfer function to linear.
     // 
-    // The output of these shaders should be linear RGB 444, 16+ bpc uints with full range.
+    // The output of these shaders should be linear RGB 444, 16+ bpc floats with full range.
     //
     Linearize_ITUR_BT601,
     Linearize_ITUR_BT709,
