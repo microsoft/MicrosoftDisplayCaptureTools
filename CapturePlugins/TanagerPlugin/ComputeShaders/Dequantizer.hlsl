@@ -39,7 +39,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
     }
 
     uint3 yuv = color.xyz;
-    uint3 rgb = mul(YCbCrToRGB709, yuv);
+    float3 rgb = mul(YCbCrToRGB709, (float3)yuv);
     outputTextureRgba8[DTid.xy] = uint4(rgb, 255);
-    outputTextureFp16[DTid.xy] = (float4) (color) / 255.0;
+    outputTextureFp16[DTid.xy] = float4(rgb / 255.0, 1.0);
 }

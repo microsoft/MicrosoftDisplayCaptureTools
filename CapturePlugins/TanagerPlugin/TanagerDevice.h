@@ -5,74 +5,6 @@ namespace winrt::TanagerPlugin::implementation
     // This is a temporary limit while we're bringing up some of the hardware on board.
     constexpr uint32_t MaxDescriptorByteSize = 512;
 
-    // The Tanager device has two display inputs: HDMI and DisplayPort. However these inputs are both
-    // put through a single ITE chip, which exposes the data as HDMI to the host from either input. 
-    // This means that we only need to handle HDMI data formats, which are enumerated below. These 
-    // formats each correspond to different data packet structures that we will load compute shaders
-    // to translate into a common RGB or YUV floating point format.
-    enum class HdmiRawCaptureFormats
-    {
-        RGB_444_8bpc_Full,
-        RGB_444_8bpc_Limited,
-        RGB_444_10bpc_Full,
-        RGB_444_10bpc_Limited,
-        RGB_444_12bpc_Full,
-        RGB_444_12bpc_Limited,
-        RGB_444_16bpc_Full,
-        RGB_444_16bpc_Limited,
-        YCbCr_444_8bpc_Limited,
-        YCbCr_444_10bpc_Limited,
-        YCbCr_444_12bpc_Limited,
-        YCbCr_444_16bpc_Limited,
-        YCbCr_422_8bpc_Limited,
-        YCbCr_422_10bpc_Limited,
-        YCbCr_422_12bpc_Limited,
-        YCbCr_422_16bpc_Limited,
-        YCbCr_420_8bpc_Limited,
-        YCbCr_420_10bpc_Limited,
-        YCbCr_420_12bpc_Limited,
-        YCbCr_420_16bpc_Limited,
-    };
-
-    static HdmiRawCaptureFormats GetFormatFromInfoFrame(winrt::Windows::Storage::Streams::IBuffer infoFrame, uint32_t bitsPerPixel);
-
-    class TanagerD3D
-    {
-    public:
-        TanagerD3D(winrt::com_ptr<ID3D11Device> d3dDevice, winrt::com_ptr<ID3D11DeviceContext> d3dDeviceContext) :
-            m_d3dDevice(d3dDevice),
-            m_d3dDeviceContext(d3dDeviceContext)
-        {
-        }
-
-        std::mutex& RenderingMutex()
-        {
-            return m_d3dRenderingMutex;
-		}
-
-        winrt::com_ptr<ID3D11ComputeShader> GetRawDataTranslateShader(HdmiRawCaptureFormats const& type);
-
-        winrt::com_ptr<ID3D11ComputeShader> GetDiffSumShader();
-
-        winrt::com_ptr<ID3D11Device> GetDevice()
-        {
-			return m_d3dDevice;
-		}
-
-		winrt::com_ptr<ID3D11DeviceContext> GetDeviceContext()
-		{
-            return m_d3dDeviceContext;
-        }
-
-    private:
-        std::map<HdmiRawCaptureFormats, winrt::com_ptr<ID3D11ComputeShader>> m_computeShaderCache;
-
-        winrt::com_ptr<ID3D11ComputeShader> m_diffSumShader;
-        winrt::com_ptr<ID3D11Device> m_d3dDevice{nullptr};
-        winrt::com_ptr<ID3D11DeviceContext> m_d3dDeviceContext{nullptr};
-        std::mutex m_d3dRenderingMutex;
-    };
-
     class TanagerDevice :
         public IMicrosoftCaptureBoard,
         public std::enable_shared_from_this<TanagerDevice>
@@ -109,8 +41,6 @@ namespace winrt::TanagerPlugin::implementation
         std::unique_ptr<IteIt68051Plugin::AviInfoframe> GetAviInfoframe();
         std::unique_ptr<IteIt68051Plugin::ColorInformation> GetColorInformation();
 
-        std::shared_ptr<TanagerD3D> GetD3D();
-
     private:
         winrt::hstring m_deviceId;
         winrt::Windows::Devices::Usb::UsbDevice m_usbDevice;
@@ -118,8 +48,6 @@ namespace winrt::TanagerPlugin::implementation
         IteIt68051Plugin::IteIt68051 hdmiChip;
         Fx3FpgaInterface m_fpga;
         std::mutex m_changingPortsLocked;
-
-        std::shared_ptr<TanagerD3D> m_d3d{nullptr};
     };
 
     struct TanagerDisplayInputHdmi : implements<TanagerDisplayInputHdmi, MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput>
@@ -192,77 +120,6 @@ namespace winrt::TanagerPlugin::implementation
         {
             m_time = time;
         }
-    };
-
-    struct TanagerDisplayCapture
-        : implements<TanagerDisplayCapture, winrt::MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet>
-    {
-        // Constructor for creating a single-frame capture
-        TanagerDisplayCapture(
-            std::shared_ptr<TanagerD3D> D3DInstance,
-            std::vector<byte> pixels,
-            winrt::Windows::Graphics::SizeInt32 resolution,
-            winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> extendedProps);
-
-        // Methods from IDisplayCapture
-        bool CompareCaptureToPrediction(winrt::hstring name, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet prediction);
-        winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameSet GetFrameData();
-        winrt::Windows::Foundation::Collections::IMapView<winrt::hstring, winrt::Windows::Foundation::IInspectable> ExtendedProperties();
-
-        // Methods from IRawFrameSet
-        winrt::Windows::Foundation::Collections::IVector<winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame> Frames();
-        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> Properties();
-
-    private:
-        std::shared_ptr<TanagerD3D> m_D3DInstance{nullptr};
-        winrt::Windows::Foundation::Collections::IVector<winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame> m_frames;
-
-        // IRawFrameSet properties (generic metadata about the capture)
-        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties{nullptr};
-
-        // DisplayCapture properties (Tanager-specific metadata)
-        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_extendedProps{nullptr};
-    };
-
-    struct Frame
-        : winrt::implements<Frame, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrame, winrt::MicrosoftDisplayCaptureTools::Framework::IRawFrameRenderable>
-    {
-        Frame(
-            std::shared_ptr<TanagerD3D> D3DInstance,
-            HdmiRawCaptureFormats const& type,
-            winrt::Windows::Graphics::SizeInt32 const& resolution,
-            winrt::Windows::Devices::Display::Core::DisplayWireFormat const& format,
-            winrt::Windows::Storage::Streams::IBuffer const& data);
-
-        // TODO: change the buffer name to pixeldata or pixelbuffer
-        //       add some utility to save out the data as json or something
-
-        // Functions from IRawFrame
-        winrt::Windows::Storage::Streams::IBuffer Data();
-        winrt::Windows::Devices::Display::Core::DisplayWireFormat DataFormat();
-        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> Properties();
-        winrt::Windows::Graphics::SizeInt32 Resolution();
-
-        // Functions from IRawFrameRenderable
-        winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Graphics::Imaging::SoftwareBitmap> GetRenderableApproximationAsync();
-        winrt::hstring GetPixelInfo(uint32_t x, uint32_t y);
-
-        // Local-only members
-        void DataFormat(winrt::Windows::Devices::Display::Core::DisplayWireFormat const& description);
-        void Resolution(winrt::Windows::Graphics::SizeInt32 const& resolution);
-
-    private:
-        std::shared_ptr<TanagerD3D> m_D3DInstance{nullptr};
-
-        const HdmiRawCaptureFormats m_type;
-        const winrt::Windows::Storage::Streams::IBuffer m_data{nullptr};
-        const winrt::Windows::Devices::Display::Core::DisplayWireFormat m_format{nullptr};
-        const winrt::Windows::Graphics::SizeInt32 m_resolution{0, 0};
-
-        winrt::Windows::Graphics::Imaging::SoftwareBitmap m_bitmap{nullptr};
-        winrt::com_ptr<ID3D11Texture2D> m_comparisonTexture{nullptr};
-
-        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Foundation::IInspectable> m_properties;
     };
 }
 

@@ -261,7 +261,7 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
     auto resolution = winrt::Windows::Graphics::SizeInt32();
     resolution = {timing->hActive, timing->vActive};
 
-    return winrt::make<TanagerDisplayCapture>(parent->GetD3D(), frameData, resolution, extendedProps);
+    return winrt::make<TanagerDisplayCapture>(frameData, resolution, extendedProps);
 }
 
 void TanagerDisplayInputHdmi::FinalizeDisplayState()
