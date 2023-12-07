@@ -258,7 +258,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             textureDesc.Height = timing->vActive;
             textureDesc.MipLevels = 1;
             textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
             textureDesc.SampleDesc.Count = 1;
             textureDesc.SampleDesc.Quality = 0;
             textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -270,7 +270,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // Create output buffer UAV
             D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sampledTexture.get(), &uavDesc, sampledTextureView.put()));
 
@@ -279,7 +279,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
                 m_d3dDeviceContext->CSSetShader(sampler.get(), nullptr, 0);
                 ID3D11ShaderResourceView* ppSRV[1] = {inputBufferView.get()};
                 m_d3dDeviceContext->CSSetShaderResources(0, 1, ppSRV);
-                ID3D11UnorderedAccessView* ppUAView[2] = {sampledTextureView.get()};
+                ID3D11UnorderedAccessView* ppUAView[1] = {sampledTextureView.get()};
                 m_d3dDeviceContext->CSSetUnorderedAccessViews(0, 1, ppUAView, nullptr);
                 m_d3dDeviceContext->Dispatch(timing->hActive, timing->vActive, 1);
             }
@@ -329,7 +329,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
                 uint32_t C_min, C_levels;
             } ConstantBuffer;
 
-            uint32_t bitDepth = colorInfo->outputColorInfo.colorDepth;
+            // TODO: figure out how to properly interpret this data from the ITE chip
+            uint32_t bitDepth = colorInfo->outputColorInfo.colorDepth == 0 ? 8 : 10;
             ConstantBuffer.PeakForBitDepth = (uint32_t)pow(2, bitDepth) - 1;
             
             if (aviInfoframe->GetPixelRange() == IteIt68051Plugin::AviPixelRange::Full)
