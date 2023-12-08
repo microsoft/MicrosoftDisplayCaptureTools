@@ -19,20 +19,6 @@ void main(uint3 DTid : SV_DispatchThreadID)
     // Calculate the index in the structured buffer
     uint pixelIndex = DTid.y * width + DTid.x;
     InputBufferStruct inputColor = InBuf[pixelIndex / 2];
-    
-    /*
-    uint upperLittleEndian =
-        ((inputColor.lower & 0x000000FF) << 24) |
-        ((inputColor.lower & 0x0000FF00) << 8) |
-        ((inputColor.lower & 0x00FF0000) >> 8) |
-        ((inputColor.lower & 0xFF000000) >> 24);
-    
-    uint lowerLittleEndian =
-        ((inputColor.upper & 0x000000FF) << 24) |
-        ((inputColor.upper & 0x0000FF00) << 8) |
-        ((inputColor.upper & 0x00FF0000) >> 8) |
-        ((inputColor.upper & 0xFF000000) >> 24);
-    */
 
     // Data comes in as a 64-bit chunk with 2 adjacent pixel values encoded into it. Scanned left to right.
     // Data is now in the format of:
