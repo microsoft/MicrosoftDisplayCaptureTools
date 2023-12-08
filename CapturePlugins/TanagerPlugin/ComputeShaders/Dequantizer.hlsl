@@ -7,6 +7,7 @@ cbuffer CS_CONSTANT_BUFFER : register(b0)
     uint B_levels;
     uint C_min;
     uint C_levels;
+    uint pad;
 };
 
 RWTexture2D<uint4> inputTexture : register(u0); // 16bpc uint 444 texture

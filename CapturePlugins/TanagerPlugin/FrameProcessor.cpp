@@ -126,16 +126,49 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         m_d3dDeviceContext->CSSetConstantBuffers(0, 1, ppCBnullptr);
     }
 
+    template <typename PixelDataType>
+    winrt::Windows::Storage::Streams::IBuffer FrameProcessor::GetBufferFromTexture(ID3D11Texture2D* texture)
+    {
+        winrt::com_ptr<ID3D11Texture2D> readBackTex;
+        D3D11_TEXTURE2D_DESC desc = {};
+        texture->GetDesc(&desc);
+        desc.BindFlags = 0;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        desc.Usage = D3D11_USAGE_STAGING;
+        desc.MiscFlags = 0;
+        winrt::check_hresult(m_d3dDevice->CreateTexture2D(&desc, nullptr, readBackTex.put()));
+        m_d3dDeviceContext->CopyResource(readBackTex.get(), texture);
+
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        winrt::check_hresult(m_d3dDeviceContext->Map(readBackTex.get(), 0, D3D11_MAP_READ, 0, &mappedResource));
+
+        winrt::Buffer outputBuffer(desc.Height * desc.Width * sizeof(PixelDataType));
+        outputBuffer.Length(desc.Height * desc.Width * sizeof(PixelDataType));
+
+        auto approxData = reinterpret_cast<PixelDataType*>(mappedResource.pData);
+        memcpy_s(outputBuffer.data(), outputBuffer.Capacity(), approxData, outputBuffer.Capacity());
+        m_d3dDeviceContext->Unmap(readBackTex.get(), 0);
+
+        outputBuffer.Length(outputBuffer.Capacity());
+
+        return outputBuffer;
+    }
+
     ComputeShaders FrameProcessor::GetSamplerShader(
         IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
     {
+
+        // temp hack to see if I can get this pipeline working 
+        colorInfo->inputColorInfo.colorDepth = 10;
+
+
         switch (aviInfoframe->GetColorFormat())
         {
         case IteIt68051Plugin::AviColorFormat::RGB:
         case IteIt68051Plugin::AviColorFormat::YUV444:
-            switch (colorInfo->outputColorInfo.colorDepth)
+            switch (colorInfo->inputColorInfo.colorDepth)
             {
-			case 8: // TODO: this might be 0,1 not 8,10
+			case 8:
 				return ComputeShaders::Sampler_444_8bpc;
 			case 10:
 				return ComputeShaders::Sampler_444_10bpc;
@@ -287,9 +320,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             ClearShaderState();
         }
 
+        // TEMP: read out the sampled texture data:
+        {
+            auto temp = GetBufferFromTexture<uint64_t>(sampledTexture.get());
+            auto tempPtr = temp.data();
+        }
+
         // The constant buffer for the dequantizer shader and the texture/UAV
         // to hold the dequantized data (16-bpc float 444)
-        ID3D11Buffer* dequantizerConstantBuffer{nullptr};
+        winrt::com_ptr<ID3D11Buffer> dequantizerConstantBuffer{nullptr};
         winrt::com_ptr<ID3D11Texture2D> dequantizedData{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> dequantizedDataView{nullptr};
         if (dequantizer != nullptr)
@@ -327,45 +366,48 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
                 uint32_t A_min, A_levels;
                 uint32_t B_min, B_levels;
                 uint32_t C_min, C_levels;
-            } ConstantBuffer;
+                uint32_t pad; // included because CS constant buffers must be 16-byte aligned
+            };
 
-            // TODO: figure out how to properly interpret this data from the ITE chip
-            uint32_t bitDepth = colorInfo->outputColorInfo.colorDepth == 0 ? 8 : 10;
-            ConstantBuffer.PeakForBitDepth = (uint32_t)pow(2, bitDepth) - 1;
+            auto ConstantBuffer = std::make_shared<DequantizerConstantBuffer>();
+
+            uint32_t bitDepth = colorInfo->inputColorInfo.colorDepth;
+            ConstantBuffer->PeakForBitDepth = (uint32_t)pow(2, bitDepth) - 1;
             
             if (aviInfoframe->GetPixelRange() == IteIt68051Plugin::AviPixelRange::Full)
             {
-                ConstantBuffer.A_min = 0;
-                ConstantBuffer.A_levels = ConstantBuffer.PeakForBitDepth;
+                ConstantBuffer->A_min = 0;
+                ConstantBuffer->A_levels = ConstantBuffer->PeakForBitDepth;
 
-                ConstantBuffer.B_min = 0;
-                ConstantBuffer.B_levels = ConstantBuffer.PeakForBitDepth;
+                ConstantBuffer->B_min = 0;
+                ConstantBuffer->B_levels = ConstantBuffer->PeakForBitDepth;
 
-                ConstantBuffer.C_min = 0;
-                ConstantBuffer.C_levels = ConstantBuffer.PeakForBitDepth;
+                ConstantBuffer->C_min = 0;
+                ConstantBuffer->C_levels = ConstantBuffer->PeakForBitDepth;
             }
             else
             {
-                ConstantBuffer.A_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                ConstantBuffer.A_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                ConstantBuffer->A_min = 16 * (uint32_t)pow(2, bitDepth - 8);
+                ConstantBuffer->A_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
 
                 switch (aviInfoframe->GetColorFormat())
                 {
                 case IteIt68051Plugin::AviColorFormat::RGB:
-                    ConstantBuffer.B_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer.B_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer.C_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer.C_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->B_min = 16 * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->B_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->C_min = 16 * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->C_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
                     break;
                 default:
-                    ConstantBuffer.B_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer.B_levels = (240 - 16) * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer.C_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer.C_levels = (240 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->B_min = 16 * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->B_levels = (240 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->C_min = 16 * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->C_levels = (240 - 16) * (uint32_t)pow(2, bitDepth - 8);
                 }
             }
 
             D3D11_BUFFER_DESC desc = {};
+            desc.Usage = D3D11_USAGE_DYNAMIC;
             desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
             desc.ByteWidth = sizeof(DequantizerConstantBuffer);
@@ -373,17 +415,18 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             desc.StructureByteStride = 0;
 
             D3D11_SUBRESOURCE_DATA InitData = {};
-            InitData.pSysMem = &ConstantBuffer;
+            InitData.pSysMem = ConstantBuffer.get();
             InitData.SysMemPitch = 0;
             InitData.SysMemSlicePitch = 0;
-            winrt::check_hresult(m_d3dDevice->CreateBuffer(&desc, &InitData, &dequantizerConstantBuffer));
+            winrt::check_hresult(m_d3dDevice->CreateBuffer(&desc, &InitData, dequantizerConstantBuffer.put()));
 
             // Run the shader
             {
                 m_d3dDeviceContext->CSSetShader(dequantizer.get(), nullptr, 0);
                 ID3D11UnorderedAccessView* ppUAView[2] = {sampledTextureView.get(), dequantizedDataView.get()};
                 m_d3dDeviceContext->CSSetUnorderedAccessViews(0, 2, ppUAView, nullptr);
-                m_d3dDeviceContext->CSSetConstantBuffers(0, 1, &dequantizerConstantBuffer);
+                ID3D11Buffer* ppCB[1] = {dequantizerConstantBuffer.get()};
+                m_d3dDeviceContext->CSSetConstantBuffers(0, 1, ppCB);
                 m_d3dDeviceContext->Dispatch(timing->hActive, timing->vActive, 1);
             }
 
@@ -394,6 +437,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // The quantization stage _can't_ be skipped, it's also where we convert the data to 16-bpc float 444.
             Logger().LogAssert(L"Attempted to skip the quantization stage.");
             throw winrt::hresult_error();
+        }
+
+        // TEMP: read out the dequantized texture data:
+        {
+            auto temp = GetBufferFromTexture<uint64_t>(dequantizedData.get());
+            auto tempPtr = temp.data();
         }
 
         // The texture and UAV to hold the R'G'B' data (16-bpc float 444 R'G'B')
@@ -439,6 +488,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             rgbPrimeView = dequantizedDataView;
         }
 
+        // TEMP: read out the R'G'B' texture data:
+        {
+            auto temp = GetBufferFromTexture<uint64_t>(rgbPrime.get());
+            auto tempPtr = temp.data();
+        }
+
         // The texture and UAV to hold the RGB data (16-bpc float 444 RGB)
         winrt::com_ptr<ID3D11Texture2D> rgbLinear{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbLinearView{nullptr};
@@ -480,6 +535,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // We skipped the transfer function stage, so just use the RGB' data as the RGB data.
             rgbLinear = rgbPrime;
             rgbLinearView = rgbPrimeView;
+        }
+
+        // TEMP: read out the RGB texture data:
+        {
+            auto temp = GetBufferFromTexture<uint64_t>(rgbLinear.get());
+            auto tempPtr = temp.data();
         }
 
         // The texture and UAV to hold the scRGB data (16-bpc float 444 scRGB) and 
@@ -555,60 +616,19 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         // The SoftwareBitmap to transfer the sRGB data to
         winrt::SoftwareBitmap renderableApproximation{nullptr};
         {
-            winrt::Buffer outputDataRgba8(timing->hActive * timing->vActive * sizeof(uint32_t));
-            outputDataRgba8.Length(timing->hActive * timing->vActive * sizeof(uint32_t));
-
-            winrt::com_ptr<ID3D11Texture2D> readBackTex;
-            D3D11_TEXTURE2D_DESC desc = {};
-            sRGB->GetDesc(&desc);
-            desc.BindFlags = 0;
-            desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-            desc.Usage = D3D11_USAGE_STAGING;
-            desc.MiscFlags = 0;
-            winrt::check_hresult(m_d3dDevice->CreateTexture2D(&desc, nullptr, readBackTex.put()));
-            m_d3dDeviceContext->CopyResource(readBackTex.get(), sRGB.get());
-
-            D3D11_MAPPED_SUBRESOURCE mappedResource;
-            winrt::check_hresult(m_d3dDeviceContext->Map(readBackTex.get(), 0, D3D11_MAP_READ, 0, &mappedResource));
-
-            auto approxData = reinterpret_cast<uint32_t*>(mappedResource.pData);
-            memcpy_s(outputDataRgba8.data(), outputDataRgba8.Capacity(), approxData, outputDataRgba8.Capacity());
-            m_d3dDeviceContext->Unmap(readBackTex.get(), 0);
-
-            outputDataRgba8.Length(outputDataRgba8.Capacity());
+            auto outputDataRgba8 = GetBufferFromTexture<uint32_t>(sRGB.get());
 
             renderableApproximation = winrt::SoftwareBitmap::CreateCopyFromBuffer(
-                outputDataRgba8, winrt::BitmapPixelFormat::Rgba8, timing->vActive, timing->hActive);
+                outputDataRgba8, winrt::BitmapPixelFormat::Rgba8, timing->hActive, timing->vActive);
         }
 
-        winrt::IBuffer rawBuffer;
+        auto scRGBBuffer = GetBufferFromTexture<uint64_t>(scRGB.get());
+
         {
-			winrt::Buffer outputDataRgba16(timing->hActive * timing->vActive * sizeof(uint64_t));
-			outputDataRgba16.Length(timing->hActive * timing->vActive * sizeof(uint64_t));
+            auto scRGBBufferPtr = scRGBBuffer.data();
+        }
 
-			winrt::com_ptr<ID3D11Texture2D> readBackTex;
-			D3D11_TEXTURE2D_DESC desc = {};
-			scRGB->GetDesc(&desc);
-			desc.BindFlags = 0;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-			desc.Usage = D3D11_USAGE_STAGING;
-			desc.MiscFlags = 0;
-			winrt::check_hresult(m_d3dDevice->CreateTexture2D(&desc, nullptr, readBackTex.put()));
-			m_d3dDeviceContext->CopyResource(readBackTex.get(), scRGB.get());
-
-			D3D11_MAPPED_SUBRESOURCE mappedResource;
-			winrt::check_hresult(m_d3dDeviceContext->Map(readBackTex.get(), 0, D3D11_MAP_READ, 0, &mappedResource));
-
-			auto approxData = reinterpret_cast<uint64_t*>(mappedResource.pData);
-			memcpy_s(outputDataRgba16.data(), outputDataRgba16.Capacity(), approxData, outputDataRgba16.Capacity());
-			m_d3dDeviceContext->Unmap(readBackTex.get(), 0);
-
-			outputDataRgba16.Length(outputDataRgba16.Capacity());
-
-			rawBuffer = outputDataRgba16;
-		}
-
-        return winrt::make<Frame>(winrt::SizeInt32{timing->hActive, timing->vActive}, rawBuffer, renderableApproximation);
+        return winrt::make<Frame>(winrt::SizeInt32{timing->hActive, timing->vActive}, scRGBBuffer, renderableApproximation);
     }
 
     double FrameProcessor::ComputePSNR(winrt::IRawFrame target, winrt::IRawFrame capture)

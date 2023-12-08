@@ -107,6 +107,9 @@ private:
     winrt::com_ptr<ID3D11ComputeShader> GetShader(ComputeShaders shaderToLoad);
     void ClearShaderState();
 
+    template <typename PixelDataType>
+    winrt::Windows::Storage::Streams::IBuffer GetBufferFromTexture(ID3D11Texture2D* texture);
+
     static ComputeShaders GetSamplerShader(IteIt68051Plugin::VideoTiming* timing,
         								   IteIt68051Plugin::AviInfoframe* aviInfoframe,
         								   IteIt68051Plugin::ColorInformation* colorInfo);
@@ -126,6 +129,7 @@ private:
     static ComputeShaders GetColorspaceShader(IteIt68051Plugin::VideoTiming* timing,
         									  IteIt68051Plugin::AviInfoframe* aviInfoframe,
         									  IteIt68051Plugin::ColorInformation* colorInfo);
+
 
     winrt::com_ptr<ID3D11Device> m_d3dDevice{nullptr};
     winrt::com_ptr<ID3D11DeviceContext> m_d3dDeviceContext{nullptr};
