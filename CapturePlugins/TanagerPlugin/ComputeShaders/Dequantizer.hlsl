@@ -16,7 +16,10 @@ RWTexture2D<float4> outputTexture : register(u1); // 16bpc float 444 texture
 [numthreads(1, 1, 1)]
 void main(uint3 DTid : SV_DispatchThreadID)
 {
-    uint4 input = inputTexture[DTid.xy];
+    uint3 input = inputTexture[DTid.xy];
+    input.x = clamp(input.x, A_min, PeakForBitDepth);
+    input.y = clamp(input.y, B_min, PeakForBitDepth);
+    input.z = clamp(input.z, C_min, PeakForBitDepth);
     
     float4 output;
     output.x = clamp(round((float)(input.x - A_min) * (float) PeakForBitDepth / (float) A_levels), 0, PeakForBitDepth);

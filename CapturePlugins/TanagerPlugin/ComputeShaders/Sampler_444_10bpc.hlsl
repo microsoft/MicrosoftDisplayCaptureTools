@@ -37,9 +37,9 @@ void main(uint3 DTid : SV_DispatchThreadID)
     // Data comes in as a 64-bit chunk with 2 adjacent pixel values encoded into it. Scanned left to right.
     // Data is now in the format of:
     
-    //  Pad  B_R / B_Cr B_G / B_Y  B_B / B_Cb A_R / A_Cr A_G / A_Y  A_B / A_Cb 
+    //  Pad  B_B / B_Cb B_G / B_Y  B_R / B_Cr  A_B / A_Cb A_G / A_Y  A_R / A_Cr 
     // |----|----------|----------|-------- --|----------|----------|----------|
-    // |   upper                           |     lower                         |
+    // |   lower                           |     upper                         |
     //
     //
     // Pad = padding nibble
@@ -50,18 +50,17 @@ void main(uint3 DTid : SV_DispatchThreadID)
     {
         // Pixel A
         color.xyz = uint3(
-            (inputColor.lower & 0x3FF00000) >> 20, // R or Cr
-            (inputColor.lower & 0x000FFC00) >> 10, // G or Y
-            (inputColor.lower & 0x000003FF) >> 0); // B or Cb
+            (inputColor.upper & 0x000003FF),        // R or Cr
+            (inputColor.upper & 0x000FFC00) >> 10,  // G or Y
+            (inputColor.upper & 0x3FF00000) >> 20); // B or Cb
     }
     else
     {
         // Pixel B
-        uint shiftedLower = (inputColor.upper << 2) | (inputColor.lower >> 30);
         color.xyz = uint3(
-            (shiftedLower & 0x3FF00000) >> 20, // R or Cr
-            (shiftedLower & 0x000FFC00) >> 10, // G or Y
-            (shiftedLower & 0x000003FF) >> 0); // B or Cb
+            ((inputColor.lower & 0x000000FF) << 2) | ((inputColor.upper & 0xC0000000) >> 30), // R or Cr
+            (inputColor.lower & 0x0003FF00) >> 8,   // G or Y
+            (inputColor.lower & 0x0FFC0000) >> 18); // B or Cb
     }
 
     outputTexture[DTid.xy] = color;

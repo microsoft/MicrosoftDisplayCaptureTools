@@ -217,6 +217,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         switch (aviInfoframe->GetColorimetry())
         {
         case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: temporary
             return ComputeShaders::Linearize_ITUR_BT709;
         default:
             Logger().LogError(L"Unsupported colorimetry, no Tanager transfer function shader available.");
@@ -229,7 +230,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     {
         switch (aviInfoframe->GetColorimetry())
         {
-		case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: temporary
 			return ComputeShaders::Color_ITUR_709;
 		default:
 			Logger().LogError(L"Unsupported colorimetry, no Tanager colorspace shader available.");
