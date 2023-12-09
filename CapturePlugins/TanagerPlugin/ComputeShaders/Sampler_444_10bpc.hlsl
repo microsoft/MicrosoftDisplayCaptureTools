@@ -19,7 +19,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
     // Calculate the index in the structured buffer
     uint pixelIndex = DTid.y * width + DTid.x;
     InputBufferStruct inputColor = InBuf[pixelIndex / 2];
-
+    
     // Data comes in as a 64-bit chunk with 2 adjacent pixel values encoded into it. Scanned left to right.
     // Data is now in the format of:
     
@@ -47,6 +47,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
             ((inputColor.lower & 0x000000FF) << 2) | ((inputColor.upper & 0xC0000000) >> 30), // R or Cr
             (inputColor.lower & 0x0003FF00) >> 8,   // G or Y
             (inputColor.lower & 0x0FFC0000) >> 18); // B or Cb
+
     }
 
     outputTexture[DTid.xy] = color;

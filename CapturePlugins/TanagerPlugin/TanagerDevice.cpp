@@ -135,9 +135,9 @@ TanagerDevice::TanagerDevice(winrt::hstring deviceId) :
         return hdmiChip.GetAviInfoframe();
     }
 
-    std::unique_ptr<IteIt68051Plugin::ColorInformation> TanagerDevice::GetColorInformation()
+    std::unique_ptr<IteIt68051Plugin::ColorInformation> TanagerDevice::GetColorInformation(bool synchronizeInputAndOutputDepths)
     {
-        return hdmiChip.GetColorInformation();
+        return hdmiChip.GetColorInformation(synchronizeInputAndOutputDepths);
     }
 
     winrt::hstring TanagerDevice::GetDeviceId()

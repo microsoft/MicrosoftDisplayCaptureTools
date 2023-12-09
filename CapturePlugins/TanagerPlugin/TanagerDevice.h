@@ -39,7 +39,7 @@ namespace winrt::TanagerPlugin::implementation
 
         std::unique_ptr<IteIt68051Plugin::VideoTiming> GetVideoTiming();
         std::unique_ptr<IteIt68051Plugin::AviInfoframe> GetAviInfoframe();
-        std::unique_ptr<IteIt68051Plugin::ColorInformation> GetColorInformation();
+        std::unique_ptr<IteIt68051Plugin::ColorInformation> GetColorInformation(bool synchronizeInputAndOutputDepths = false);
 
     private:
         winrt::hstring m_deviceId;

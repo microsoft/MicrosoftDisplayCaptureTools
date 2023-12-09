@@ -11,5 +11,6 @@ void main(uint3 DTid : SV_DispatchThreadID)
     
     // YCbCr values are read in CbYCr order, flip them to YCbCr.
     float4 color = inputTexture[DTid.xy].yxzw;
+    color.yz -= 0.5f;
     outputTexture[DTid.xy] = mul(mat, color);
 }

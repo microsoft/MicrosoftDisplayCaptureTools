@@ -157,16 +157,11 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     ComputeShaders FrameProcessor::GetSamplerShader(
         IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
     {
-
-        // temp hack to see if I can get this pipeline working 
-        colorInfo->inputColorInfo.colorDepth = 10;
-
-
         switch (aviInfoframe->GetColorFormat())
         {
         case IteIt68051Plugin::AviColorFormat::RGB:
         case IteIt68051Plugin::AviColorFormat::YUV444:
-            switch (colorInfo->inputColorInfo.colorDepth)
+            switch (colorInfo->outputColorInfo.colorDepth)
             {
 			case 8:
 				return ComputeShaders::Sampler_444_8bpc;
@@ -293,7 +288,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             textureDesc.Height = timing->vActive;
             textureDesc.MipLevels = 1;
             textureDesc.ArraySize = 1;
-            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            textureDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
             textureDesc.SampleDesc.Count = 1;
             textureDesc.SampleDesc.Quality = 0;
             textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -305,7 +300,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // Create output buffer UAV
             D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+            uavDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
             uavDesc.Texture2D.MipSlice = 0;
             winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sampledTexture.get(), &uavDesc, sampledTextureView.put()));
 
@@ -373,7 +368,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
             auto ConstantBuffer = std::make_shared<DequantizerConstantBuffer>();
 
-            uint32_t bitDepth = colorInfo->inputColorInfo.colorDepth;
+            uint32_t bitDepth = colorInfo->outputColorInfo.colorDepth;
             ConstantBuffer->PeakForBitDepth = (uint32_t)pow(2, bitDepth) - 1;
             
             if (aviInfoframe->GetPixelRange() == IteIt68051Plugin::AviPixelRange::Full)
@@ -389,22 +384,23 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             }
             else
             {
-                ConstantBuffer->A_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                ConstantBuffer->A_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                uint32_t bitDepthModifier = (uint32_t)pow(2, bitDepth - 8);
+                ConstantBuffer->A_min = 16 * bitDepthModifier;
+                ConstantBuffer->A_levels = (235 - 16) * bitDepthModifier;
 
                 switch (aviInfoframe->GetColorFormat())
                 {
                 case IteIt68051Plugin::AviColorFormat::RGB:
-                    ConstantBuffer->B_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer->B_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer->C_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer->C_levels = (235 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->B_min = 16 * bitDepthModifier;
+                    ConstantBuffer->B_levels = (235 - 16) * bitDepthModifier;
+                    ConstantBuffer->C_min = 16 * bitDepthModifier;
+                    ConstantBuffer->C_levels = (235 - 16) * bitDepthModifier;
                     break;
                 default:
-                    ConstantBuffer->B_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer->B_levels = (240 - 16) * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer->C_min = 16 * (uint32_t)pow(2, bitDepth - 8);
-                    ConstantBuffer->C_levels = (240 - 16) * (uint32_t)pow(2, bitDepth - 8);
+                    ConstantBuffer->B_min = 16 * bitDepthModifier;
+                    ConstantBuffer->B_levels = (240 - 16) * bitDepthModifier;
+                    ConstantBuffer->C_min = 16 * bitDepthModifier;
+                    ConstantBuffer->C_levels = (240 - 16) * bitDepthModifier;
                 }
             }
 
@@ -644,6 +640,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         auto lock = std::scoped_lock(m_d3dRenderingMutex);
 
 		// TODO: implement the rest of this function
+        return 0;
 	}
 
     // Create a single frame capture object from the raw captured data.
@@ -696,6 +693,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             auto predictedFrame = prediction.Frames().GetAt(index);
             auto capturedFrame = m_frames.GetAt(index);
 
+            if (false)
             {
                 bool formatMismatch = false;
 

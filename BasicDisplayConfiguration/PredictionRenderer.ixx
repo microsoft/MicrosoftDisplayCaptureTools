@@ -558,9 +558,6 @@ namespace PredictionRenderer {
             // 1. Format Conversion RGB->YUV (if applicable)
             // TODO
 
-            // 2. Range Conversion Full->Studio (if applicable)
-            // TODO
-
             drawingSession.Flush();
             drawingSession.Close();
         }
@@ -618,7 +615,7 @@ namespace PredictionRenderer {
 
             // TODO: allocate only what's actually needed for the output values, this will need to involve defining a 2-byte float -> integer function
             frame->SetBuffer(frameBytesBufferWriter.DetachBuffer());
-
+             
             // 5. Ensure that the copy started in 2 is finished
             frame->SetImageApproximation(softwareBitmapAsync.get());
 

@@ -177,6 +177,11 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
         return nullptr;
     }
 
+    // query resolution
+    auto timing = parent->GetVideoTiming();
+    auto aviInfoframe = parent->GetAviInfoframe();
+    auto colorData = parent->GetColorInformation(true);
+
     // Capture frame in DRAM
     parent->FpgaWrite(0x20, std::vector<byte>({0}));
 
@@ -199,9 +204,6 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
         Logger().LogError(L"Timeout while waiting for video frame capture to complete.");
         return nullptr;
     }
-
-    // query resolution
-    auto timing = parent->GetVideoTiming();
 
     // compute size of buffer
     uint32_t bufferSizeInDWords = timing->hActive * timing->vActive; // For now, assume good sync and 4 bytes per pixel
@@ -233,9 +235,6 @@ MicrosoftDisplayCaptureTools::CaptureCard::IDisplayCapture TanagerDisplayInputHd
 
     // turn off read sequencer
     parent->FpgaWrite(0x10, std::vector<byte>({3}));
-
-    auto aviInfoframe = parent->GetAviInfoframe();
-    auto colorData = parent->GetColorInformation();
 
     return winrt::make<winrt::TanagerDisplayCapture>(frameData, timing.get(), aviInfoframe.get(), colorData.get());
 }

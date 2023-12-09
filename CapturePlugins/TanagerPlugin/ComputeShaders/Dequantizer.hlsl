@@ -26,6 +26,6 @@ void main(uint3 DTid : SV_DispatchThreadID)
     output.y = clamp(round((float)(input.y - B_min) * (float) PeakForBitDepth / (float) B_levels), 0, PeakForBitDepth);
     output.z = clamp(round((float)(input.z - C_min) * (float) PeakForBitDepth / (float) C_levels), 0, PeakForBitDepth);
     output.w = PeakForBitDepth;
-    
+
     outputTexture[DTid.xy] = output / PeakForBitDepth;
 }
