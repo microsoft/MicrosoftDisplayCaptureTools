@@ -16,7 +16,7 @@ namespace ABI
 
 namespace RenderingUtils {
 
-export enum class GammaType {G10, G22, G2084, GHLG, G24};
+export enum class GammaType {G10, G22, G2084, GHLG, G24, G709};
 
 export GammaType GetGammaTypeForEotf(const DisplayWireFormatEotf eotf)
 {
@@ -25,7 +25,7 @@ export GammaType GetGammaTypeForEotf(const DisplayWireFormatEotf eotf)
     case DisplayWireFormatEotf::HdrSmpte2084:
         return GammaType::G2084;
     case DisplayWireFormatEotf::Sdr:
-        return GammaType::G22;
+        return GammaType::G709;
     default:
         throw winrt::hresult_invalid_argument();
     }
@@ -94,6 +94,13 @@ export std::vector<float> CreateGammaTransferCurve(
                 gammaArray[i] = stop <= 0.0031308f ? stop * 12.92f : 1.055f * std::powf(stop, 1.0f/2.4f) - 0.055f;
             }
             break;
+        case GammaType::G709:
+            for (unsigned int i = 0; i < gammaStops; i++)
+            {
+                float stop = (float)i / (gammaStops - 1);
+                gammaArray[i] = stop < 0.018f ? stop * 4.5f : 1.099f * std::powf(stop, 0.45f) - 0.099f;
+            }
+            break;
         default:
             // Right now this explicitly only supports linear and 2.2
             throw winrt::hresult_invalid_argument();
@@ -115,6 +122,13 @@ export std::vector<float> CreateGammaTransferCurve(
             {
                 float stop = (float)i / (gammaStops - 1);
                 gammaArray[i] = stop <= 0.04045f ? stop / 12.92f : std::powf((stop + 0.055f) / 1.055f, 2.4f);
+            }
+            break;
+        case GammaType::G709:
+            for (unsigned long i = 0; i < gammaStops; i++)
+            {
+                float stop = (float)i / (gammaStops - 1);
+                gammaArray[i] = stop < 0.081f ? stop / 4.5f : std::powf((stop + 0.099f) / 1.099f, 1.0f / 0.45f);
             }
             break;
         default:
