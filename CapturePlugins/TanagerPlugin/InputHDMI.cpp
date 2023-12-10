@@ -56,9 +56,14 @@ struct HDMICapabilities : implements<HDMICapabilities, winrt::MicrosoftDisplayCa
     }
     void ValidateAgainstDisplayOutput(winrt::IDisplayOutput displayOutput)
     {
-        // Tanager HDMI does not have any current limitations
-        (void)displayOutput;
+        m_displayOutputValidationToken = displayOutput.DisplaySetupCallback([&](const auto&, IDisplaySetupToolArgs args) {
+            // Tanager HDMI does not have any current limitations
+            args.IsModeCompatible(true);
+        });
     }
+
+private:
+    winrt::event_token m_displayOutputValidationToken;
 };
 
 TanagerDisplayInputHdmi::TanagerDisplayInputHdmi(std::weak_ptr<TanagerDevice> tanagerDevice) :

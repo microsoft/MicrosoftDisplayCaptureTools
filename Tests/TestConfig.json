@@ -25,7 +25,7 @@
 	"TestCase": {
 		"Tools": [
 			{ "Resolution": "1920x1080" },
-			{ "RefreshRate": "60hz" },
+			{ "RefreshRate": "60" },
 			{ "Pattern": "green" }
 		],
 		"ComparisonTolerance": {
