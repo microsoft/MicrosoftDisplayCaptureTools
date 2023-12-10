@@ -32,6 +32,8 @@ namespace winrt {
 	using namespace MicrosoftDisplayCaptureTools::Framework::Helpers;
 } // namespace winrt
 
+using namespace winrt::TanagerPlugin::implementation;
+
 namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
 	FrameProcessor::FrameProcessor()
@@ -639,7 +641,123 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
         auto lock = std::scoped_lock(m_d3dRenderingMutex);
 
-		// TODO: implement the rest of this function
+
+        winrt::com_ptr<ID3D11Texture2D> targetTexture{nullptr};
+        winrt::com_ptr<ID3D11ShaderResourceView> targetTextureView{nullptr};
+        {
+            D3D11_TEXTURE2D_DESC textureDesc = {};
+            textureDesc.Width = target.Resolution().Width;
+            textureDesc.Height = target.Resolution().Height;
+            textureDesc.MipLevels = 1;
+            textureDesc.ArraySize = 1;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            textureDesc.SampleDesc.Count = 1;
+            textureDesc.SampleDesc.Quality = 0;
+            textureDesc.Usage = D3D11_USAGE_DEFAULT;
+            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            textureDesc.CPUAccessFlags = 0;
+            textureDesc.MiscFlags = 0;
+
+            D3D11_SUBRESOURCE_DATA InitData = {};
+            InitData.pSysMem = target.Data().data();
+            InitData.SysMemPitch = target.Resolution().Width * sizeof(uint64_t);
+            InitData.SysMemSlicePitch = 0;
+            winrt::check_hresult(m_d3dDevice->CreateTexture2D(&textureDesc, &InitData, targetTexture.put()));
+
+            // Create target texture SRV
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            srvDesc.Texture2D.MipLevels = 1;
+            winrt::check_hresult(m_d3dDevice->CreateShaderResourceView(targetTexture.get(), &srvDesc, targetTextureView.put()));
+        }
+
+        winrt::com_ptr<ID3D11Texture2D> captureTexture{nullptr};
+        winrt::com_ptr<ID3D11ShaderResourceView> captureTextureView{nullptr};
+        {
+            D3D11_TEXTURE2D_DESC textureDesc = {};
+            textureDesc.Width = capture.Resolution().Width;
+            textureDesc.Height = capture.Resolution().Height;
+            textureDesc.MipLevels = 1;
+            textureDesc.ArraySize = 1;
+            textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            textureDesc.SampleDesc.Count = 1;
+            textureDesc.SampleDesc.Quality = 0;
+            textureDesc.Usage = D3D11_USAGE_DEFAULT;
+            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            textureDesc.CPUAccessFlags = 0;
+            textureDesc.MiscFlags = 0;
+
+            D3D11_SUBRESOURCE_DATA InitData = {};
+            InitData.pSysMem = capture.Data().data();
+            InitData.SysMemPitch = capture.Resolution().Width * sizeof(uint64_t);
+            InitData.SysMemSlicePitch = 0;
+            winrt::check_hresult(m_d3dDevice->CreateTexture2D(&textureDesc, &InitData, captureTexture.put()));
+
+            // Create target texture SRV
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            srvDesc.Texture2D.MipLevels = 1;
+            winrt::check_hresult(m_d3dDevice->CreateShaderResourceView(captureTexture.get(), &srvDesc, captureTextureView.put()));
+        }
+
+        uint32_t numPixels = capture.Resolution().Width * capture.Resolution().Height;
+
+        // The buffer and view that will hold the output of the summing shader
+        winrt::com_ptr<ID3D11Texture2D> sumTexture{nullptr};
+        winrt::com_ptr<ID3D11UnorderedAccessView> sumTextureView{nullptr};
+        {
+            D3D11_TEXTURE2D_DESC desc = {};
+            desc.Format = DXGI_FORMAT_R32_FLOAT;
+            desc.Width = capture.Resolution().Width;
+            desc.Height = capture.Resolution().Height;
+            desc.MipLevels = 1;
+            desc.ArraySize = 1;
+            desc.SampleDesc.Count = 1;
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+            winrt::check_hresult(m_d3dDevice->CreateTexture2D(&desc, 0, sumTexture.put()));
+
+            // Create output buffer UAV
+            D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+            uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+            uavDesc.Format = DXGI_FORMAT_R32_FLOAT;
+            uavDesc.Texture1D.MipSlice = 0;
+            winrt::check_hresult(m_d3dDevice->CreateUnorderedAccessView(sumTexture.get(), &uavDesc, sumTextureView.put()));
+        }
+
+        // Run the shader
+        {
+            auto sumShader = GetShader(ComputeShaders::FrameSquaredDifferenceBucketSum);
+            m_d3dDeviceContext->CSSetShader(sumShader.get(), nullptr, 0);
+            ID3D11ShaderResourceView* ppSRV[2] = {captureTextureView.get(), targetTextureView.get()};
+            m_d3dDeviceContext->CSSetShaderResources(0, 2, ppSRV);
+            ID3D11UnorderedAccessView* ppUAView[1] = {sumTextureView.get() };
+            m_d3dDeviceContext->CSSetUnorderedAccessViews(0, 1, ppUAView, nullptr);
+            m_d3dDeviceContext->Dispatch(capture.Resolution().Width, capture.Resolution().Height, 1);
+        }
+
+        ClearShaderState();
+
+        // Map the sum array and sum the values
+		{
+            auto mappedData = GetBufferFromTexture<float>(sumTexture.get());
+
+			auto sumTexturePtr = reinterpret_cast<float*>(mappedData.data());
+			double sum = 0;
+			for (uint32_t i = 0; i < numPixels; i++)
+			{
+				sum += sumTexturePtr[i];
+			}
+
+			// Compute the PSNR
+			double mse = sum / (static_cast<double>(numPixels) * 3);
+			double psnr = 20.0 * log10((7.5 * 7.5) / mse); // 7.5 is the peak value for the scRGB format of our intermediates
+
+			return psnr;
+		}
+
         return 0;
 	}
 
@@ -754,14 +872,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
             auto psnr = FrameProcessor::GetInstance().ComputePSNR(predictedFrame, capturedFrame);
 
-            if (psnr < 30.0)
+            if (psnr < PsnrLimit)
             {
                 Logger().LogError(
 					winrt::hstring(L"PSNR for frame ") + std::to_wstring(index) + L" was " + std::to_wstring(psnr) +
-					L", which is below the threshold of 30.0");
+					L", which is below the threshold of " + std::to_wstring(PsnrLimit));
 
 				return false;
 			}
+            else
+            {
+                Logger().LogNote(
+                    winrt::hstring(L"PSNR for frame ") + std::to_wstring(index) + L" was " + std::to_wstring(psnr) + 
+                    L", which is above the threshold of " + std::to_wstring(PsnrLimit));
+            }
         }
 
         return true;
