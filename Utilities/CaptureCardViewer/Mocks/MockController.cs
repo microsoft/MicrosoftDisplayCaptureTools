@@ -1,4 +1,5 @@
 ﻿using MicrosoftDisplayCaptureTools.CaptureCard;
+using MicrosoftDisplayCaptureTools.Display;
 using MicrosoftDisplayCaptureTools.Framework;
 using System;
 using System.Threading.Tasks;
@@ -57,6 +58,10 @@ namespace CaptureCardViewer.Mocks
 			public bool CanReturnRawFramesToHost() => true;
 
 			public uint GetMaxDescriptorSize() => 512;
+
+			public void ValidateAgainstDisplayOutput(IDisplayOutput displayOutput)
+			{
+			}
 		}
 
 		public string Name => "HDMI 2.0 Input";

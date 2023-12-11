@@ -418,3 +418,6 @@ FodyWeavers.xsd
 # TAEF log files
 *.wtl
 *.wtl.trace
+/Utilities/CaptureCardViewer/Properties/launchSettings.json
+/Utilities/CaptureCardViewer/Properties/Settings.settings
+/Utilities/CaptureCardViewer/Properties/Settings.Designer.cs

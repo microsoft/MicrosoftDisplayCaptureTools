@@ -1,7 +1,7 @@
 import "DisplayManager.idl";
 import "Framework.idl";
 
-namespace MicrosoftDisplayCaptureTools.ConfigurationTools 
+namespace MicrosoftDisplayCaptureTools.ConfigurationTools
 {
     //
     // This enum defines what a particular tool is used for. The testing framework uses this information to determine in
@@ -127,8 +127,65 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //      displayPrediction
         //          The prediction object to apply this tool's changes to
         //
-        void ApplyToPrediction(MicrosoftDisplayCaptureTools.Display.IDisplayPrediction displayPrediction);
+        void ApplyToPrediction(MicrosoftDisplayCaptureTools.ConfigurationTools.IPrediction displayPrediction);
     }
+
+    //
+    // Represents the the data making up a prediction before it is 'finalized' into a single composed set of frames
+    // and properties.
+    //
+    interface IPredictionData
+    {
+        // Properties
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     retrieves a collection of properties that apply to the entire prediction
+        //
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    //
+    // Represents the collective state that tools modify to generate what the display output of those settings should
+    // correspond to.
+    //
+    interface IPrediction
+    {
+        // FinalizePredictionAsync
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Go through and generate the predicted output data using any and all tools which have registered with
+        //     this object
+        //
+        Windows.Foundation.IAsyncOperation<MicrosoftDisplayCaptureTools.Framework.IRawFrameSet> FinalizePredictionAsync();
+
+        // DisplaySetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
+        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
+        //     rate, etc.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> DisplaySetupCallback;
+
+        // RenderSetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
+        //     created, but before the core render loop begins.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> RenderSetupCallback;
+
+        // RenderLoopCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
+        //     called for each frame, so high-latency callbacks may cause problems.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> RenderLoopCallback;
+    };
 
     //
     // This object simply holds a slate of ConfigurationTools.
@@ -181,21 +238,30 @@ namespace MicrosoftDisplayCaptureTools.ConfigurationTools
         //          The subsection of the json config file for this toolbox
         //
         void SetConfigData(Windows.Data.Json.IJsonValue data);
+
+        // CreatePrediction
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates a prediction object, these are used by tools to create a prediction of what the display output
+        //     should contain
+        //
+        IPrediction CreatePrediction();
     }
 
     //
     // The required static initializer for IConfigurationToolbox implementations. This is how other components of this
-    // project will instantiate IController implementations.
+    // project will instantiate IConfigurationToolbox implementations.
     //
     // This is to be implemented by toolbox producer.
     //
-    interface IConfigurationToolboxFactory 
+    interface IConfigurationToolboxFactory
     {
-        // Create
+
+        // CreateConfigurationToolbox
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
-        //     Creates an IController implementation instance with a defined logger.
+        //     Creates an IConfigurationToolbox implementation instance
         //
-        IConfigurationToolbox CreateConfigurationToolbox(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        IConfigurationToolbox CreateConfigurationToolbox();
     };
 } // namespace MicrosoftDisplayCaptureTools. ConfigurationTools

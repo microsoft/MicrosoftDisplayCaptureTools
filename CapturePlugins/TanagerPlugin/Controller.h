@@ -48,7 +48,6 @@ namespace winrt::TanagerPlugin::implementation
     struct Controller : ControllerT<Controller>
     {
         Controller();
-        Controller(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         hstring Name();
         com_array<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> EnumerateDisplayInputs();
@@ -68,15 +67,13 @@ namespace winrt::TanagerPlugin::implementation
         void DiscoverCaptureBoards();
         std::vector<MicrosoftDisplayCaptureTools::CaptureCard::IDisplayInput> m_displayInputs;
         std::vector<std::shared_ptr<IMicrosoftCaptureBoard>> m_captureBoards;
-
-        const winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
     };
 
     struct ControllerFactory : ControllerFactoryT<ControllerFactory>
     {
         ControllerFactory() = default;
 
-        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController CreateController(winrt::MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        winrt::MicrosoftDisplayCaptureTools::CaptureCard::IController CreateController();
     };
 }
 

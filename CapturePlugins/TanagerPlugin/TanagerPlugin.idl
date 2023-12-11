@@ -5,7 +5,7 @@ namespace TanagerPlugin
         MicrosoftDisplayCaptureTools.CaptureCard.IController,
         MicrosoftDisplayCaptureTools.CaptureCard.IControllerWithFirmware
     {
-        Controller(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        Controller();
     }
 
     [default_interface] 

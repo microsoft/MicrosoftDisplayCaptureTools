@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using MicrosoftDisplayCaptureTools.CaptureCard;
 using MicrosoftDisplayCaptureTools.ConfigurationTools;
 using MicrosoftDisplayCaptureTools.Display;
+using MicrosoftDisplayCaptureTools.Framework;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -41,33 +42,35 @@ namespace CaptureCardViewer.ViewModels
 		/// </summary>
 		public IDisplayEngine Engine { get; }
 
+		public ToolboxViewModel Toolbox { get; }
+
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(SelectedEngineOutputName))]
-		[AlsoNotifyChangeFor(nameof(CanStartOutputRender))]
+		[NotifyPropertyChangedFor(nameof(SelectedEngineOutputName))]
+		[NotifyPropertyChangedFor(nameof(CanStartOutputRender))]
 		IDisplayOutput? selectedEngineOutput;
 		public string SelectedEngineOutputName => SelectedEngineOutput?.Target.StableMonitorId ?? "None";
 
 		IDisposable? selectedEngineOutputRenderer;
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanCompare))]
+		[NotifyPropertyChangedFor(nameof(CanCompare))]
 		IDisplayCapture? lastCapturedFrame;
 
 		[ObservableProperty]
 		ObservableCollection<MetadataViewModel> lastCapturedFrameMetadata = new ObservableCollection<MetadataViewModel>();
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanCompare))]
-		IDisplayPredictionData? lastPredictedFrame;
+		[NotifyPropertyChangedFor(nameof(CanCompare))]
+		IRawFrameSet? lastPredictedFrame;
 
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(IsComparisonFailed))]
-		[AlsoNotifyChangeFor(nameof(IsComparisonPassed))]
+		[NotifyPropertyChangedFor(nameof(IsComparisonFailed))]
+		[NotifyPropertyChangedFor(nameof(IsComparisonPassed))]
 		bool? lastComparisonResult;
 
-		public bool CanCompare => lastCapturedFrame != null && lastPredictedFrame != null;
-		public bool IsComparisonPassed => lastComparisonResult.HasValue && lastComparisonResult == true;
-		public bool IsComparisonFailed => lastComparisonResult.HasValue && lastComparisonResult == false;
+		public bool CanCompare => LastCapturedFrame != null && LastPredictedFrame != null;
+		public bool IsComparisonPassed => LastComparisonResult.HasValue && LastComparisonResult == true;
+		public bool IsComparisonFailed => LastComparisonResult.HasValue && LastComparisonResult == false;
 		public bool IsComparisonDetailsAvailable => false;
 
 		/// <summary>
@@ -81,7 +84,7 @@ namespace CaptureCardViewer.ViewModels
 			public DisplayTarget Target { get; }
 
 			[ObservableProperty]
-			[AlsoNotifyChangeFor(nameof(Name))]
+			[NotifyPropertyChangedFor(nameof(Name))]
 			string adapterFriendlyName = "";
 
 			public string Name => $"{Monitor?.DisplayName ?? Target.StableMonitorId} ({Monitor?.PhysicalConnector} port on {AdapterFriendlyName})";
@@ -106,7 +109,7 @@ namespace CaptureCardViewer.ViewModels
 				}
 			}
 
-			[ICommand]
+			[RelayCommand]
 			void Connect()
 			{
 				try
@@ -125,9 +128,6 @@ namespace CaptureCardViewer.ViewModels
 		[ObservableProperty]
 		ImageSource? captureSource;
 
-		ObservableCollection<AvailableEngineOutput> availableEngineOutputs = new();
-		public ReadOnlyObservableCollection<AvailableEngineOutput> AvailableEngineOutputs { get; }
-
 		[ObservableProperty]
 		int framesCaptured = 0;
 
@@ -135,12 +135,12 @@ namespace CaptureCardViewer.ViewModels
 		/// The live capture async task sets this to trigger the UI to update.
 		/// </summary>
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanStartLiveCapture))]
-		[AlsoNotifyChangeFor(nameof(CanStopLiveCapture))]
-		[AlsoNotifyChangeFor(nameof(CanSingleFrameCapture))]
+		[NotifyPropertyChangedFor(nameof(CanStartLiveCapture))]
+		[NotifyPropertyChangedFor(nameof(CanStopLiveCapture))]
+		[NotifyPropertyChangedFor(nameof(CanSingleFrameCapture))]
 		bool isRunningLiveCapture = false;
 
-		public bool CanStartLiveCapture => CaptureInput != null && !isRunningLiveCapture;
+		public bool CanStartLiveCapture => CaptureInput != null && !IsRunningLiveCapture;
 		[ObservableProperty]
 		bool canStopLiveCapture = false;
 		public bool CanSingleFrameCapture => CanStartLiveCapture;
@@ -149,54 +149,53 @@ namespace CaptureCardViewer.ViewModels
 		/// The output render task uses this to reflect the buttons
 		/// </summary>
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanStopOutputRender))]
-		[AlsoNotifyChangeFor(nameof(CanStartOutputRender))]
-		[AlsoNotifyChangeFor(nameof(IsNotRendering))]
+		[NotifyPropertyChangedFor(nameof(CanStopOutputRender))]
+		[NotifyPropertyChangedFor(nameof(CanStartOutputRender))]
+		[NotifyPropertyChangedFor(nameof(IsNotRendering))]
 		bool isRenderingOutput = false;
 
-		public bool IsNotRendering => !isRenderingOutput;
+		public bool IsNotRendering => !IsRenderingOutput;
 
-		public bool CanStartOutputRender => selectedEngineOutput != null && !isRenderingOutput;
-		public bool CanStopOutputRender => isRenderingOutput;
+		public bool CanStartOutputRender => SelectedEngineOutput != null && !IsRenderingOutput;
+		public bool CanStopOutputRender => IsRenderingOutput;
 
 
-		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, CaptureCardViewModel captureCard, IDisplayInput input)
+		public CaptureSessionViewModel(WorkspaceViewModel workspace, IDisplayEngine engine, ISourceToSinkMapping inputOutputMapping, ToolboxViewModel toolbox)
 		{
 			Workspace = workspace;
 			Engine = engine;
-			CaptureInput = input;
-			CaptureCard = captureCard;
+			Toolbox = toolbox;
+			CaptureInput = inputOutputMapping.Sink;
 
-			// Enumerate available targets
-			var dispManager = DisplayManager.Create(DisplayManagerOptions.None)!;
-			foreach (var target in dispManager.GetCurrentTargets())
+			SelectedEngineOutput = Engine.InitializeOutput(inputOutputMapping.Source);
+
+			if (SelectedEngineOutput == null)
 			{
-				if (target.IsConnected)
-				{
-					availableEngineOutputs.Add(new AvailableEngineOutput(this, target));
-				}
+				ModernWpf.MessageBox.Show("Could not take control of the mapped output.");
+				return;
 			}
-
-			AvailableEngineOutputs = new ReadOnlyObservableCollection<AvailableEngineOutput>(availableEngineOutputs);
 		}
 
 		// Displaying frames & properties from the plugin
-		[ICommand]
+		[RelayCommand]
 		async void CaptureSingleFrame()
 		{
-			var displayOutput = SelectedEngineOutput;
-
 			// Display & Capture of frames 
 			(var capturedFrame, var capturedBitmap, var capturedMetadata) =
-				await Task.Run(() =>
+				await Task.Run(async () =>
 			{
-				// Captured frames from the tanager board
+				// Ensure that the capture card is ready to capture
 				var captureInput = CaptureInput;
-				captureInput.FinalizeDisplayState();
 
 				var capturedFrame = captureInput.CaptureFrame();
-				var capPixelBuffer = capturedFrame.GetFrameData();
-				var capturedBitmap = BufferToImgConv(capPixelBuffer.Data, capPixelBuffer.Resolution, (int)capPixelBuffer.FormatDescription.Stride);
+
+				var capPixelBuffer = capturedFrame.GetFrameData().Frames()[0];
+
+				BitmapSource capturedBitmap = null;
+				if (capPixelBuffer is IRawFrameRenderable capPixelBufferRenderable)
+				{
+					capturedBitmap = BufferToImgConv(await capPixelBufferRenderable.GetRenderableApproximationAsync());
+				}
 
 				return (capturedFrame, capturedBitmap, capturedFrame.ExtendedProperties);
 			});
@@ -208,25 +207,25 @@ namespace CaptureCardViewer.ViewModels
 			FramesCaptured += 1;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StartLiveCapture()
 		{
 			FramesCaptured = 0;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StopLiveCapture()
 		{
 			IsRunningLiveCapture = false;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StartOutputRender()
 		{
 			await Task.Run(() =>
 			{
 				// Start the render
-				if (selectedEngineOutput != null)
+				if (SelectedEngineOutput != null)
 				{
 					var activeTools =
 						this.Workspace.Toolboxes
@@ -246,19 +245,26 @@ namespace CaptureCardViewer.ViewModels
 						{
 							if (tool.Category == category)
 							{
-								tool.ApplyToOutput(selectedEngineOutput);
+								tool.ApplyToOutput(SelectedEngineOutput);
 							}
 						}
 					}
+					var captureInput = CaptureInput;
 
-					selectedEngineOutputRenderer = selectedEngineOutput.StartRender();
+					CaptureInput.FinalizeDisplayState();
+
+					// Ensure that the capture card can actually handle the output
+					var caps = captureInput.GetCapabilities();
+					caps.ValidateAgainstDisplayOutput(SelectedEngineOutput);
+
+					selectedEngineOutputRenderer = SelectedEngineOutput?.StartRender();
 				}
 
 				IsRenderingOutput = true;
 			});
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void StopOutputRender()
 		{
 			await Task.Run(() =>
@@ -274,15 +280,10 @@ namespace CaptureCardViewer.ViewModels
 			});
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void RenderPrediction()
 		{
-			var displayOutput = SelectedEngineOutput;
-
-			if (displayOutput == null)
-				return;
-
-			var displayPrediction = Engine.CreateDisplayPrediction();
+			var displayPrediction = Toolbox.Toolbox.CreatePrediction();
 
 			// TODO: Encapsulate the active tools into a sub-property of this CaptureSessionViewModel
 			var activeTools =
@@ -299,22 +300,26 @@ namespace CaptureCardViewer.ViewModels
 					tool.ApplyToPrediction(displayPrediction);
 				}
 
-				var prediction = await displayPrediction.GeneratePredictionDataAsync();
-				var predictionBitmap = prediction.FrameData;
+				var prediction = await displayPrediction.FinalizePredictionAsync();
+				var predictionBitmap = prediction.Frames()[0];
 
-				return (prediction, BufferToImgConv(predictionBitmap.Data, predictionBitmap.Resolution, (int)predictionBitmap.FormatDescription.Stride));
+				if (predictionBitmap is IRawFrameRenderable predictionBitmapRenderable)
+				{
+					return (prediction, BufferToImgConv(await predictionBitmapRenderable.GetRenderableApproximationAsync()));
+				}
+				return (prediction, BufferToImgConv(predictionBitmap.Data, predictionBitmap.Resolution, predictionBitmap.DataFormat));
 			});
 
 			LastPredictedFrame = predictedFrame;
 			PredictionSource = predictedBitmap;
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void CompareCapture()
 		{
 			// Snap the current frames in case they change while we're comparing
-			var lastCapture = this.lastCapturedFrame;
-			var lastPrediction = this.lastPredictedFrame;
+			var lastCapture = this.LastCapturedFrame;
+			var lastPrediction = this.LastPredictedFrame;
 
 			if (lastCapture == null || lastPrediction == null)
 				return;
@@ -326,8 +331,11 @@ namespace CaptureCardViewer.ViewModels
 		}
 
 		// Converting buffer to image source
-		private static BitmapSource BufferToImgConv(IBuffer pixelBuffer, Windows.Graphics.SizeInt32 resolution, int stride)
+		private static BitmapSource BufferToImgConv(IBuffer pixelBuffer, Windows.Graphics.SizeInt32 resolution, DisplayWireFormat dataFormat)
 		{
+			int stride = resolution.Width * 3;
+			// TODO: Implement other data formats
+
 			BitmapSource imgSource;
 			unsafe
 			{
@@ -340,6 +348,37 @@ namespace CaptureCardViewer.ViewModels
 
 			imgSource.Freeze();
 			return imgSource;
+		}
+
+		// Convert SoftwareBitmap to a WPF BitmapSource
+		private unsafe static BitmapSource BufferToImgConv(SoftwareBitmap bitmap)
+		{
+			BitmapSource imgSource;
+
+			// The bitmap format here should always be RGBA8, which is how the approximation is documented to be rendered.
+			var pixelFormat = bitmap.BitmapPixelFormat switch
+			{
+				BitmapPixelFormat.Rgba8 => PixelFormats.Bgr32,
+				_ => throw new Exception($"Unsupported preview bitmap format {bitmap.BitmapPixelFormat}")
+			};
+
+			// Fix the bitmap format to work with WPF's BitmapSource.
+			var bgra32Bitmap = SoftwareBitmap.Convert(bitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+
+			using (var lockedBuffer = bgra32Bitmap.LockBuffer(BitmapBufferAccessMode.Read))
+			using (var memRef = lockedBuffer.CreateReference())
+			{
+				var memRefAccess = memRef.As<IMemoryBufferByteAccess>();
+				memRefAccess.GetBuffer(out var buffer, out var capacity);
+
+				var description = lockedBuffer.GetPlaneDescription(0);
+				
+				imgSource = BitmapSource.Create(description.Width, description.Height, 96, 96, pixelFormat, null, (nint)buffer, (int)capacity, description.Stride);
+			}
+
+			imgSource.Freeze();
+			return imgSource;
+
 		}
 	}
 }

@@ -2,87 +2,66 @@ import "ConfigurationTools.idl";
 import "CaptureCardPlugin.idl";
 import "DisplayManager.idl";
 
-namespace MicrosoftDisplayCaptureTools.Framework 
+namespace MicrosoftDisplayCaptureTools.Framework
 {
-    // IFrameData Implementations
-    struct FrameDataDescription
-    {
-        // The number of bits to represent each pixel, regardless of subsampling mode.
-        UInt32 BitsPerPixel;
-
-        // The number of bytes for one scanline of the image
-        UInt32 Stride;
-
-        // The DirectX pixel format of the buffer - If the pixel structure cannot be expressed with this enum, use 'Unknown' and
-        // use PixelEncoding to specify. If this value is set to anything other than 'Unknown', this is used.
-        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat;
-
-        // Pixel encoding mode - i.e. RGB444, YCC420
-        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding PixelEncoding;
-
-        // The transfer function of the pixels (essentially the gamma encoding)
-        Windows.Devices.Display.Core.DisplayWireFormatEotf Eotf;
-    };
-
     //
-    // An interface representing any additional non-pixel data describing the link or pixel data (i.e. An AVI Infoframe)
+    // An interface representing a single output frame
     //
-    runtimeclass FrameMetadata
+    interface IRawFrame
     {
-        FrameMetadata(String Format, Windows.Storage.Streams.IBuffer Data);
-
-        Windows.Storage.Streams.IBuffer Data
+        // A description of how the frame and pixels are formatted
+        Windows.Devices.Display.Core.DisplayWireFormat DataFormat
+        {
+            get;
+        };
+        
+        // The resolution of the frame
+        Windows.Graphics.SizeInt32 Resolution
         {
             get;
         };
 
-        String Name
-        {
-            get;
-        };
-    };
-
-    //
-    // An interface representing formatted pixel data
-    //
-    interface IFrameData
-    {
         // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).
         Windows.Storage.Streams.IBuffer Data
         {
             get;
-            set;
         };
 
-        // The resolution of the image
-        Windows.Graphics.SizeInt32 Resolution
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h).
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
         {
             get;
-            set;
         };
-
-        // A description of how the pixels are formatted
-        FrameDataDescription FormatDescription
-        {
-            get;
-            set;
-        };
-
-        FrameMetadata[] GetFrameMetadata();
-        void AddMetadata(FrameMetadata data);
     };
 
     //
-    // An interface representing optional extended features on top of IFrameData to assist in tooling
+    // An interface representing a set of captured or predicted frames
     //
-    interface IFrameDataComparisons
+    interface IRawFrameSet
+    {
+        // Get the frames in this frame set
+        Windows.Foundation.Collections.IVector<IRawFrame> Frames();
+
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h)
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    //
+    // An interface representing optional extended features to assist in tooling
+    //
+    interface IRawFrameRenderable
     {
         // Get an easily renderable approximation of the image data, in RGBA8 format
         Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap> GetRenderableApproximationAsync();
 
-        // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
-        // do not match.
-        IFrameDataComparisons GetImageDelta(IFrameData other);
+        // Get a string representation of a particular pixel in the frame. This should be in the original pixel format
+        // and be as close to raw data as possible.
+        String GetPixelInfo(UInt32 x, UInt32 y);
     };
 
     runtimeclass Version : Windows.Foundation.IStringable
@@ -185,6 +164,25 @@ namespace MicrosoftDisplayCaptureTools.Framework
     };
 
     //
+    // A small interface which the executable should implement and use to provide runtime setting overrides to the various
+    // components
+    //
+    interface IRuntimeSettings
+    {
+        IInspectable GetSettingValue(String settingName);
+        Boolean GetSettingValueAsBool(String settingName);
+        String GetSettingValueAsString(String settingsName);
+    };
+
+    runtimeclass Runtime
+    {
+        static Runtime GetRuntime();
+
+        IRuntimeSettings RuntimeSettings();
+        ILogger Logger();
+    }
+
+    //
     // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
     // descriptor from the framework - plugins are largely expected to only need the memory block.
     //
@@ -206,7 +204,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
             get;
         };
 
-        // The main data of the descriptor is returned in a read only vector to make
+        // The main data of the descriptor is returned in a read only vector
         IVectorView<UInt8> Data
         {
             get;
@@ -222,6 +220,13 @@ namespace MicrosoftDisplayCaptureTools.Framework
 
         Boolean IsSame(IMonitorDescriptor other);
     };
+
+    runtimeclass MonitorDescriptorLoader
+    {
+        static IMonitorDescriptor LoadDescriptorFromFile(String filePath);
+        static IMonitorDescriptor LoadDescriptorFromBuffer(Windows.Storage.Streams.IBuffer data);
+        static IMonitorDescriptor LoadDescriptorFromVectorView(IVectorView<UInt8> data);
+	};
 
     //
     // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection
@@ -250,12 +255,6 @@ namespace MicrosoftDisplayCaptureTools.Framework
     {
         // Get the version, in Major.Minor.Patch format
         MicrosoftDisplayCaptureTools.Framework.Version Version
-        {
-            get;
-        };
-
-        // Get the logger for this instance
-        ILogger Logger
         {
             get;
         };
@@ -351,7 +350,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //      Attempt to discover and load other installed components. This assumes that everything has been installed
         //      via the standard nuget packages. This does not automatically mean that tests will use specific components,
         //      just that they have the option. If specific components have already been loaded using LoadConfigFile, this
-        //      function will not load futher components of the same categories. For example, if the config file specified 
+        //      function will not load futher components of the same categories. For example, if the config file specified
         //      with LoadConfigFile specifies a particular capture card plugin, DiscoverInstalledPlugins will not attempt
         //      to load any other capture card plugins.
         //
@@ -381,12 +380,30 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          only whichever mappings were provided by configuration file. If false and no mappings were provided via
         //          config files, an empty array will be returned.
         //      displayEngine (optional)
-        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false.
+        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false
+        //      toolbox (optional)
+        //          The ConfigurationToolbox to use when regenerating mappings, this is not used when regenerateMappings =
+        //          false. This is also not used if the displayEngine supports customized display descriptors (EDIDs or 
+        //          DisplayIDs) as those provide a faster and more reliable mapping path.
+        //      captureCard (optional)
+        //          The specific capture card to use when regenerating mappings, this is not used when regenerateMappings =
+        //          false. If this is not provided, the framework will attempt to map using all loaded capture cards. Mappings
+        //          will be generated for all inputs on the capture card unless displayInput is provided.
+        //      displayInput (optional)
+        //          The specific capture card input to map the input-output for, this is not used when regenerateMappings = false.
+        //          If this is not provided, the framework will attempt to map using the inputs from all capture cards or any
+        //          specfic capture card provided with captureCard. If this is provided, captureCard must also be provided, and 
+        //          this displayInput must be a valid input on the specific captureCard.
         //
         // Returns:
         //      An array of structs containing the source and sink references.
         //
-        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(Boolean regenerateMappings, MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine);
+        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(
+            Boolean regenerateMappings,
+            MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine,
+            MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox toolbox,
+            MicrosoftDisplayCaptureTools.CaptureCard.IController captureCard,
+            MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput displayInput);
 
         // GetConfigurationToolboxes
         // ----------------------------------------------------------------------------------------------------------------

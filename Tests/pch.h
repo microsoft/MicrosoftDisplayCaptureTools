@@ -18,7 +18,7 @@
 #include <Log.h>
 
 // WinRT headers
-#include <winrt\Windows.Foundation.Collections.h>
+#include <winrt/Windows.Foundation.Collections.h>
 
 // Project headers
 #include "winrt/Windows.Foundation.h"
@@ -26,8 +26,10 @@
 #include "winrt/MicrosoftDisplayCaptureTools.ConfigurationTools.h"
 #include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
 #include "winrt/MicrosoftDisplayCaptureTools.Display.h"
-#include "..\Shared\Inc\BinaryLoader.h"
+#include "BinaryLoader.h"
+#include "TestRuntime.h"
 
 // Local headers
 #include "TestSettings.h"
 #include "Logger.h"
+#include "RuntimeSettings.h"

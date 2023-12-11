@@ -5,6 +5,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:CaptureCardViewer.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    xmlns:localvm="clr-namespace:CaptureCardViewer.ViewModels" d:DataContext="{d:DesignInstance Type=localvm:WorkspaceViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -25,15 +27,69 @@
                 HorizontalAlignment="Center"
                 Text="{Binding AppVersion}" />
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Margin="0,10,10,10" Padding="15">
-                    Start New Generic Capture
-                </Button>
-                <Button Margin="0,10,10,10" Padding="15">
-                    Start New Tanager Capture
-                </Button>
-                <Button Margin="0,10,10,10" Padding="15">
-                    Repro Test Case
-                </Button>
+                <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
+                    <StackPanel.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontSize" Value="20" />
+                            <Setter Property="Margin" Value="0,0,10,0" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                        <DataTemplate DataType="{x:Type localvm:CaptureCardViewModel}">
+                            <TextBlock Text="{Binding Name, Mode=OneWay}" />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type localvm:DisplayEngineViewModel}">
+                            <TextBlock Text="{Binding Name, Mode=OneWay}" />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type localvm:ToolboxViewModel}">
+                            <TextBlock Text="{Binding Name, Mode=OneWay}" />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type localvm:DisplayInputViewModel}">
+                            <TextBlock Text="{Binding Name, Mode=OneWay}" />
+                        </DataTemplate>
+                    </StackPanel.Resources> 
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <TextBlock>Display Engine:</TextBlock>
+                        <ComboBox
+                        Margin="0,10,10,10"
+                        Padding="15"
+                        Width="300"
+                        ItemsSource="{Binding DisplayEngines}"
+                        SelectedItem="{Binding SelectedDisplayEngine}"/>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <TextBlock>Toolbox:</TextBlock>
+                        <ComboBox
+                        Margin="0,10,10,10"
+                        Padding="15"
+                        Width="300"
+                        ItemsSource="{Binding Toolboxes}"
+                        SelectedItem="{Binding SelectedToolbox}"/>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <TextBlock>Capture Plugin:</TextBlock>
+                        <ComboBox
+                        Margin="0,10,10,10"
+                        Padding="15"
+                        Width="300"
+                        ItemsSource="{Binding CaptureCards}"
+                        SelectedItem="{Binding SelectedCaptureCard}"/>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="right" Orientation="Horizontal" Width="300">
+                        <TextBlock>Input:</TextBlock>
+                        <ComboBox
+                            x:Name="DisplayInputComboBox"
+                            Margin="0,10,10,10"
+                            Width="230"
+                            Padding="15"
+                            ItemsSource="{Binding SelectedCaptureCard.Inputs}"
+                            SelectedItem="{Binding SelectedDisplayInput}"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button 
+                    Margin="20,10,10,10" 
+                    Padding="15" 
+                    Command="{Binding CreateCaptureSessionCommand}"
+                    Content="Start Capture Session" />
             </StackPanel>
         </StackPanel>
     </Grid>

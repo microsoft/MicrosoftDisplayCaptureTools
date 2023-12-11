@@ -23,6 +23,18 @@ EDIDDescriptor::EDIDDescriptor(std::vector<uint8_t> data)
     m_data = winrt::single_threaded_vector<uint8_t>(std::move(data));
 }
 
+EDIDDescriptor::EDIDDescriptor(winrt::Windows::Foundation::Collections::IVectorView<uint8_t> data)
+{
+    if (data.Size() < MinEDIDSize)
+    {
+		throw winrt::hresult_invalid_argument();
+	}
+
+    std::vector<uint8_t> temp(data.Size());
+    data.GetMany(0, temp);
+    m_data = winrt::single_threaded_vector<uint8_t>(std::move(temp));
+}
+
 EDIDDescriptor::EDIDDescriptor(winrt::com_array<uint8_t> data)
 {
     if (data.size() < MinEDIDSize)
@@ -58,6 +70,11 @@ bool EDIDDescriptor::IsSame(winrt::IMonitorDescriptor other)
     }
 
     return true;
+}
+
+winrt::Windows::Foundation::Collections::IVector<uint8_t> EDIDDescriptor::GetRawData()
+{
+    return m_data;
 }
 
 winrt::IVectorView<uint8_t> EDIDDescriptor::Data()

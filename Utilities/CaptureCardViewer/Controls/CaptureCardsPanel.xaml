@@ -27,9 +27,6 @@
                 Label="Load Plugin">
                 <ui:AppBarButton.Flyout>
                     <ui:MenuFlyout Placement="Bottom">
-                        <MenuItem Header="Generic Video Device" />
-                        <MenuItem Header="Tanager Device" />
-                        <Separator />
                         <MenuItem Command="{Binding ViewModel.LoadCaptureCardFromFileCommand}" Header="Load from file..." />
                     </ui:MenuFlyout>
                 </ui:AppBarButton.Flyout>

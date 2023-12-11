@@ -1,8 +1,10 @@
 ﻿#include "pch.h"
-#include "GenericCaptureCardPlugin.h"
 #include "Controller.g.cpp"
 #include "ControllerFactory.g.cpp"
 #include <filesystem>
+
+// included for translations of the half data format of the prediction
+#include <DirectXPackedVector.h>
 
 namespace winrt
 {
@@ -19,11 +21,15 @@ namespace winrt
     using namespace Windows::Graphics::Imaging;
     using namespace Windows::Graphics::DirectX;
     using namespace Windows::Devices::Enumeration;
+    using namespace Windows::Devices::Display::Core;
+
 
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
     using namespace MicrosoftDisplayCaptureTools::Display;
     using namespace MicrosoftDisplayCaptureTools::Framework;
 }
+
+using namespace winrt::MicrosoftDisplayCaptureTools::GenericCaptureCardPlugin::DataProcessing;
 
 struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
 {
@@ -32,18 +38,12 @@ struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novta
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
-    winrt::IController ControllerFactory::CreateController(winrt::ILogger const& logger)
+    winrt::IController ControllerFactory::CreateController()
     {
-        return winrt::make<Controller>(logger);
+        return winrt::make<Controller>();
     }
 
     Controller::Controller()
-    {
-        // Throw - callers should explicitly instantiate through the factory
-        throw winrt::hresult_illegal_method_call();
-    }
-
-    Controller::Controller(winrt::ILogger const& logger) : m_logger(logger)
     {
     }
 
@@ -57,7 +57,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         // Only try and get the input specified by config file
         if (m_usbIdFromConfigFile != L"")
         {
-            m_displayInputs.push_back(*make_self<DisplayInput>(m_usbIdFromConfigFile, m_logger));
+            m_displayInputs.push_back(*make_self<DisplayInput>(m_usbIdFromConfigFile));
         }
         else // Attempt to get all possible inputs
         {
@@ -65,7 +65,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
             for (auto&& captureDevice : captureDevices)
             {
-                m_displayInputs.push_back(*make_self<DisplayInput>(captureDevice.Id(), m_logger));
+                m_displayInputs.push_back(*make_self<DisplayInput>(captureDevice.Id()));
             }
         }
 
@@ -92,7 +92,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         }
         catch (winrt::hresult_error const& ex)
         {
-            m_logger.LogError(Name() + L" was provided configuration data, but was unable to parse it. Error: " + ex.message());
+            Logger().LogError(Name() + L" was provided configuration data, but was unable to parse it. Error: " + ex.message());
         }
     }
 
@@ -153,11 +153,10 @@ namespace winrt::GenericCaptureCardPlugin::implementation
         m_time = time;
     }
 
-    DisplayInput::DisplayInput(hstring deviceId, winrt::ILogger const& logger) :
-        m_deviceId(deviceId),
-        m_logger(logger)
+    DisplayInput::DisplayInput(hstring deviceId) :
+        m_deviceId(deviceId)
     {
-        hstring cameraId;
+       hstring cameraId;
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
         for (auto&& captureDevice : captureDevices)
         {
@@ -168,9 +167,6 @@ namespace winrt::GenericCaptureCardPlugin::implementation
                 break;
             }
         }
-
-        m_captureCapabilities = make_self<CaptureCapabilities>();
-        m_captureTrigger = make_self<CaptureTrigger>();
     }
 
     hstring DisplayInput::Name()
@@ -192,16 +188,26 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     ICaptureCapabilities DisplayInput::GetCapabilities()
     {
-        return *m_captureCapabilities;
+        return winrt::make<CaptureCapabilities>();
     }
 
     ICaptureTrigger DisplayInput::GetCaptureTrigger()
     {
-        return *m_captureTrigger;
+        return winrt::make<CaptureTrigger>();
     }
+
+    void DisplayInput::SetDescriptor(IMonitorDescriptor descriptor)
+    {
+        Logger().LogAssert(L"SetDescriptor not available for this capture card.");
+
+		// This should never be called given that CanConfigureEDID returns false.
+		throw hresult_not_implemented();
+	}
 
     IDisplayCapture DisplayInput::CaptureFrame()
     {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
         try
         {
             auto cap = m_mediaCapture.PrepareLowLagPhotoCaptureAsync(ImageEncodingProperties::CreateUncompressed(MediaPixelFormat::Bgra8));
@@ -211,130 +217,12 @@ namespace winrt::GenericCaptureCardPlugin::implementation
             auto extendedProps = winrt::multi_threaded_observable_map<winrt::hstring, winrt::IInspectable>();
             extendedProps.Insert(L"Timestamp", winrt::box_value(winrt::DateTime(winrt::clock::now())));
 
-            m_capture = make_self<DisplayCapture>(photo.Frame(), m_logger, extendedProps);
+            return winrt::make<DisplayCapture>(photo.Frame(), extendedProps);
         }
         catch (...)
         {
-            m_logger.LogError(L"Unable to get pixels for input: " + Name());
-            m_capture = nullptr;
+            Logger().LogError(L"Unable to get pixels for input: " + Name());
             return nullptr;
         }
-
-        return *m_capture;
-    }
-
-    DisplayCapture::DisplayCapture(CapturedFrame frame, winrt::ILogger const& logger, winrt::IMap<winrt::hstring, winrt::IInspectable> extendedProps) :
-        m_logger(logger), m_extendedProps(extendedProps)
-    {
-        // Ensure that we can actually read the provided frame
-        if (!frame.CanRead())
-        {
-            m_logger.LogError(L"Cannot read pixel data from frame.");
-            throw winrt::hresult_invalid_argument();
-        }
-
-        m_frameData = FrameData(m_logger);
-        
-        // Copy the new data over to the FrameData object
-        auto capturedFrameBitmap = SoftwareBitmap::Convert(frame.SoftwareBitmap(), BitmapPixelFormat::Rgba8);
-        
-        m_frameData.Resolution({capturedFrameBitmap.PixelWidth(), capturedFrameBitmap.PixelHeight()});
-
-        FrameDataDescription desc{0};
-        desc.BitsPerPixel = 32;
-        desc.Stride = capturedFrameBitmap.PixelWidth() * 3; // There is no padding with this capture
-        desc.PixelFormat = static_cast<DirectXPixelFormat>(BitmapPixelFormat::Rgba8);
-        m_frameData.FormatDescription(desc);
-
-        auto buffer = Buffer(static_cast<uint32_t>(frame.Size()));
-        capturedFrameBitmap.CopyToBuffer(buffer);
-        m_frameData.Data(buffer);
-    }
-
-    bool DisplayCapture::CompareCaptureToPrediction(hstring name, MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData prediction)
-    {
-        auto predictedFrame = prediction.FrameData();
-        
-        // Compare descriptions
-        auto predictedFrameDesc = predictedFrame.FormatDescription();
-        auto capturedFrameDesc = m_frameData.FormatDescription();
-        if (m_frameData.Data().Length() < predictedFrame.Data().Length())
-        {
-            m_logger.LogError(
-                winrt::hstring(L"Capture should be at least as large as prediction") +
-                std::to_wstring(m_frameData.Data().Length()) +
-                L", Predicted=" + std::to_wstring(predictedFrame.Data().Length()));
-        }
-        else if (0 != memcmp(m_frameData.Data().data(), predictedFrame.Data().data(), predictedFrame.Data().Length()))
-        {
-            m_logger.LogWarning(L"Capture did not exactly match prediction! Attempting comparison with tolerance.");
-            {
-                auto filename = name + L"_Captured.bin";
-                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(m_frameData.Data()).get();
-                stream.FlushAsync().get();
-                stream.Close();
-
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
-            }
-            {
-                auto filename = name + L"_Predicted.bin";
-                auto folder = winrt::StorageFolder::GetFolderFromPathAsync(std::filesystem::current_path().c_str()).get();
-                auto file = folder.CreateFileAsync(filename, winrt::CreationCollisionOption::GenerateUniqueName).get();
-                auto stream = file.OpenAsync(winrt::FileAccessMode::ReadWrite).get();
-                stream.WriteAsync(predictedFrame.Data()).get();
-                stream.FlushAsync().get();
-                stream.Close();
-
-                m_logger.LogNote(L"Dumping captured data here: " + filename);
-            }
-
-            struct PixelStruct
-            {
-                uint8_t r, g, b, a;
-            };
-
-            auto differenceCount = 0;
-
-            PixelStruct* cap = reinterpret_cast<PixelStruct*>(m_frameData.Data().data());
-            PixelStruct* pre = reinterpret_cast<PixelStruct*>(predictedFrame.Data().data());
-
-            // Comparing pixel for pixel takes a very long time at the moment - so let's compare stochastically
-            const int samples = 10000;
-            const int pixelCount = m_frameData.Resolution().Width * m_frameData.Resolution().Height;
-            for (auto i = 0; i < samples; i++)
-            {
-                auto index = rand() % pixelCount;
-
-                if (cap[index].r != pre[index].r || cap[index].g != pre[index].g || cap[index].b != pre[index].b)
-                {
-                    differenceCount++;
-                }
-            }
-
-            float diff = (float)differenceCount / (float)pixelCount;
-            if (diff > 0.10f)
-            {
-                std::wstring msg;
-                std::format_to(std::back_inserter(msg), "\n\tMatch = %2.2f\n\n", diff);
-                m_logger.LogError(msg);
-
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    winrt::IFrameData DisplayCapture::GetFrameData()
-    {
-        return m_frameData;
-    }
-
-    winrt::IMapView<winrt::hstring, winrt::IInspectable> DisplayCapture::ExtendedProperties()
-    {
-        return m_extendedProps.GetView();
     }
 }

@@ -60,7 +60,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
     struct Core : CoreT<Core>
     {
         Core();
-        Core(Framework::ILogger const& logger);
+        Core(Framework::ILogger const& logger, Framework::IRuntimeSettings const& runtimeSettings);
 
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath, hstring const& className);
         CaptureCard::IController LoadCapturePlugin(hstring const& pluginPath);
@@ -82,17 +82,17 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         com_array<CaptureCard::IController> GetCaptureCards();
         com_array<Display::IDisplayEngine> GetDisplayEngines();
         
-        winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(bool regenerateMappings, Display::IDisplayEngine displayEngine);
+        winrt::Windows::Foundation::Collections::IVector<Framework::ISourceToSinkMapping> GetSourceToSinkMappings(
+            bool regenerateMappings,
+            Display::IDisplayEngine displayEngine,
+            ConfigurationTools::IConfigurationToolbox toolbox,
+            CaptureCard::IController captureCard,
+            CaptureCard::IDisplayInput displayInput);
 
         MicrosoftDisplayCaptureTools::Framework::Version Version()
         {
             return MicrosoftDisplayCaptureTools::Framework::Version(0, 1, 0);
         };
-
-        winrt::MicrosoftDisplayCaptureTools::Framework::ILogger Logger()
-        {
-            return m_logger;
-        }
 
     private:
 
@@ -101,7 +101,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
             return m_lockCount > 0;
         }
 
-        std::vector<ConfigurationTools::IConfigurationTool> GetAllTools();
+        std::vector<ConfigurationTools::IConfigurationTool> GetAllTools(ConfigurationTools::IConfigurationToolbox specificToolbox);
 
     private:
         // A list of all capture card plugins wthat have been loaded
@@ -122,6 +122,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // The logging system for this framework instance
         const ILogger m_logger;
+
+        // The runtime settings wrapper for this framework instance
+        const IRuntimeSettings m_runtimeSettings;
 
         // Has a test locked components
         std::atomic_int32_t m_lockCount = 0;

@@ -26,10 +26,10 @@ namespace CaptureCardViewer.ViewModels
 		public string FirmwareVersion => Firmware?.FirmwareVersion ?? "Unknown";
 		public bool CanUpdateFirmware => (NeedsFirmwareUpdate == true) && !IsUpdatingFirmware;
 		[ObservableProperty]
-		[AlsoNotifyChangeFor(nameof(CanUpdateFirmware))]
-		[AlsoNotifyChangeFor(nameof(FirmwareVersion))]
-		[AlsoNotifyChangeFor(nameof(FirmwareStatus))]
-		[AlsoNotifyChangeFor(nameof(NeedsFirmwareUpdate))]
+		[NotifyPropertyChangedFor(nameof(CanUpdateFirmware))]
+		[NotifyPropertyChangedFor(nameof(FirmwareVersion))]
+		[NotifyPropertyChangedFor(nameof(FirmwareStatus))]
+		[NotifyPropertyChangedFor(nameof(NeedsFirmwareUpdate))]
 		bool isUpdatingFirmware;
 		#endregion
 
@@ -38,17 +38,21 @@ namespace CaptureCardViewer.ViewModels
 			Workspace = workspace;
 			Controller = controller;
 
-			foreach (var input in controller.EnumerateDisplayInputs())
-				inputs.Add(new DisplayInputViewModel(workspace, this, input));
+			var controllerInputs = controller.EnumerateDisplayInputs();
+			if (controllerInputs != null)
+			{
+				foreach (var input in controllerInputs)
+					inputs.Add(new DisplayInputViewModel(workspace, this, input));
 
-			Inputs = new ReadOnlyObservableCollection<DisplayInputViewModel>(inputs);
+				Inputs = new ReadOnlyObservableCollection<DisplayInputViewModel>(inputs);
+			}
 
 			Firmware = Controller as IControllerWithFirmware;
 		}
 
 		public ReadOnlyObservableCollection<DisplayInputViewModel> Inputs { get; }
 
-		[ICommand]
+		[RelayCommand]
 		async void UpdateFirmware()
 		{
 			if (Firmware == null)

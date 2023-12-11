@@ -29,4 +29,5 @@
 #include <iostream>
 #include <sstream>
 
-#include "../Shared/Inc/DisplayToolComInterop.h"
+#include "DisplayToolComInterop.h"
+#include "TestRuntime.h"
