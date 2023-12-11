@@ -8,13 +8,18 @@
     <Filter Include="Generated Files">
       <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Compute Shaders">
+      <UniqueIdentifier>{562aae7c-f974-44a6-8cef-11fb784ca884}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="FrameProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="FrameProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="GenericCaptureCardPlugin.idl" />
@@ -28,5 +33,13 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="ComputeShaders\FrameSquaredDifferenceBucketSum.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\sRGB_8bpc_to_scRGB_16bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
