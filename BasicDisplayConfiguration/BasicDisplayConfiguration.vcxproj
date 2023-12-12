@@ -198,6 +198,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)Shared\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(SolutionDir)Shared\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(SolutionDir)Shared\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Disabled</Optimization>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

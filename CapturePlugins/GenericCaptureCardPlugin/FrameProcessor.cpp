@@ -267,6 +267,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::GenericCaptureCardPlugin::DataPro
     {
         // TODO: implement this - the intent is that because the above returns only an approximation, this should return a
         // description in string form of what the original pixel values are for a given address.
+        UNREFERENCED_PARAMETER(x);
+        UNREFERENCED_PARAMETER(y);
+
         throw winrt::hresult_not_implemented();
     }
 

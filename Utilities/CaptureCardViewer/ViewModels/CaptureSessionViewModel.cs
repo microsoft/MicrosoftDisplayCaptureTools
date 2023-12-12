@@ -335,7 +335,6 @@ namespace CaptureCardViewer.ViewModels
 		private static BitmapSource BufferToImgConv(IBuffer pixelBuffer, Windows.Graphics.SizeInt32 resolution, DisplayWireFormat dataFormat)
 		{
 			int stride = resolution.Width * 3;
-			// TODO: Implement other data formats
 
 			BitmapSource imgSource;
 			unsafe
