@@ -594,8 +594,8 @@ namespace PredictionRenderer {
                     drawingSession.Close();
                 }
 
-                auto buffer =
-                    winrt::Windows::Security::Cryptography::CryptographicBuffer::CreateFromByteArray(renderablePreview.GetPixelBytes());
+                auto buffer = winrt::Buffer(renderablePreview.SizeInPixels().Width * renderablePreview.SizeInPixels().Height * 4);
+                renderablePreview.GetPixelBytes(buffer);
 
                 auto softwareBitmap = winrt::SoftwareBitmap::CreateCopyFromBuffer(
                     buffer,

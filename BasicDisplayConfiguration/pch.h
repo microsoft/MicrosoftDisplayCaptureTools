@@ -20,8 +20,6 @@
 #include "winrt/Microsoft.Graphics.Canvas.Brushes.h"
 #include "winrt/Windows.Graphics.DirectX.Direct3D11.h"
 #include "winrt/Windows.UI.h"
-#include "winrt/Windows.Security.Cryptography.h"
-#include "winrt/Windows.Security.Cryptography.Core.h"
 
 #include "winrt/MicrosoftDisplayCaptureTools.Display.h"
 #include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
