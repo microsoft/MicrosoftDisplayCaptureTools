@@ -321,8 +321,8 @@ namespace PredictionRenderer {
     // Compose the data collected for each frame into the final output data
     //
     // The way this works is that we define a surface on the GPU device that represents the frame data, this is a 3-channel,
-    // 16-bits-per-channel, floating point surface that should represent a higher precision-level than required for any part
-    // of the pipeline. This surface is nominally linear gamma, and the operations of a GPU display pipeline will happen
+    // 16-bits-per-channel, floating point scRGB surface that should represent a higher precision-level than required for any
+    // part of the pipeline. This surface is nominally linear gamma, and the operations of a GPU display pipeline will happen
     // entirely in this space. Including degammma and regamma as appropriate. Configurable quantization steps will be inserted
     // between each stage of this pipeline so that various rounding and precision behaviors can be emulated.
     // 
@@ -463,7 +463,8 @@ namespace PredictionRenderer {
         // 1. RGB->XYZ
         // 2. Color Matrix
         // 3. XYZ->RGB
-        // 4. Regamma
+        // 4. Regamma - since we use scRGB as our intermediate format, this is skipped in prediction generation. If there are
+        //              hardware/driver issues with regamma, they would still be detected on the capture end.
         //
         // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
         auto postBlendTarget = winrt::CanvasRenderTarget(
@@ -521,45 +522,8 @@ namespace PredictionRenderer {
             xyzrgbMatrixEffect.ColorMatrix(xyzrgb);
             xyzrgbMatrixEffect.Source(cscMatrix);
 
-            // 4. Regamma
-            auto regammaEffect = winrt::DiscreteTransferEffect();
-            regammaEffect.Source(xyzrgbMatrixEffect);
-
-            auto regammaCurve = RenderingUtils::CreateGammaTransferCurve(
-                RenderingUtils::GammaType::G10,
-                RenderingUtils::GetGammaTypeForEotf(frameInformation.WireFormat.Eotf()),
-                1024);
-            // TODO: source gamma stops parameter from GPU caps?
-
-            regammaEffect.RedTable(regammaCurve);
-            regammaEffect.GreenTable(regammaCurve);
-            regammaEffect.BlueTable(regammaCurve);
-
             // Commit the color pipeline
-            drawingSession.DrawImage(regammaEffect);
-
-            drawingSession.Flush();
-            drawingSession.Close();
-        }
-
-        // Post color pipeline migration to wire format
-        // 1. Format Conversion RGB->YUV (if applicable)
-        // 2. Range Conversion Full->Studio (if applicable)
-        //
-        // Note: Inserting 'quantization' steps in between each step so that we can accurately reflect hardware pipelines.
-        auto wireFormatTarget = winrt::CanvasRenderTarget(
-            device,
-            (float)frameInformation.TargetModeSize.Width,
-            (float)frameInformation.TargetModeSize.Height,
-            96,
-            winrt::DirectXPixelFormat::R16G16B16A16Float,
-            winrt::CanvasAlphaMode::Premultiplied);
-        {
-            auto drawingSession = postBlendTarget.CreateDrawingSession();
-            drawingSession.EffectBufferPrecision(winrt::CanvasBufferPrecision::Precision16Float);
-
-            // 1. Format Conversion RGB->YUV (if applicable)
-            // TODO
+            drawingSession.DrawImage(xyzrgbMatrixEffect);
 
             drawingSession.Flush();
             drawingSession.Close();
@@ -616,7 +580,6 @@ namespace PredictionRenderer {
             auto frameBytesBufferWriter = winrt::DataWriter();
             frameBytesBufferWriter.WriteBytes(frameBytes);
 
-            // TODO: allocate only what's actually needed for the output values, this will need to involve defining a 2-byte float -> integer function
             frame->SetBuffer(frameBytesBufferWriter.DetachBuffer());
              
             // 5. Ensure that the copy started in 2 is finished
@@ -649,8 +612,6 @@ namespace PredictionRenderer {
         // Create the prediction data object
         auto predictionData = winrt::make_self<PredictionData>();
 
-        // TODO: add a callback for test setup that sets things like whether to use warp, how many frames, etc.
-
         uint32_t frameCount = 1;
         if (predictionData->Properties().HasKey(L"FrameCount"))
         {
@@ -662,8 +623,6 @@ namespace PredictionRenderer {
         auto canvasDevice = predictionData->Device();
 
         // TODO: Should have options for per-frame and collective callbacks
-
-        // TODO: rename pattern tool to something like BasePlanBasePlanePattern
 
         // Invoke any tools registering as display setup (format, resolution, etc.)
         if (m_displaySetupCallback)
