@@ -23,7 +23,6 @@ namespace winrt
     using namespace Windows::Devices::Enumeration;
     using namespace Windows::Devices::Display::Core;
 
-
     using namespace MicrosoftDisplayCaptureTools::CaptureCard;
     using namespace MicrosoftDisplayCaptureTools::Display;
     using namespace MicrosoftDisplayCaptureTools::Framework;
@@ -175,9 +174,10 @@ namespace winrt::GenericCaptureCardPlugin::implementation
 
     void DisplayInput::FinalizeDisplayState()
     {
-        MediaCaptureInitializationSettings mediaCaptureInitSettings;
+        auto mediaCaptureInitSettings = MediaCaptureInitializationSettings(); 
         mediaCaptureInitSettings.VideoDeviceId(m_deviceId);
         mediaCaptureInitSettings.PhotoCaptureSource(PhotoCaptureSource::Photo);
+        mediaCaptureInitSettings.StreamingCaptureMode(StreamingCaptureMode::Video);
 
         m_mediaCapture = MediaCapture();
 

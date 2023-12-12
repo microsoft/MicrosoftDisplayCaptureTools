@@ -546,7 +546,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(
 
                         // Start outputting to the target with the current settings
                         auto renderer = output.StartRender();
-                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                        std::this_thread::sleep_for(std::chrono::seconds(2));
 
                         // Iterate through the still unassigned inputs to find any matches
                         for (auto&& unassignedInput : unassignedInputs_NoEDID)

@@ -39,7 +39,6 @@
 
 // Include the D3D headers for doing shader-based math
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
-#include <DirectXMath.h>
 #include <dxgi.h>
 #include <d3d11.h>
 #include <d3d11shader.h>
