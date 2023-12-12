@@ -157,7 +157,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     }
 
     ComputeShaders FrameProcessor::GetSamplerShader(
-        IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
+        IteIt68051Plugin::VideoTiming*, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
     {
         switch (aviInfoframe->GetColorFormat())
         {
@@ -185,13 +185,13 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     }
 
     ComputeShaders FrameProcessor::GetDequantizerShader(
-        IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
+        IteIt68051Plugin::VideoTiming*, IteIt68051Plugin::AviInfoframe*, IteIt68051Plugin::ColorInformation*)
     {
         return ComputeShaders::Dequantizer;
     }
 
     ComputeShaders FrameProcessor::GetColorFormatShader(
-        IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
+        IteIt68051Plugin::VideoTiming*, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation*)
     {
         if (aviInfoframe->GetColorFormat() == IteIt68051Plugin::AviColorFormat::RGB)
         {
@@ -209,7 +209,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     }
 
     ComputeShaders FrameProcessor::GetTransferFunctionShader(
-        IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
+        IteIt68051Plugin::VideoTiming*, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation*)
     {
         switch (aviInfoframe->GetColorimetry())
         {
@@ -223,7 +223,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     }
 
     ComputeShaders FrameProcessor::GetColorspaceShader(
-        IteIt68051Plugin::VideoTiming* timing, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* colorInfo)
+        IteIt68051Plugin::VideoTiming*, IteIt68051Plugin::AviInfoframe* aviInfoframe, IteIt68051Plugin::ColorInformation* )
     {
         switch (aviInfoframe->GetColorimetry())
         {
@@ -317,12 +317,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             }
 
             ClearShaderState();
-        }
-
-        // TEMP: read out the sampled texture data:
-        {
-            auto temp = GetBufferFromTexture<uint64_t>(sampledTexture.get());
-            auto tempPtr = temp.data();
         }
 
         // The constant buffer for the dequantizer shader and the texture/UAV
@@ -439,12 +433,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             throw winrt::hresult_error();
         }
 
-        // TEMP: read out the dequantized texture data:
-        {
-            auto temp = GetBufferFromTexture<uint64_t>(dequantizedData.get());
-            auto tempPtr = temp.data();
-        }
-
         // The texture and UAV to hold the R'G'B' data (16-bpc float 444 R'G'B')
         winrt::com_ptr<ID3D11Texture2D> rgbPrime{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbPrimeView{nullptr};
@@ -488,12 +476,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             rgbPrimeView = dequantizedDataView;
         }
 
-        // TEMP: read out the R'G'B' texture data:
-        {
-            auto temp = GetBufferFromTexture<uint64_t>(rgbPrime.get());
-            auto tempPtr = temp.data();
-        }
-
         // The texture and UAV to hold the RGB data (16-bpc float 444 RGB)
         winrt::com_ptr<ID3D11Texture2D> rgbLinear{nullptr};
         winrt::com_ptr<ID3D11UnorderedAccessView> rgbLinearView{nullptr};
@@ -535,12 +517,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             // We skipped the transfer function stage, so just use the RGB' data as the RGB data.
             rgbLinear = rgbPrime;
             rgbLinearView = rgbPrimeView;
-        }
-
-        // TEMP: read out the RGB texture data:
-        {
-            auto temp = GetBufferFromTexture<uint64_t>(rgbLinear.get());
-            auto tempPtr = temp.data();
         }
 
         // The texture and UAV to hold the scRGB data (16-bpc float 444 scRGB) and 
@@ -755,14 +731,14 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 			double sum = 0;
 
             constexpr uint32_t threadCount = 8;
-            auto threads = std::vector<winrt::IAsyncOperation<double>>(threadCount);
+            auto threads = std::array<winrt::IAsyncOperation<double>, threadCount>();
             for (uint32_t i = 0; i < threadCount-1; i++)
             {
-                threads.push_back(AddPixelSums(sumTexturePtr, i * numPixels / threadCount, numPixels / threadCount));
+                threads[i] = AddPixelSums(sumTexturePtr, i * numPixels / threadCount, numPixels / threadCount);
 			}
 
             // In the last thread account for any pixels that don't fall into a whole number of threadCount buckets
-            threads.push_back(AddPixelSums(sumTexturePtr, (threadCount - 1) * numPixels / threadCount, numPixels / threadCount + numPixels % threadCount));
+            threads[threadCount-1] = AddPixelSums(sumTexturePtr, (threadCount - 1) * numPixels / threadCount, numPixels / threadCount + numPixels % threadCount);
 
             for (auto& sumThread : threads)
             {
@@ -770,7 +746,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             }
 
 			// Compute the PSNR
-			double mse = sum / (static_cast<double>(numPixels) * 3);
+			double mse = sum / (static_cast<double>(numPixels) * 3); // 3 channels, so we divide the squared sum by 3
 			double psnr = 20.0 * log10((7.5 * 7.5) / mse); // 7.5 is the peak value for the scRGB format of our intermediates
 
 			return psnr;
@@ -829,63 +805,17 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             auto predictedFrame = prediction.Frames().GetAt(index);
             auto capturedFrame = m_frames.GetAt(index);
 
-            if (false)
+            // Compare the frame resolutions
+            auto predictedFrameRes = predictedFrame.Resolution();
+            auto capturedFrameRes = capturedFrame.Resolution();
+            if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
             {
-                bool formatMismatch = false;
+                Logger().LogError(
+                    winrt::hstring(L"Capture resolution did not match prediction. Captured=") +
+                    std::to_wstring(capturedFrameRes.Width) + L"x" + std::to_wstring(capturedFrameRes.Height) + L", Predicted=" +
+                    std::to_wstring(predictedFrameRes.Width) + L"x" + std::to_wstring(predictedFrameRes.Height));
 
-                // Compare the frame resolutions
-                auto predictedFrameRes = predictedFrame.Resolution();
-                auto capturedFrameRes = capturedFrame.Resolution();
-                if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
-                {
-                    Logger().LogError(
-                        winrt::hstring(L"Capture resolution did not match prediction. Captured=") +
-                        std::to_wstring(capturedFrameRes.Width) + L"x" + std::to_wstring(capturedFrameRes.Height) + L", Predicted=" +
-                        std::to_wstring(predictedFrameRes.Width) + L"x" + std::to_wstring(predictedFrameRes.Height));
-                    formatMismatch = true;
-                }
-
-                // Compare the frame formats
-                auto predictedFrameFormat = predictedFrame.DataFormat();
-                auto capturedFrameFormat = capturedFrame.DataFormat();
-
-                if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture pixel format did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture color space did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture EOTF did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture HDR metadata format did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.BitsPerChannel() != capturedFrameFormat.BitsPerChannel())
-                {
-                    Logger().LogError(
-                        winrt::hstring(L"Capture bits per channel did not match prediction. Captured=") +
-                        std::to_wstring(capturedFrameFormat.BitsPerChannel()) + L", Predicted=" +
-                        std::to_wstring(predictedFrameFormat.BitsPerChannel()));
-                    formatMismatch = true;
-                }
-
-                if (formatMismatch)
-                {
-                    return false;
-                }
+                return false;
             }
 
             auto psnr = FrameProcessor::GetInstance().ComputePSNR(predictedFrame, capturedFrame);
@@ -967,6 +897,9 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
     {
         // TODO: implement this - the intent is that because the above returns only an approximation, this should return a
         // description in string form of what the original pixel values are for a given address.
+        UNREFERENCED_PARAMETER(x);
+        UNREFERENCED_PARAMETER(y);
+
         throw winrt::hresult_not_implemented();
     }
 } // namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing

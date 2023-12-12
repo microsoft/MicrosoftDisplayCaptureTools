@@ -21,7 +21,6 @@
 #include "winrt/MicrosoftDisplayCaptureTools.Display.h"
 
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
-#include <DirectXMath.h>
 #include <dxgi.h>
 #include <d3d11.h>
 #include <d3d11shader.h>
