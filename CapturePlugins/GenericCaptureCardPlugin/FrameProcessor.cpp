@@ -404,7 +404,7 @@ namespace winrt::MicrosoftDisplayCaptureTools::GenericCaptureCardPlugin::DataPro
             m_d3dDeviceContext->CSSetShaderResources(0, 2, ppSRV);
             ID3D11UnorderedAccessView* ppUAView[1] = {sumTextureView.get()};
             m_d3dDeviceContext->CSSetUnorderedAccessViews(0, 1, ppUAView, nullptr);
-            m_d3dDeviceContext->Dispatch(capture.Resolution().Width, capture.Resolution().Height, 1);
+            m_d3dDeviceContext->Dispatch(target.Resolution().Width, target.Resolution().Height, 1);
         }
 
         ClearShaderState();
@@ -484,63 +484,17 @@ namespace winrt::MicrosoftDisplayCaptureTools::GenericCaptureCardPlugin::DataPro
             auto predictedFrame = prediction.Frames().GetAt(index);
             auto capturedFrame = m_frames.GetAt(index);
 
-            if (false)
+            // Compare the frame resolutions
+            auto predictedFrameRes = predictedFrame.Resolution();
+            auto capturedFrameRes = capturedFrame.Resolution();
+            if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
             {
-                bool formatMismatch = false;
+                Logger().LogNote(
+                    winrt::hstring(L"Capture resolution did not match prediction. Captured=") + std::to_wstring(capturedFrameRes.Width) +
+                    L"x" + std::to_wstring(capturedFrameRes.Height) + L", Predicted=" + std::to_wstring(predictedFrameRes.Width) +
+                    L"x" + std::to_wstring(predictedFrameRes.Height) + L" \nComparison will be to re-scaled data.");
 
-                // Compare the frame resolutions
-                auto predictedFrameRes = predictedFrame.Resolution();
-                auto capturedFrameRes = capturedFrame.Resolution();
-                if (predictedFrameRes.Width != capturedFrameRes.Width || predictedFrameRes.Height != capturedFrameRes.Height)
-                {
-                    Logger().LogError(
-                        winrt::hstring(L"Capture resolution did not match prediction. Captured=") +
-                        std::to_wstring(capturedFrameRes.Width) + L"x" + std::to_wstring(capturedFrameRes.Height) + L", Predicted=" +
-                        std::to_wstring(predictedFrameRes.Width) + L"x" + std::to_wstring(predictedFrameRes.Height));
-                    formatMismatch = true;
-                }
-
-                // Compare the frame formats
-                auto predictedFrameFormat = predictedFrame.DataFormat();
-                auto capturedFrameFormat = capturedFrame.DataFormat();
-
-                if (predictedFrameFormat.PixelEncoding() != capturedFrameFormat.PixelEncoding())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture pixel format did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.ColorSpace() != capturedFrameFormat.ColorSpace())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture color space did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.Eotf() != capturedFrameFormat.Eotf())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture EOTF did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.HdrMetadata() != capturedFrameFormat.HdrMetadata())
-                {
-                    Logger().LogError(winrt::hstring(L"Capture HDR metadata format did not match prediction"));
-                    formatMismatch = true;
-                }
-
-                if (predictedFrameFormat.BitsPerChannel() != capturedFrameFormat.BitsPerChannel())
-                {
-                    Logger().LogError(
-                        winrt::hstring(L"Capture bits per channel did not match prediction. Captured=") +
-                        std::to_wstring(capturedFrameFormat.BitsPerChannel()) + L", Predicted=" +
-                        std::to_wstring(predictedFrameFormat.BitsPerChannel()));
-                    formatMismatch = true;
-                }
-
-                if (formatMismatch)
-                {
-                    return false;
-                }
+                return false;
             }
 
             auto psnr = FrameProcessor::GetInstance().ComputePSNR(predictedFrame, capturedFrame);

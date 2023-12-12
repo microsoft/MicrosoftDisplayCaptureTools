@@ -156,7 +156,6 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     DisplayInput::DisplayInput(hstring deviceId) :
         m_deviceId(deviceId)
     {
-       hstring cameraId;
         auto captureDevices = DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get();
         for (auto&& captureDevice : captureDevices)
         {
@@ -178,7 +177,7 @@ namespace winrt::GenericCaptureCardPlugin::implementation
     {
         MediaCaptureInitializationSettings mediaCaptureInitSettings;
         mediaCaptureInitSettings.VideoDeviceId(m_deviceId);
-        mediaCaptureInitSettings.StreamingCaptureMode(StreamingCaptureMode::Video);
+        mediaCaptureInitSettings.PhotoCaptureSource(PhotoCaptureSource::Photo);
 
         m_mediaCapture = MediaCapture();
 
