@@ -111,7 +111,7 @@ extends:
               ob_restore_phase: true
             displayName: 'Clean packages directory'
             inputs:
-              SourceFolder: '$(Build.SourcesDirectory)/packages'
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
               Contents: '*'
               RemoveSourceFolder: true
 
@@ -127,10 +127,10 @@ extends:
               ob_restore_phase: true
             inputs:
               command: 'restore'
-              restoreSolution: '$(Build.SourcesDirectory)/Core/packages.config'
+              restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Core\packages.config'
               feedsToUse: 'config'
-              nugetConfigPath: '$(Build.SourcesDirectory)/NuGet.config'
-              restoreDirectory: '$(Build.SourcesDirectory)/packages'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
           # Build the solution
           - task: VSBuild@1
@@ -171,7 +171,7 @@ extends:
               ob_restore_phase: true
             displayName: 'Copy winmd to output directory'
             inputs:
-              SourceFolder: '$(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Release'
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\x64\Release'
               Contents: '**\*.winmd'
               TargetFolder: '$(ob_outputDirectory)\winmd'
 
@@ -185,15 +185,15 @@ extends:
                 New-Item $(ob_outputDirectory)\bin\objchk\arm64 -ItemType Directory -Force
                 New-Item $(ob_outputDirectory)\bin\objfre\arm64 -ItemType Directory -Force
 
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\amd64
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\x64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
                 
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\amd64
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\amd64
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\arm64
-                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\x64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\x64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\ARM64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\ARM64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\arm64
 
           - task: onebranch.pipeline.signing@1
             displayName: 'Code Signing'
