@@ -122,7 +122,7 @@ extends:
               forceReinstallCredentialProvider: true
 
           - task: NuGetCommand@2
-            displayName: 'NuGet Restore'
+            displayName: 'NuGet Restore Core'
             env:
               ob_restore_phase: true
             inputs:
@@ -133,7 +133,7 @@ extends:
               restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
           - task: NuGetCommand@2
-            displayName: 'NuGet Restore'
+            displayName: 'NuGet Restore Tanager'
             env:
               ob_restore_phase: true
             inputs:
