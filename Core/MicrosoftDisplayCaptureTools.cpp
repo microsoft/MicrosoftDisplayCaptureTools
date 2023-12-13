@@ -445,7 +445,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(
                         // Try to get the EDID from this monitor - the display we are looking for will have the same EDID we plugged in earlier
                         auto retrievedEDID = winrt::make<EDIDDescriptor>(monitor.GetDescriptor(DisplayMonitorDescriptorKind::Edid));
 
-                        if (standardEDID.IsSame(retrievedEDID))
+                        if (standardEDID.SerialNumber() == retrievedEDID.SerialNumber())
                         {
                             auto pluginName = card.Name();
                             auto pluginInputName = input.Name();
