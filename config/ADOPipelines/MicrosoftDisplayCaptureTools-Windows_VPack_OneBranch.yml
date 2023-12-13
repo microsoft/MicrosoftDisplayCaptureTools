@@ -5,7 +5,7 @@
 # This pipeline was created by EasyStart from a sample located at:                                                                  #
 #                               https://aka.ms/obpipelines/easystart/samples                                                        #
 #                                                                                                                                   #
-# OB Windows Undocked Wiki:     https://aka.ms/wud/template                                                                         #
+# Windows Undocked Wiki:        https://www.osgwiki.com/wiki/Windows_Undocked_Template                                              #
 # General OB Documentation:     https://aka.ms/obpipelines                                                                          #
 # Build MSBuild project:        https://dev.azure.com/onebranch/OneBranch/_wiki/wikis/OneBranch.wiki/6045/Build-MSBuild-project     #
 # Yaml Schema:                  https://aka.ms/obpipelines/yaml/schema                                                              #
@@ -15,16 +15,12 @@
 #####################################################################################################################################
 
 # Add this for VPack versioning when using Package ES Setup task
-# name: $(BuildDefinitionName)_$(date:yyMM).$(date:dd)$(rev:rrr)
+name: $(Date:yyMMdd-HHmm)$(Rev:.r).$(SourceBranchName).$(SourceVersion)
 
 # https://aka.ms/obpipelines/triggers
 trigger: none 
 
 parameters: # parameters are shown up in ADO UI in a build queue time
-- name: 'debug'
-  displayName: 'Enable debug output'
-  type: boolean
-  default: false
 - name: PackageNameSuffix
   type: string
   default: Ge
@@ -33,7 +29,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 
 variables:
   CDP_DEFINITION_BUILD_COUNT: $[counter('', 0)] # needed for onebranch.pipeline.version task https://aka.ms/obpipelines/versioning
-  system.debug: ${{ parameters.debug }}
+  system.debug: false
   ENABLE_PRS_DELAYSIGN: 1
   ROOT: $(Build.SourcesDirectory)
   REPOROOT: $(Build.SourcesDirectory)
@@ -45,10 +41,9 @@ variables:
   PRE_RELEASE_VERSION: $(Build.BuildId)
   VPACK_METADATA: $(Build.SourceVersion)
 
+
   # Docker image which is used to build the project https://aka.ms/obpipelines/containers
   WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2019/vse2022:latest' 
-
-  Codeql.Enabled: true #  CodeQL once every 3 days on the default branch for all languages its applicable to in that pipeline.
 
 resources:
   repositories: 
@@ -57,34 +52,27 @@ resources:
       name: OneBranch.Pipelines/GovernedTemplates
       ref: refs/heads/main
 
+
 extends:
   template: v2/Microsoft.Official.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     platform:
       name: 'windows_undocked' # windows undocked
-            
+
     cloudvault: # Please refer the wiki for more information: https://aka.ms/obpipelines/cloudvault
       enabled: false
-    
+
     globalSdl: # Refer the wiki for more options in this parameter: https://aka.ms/obpipelines/sdl
       tsa:
-        enabled: true # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.  Please provide TSAOptions.json.
+        enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
       # suppression:
       #   suppressionFile: $(Build.SourcesDirectory)\.gdn\global.gdnsuppress
 
-    #   updateOSManifest: # Information for updating OS Manifest OS repository (Learn more: https://aka.ms/wud/template)
-    #     enabled: true
-    #     osbranch: << Branch of the repo to fetch from >>
-    #     source: << Path to the file to fetch >>
-    #     destination: << Path to folder where file should be fetched to >>
-    #     manifest: << Path(s) to location of a vPack manifest to update the downloaded manifest from. >>
-    # ##    << Please refer wiki for more Update OS Manifest options >>
-    
     featureFlags:
       createVPack: # Information for Trusted Vpack (https://www.osgwiki.com/wiki/Windows_Build_Tools_Template)
         enabled: true
         packagename: $(VPACK_NAME)
-        description: 'MicrosoftDisplayCaptureTools Undocked Files'
+        description: 'DisplayHardwareHLK Undocked Files'
         owneralias: $(OWNER_ALIAS)
         provData: true
         versionAs: Parts
@@ -97,26 +85,17 @@ extends:
     stages:
     - stage: build
       jobs:
-      - job: main
+      - job: DisplayHardwareHLKUndockedVpack
         pool:
           # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
-          type: windows  
-        
+          type: windows
+
         variables:
           # binaries scanning tools are run on this directory ( https://onebranch.visualstudio.com/OneBranch/_wiki/wikis/OneBranch.wiki/4634/SDL-(Static-Analysis)-for-Containerized-Workflows ) and 
           # this directory is uploaded to pipeline artifacts. More info at https://aka.ms/obpipelines/artifacts
-          ob_outputDirectory: '$(REPOROOT)\out' 
-
-          # createVPack: # information for Vpack (Learn more: https://aka.ms/wud/template)
-          ob_createvpack_enabled: true
-          ob_createvpack_packagename: VPACK_PACKAGE_NAME
-          ob_createvpack_description: VPACK_DESCRIPTION
-          ob_createvpack_owneralias: $(OWNER_ALIAS)
-          ob_createvpack_versionAs: string
-          ob_createvpack_version: X.Y.Z-T
-          ob_createvpack_propsFile: true
-          ob_createvpack_verbose: true
-          # ##    << Please refer wiki for more Vpack options >>
+          ob_outputDirectory: '$(REPOROOT)\DisplayHardwareHLK\outputDirectory'
+          ob_sdl_codeSignValidation_excludes: -|**\*.js;-|**\*.ps1;-|**\*.wsf;-|**\*.exp
+          ob_artifactsBaseName: 'DisplayHardwareHLK_Undocked_Binaries_and_Source'
 
         steps:
           - checkout: self
@@ -132,7 +111,9 @@ extends:
               ob_restore_phase: true
             displayName: 'Clean packages directory'
             inputs:
-              SourceFolder: '$(Build.SourcesDirectory)/packages'
+              SourceFolder: '$(Build.SourcesDirectory)/DisplayHardwareHLK/packages'
+              Contents: '*'
+              RemoveSourceFolder: true
 
           - task: NuGetAuthenticate@1
             env:
@@ -145,19 +126,13 @@ extends:
             env:
               ob_restore_phase: true
             inputs:
-              restoreDirectory: packages
-              nugetConfigPath: 'nuget.config'
-              restoreSolution: '*.sln'
+              command: 'restore'
+              restoreSolution: '$(Build.SourcesDirectory)/DisplayHardwareHLK/Core/packages.config'
               feedsToUse: 'config'
+              nugetConfigPath: '$(Build.SourcesDirectory)/DisplayHardwareHLK/NuGet.config'
+              restoreDirectory: '$(Build.SourcesDirectory)/DisplayHardwareHLK/packages'
 
-          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
-            displayName: 'Setup BuildNumber'
-            inputs:
-              system: 'RevisionCounter'
-              major: '1'
-              minor: '0'
-              exclude_commit: true
-
+          # Build the solution
           - task: VSBuild@1
             displayName: 'Visual Studio 2022 Build, Debug x64'
             inputs:
@@ -190,11 +165,103 @@ extends:
               platform: 'ARM64'
               configuration: 'release'
 
-          - task: onebranch.pipeline.signing@1 # https://aka.ms/obpipelines/signing
-            displayName: 'Sign output'
+          # Copy the WinMD file, the core and capture card binaries & symbols
+          - task: CopyFiles@2
+            env:
+              ob_restore_phase: true
+            displayName: 'Copy winmd to output directory'
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Release'
+              Contents: '**\*.winmd'
+              TargetFolder: '$(ob_outputDirectory)\winmd'
+
+          - task: PowerShell@2
+            displayName: 'Copy undocked binaries to output directory'
+            inputs:
+              targetType: 'inline'
+              script: |
+                New-Item $(ob_outputDirectory)\bin\objchk\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\bin\objfre\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\bin\objchk\arm64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\bin\objfre\arm64 -ItemType Directory -Force
+
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
+                
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\x64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\DisplayHardwareHLK\ARM64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\arm64
+
+          - task: onebranch.pipeline.signing@1
+            displayName: 'Code Signing'
             inputs:
               command: 'sign'
               signing_environment: 'azure-ado'
-              files_to_sign: '**/*.exe;**/*.dll;**/*.ps1;**/*.winmd'
-              search_root: '$(Build.SourcesDirectory)\out'
+              signing_profile: 'internal_azure_service'
+              files_to_sign: '**/*.dll'
+              search_root: '$(ob_outputDirectory)\bin'
+              use_testsign: false
+              in_container: true
 
+          - task: PublishSymbols@2
+            inputs:
+              symbolsFolder: $(ob_outputDirectory)\bin
+              searchPattern: |
+                **/*.pdb
+                **/*.dll
+              symbolServerType: teamServices
+
+          - task: PowerShell@2
+            name: 'VPackVersion'
+            displayName: 'Extract VPack Version Numbers'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host 'Not building so extract version numbers from cmakelists.txt and d3d12constants.dat'
+
+                $cmakelists = Get-Content $(Build.SourcesDirectory)\DisplayHardwareHLK\src\cmakelists.txt
+
+                "$cmakelists" -match "set\s*\(\s*DX_VER_MAJOR\s+(\d+)\s*\)" | Out-Null
+                $DxVerMajor = [int]($Matches[1])
+
+                "$cmakelists" -match "set\s*\(\s*DX_VER_BUILD\s+(\d+)\s*\)" | Out-Null
+                $DxVerBuild = [int]($Matches[1])
+
+                $d3d12constants = Get-Content $(Build.SourcesDirectory)\DisplayHardwareHLK\src\published\d3d12constants.dat
+
+                "$d3d12constants" -match "D3D12_SDK_VERSION\s+=\s+(\d+)" | Out-Null
+                $DxVerMinor = [int]($Matches[1])
+
+                Write-Host "##vso[task.setVariable variable=Major;isOutput=true]$DxVerMajor"
+                Write-Host "##vso[task.setVariable variable=Minor;isOutput=true]$DxVerMinor"
+                Write-Host "##vso[task.setVariable variable=Patch;isOutput=true]$DxVerBuild"
+
+          - task: PowerShell@2
+            displayName: 'How To Update Windows'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host 'To import this VPack into Windows, edit:'
+                Write-Host
+                Write-Host '%SDXROOT%\build\onecoreuap\internal\config\OSDependencies.Manifest'
+                Write-Host
+                Write-Host 'and find the entry with the key "$(VPACK_NAME)". Typically only the version number changes.'
+                Write-Host 'Modify the entry to match:'
+                Write-Host
+                Write-Host '// Description: DisplayHardwareHLK Binaries'
+                Write-Host '// Source: https://microsoft.visualstudio.com/DisplayHardwareHLK'
+                Write-Host '// Owner: $(OWNER_ALIAS)'
+                Write-Host '$(VPACK_NAME),[$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
+                Write-Host
+
+          - task: PowerShell@2
+            displayName: 'Create tag for the latest commit'
+            inputs:
+              targetType: 'inline'
+              script: |
+                cd DisplayHardwareHLK
+                $TagName = "$(VPACK_NAME).$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)"
+                echo $TagName
