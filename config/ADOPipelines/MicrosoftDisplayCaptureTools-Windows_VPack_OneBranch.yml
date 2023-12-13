@@ -167,8 +167,6 @@ extends:
 
           # Copy the WinMD file, the core and capture card binaries & symbols
           - task: CopyFiles@2
-            env:
-              ob_restore_phase: true
             displayName: 'Copy winmd to output directory'
             inputs:
               SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\DisplayHardwareHLK\x64\Release'
