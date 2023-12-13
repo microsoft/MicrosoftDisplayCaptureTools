@@ -132,6 +132,17 @@ extends:
               nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
               restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
+          - task: NuGetCommand@2
+            displayName: 'NuGet Restore'
+            env:
+              ob_restore_phase: true
+            inputs:
+              command: 'restore'
+              restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\CapturePlugins\TanagerCaptureCardPlugin\packages.config'
+              feedsToUse: 'config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
+
           # Build the solution
           - task: VSBuild@1
             displayName: 'Visual Studio 2022 Build, Debug x64'
