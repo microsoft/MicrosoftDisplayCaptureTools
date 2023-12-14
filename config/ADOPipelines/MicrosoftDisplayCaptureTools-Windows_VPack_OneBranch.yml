@@ -244,6 +244,6 @@ extends:
             inputs:
               targetType: 'inline'
               script: |
-                cd DisplayHardwareHLK
+                cd MicrosoftDisplayCaptureTools
                 $TagName = "$(VPACK_NAME).$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)"
                 echo $TagName
