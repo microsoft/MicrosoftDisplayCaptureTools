@@ -49,6 +49,9 @@ variables:
   VPACK_NAME: Microsoft.$(Build.Repository.Name)Undocked-$(BRANCH_NAME)-${{parameters.PackageNameSuffix}}
   PRE_RELEASE_VERSION: $(Build.BuildId)
   VPACK_METADATA: $(Build.SourceVersion)
+  VPackVersion.Major: ${{parameters.Major}}
+  VPackVersion.Minor: ${{parameters.Minor}}
+  VPackVersion.Patch: ${{parameters.Patch}}
 
 
   # Docker image which is used to build the project https://aka.ms/obpipelines/containers
@@ -85,9 +88,9 @@ extends:
         owneralias: $(OWNER_ALIAS)
         provData: true
         versionAs: Parts
-        majorVer: ${{parameters.Major}}
-        minorVer: ${{parameters.Minor}}
-        patchVer: ${{parameters.Patch}}
+        majorVer: $(VPackVersion.Major)
+        minorVer: $(VPackVersion.Minor)
+        patchVer: $(VPackVersion.Patch)
         prereleaseVer: $(PRE_RELEASE_VERSION)
         metadata: $(VPACK_METADATA)
 
@@ -193,6 +196,17 @@ extends:
               Contents: '**\*.winmd'
               TargetFolder: '$(ob_outputDirectory)\winmd'
 
+          - task: onebranch.pipeline.signing@1
+            displayName: 'Code Signing'
+            inputs:
+              command: 'sign'
+              signing_environment: 'azure-ado'
+              signing_profile: 'internal_azure_service'
+              files_to_sign: '**/*.dll'
+              search_root: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools'
+              use_testsign: false
+              in_container: true
+
           - task: PowerShell@2
             displayName: 'Copy undocked binaries to output directory'
             inputs:
@@ -210,17 +224,6 @@ extends:
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\CaptureCards\*.* $(ob_outputDirectory)\bin\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\CaptureCards\*.* $(ob_outputDirectory)\bin\objchk\arm64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\CaptureCards\*.* $(ob_outputDirectory)\bin\objfre\arm64
-
-          - task: onebranch.pipeline.signing@1
-            displayName: 'Code Signing'
-            inputs:
-              command: 'sign'
-              signing_environment: 'azure-ado'
-              signing_profile: 'internal_azure_service'
-              files_to_sign: '**/*.dll'
-              search_root: '$(ob_outputDirectory)\bin'
-              use_testsign: false
-              in_container: true
 
           - task: PublishSymbols@2
             inputs:
@@ -245,7 +248,7 @@ extends:
                 Write-Host '// Description: MicrosoftDisplayCaptureTools Binaries'
                 Write-Host '// Source: https://microsoft.visualstudio.com/DisplayHardwareHLK'
                 Write-Host '// Owner: $(OWNER_ALIAS)'
-                Write-Host '$(VPACK_NAME),[${{parameters.Major}}.${{parameters.Minor}}.${{parameters.Patch}}-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
+                Write-Host '$(VPACK_NAME),[$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
                 Write-Host
 
           - task: PowerShell@2
@@ -254,5 +257,5 @@ extends:
               targetType: 'inline'
               script: |
                 cd MicrosoftDisplayCaptureTools
-                $TagName = "$(VPACK_NAME).${{parameters.Major}}.${{parameters.Minor}}.${{parameters.Patch}}-$(PRE_RELEASE_VERSION)"
+                $TagName = "$(VPACK_NAME).$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)"
                 echo $TagName
