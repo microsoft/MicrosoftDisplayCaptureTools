@@ -85,9 +85,9 @@ extends:
         owneralias: $(OWNER_ALIAS)
         provData: true
         versionAs: Parts
-        majorVer: ${{parameters.Major}}
-        minorVer: ${{parameters.Minor}}
-        patchVer: ${{parameters.Patch}}
+        majorVer: ${{parameters.Version.Major}}
+        minorVer: ${{parameters.Version.Minor}}
+        patchVer: ${{parameters.Version.Patch}}
         prereleaseVer: $(PRE_RELEASE_VERSION)
         metadata: $(VPACK_METADATA)
 
@@ -245,7 +245,7 @@ extends:
                 Write-Host '// Description: MicrosoftDisplayCaptureTools Binaries'
                 Write-Host '// Source: https://microsoft.visualstudio.com/DisplayHardwareHLK'
                 Write-Host '// Owner: $(OWNER_ALIAS)'
-                Write-Host '$(VPACK_NAME),[${{parameters.Major}}.${{parameters.Minor}}.${{parameters.Patch}}-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
+                Write-Host '$(VPACK_NAME),[${{parameters.Version.Major}}.${{parameters.Version.Minor}}.${{parameters.Version.Patch}}-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
                 Write-Host
 
           - task: PowerShell@2
@@ -254,5 +254,5 @@ extends:
               targetType: 'inline'
               script: |
                 cd MicrosoftDisplayCaptureTools
-                $TagName = "$(VPACK_NAME).${{parameters.Major}}.${{parameters.Minor}}.${{parameters.Patch}}-$(PRE_RELEASE_VERSION)"
+                $TagName = "$(VPACK_NAME).${{parameters.Version.Major}}.${{parameters.Version.Minor}}.${{parameters.Version.Patch}}-$(PRE_RELEASE_VERSION)"
                 echo $TagName
