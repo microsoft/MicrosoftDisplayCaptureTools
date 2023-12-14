@@ -64,7 +64,6 @@ resources:
       name: OneBranch.Pipelines/GovernedTemplates
       ref: refs/heads/main
 
-
 extends:
   template: v2/Microsoft.Official.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
@@ -220,10 +219,6 @@ extends:
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\amd64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\amd64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\arm64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\arm64
 
           - task: PublishSymbols@2
             inputs:
