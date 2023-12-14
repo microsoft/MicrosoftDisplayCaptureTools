@@ -193,16 +193,14 @@ extends:
                 New-Item $(ob_outputDirectory)\bin\objfre\amd64 -ItemType Directory -Force
                 New-Item $(ob_outputDirectory)\bin\objchk\arm64 -ItemType Directory -Force
                 New-Item $(ob_outputDirectory)\bin\objfre\arm64 -ItemType Directory -Force
-
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
-                
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\amd64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\amd64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\CaptureCards\* $(ob_outputDirectory)\bin\objchk\arm64
-                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\CaptureCards\* $(ob_outputDirectory)\bin\objfre\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\CaptureCards\*.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\CaptureCards\*.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\CaptureCards\*.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\CaptureCards\*.* $(ob_outputDirectory)\bin\objfre\arm64
 
           - task: onebranch.pipeline.signing@1
             displayName: 'Code Signing'
@@ -224,31 +222,6 @@ extends:
               symbolServerType: teamServices
 
           - task: PowerShell@2
-            name: 'VPackVersion'
-            displayName: 'Extract VPack Version Numbers'
-            inputs:
-              targetType: 'inline'
-              script: |
-                Write-Host 'Not building so extract version numbers from cmakelists.txt and d3d12constants.dat'
-
-                $cmakelists = Get-Content $(Build.SourcesDirectory)\DisplayHardwareHLK\src\cmakelists.txt
-
-                "$cmakelists" -match "set\s*\(\s*DX_VER_MAJOR\s+(\d+)\s*\)" | Out-Null
-                $DxVerMajor = [int]($Matches[1])
-
-                "$cmakelists" -match "set\s*\(\s*DX_VER_BUILD\s+(\d+)\s*\)" | Out-Null
-                $DxVerBuild = [int]($Matches[1])
-
-                $d3d12constants = Get-Content $(Build.SourcesDirectory)\DisplayHardwareHLK\src\published\d3d12constants.dat
-
-                "$d3d12constants" -match "D3D12_SDK_VERSION\s+=\s+(\d+)" | Out-Null
-                $DxVerMinor = [int]($Matches[1])
-
-                Write-Host "##vso[task.setVariable variable=Major;isOutput=true]$DxVerMajor"
-                Write-Host "##vso[task.setVariable variable=Minor;isOutput=true]$DxVerMinor"
-                Write-Host "##vso[task.setVariable variable=Patch;isOutput=true]$DxVerBuild"
-
-          - task: PowerShell@2
             displayName: 'How To Update Windows'
             inputs:
               targetType: 'inline'
@@ -260,7 +233,7 @@ extends:
                 Write-Host 'and find the entry with the key "$(VPACK_NAME)". Typically only the version number changes.'
                 Write-Host 'Modify the entry to match:'
                 Write-Host
-                Write-Host '// Description: DisplayHardwareHLK Binaries'
+                Write-Host '// Description: MicrosoftDisplayCaptureTools Binaries'
                 Write-Host '// Source: https://microsoft.visualstudio.com/DisplayHardwareHLK'
                 Write-Host '// Owner: $(OWNER_ALIAS)'
                 Write-Host '$(VPACK_NAME),[$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
