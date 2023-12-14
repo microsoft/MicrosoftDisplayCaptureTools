@@ -26,13 +26,13 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: Ge
   values:
   - Ge
-- name: Version.Major
+- name: Major
   type: number
   default: 0
-- name: Version.Minor
+- name: Minor
   type: number
   default: 0
-- name: Version.Patch
+- name: Patch
   type: number
   default: 1
 
