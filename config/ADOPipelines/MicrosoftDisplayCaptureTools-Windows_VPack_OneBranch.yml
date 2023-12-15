@@ -198,7 +198,7 @@ extends:
           - task: CopyFiles@2
             displayName: 'Copy idl to output directory'
             inputs:
-              SourceFolder: '$(Build.SourcesDirectory)\Shared\IDL'
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Shared\IDL'
               Contents: '**\*.idl'
               TargetFolder: '$(ob_outputDirectory)\idl'
 
