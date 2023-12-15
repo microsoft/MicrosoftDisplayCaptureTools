@@ -491,7 +491,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
-    <Import Project="..\..\packages\MicrosoftIteIt68051.0.1.29.1\build\native\MicrosoftIteIt68051.targets" Condition="Exists('..\..\packages\MicrosoftIteIt68051.0.1.29.1\build\native\MicrosoftIteIt68051.targets')" />
+    <Import Project="..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets" Condition="Exists('..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -499,6 +499,6 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     </PropertyGroup>
     <Error Condition="!Exists('..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
-    <Error Condition="!Exists('..\..\packages\MicrosoftIteIt68051.0.1.29.1\build\native\MicrosoftIteIt68051.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\MicrosoftIteIt68051.0.1.29.1\build\native\MicrosoftIteIt68051.targets'))" />
+    <Error Condition="!Exists('..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets'))" />
   </Target>
 </Project>
