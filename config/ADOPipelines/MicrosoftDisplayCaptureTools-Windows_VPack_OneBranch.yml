@@ -198,7 +198,7 @@ extends:
           - task: CopyFiles@2
             displayName: 'Copy idl to output directory'
             inputs:
-              SourceFolder: '$(Build.SourcesDirectory)\Shared\IDL'
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Shared\IDL'
               Contents: '**\*.idl'
               TargetFolder: '$(ob_outputDirectory)\idl'
 
@@ -226,6 +226,10 @@ extends:
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objfre\arm64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\arm64
