@@ -1,12 +1,15 @@
+import "Windows.Foundation.idl";
 import "ConfigurationTools.idl";
 import "CaptureCardPlugin.idl";
 import "DisplayManager.idl";
 
 namespace MicrosoftDisplayCaptureTools.Framework
 {
+
     //
     // An interface representing a single output frame
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IRawFrame
     {
         // A description of how the frame and pixels are formatted
@@ -38,6 +41,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     // An interface representing a set of captured or predicted frames
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IRawFrameSet
     {
         // Get the frames in this frame set
@@ -54,6 +58,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     // An interface representing optional extended features to assist in tooling
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IRawFrameRenderable
     {
         // Get an easily renderable approximation of the image data, in RGBA8 format
@@ -64,6 +69,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         String GetPixelInfo(UInt32 x, UInt32 y);
     };
 
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     runtimeclass Version : Windows.Foundation.IStringable
     {
         Version(UInt32 major, UInt32 minor, UInt32 patch);
@@ -81,6 +87,8 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // the components loaded.
     //
     interface ILoggerMode;
+
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface ILogger
     {
         // LogNote
@@ -158,6 +166,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // this object exists the ILogger will continue logging errors as warnings. Calling .HasErrored will return if any errors
     // were logged while this object lived.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface ILoggerMode
     {
         Boolean HasErrored();
@@ -167,6 +176,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // A small interface which the executable should implement and use to provide runtime setting overrides to the various
     // components
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IRuntimeSettings
     {
         IInspectable GetSettingValue(String settingName);
@@ -174,6 +184,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         String GetSettingValueAsString(String settingsName);
     };
 
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     runtimeclass Runtime
     {
         static Runtime GetRuntime();
@@ -186,6 +197,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
     // descriptor from the framework - plugins are largely expected to only need the memory block.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     enum MonitorDescriptorType
     {
         EDID,
@@ -196,6 +208,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     //
     // Represents a monitor descriptor (i.e. EDID, DisplayID).
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IMonitorDescriptor
     {
         // The type of the monitor descriptor, various forms of EDID/DisplayID
@@ -221,6 +234,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Boolean IsSame(IMonitorDescriptor other);
     };
 
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     runtimeclass MonitorDescriptorLoader
     {
         static IMonitorDescriptor LoadDescriptorFromFile(String filePath);
@@ -232,6 +246,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection
     // for the test setup.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface ISourceToSinkMapping
     {
         // The DisplayTarget object representing the particular output (display source) for this connection
@@ -251,6 +266,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // The core of the Hardware HLK project, this object manages communication and coordination between the various other
     // components of this framework.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface ICore
     {
         // Get the version, in Major.Minor.Patch format

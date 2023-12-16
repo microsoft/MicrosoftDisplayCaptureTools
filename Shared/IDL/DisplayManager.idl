@@ -3,6 +3,7 @@ import "Framework.idl";
 namespace MicrosoftDisplayCaptureTools.Display
 {
     // Used to set parameters for this particular output plane.
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayEnginePlaneProperties
     {
         // Should this plane be rendered
@@ -29,6 +30,7 @@ namespace MicrosoftDisplayCaptureTools.Display
     };
 
     // Used to set parameters to the selected display
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayEngineProperties
     {
         // The active mode of this display
@@ -51,6 +53,7 @@ namespace MicrosoftDisplayCaptureTools.Display
     // The arguments passed to tool display setup callback events. Specifically
     // these events are called for available modes on the test sytem until one
     // is found to be compatible with all registered display setup tools.
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplaySetupToolArgs
     {
         // Properties of the current display engine.
@@ -75,6 +78,7 @@ namespace MicrosoftDisplayCaptureTools.Display
     // The arguments passed to tool render setup callback events. Specifically
     // these events are called once, just before the start of the render loop,
     // to construct any needed objects before the actual rendering.
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IRenderSetupToolArgs
     {
         // Properties of the current display engine.
@@ -86,6 +90,7 @@ namespace MicrosoftDisplayCaptureTools.Display
 
     // The arguments passed to tool render loop callback events. Specifically
     // these events are called for each sync when drawing to the output.
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IRenderingToolArgs
     {
         // Properties of the current display engine.
@@ -102,6 +107,7 @@ namespace MicrosoftDisplayCaptureTools.Display
     };
 
     // Represents a particular display managed with this DisplayEngine
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayOutput
     {
         // The display target tracked by this object
@@ -153,6 +159,7 @@ namespace MicrosoftDisplayCaptureTools.Display
     };
 
     // The engine managing both physical and predicted output to the display
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayEngine
     {
         // Get the name of this IDisplayEngine implementation
@@ -200,6 +207,7 @@ namespace MicrosoftDisplayCaptureTools.Display
     //
     // This is to be implemented by capture card producer.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayEngineFactory
     {
         // Create

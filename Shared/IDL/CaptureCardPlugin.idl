@@ -10,6 +10,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     // Other capabilities of the capture card are exposed by simply exposing various configuration tools, see
     // ConfigurationTools.idl for more information.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface ICaptureCapabilities
     {
         // Can the capture card return captured frames to the host _without_ any compression or artifacts
@@ -51,6 +52,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // CaptureTriggerType defines the different types of capture triggers
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     enum CaptureTriggerType
     {
         // Immediately capture the next available frame
@@ -69,6 +71,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // A CaptureTrigger represents settings for what should 'trigger' the capture device to single out a frame.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface ICaptureTrigger
     {
         // Define the type of this trigger
@@ -95,6 +98,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // This is to be implemented by capture card producer.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayCapture
     {
         // CompareCaptureToPrediction
@@ -139,6 +143,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // This is to be implemented by capture card producer.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IDisplayInput
     {
         // A string identifier for this particular captured display, to be used for logging.
@@ -203,6 +208,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // This is to be implemented by capture card producer.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IController {
         // A string identifier for this particular implementation of the framework, this is only to be used for logging.
         String Name
@@ -245,6 +251,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     //
     // This is to be implemented by capture card producer.
     //
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IControllerFactory {
         // Create
         // ----------------------------------------------------------------------------------------------------------------
@@ -254,6 +261,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
         IController CreateController();
     };
 
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     enum ControllerFirmwareState
     {
         // The firmware isn't recognized or can't be updated to a known-good state by the
@@ -272,6 +280,7 @@ namespace MicrosoftDisplayCaptureTools.CaptureCard
     /// <summary>
     /// An interface implemented by capture cards that support firmware updates.
     /// </summary>
+    [contract(Windows.Foundation.UniversalApiContract, 15)]
     interface IControllerWithFirmware
     {
         ControllerFirmwareState FirmwareState

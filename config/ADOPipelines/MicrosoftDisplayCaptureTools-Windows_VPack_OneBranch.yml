@@ -202,6 +202,13 @@ extends:
               Contents: '**\*.idl'
               TargetFolder: '$(ob_outputDirectory)\idl'
 
+          - task: CopyFiles@2
+            displayName: 'Copy shared headers to output directory'
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Shared\Inc'
+              Contents: '**\*.h'
+              TargetFolder: '$(ob_outputDirectory)\inc'
+
           - task: onebranch.pipeline.signing@1
             displayName: 'Code Signing'
             inputs:
