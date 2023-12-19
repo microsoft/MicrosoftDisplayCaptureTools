@@ -4,9 +4,6 @@
 // all other component projects.
 //
 import "Framework.idl";
-import "DisplayManager.idl";
-import "ConfigurationTools.idl";
-import "CaptureCardPlugin.idl";
 
 namespace MicrosoftDisplayCaptureTools.Framework
 {

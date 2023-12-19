@@ -32,15 +32,6 @@
     <Midl Include="..\Shared\IDL\Framework.idl">
       <Filter>SharedIDLs</Filter>
     </Midl>
-    <Midl Include="..\Shared\IDL\CaptureCardPlugin.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
-    <Midl Include="..\Shared\IDL\ConfigurationTools.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
-    <Midl Include="..\Shared\IDL\DisplayManager.idl">
-      <Filter>SharedIDLs</Filter>
-    </Midl>
   </ItemGroup>
   <ItemGroup>
     <None Include="MicrosoftDisplayCaptureTools.def" />
