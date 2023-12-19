@@ -220,9 +220,6 @@
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="..\Shared\IDL\CaptureCardPlugin.idl" />
-    <Midl Include="..\Shared\IDL\ConfigurationTools.idl" />
-    <Midl Include="..\Shared\IDL\DisplayManager.idl" />
     <Midl Include="..\Shared\IDL\Framework.idl" />
     <Midl Include="MicrosoftDisplayCaptureTools.idl" />
   </ItemGroup>
