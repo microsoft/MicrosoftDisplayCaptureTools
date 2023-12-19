@@ -189,13 +189,6 @@ extends:
 
           # Copy the WinMD file, the core and capture card binaries & symbols
           - task: CopyFiles@2
-            displayName: 'Copy winmd to output directory'
-            inputs:
-              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release'
-              Contents: '**\*.winmd'
-              TargetFolder: '$(ob_outputDirectory)\winmd'
-
-          - task: CopyFiles@2
             displayName: 'Copy idl to output directory'
             inputs:
               SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Shared\IDL'
@@ -241,6 +234,16 @@ extends:
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\arm64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\arm64
+        
+          - task: PowerShell@2
+            displayName: 'Copy winmd to output directory'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objfre\arm64
 
           - task: PublishSymbols@2
             inputs:
