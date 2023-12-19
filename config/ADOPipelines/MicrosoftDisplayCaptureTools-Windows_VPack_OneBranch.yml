@@ -240,6 +240,10 @@ extends:
             inputs:
               targetType: 'inline'
               script: |
+                New-Item $(ob_outputDirectory)\winmd\objchk\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\winmd\objfre\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\winmd\objchk\arm64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\winmd\objfre\arm64 -ItemType Directory -Force
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objchk\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objfre\amd64
                 Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objchk\arm64
