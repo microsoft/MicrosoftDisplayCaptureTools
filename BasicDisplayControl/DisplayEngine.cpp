@@ -410,42 +410,30 @@ namespace winrt::BasicDisplayControl::implementation {
             m_displayPath.SourcePixelFormat(),
             winrt::DirectXColorSpace::RgbFullG22NoneP709,
             false,
-            multisampleDesc};
-
-        winrt::DisplaySurface primarySurface{nullptr};
-        winrt::DisplayScanout primaryScanout{nullptr};
-
-        primarySurface = m_displayDevice.CreatePrimary(m_displayTarget, primaryDesc);
-        primaryScanout = m_displayDevice.CreateSimpleScanout(source, primarySurface, 0, 1);
+            multisampleDesc };
 
         auto interopDevice = m_displayDevice.as<IDisplayDeviceInterop>();
-        auto rawSurface = primarySurface.as<::IInspectable>();
 
-        winrt::handle primarySurfaceHandle;
-        winrt::check_hresult(
-            interopDevice->CreateSharedHandle(rawSurface.get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandle.put()));
+        winrt::DisplaySurface primarySurfaces[2]{ nullptr, nullptr };
+        winrt::DisplayScanout primaryScanouts[2]{ nullptr, nullptr };
+        winrt::com_ptr<::IInspectable> rawSurfaces[2];
+        winrt::handle primarySurfaceHandles[2];
+        winrt::com_ptr<ID3D11Texture2D> d3dSurfaces[2];
 
-        winrt::com_ptr<ID3D11RenderTargetView> d3dRenderTarget;
-
+        for (int n = 0; n < 2; ++n)
         {
-            winrt::com_ptr<ID3D11Texture2D> d3dSurface;
-            d3dSurface.capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandle.get());
-            basePlaneProperties->SetPlaneTexture(d3dSurface.get());
+            primarySurfaces[n] = m_displayDevice.CreatePrimary(m_displayTarget, primaryDesc);
+            primaryScanouts[n] = m_displayDevice.CreateSimpleScanout(source, primarySurfaces[n], 0, 1);
+
+            rawSurfaces[n] = primarySurfaces[n].as<::IInspectable>();
+
+            winrt::check_hresult(
+                interopDevice->CreateSharedHandle(rawSurfaces[n].get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandles[n].put()));
+
+            d3dSurfaces[n].capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandles[n].get());
         }
 
-        winrt::com_ptr<ID3D11Texture2D> basePlaneSurface;
-        winrt::check_hresult(basePlaneProperties->GetPlaneTexture(basePlaneSurface.put()));
-
-        D3D11_TEXTURE2D_DESC d3dTextureDesc{};
-        basePlaneSurface->GetDesc(&d3dTextureDesc);
-
-        D3D11_RENDER_TARGET_VIEW_DESC d3dRenderTargetViewDesc{};
-        d3dRenderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        d3dRenderTargetViewDesc.Texture2D.MipSlice = 0;
-        d3dRenderTargetViewDesc.Format = d3dTextureDesc.Format;
-
-        // Create the render target view
-        winrt::check_hresult(d3dDevice->CreateRenderTargetView(basePlaneSurface.get(), &d3dRenderTargetViewDesc, d3dRenderTarget.put()));
+        basePlaneProperties->SetPlaneTexture(d3dSurfaces[0].get());
 
         // Get a fence to wait for render work to complete
         winrt::handle fenceHandle;
@@ -464,8 +452,10 @@ namespace winrt::BasicDisplayControl::implementation {
         auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_properties.as<IDisplayEngineProperties>());
 
         // Render and present until termination is signaled
+        UINT SurfaceIndex = 0;
         while (m_valid)
         {
+            basePlaneProperties->SetPlaneTexture(d3dSurfaces[SurfaceIndex].get());
             auto d3dContext4 = d3dContext.as<ID3D11DeviceContext4>();
             d3dContext4->Signal(d3dFence.get(), ++d3dFenceValue);
 
@@ -474,7 +464,7 @@ namespace winrt::BasicDisplayControl::implementation {
                 m_renderLoopCallback(*this, renderLoopArgs.as<IRenderingToolArgs>());
 
             winrt::DisplayTask task = taskPool.CreateTask();
-            task.SetScanout(primaryScanout);
+            task.SetScanout(primaryScanouts[SurfaceIndex]);
             task.SetWait(fence, d3dFenceValue);
             taskPool.ExecuteTask(task);
             m_displayDevice.WaitForVBlank(source);
@@ -483,6 +473,8 @@ namespace winrt::BasicDisplayControl::implementation {
 
             // Increment the frame counter
             renderLoopArgs->FrameNumber(++frameCounter);
+
+            SurfaceIndex = 1 - SurfaceIndex;
         }
 
         Logger().LogNote(L"Stopping Render");
