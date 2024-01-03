@@ -210,6 +210,7 @@ namespace MicrosoftDisplayCaptureTools.Framework {
         IInspectable GetSettingValue(String settingName);
         Boolean GetSettingValueAsBool(String settingName);
         String GetSettingValueAsString(String settingsName);
+        Double GetSettingValueAsDouble(String settingsName);
     };
 
     [contract(MicrosoftDisplayCaptureToolsContract, 1)] runtimeclass Runtime {

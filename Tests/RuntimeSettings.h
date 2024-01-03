@@ -9,6 +9,7 @@ namespace RuntimeSettings {
         winrt::Windows::Foundation::IInspectable GetSettingValue(winrt::hstring name);
         bool GetSettingValueAsBool(winrt::hstring name);
         winrt::hstring GetSettingValueAsString(winrt::hstring name);
+        double GetSettingValueAsDouble(winrt::hstring name);
     };
 
     winrt::MicrosoftDisplayCaptureTools::Framework::IRuntimeSettings GetRuntimeSettings();

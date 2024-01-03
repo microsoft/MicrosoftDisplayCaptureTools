@@ -99,6 +99,11 @@ namespace CaptureCardViewer.ViewModels
 			{
 				return values.TryGetValue(settingName, out var value) ? value as string : null;
 			}
+
+			public double GetSettingValueAsDouble(string settingName)
+			{
+				return values.TryGetValue(settingName, out var value) ? (value as double? ?? 0.0) : 0.0;
+			}
 		}
 
 		public WorkspaceViewModel()

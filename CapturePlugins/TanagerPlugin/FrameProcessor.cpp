@@ -820,6 +820,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
             auto psnr = FrameProcessor::GetInstance().ComputePSNR(predictedFrame, capturedFrame);
 
+            auto PsnrLimit = PsnrLimitDefault;
+            if (RuntimeSettings().GetSettingValue(PsnrOverrideKey))
+			{
+                PsnrLimit = RuntimeSettings().GetSettingValueAsDouble(PsnrOverrideKey);
+			}
+
             if (psnr < PsnrLimit)
             {
                 Logger().LogError(
