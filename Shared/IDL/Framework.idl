@@ -209,8 +209,8 @@ namespace MicrosoftDisplayCaptureTools.Framework {
     [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface IRuntimeSettings {
         IInspectable GetSettingValue(String settingName);
         Boolean GetSettingValueAsBool(String settingName);
-        String GetSettingValueAsString(String settingsName);
-        Double GetSettingValueAsDouble(String settingsName);
+        String GetSettingValueAsString(String settingName);
+        Double GetSettingValueAsDouble(String settingName);
     };
 
     [contract(MicrosoftDisplayCaptureToolsContract, 1)] runtimeclass Runtime {
