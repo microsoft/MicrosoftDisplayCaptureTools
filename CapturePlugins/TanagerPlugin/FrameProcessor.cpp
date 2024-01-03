@@ -605,6 +605,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
     static winrt::IAsyncOperation<double> AddPixelSums(float* pixelSums, uint32_t startIndex, uint32_t processCount)
     {
+        co_await winrt::resume_background();
+
 		double sum = 0.0;
         for (uint32_t i = 0; i < processCount; i++)
         {
