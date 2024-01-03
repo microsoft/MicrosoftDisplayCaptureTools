@@ -603,16 +603,18 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         return winrt::make<Frame>(winrt::SizeInt32{timing->hActive, timing->vActive}, scRGBBuffer, renderableApproximation);
     }
 
-    static winrt::IAsyncOperation<double> AddPixelSums(float* pixelSums, uint32_t startIndex, uint32_t processCount)
+    static winrt::IAsyncOperation<double> AddPixelSums(std::span<float> pixelSums)
     {
-		double sum = 0.0;
-        for (uint32_t i = 0; i < processCount; i++)
-        {
-            sum += pixelSums[i + startIndex];
-		}
+        co_await winrt::resume_background();
 
-		co_return sum;
-	}
+        double sum = 0.0;
+        for (uint32_t i = 0; i < pixelSums.size(); i++)
+        {
+            sum += pixelSums[i];
+        }
+
+        co_return sum;
+    }
 
     double FrameProcessor::ComputePSNR(winrt::IRawFrame target, winrt::IRawFrame capture)
     {
@@ -728,17 +730,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             auto mappedData = GetBufferFromTexture<float>(sumTexture.get());
 
 			auto sumTexturePtr = reinterpret_cast<float*>(mappedData.data());
-			double sum = 0;
+            double sum = 0;
+
+            std::span<float> pixelSums(sumTexturePtr, numPixels);
 
             constexpr uint32_t threadCount = 8;
-            auto threads = std::array<winrt::IAsyncOperation<double>, threadCount>();
-            for (uint32_t i = 0; i < threadCount-1; i++)
+            auto threads = std::vector<winrt::IAsyncOperation<double>>(threadCount);
+            for (uint32_t i = 0; i < threadCount - 1; i++)
             {
-                threads[i] = AddPixelSums(sumTexturePtr, i * numPixels / threadCount, numPixels / threadCount);
-			}
+                auto subSpan = pixelSums.subspan(i * numPixels / threadCount, numPixels / threadCount);
+                threads.push_back(AddPixelSums(subSpan));
+            }
 
             // In the last thread account for any pixels that don't fall into a whole number of threadCount buckets
-            threads[threadCount-1] = AddPixelSums(sumTexturePtr, (threadCount - 1) * numPixels / threadCount, numPixels / threadCount + numPixels % threadCount);
+            threads.push_back(AddPixelSums(pixelSums.subspan((threadCount - 1) * numPixels / threadCount, std::dynamic_extent)));
 
             for (auto& sumThread : threads)
             {
@@ -819,6 +824,12 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             }
 
             auto psnr = FrameProcessor::GetInstance().ComputePSNR(predictedFrame, capturedFrame);
+
+            auto PsnrLimit = PsnrLimitDefault;
+            if (RuntimeSettings().GetSettingValue(PsnrOverrideKey))
+			{
+                PsnrLimit = RuntimeSettings().GetSettingValueAsDouble(PsnrOverrideKey);
+			}
 
             if (psnr < PsnrLimit)
             {

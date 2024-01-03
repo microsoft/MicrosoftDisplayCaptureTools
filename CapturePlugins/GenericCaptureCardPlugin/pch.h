@@ -2,6 +2,7 @@
 #include <iostream>
 #include <format>
 #include <mutex>
+#include <span>
 
 #include <unknwn.h>
 #include <winrt/Windows.Foundation.h>

@@ -2,8 +2,9 @@
 
 namespace winrt::TanagerPlugin::implementation
 {
-    // The psnr limit we use to determine if a match is good enough to be considered a match.
-    constexpr double PsnrLimit = 50.0;
+    // The psnr limit we use to determine if a match is good enough to be considered a match by default
+    constexpr double PsnrLimitDefault = 50.0;
+    constexpr LPCWSTR PsnrOverrideKey = L"psnrlimit";
 
     // This is a temporary limit while we're bringing up some of the hardware on board.
     constexpr uint32_t MaxDescriptorByteSize = 512;

@@ -49,6 +49,17 @@ namespace RuntimeSettings {
         return L"";
     }
 
+    double RuntimeSettings::GetSettingValueAsDouble(winrt::hstring name)
+    {
+        auto value = GetSettingValue(name);
+        if (value)
+        {
+            auto valueStr = std::wstring(winrt::unbox_value<winrt::hstring>(value).c_str());
+            return _wtof(valueStr.c_str());
+        }
+        return 0;
+    }
+
     winrt::IRuntimeSettings GetRuntimeSettings()
     {
         if (!runtimeSettingsInstance)

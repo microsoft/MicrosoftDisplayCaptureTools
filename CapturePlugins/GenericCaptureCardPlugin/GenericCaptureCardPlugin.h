@@ -4,8 +4,9 @@
 
 namespace winrt::GenericCaptureCardPlugin::implementation
 {
-    // The psnr limit we use to determine if a match is good enough to be considered a match.
-    constexpr double PsnrLimit = 35.0;
+    // The psnr limit we use to determine if a match is good enough to be considered a match by default.
+    constexpr double PsnrLimitDefault = 35.0;
+    constexpr LPCWSTR PsnrOverrideKey = L"psnrlimit";
 
     struct CaptureTrigger : implements<CaptureTrigger, winrt::MicrosoftDisplayCaptureTools::CaptureCard::ICaptureTrigger>
     {
