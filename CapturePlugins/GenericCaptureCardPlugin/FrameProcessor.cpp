@@ -292,15 +292,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::GenericCaptureCardPlugin::DataPro
     {
         m_bitmap = bitmap;
     }
-    
-    static winrt::IAsyncOperation<double> AddPixelSums(float* pixelSums, uint32_t startIndex, uint32_t processCount)
+
+    static winrt::IAsyncOperation<double> AddPixelSums(std::span<float> pixelSums)
     {
         co_await winrt::resume_background();
 
         double sum = 0.0;
-        for (uint32_t i = 0; i < processCount; i++)
+        for (uint32_t i = 0; i < pixelSums.size(); i++)
         {
-            sum += pixelSums[i + startIndex];
+            sum += pixelSums[i];
         }
 
         co_return sum;
@@ -421,16 +421,19 @@ namespace winrt::MicrosoftDisplayCaptureTools::GenericCaptureCardPlugin::DataPro
             auto sumTexturePtr = reinterpret_cast<float*>(mappedData.data());
             double sum = 0;
 
+            std::span<float> pixelSums(sumTexturePtr, numPixels);
+
             constexpr uint32_t threadCount = 8;
             auto threads = std::vector<winrt::IAsyncOperation<double>>(threadCount);
             for (uint32_t i = 0; i < threadCount - 1; i++)
             {
-                threads.push_back(AddPixelSums(sumTexturePtr, i * numPixels / threadCount, numPixels / threadCount));
+                auto subSpan = pixelSums.subspan(i * numPixels / threadCount, numPixels / threadCount);
+                threads.push_back(AddPixelSums(subSpan));
             }
 
             // In the last thread account for any pixels that don't fall into a whole number of threadCount buckets
             threads.push_back(AddPixelSums(
-                sumTexturePtr, (threadCount - 1) * numPixels / threadCount, numPixels / threadCount + numPixels % threadCount));
+                pixelSums.subspan((threadCount - 1) * numPixels / threadCount, std::dynamic_extent)));
 
             for (auto& sumThread : threads)
             {

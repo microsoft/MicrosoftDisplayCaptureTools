@@ -34,6 +34,7 @@
 #include <ranges>
 #include <iterator>
 #include <mutex>
+#include <span>
 
 #include "IteIt68051.h"
 #include "Controller.h"
