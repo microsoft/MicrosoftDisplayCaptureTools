@@ -735,15 +735,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             std::span<float> pixelSums(sumTexturePtr, numPixels);
 
             constexpr uint32_t threadCount = 8;
-            auto threads = std::vector<winrt::IAsyncOperation<double>>(threadCount);
+            auto threads = std::array<winrt::IAsyncOperation<double>, threadCount>();
             for (uint32_t i = 0; i < threadCount - 1; i++)
             {
                 auto subSpan = pixelSums.subspan(i * numPixels / threadCount, numPixels / threadCount);
-                threads.push_back(AddPixelSums(subSpan));
+                threads[i] = std::move(AddPixelSums(subSpan));
             }
 
             // In the last thread account for any pixels that don't fall into a whole number of threadCount buckets
-            threads.push_back(AddPixelSums(pixelSums.subspan((threadCount - 1) * numPixels / threadCount, std::dynamic_extent)));
+            threads[threadCount - 1] = std::move(AddPixelSums(pixelSums.subspan((threadCount - 1) * numPixels / threadCount, std::dynamic_extent)));
 
             for (auto& sumThread : threads)
             {
