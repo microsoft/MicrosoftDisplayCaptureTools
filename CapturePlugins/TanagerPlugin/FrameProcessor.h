@@ -62,6 +62,7 @@ enum class ComputeShaders
     // The output of these shaders should be scRGB 16bpc floats _and_ sRGB 8bpc uints.
     //
     Color_ITUR_601,
+    Color_SMPTE170M, // This is often used interchangeably as ITUR-601, but not perfectly.
     Color_ITUR_709,
     Color_ITUR_2020,
     Color_opRGB,

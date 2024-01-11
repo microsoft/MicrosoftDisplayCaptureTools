@@ -57,5 +57,17 @@
     <FxCompile Include="ComputeShaders\Ycbcr_ITUR_BT709.hlsl">
       <Filter>Compute Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="ComputeShaders\Ycbcr_ITUR_BT601.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Color_SMPTE170M.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Color_ITUR_2020.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Ycbcr_ITUR_BT2020.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
