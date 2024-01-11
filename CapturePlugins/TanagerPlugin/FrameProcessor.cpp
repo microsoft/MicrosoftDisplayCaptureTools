@@ -9,9 +9,13 @@ namespace PrecompiledShaders {
 #include "ComputeShaders/Ycbcr_ITUR_BT601.h"
 #include "ComputeShaders/Ycbcr_ITUR_BT2020.h"
 #include "ComputeShaders/Linearize_ITUR_BT709.h"
+#include "ComputeShaders/Linearize_opRGB.h"
+#include "ComputeShaders/Linearize_SMPTE2084.h"
 #include "ComputeShaders/Color_ITUR_709.h"
 #include "ComputeShaders/Color_ITUR_2020.h"
 #include "ComputeShaders/Color_SMPTE170M.h"
+#include "ComputeShaders/Color_opRGB.h"
+#include "ComputeShaders/Color_DCI_P3.h"
 #include "ComputeShaders/FrameSquaredDifferenceBucketSum.h"
 } // namespace PrecompiledShaders
 
@@ -109,6 +113,16 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
                 PrecompiledShaders::Linearize_ITUR_BT709, sizeof(PrecompiledShaders::Linearize_ITUR_BT709), nullptr, shader.put()));
             break;
 
+        case ComputeShaders::Linearize_opRGB:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Linearize_opRGB, sizeof(PrecompiledShaders::Linearize_opRGB), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Linearize_SMPTE2084:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Linearize_SMPTE2084, sizeof(PrecompiledShaders::Linearize_SMPTE2084), nullptr, shader.put()));
+            break;
+
         case ComputeShaders::Color_ITUR_709:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 PrecompiledShaders::Color_ITUR_709, sizeof(PrecompiledShaders::Color_ITUR_709), nullptr, shader.put()));
@@ -122,6 +136,16 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         case ComputeShaders::Color_SMPTE170M:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 PrecompiledShaders::Color_SMPTE170M, sizeof(PrecompiledShaders::Color_SMPTE170M), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Color_opRGB:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Color_opRGB, sizeof(PrecompiledShaders::Color_opRGB), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Color_DCI_P3:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Color_DCI_P3, sizeof(PrecompiledShaders::Color_DCI_P3), nullptr, shader.put()));
             break;
             
         case ComputeShaders::FrameSquaredDifferenceBucketSum:
@@ -224,15 +248,18 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
         switch (aviInfoframe->GetColorimetry())
         {
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: Should be customized for the EDID colorimetry
+                                                              // (not an issue unless using non709 EDID primaries)
         case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
 			return ComputeShaders::Ycbcr_ITUR_BT709;
-        case IteIt68051Plugin::AviColorimetry::SMPTE170M:
-            return ComputeShaders::Ycbcr_ITUR_BT601; // SMPTE170M uses BT601 YCbCr-RGB conversion
+        case IteIt68051Plugin::AviColorimetry::SMPTE170M: // SMPTE170M uses BT601 YCbCr-RGB conversion
+        case IteIt68051Plugin::AviColorimetry::opRGB: // opRGB uses BT601 YCbCr-RGB conversion
+            return ComputeShaders::Ycbcr_ITUR_BT601; 
         case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr:
 			return ComputeShaders::Ycbcr_ITUR_BT2020;
         default:
             Logger().LogError(winrt::hstring(L"Unsupported colorimetry ") + 
-                static_cast<uint32_t>(aviInfoframe->GetColorimetry()) + 
+                std::to_wstring(static_cast<uint32_t>(aviInfoframe->GetColorimetry())) + 
                 L", no Tanager color format shader available.");
 			throw winrt::hresult_not_implemented();
         }
@@ -247,17 +274,20 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: Should be customized for the EDID colorimetry 
                                                               // (not an issue unless using non709 EDID primaries)
         case IteIt68051Plugin::AviColorimetry::SMPTE170M: // SMPTE170M uses BT709 transfer function
+            return ComputeShaders::Linearize_ITUR_BT709;
+        case IteIt68051Plugin::AviColorimetry::opRGB:
+            return ComputeShaders::Linearize_opRGB;
         case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_RGB:
         case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YcCbcCrc:
-        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr: // 2020 is interesting... _technically_ the transfer function is 
-                                                                  // defined as 709, but it's actually usually SMPTE 2084 (PQ)
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr: // 2020 is interesting... _technically_ the transfer function is
+                                                                  // defined as 709, but it's actually usually SMPTE 2084
                                                                   // TODO: confirming that we can figure out the proper transfer
                                                                   // function from the ITE data without looking at the pixels directly
-            return ComputeShaders::Linearize_ITUR_BT709;
+            return ComputeShaders::Linearize_SMPTE2084;
         default:
             Logger().LogError(
                 winrt::hstring(L"Unsupported colorimetry ") + 
-                static_cast<uint32_t>(aviInfoframe->GetColorimetry()) +
+                std::to_wstring(static_cast<uint32_t>(aviInfoframe->GetColorimetry())) +
                 L", no Tanager transfer function shader available.");
             throw winrt::hresult_not_implemented();
         }
@@ -269,14 +299,21 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         switch (aviInfoframe->GetColorimetry())
         {
         case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
-        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: temporary
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: Should be customized for the EDID colorimetry
+                                                              // (not an issue unless using non709 EDID primaries)
 			return ComputeShaders::Color_ITUR_709;
         case IteIt68051Plugin::AviColorimetry::SMPTE170M: // SMPTE170M has defined primaries
 			return ComputeShaders::Color_SMPTE170M;
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_RGB:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YcCbcCrc:
+            return ComputeShaders::Color_ITUR_2020;
+        case IteIt68051Plugin::AviColorimetry::opRGB:
+            return ComputeShaders::Color_opRGB;
         default:
             Logger().LogError(
                 winrt::hstring(L"Unsupported colorimetry ") + 
-                static_cast<uint32_t>(aviInfoframe->GetColorimetry()) +
+                std::to_wstring(static_cast<uint32_t>(aviInfoframe->GetColorimetry())) +
                 L", no Tanager colorspace shader available.");
 			throw winrt::hresult_not_implemented();
 		}

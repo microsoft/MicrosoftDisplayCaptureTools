@@ -41,6 +41,7 @@ enum class ComputeShaders
     Ycbcr_ITUR_BT601,
     Ycbcr_ITUR_BT709,
     Ycbcr_ITUR_BT2020,
+    Ycbcr_opRGB,
 
     // Transfer function shaders
     // -------------------------------------------
@@ -51,6 +52,7 @@ enum class ComputeShaders
     Linearize_ITUR_BT601,
     Linearize_ITUR_BT709,
     Linearize_ITUR_BT2020,
+    Linearize_SMPTE2084,
     Linearize_opRGB,
 
     // Colorspace conversion shaders
@@ -66,6 +68,7 @@ enum class ComputeShaders
     Color_ITUR_709,
     Color_ITUR_2020,
     Color_opRGB,
+    Color_DCI_P3,
     Color_source_defined,
 
     // Frame Difference Computation
