@@ -431,9 +431,15 @@ namespace winrt::BasicDisplayControl::implementation {
                 interopDevice->CreateSharedHandle(rawSurfaces[n].get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandles[n].put()));
 
             d3dSurfaces[n].capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandles[n].get());
-        }
+            
+            basePlaneProperties->SetPlaneTexture(d3dSurfaces[n].get());
 
-        basePlaneProperties->SetPlaneTexture(d3dSurfaces[0].get());
+            // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
+            // actual scan out starts. This is being called in this loop as it needs to happen for each surface.
+            auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_properties.as<IDisplayEngineProperties>());
+            if (m_renderSetupCallback)
+                m_renderSetupCallback(*this, renderSetupArgs);
+        }
 
         // Get a fence to wait for render work to complete
         winrt::handle fenceHandle;
@@ -441,12 +447,6 @@ namespace winrt::BasicDisplayControl::implementation {
         winrt::com_ptr<winrt::IInspectable> displayFenceIInspectable;
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
-
-        // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
-        // actual scan out starts.
-        auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_properties.as<IDisplayEngineProperties>());
-        if (m_renderSetupCallback)
-            m_renderSetupCallback(*this, renderSetupArgs);
 
         // Create the callback args object for per-frame rendering tools
         auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_properties.as<IDisplayEngineProperties>());
@@ -459,6 +459,7 @@ namespace winrt::BasicDisplayControl::implementation {
             auto d3dContext4 = d3dContext.as<ID3D11DeviceContext4>();
             d3dContext4->Signal(d3dFence.get(), ++d3dFenceValue);
 
+            basePlaneProperties->SetPlaneTexture(d3dSurfaces[SurfaceIndex].get());
             // Callback to any tools which need to perform per-scanout operations
             if (m_renderLoopCallback)
                 m_renderLoopCallback(*this, renderLoopArgs.as<IRenderingToolArgs>());
