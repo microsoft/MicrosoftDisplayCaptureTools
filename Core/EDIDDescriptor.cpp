@@ -3,12 +3,14 @@
 #include "MicrosoftDisplayCaptureTools.h"
 
 #include <fstream>
+#include <Utils.h>
 
 namespace winrt 
 {
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::MicrosoftDisplayCaptureTools::Framework;
+	using namespace MicrosoftDisplayCaptureTools::Framework::Helpers;
 } // namespace winrt
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities {
@@ -117,7 +119,12 @@ void EDIDDescriptor::UpdateChecksum()
 
 winrt::IMonitorDescriptor EDIDDescriptor::CreateStandardEDID()
 {
-    return CreateEDIDFromFile(L"StandardEDID.bin");
+    winrt::hstring edidFileName = L"StandardEDID.bin";
+    if (RuntimeSettings().GetSettingValue(c_EDIDOverrideParameter))
+    {
+        edidFileName = RuntimeSettings().GetSettingValueAsString(c_EDIDOverrideParameter);
+    }
+    return CreateEDIDFromFile(edidFileName);
 }
 
 winrt::IMonitorDescriptor EDIDDescriptor::CreateEDIDFromFile(hstring filePath)
