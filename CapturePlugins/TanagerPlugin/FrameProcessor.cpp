@@ -4,6 +4,10 @@
 namespace PrecompiledShaders {
 #include "ComputeShaders/Sampler_444_8bpc.h"
 #include "ComputeShaders/Sampler_444_10bpc.h"
+#include "ComputeShaders/Sampler_422_8bpc.h"
+#include "ComputeShaders/Sampler_422_10bpc.h"
+#include "ComputeShaders/Sampler_420_8bpc.h"
+#include "ComputeShaders/Sampler_420_10bpc.h"
 #include "ComputeShaders/Dequantizer.h"
 #include "ComputeShaders/Ycbcr_ITUR_BT709.h"
 #include "ComputeShaders/Ycbcr_ITUR_BT601.h"
@@ -86,6 +90,22 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         case ComputeShaders::Sampler_444_10bpc:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 PrecompiledShaders::Sampler_444_10bpc, sizeof(PrecompiledShaders::Sampler_444_10bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_422_8bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_422_8bpc, sizeof(PrecompiledShaders::Sampler_422_8bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_422_10bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_422_10bpc, sizeof(PrecompiledShaders::Sampler_422_10bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_420_8bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_420_8bpc, sizeof(PrecompiledShaders::Sampler_420_8bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_420_10bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_420_10bpc, sizeof(PrecompiledShaders::Sampler_420_10bpc), nullptr, shader.put()));
             break;
 
 		case ComputeShaders::Dequantizer:
@@ -222,10 +242,29 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 				throw winrt::hresult_not_implemented();
 			}
         case IteIt68051Plugin::AviColorFormat::YUV422:
-            Logger().LogError(L"Unsupported color format YUV422, no Tanager sampler shader available.");
-            break;
+            switch (colorInfo->outputColorInfo.colorDepth)
+            {
+            case 8:
+                return ComputeShaders::Sampler_422_8bpc;
+            case 10:
+                return ComputeShaders::Sampler_422_10bpc;
+            default:
+                Logger().LogError(L"Unsupported bit depth, no Tanager sampler shader available.");
+                throw winrt::hresult_not_implemented();
+            }
         case IteIt68051Plugin::AviColorFormat::YUV420:
-            Logger().LogError(L"Unsupported color format YUV422, no Tanager sampler shader available.");
+            switch (colorInfo->outputColorInfo.colorDepth)
+            {
+            case 8:
+                return ComputeShaders::Sampler_420_8bpc;
+            case 10:
+                return ComputeShaders::Sampler_420_10bpc;
+            default:
+                Logger().LogError(L"Unsupported bit depth, no Tanager sampler shader available.");
+                throw winrt::hresult_not_implemented();
+            }
+        default:
+            Logger().LogError(L"Unsupported color format, no Tanager sampler shader available.");
             break;
         }
 

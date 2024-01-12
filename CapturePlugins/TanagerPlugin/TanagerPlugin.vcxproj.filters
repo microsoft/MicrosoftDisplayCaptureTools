@@ -81,5 +81,17 @@
     <FxCompile Include="ComputeShaders\Color_DCI_P3.hlsl">
       <Filter>Compute Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_422_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_422_10bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_420_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_420_10bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
