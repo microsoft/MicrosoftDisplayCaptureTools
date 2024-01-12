@@ -2,6 +2,8 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::Utilities 
 {
+// The configuration parameter used to specify what EDID to use in device bringup
+const std::wstring c_EDIDOverrideParameter = L"TestingEDID";
 
 // Create a simple EDID descriptor implementation that the framework itself will use when trying to determine display mappings.
 struct EDIDDescriptor : winrt::implements<EDIDDescriptor, winrt::MicrosoftDisplayCaptureTools::Framework::IMonitorDescriptor>
