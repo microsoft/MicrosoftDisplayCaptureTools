@@ -4,10 +4,22 @@
 namespace PrecompiledShaders {
 #include "ComputeShaders/Sampler_444_8bpc.h"
 #include "ComputeShaders/Sampler_444_10bpc.h"
+#include "ComputeShaders/Sampler_422_8bpc.h"
+#include "ComputeShaders/Sampler_422_10bpc.h"
+#include "ComputeShaders/Sampler_420_8bpc.h"
+#include "ComputeShaders/Sampler_420_10bpc.h"
 #include "ComputeShaders/Dequantizer.h"
 #include "ComputeShaders/Ycbcr_ITUR_BT709.h"
+#include "ComputeShaders/Ycbcr_ITUR_BT601.h"
+#include "ComputeShaders/Ycbcr_ITUR_BT2020.h"
 #include "ComputeShaders/Linearize_ITUR_BT709.h"
+#include "ComputeShaders/Linearize_opRGB.h"
+#include "ComputeShaders/Linearize_SMPTE2084.h"
 #include "ComputeShaders/Color_ITUR_709.h"
+#include "ComputeShaders/Color_ITUR_2020.h"
+#include "ComputeShaders/Color_SMPTE170M.h"
+#include "ComputeShaders/Color_opRGB.h"
+#include "ComputeShaders/Color_DCI_P3.h"
 #include "ComputeShaders/FrameSquaredDifferenceBucketSum.h"
 } // namespace PrecompiledShaders
 
@@ -79,6 +91,22 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 PrecompiledShaders::Sampler_444_10bpc, sizeof(PrecompiledShaders::Sampler_444_10bpc), nullptr, shader.put()));
             break;
+        case ComputeShaders::Sampler_422_8bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_422_8bpc, sizeof(PrecompiledShaders::Sampler_422_8bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_422_10bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_422_10bpc, sizeof(PrecompiledShaders::Sampler_422_10bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_420_8bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_420_8bpc, sizeof(PrecompiledShaders::Sampler_420_8bpc), nullptr, shader.put()));
+            break;
+        case ComputeShaders::Sampler_420_10bpc:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Sampler_420_10bpc, sizeof(PrecompiledShaders::Sampler_420_10bpc), nullptr, shader.put()));
+            break;
 
 		case ComputeShaders::Dequantizer:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
@@ -90,14 +118,54 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
                 PrecompiledShaders::Ycbcr_ITUR_BT709, sizeof(PrecompiledShaders::Ycbcr_ITUR_BT709), nullptr, shader.put()));
             break;
 
+        case ComputeShaders::Ycbcr_ITUR_BT2020:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Ycbcr_ITUR_BT2020, sizeof(PrecompiledShaders::Ycbcr_ITUR_BT2020), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Ycbcr_ITUR_BT601:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Ycbcr_ITUR_BT601, sizeof(PrecompiledShaders::Ycbcr_ITUR_BT601), nullptr, shader.put()));
+            break;
+
         case ComputeShaders::Linearize_ITUR_BT709:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 PrecompiledShaders::Linearize_ITUR_BT709, sizeof(PrecompiledShaders::Linearize_ITUR_BT709), nullptr, shader.put()));
             break;
 
+        case ComputeShaders::Linearize_opRGB:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Linearize_opRGB, sizeof(PrecompiledShaders::Linearize_opRGB), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Linearize_SMPTE2084:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Linearize_SMPTE2084, sizeof(PrecompiledShaders::Linearize_SMPTE2084), nullptr, shader.put()));
+            break;
+
         case ComputeShaders::Color_ITUR_709:
             winrt::check_hresult(m_d3dDevice->CreateComputeShader(
                 PrecompiledShaders::Color_ITUR_709, sizeof(PrecompiledShaders::Color_ITUR_709), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Color_ITUR_2020:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Color_ITUR_2020, sizeof(PrecompiledShaders::Color_ITUR_2020), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Color_SMPTE170M:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Color_SMPTE170M, sizeof(PrecompiledShaders::Color_SMPTE170M), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Color_opRGB:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Color_opRGB, sizeof(PrecompiledShaders::Color_opRGB), nullptr, shader.put()));
+            break;
+
+        case ComputeShaders::Color_DCI_P3:
+            winrt::check_hresult(m_d3dDevice->CreateComputeShader(
+                PrecompiledShaders::Color_DCI_P3, sizeof(PrecompiledShaders::Color_DCI_P3), nullptr, shader.put()));
             break;
             
         case ComputeShaders::FrameSquaredDifferenceBucketSum:
@@ -174,10 +242,29 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 				throw winrt::hresult_not_implemented();
 			}
         case IteIt68051Plugin::AviColorFormat::YUV422:
-            Logger().LogError(L"Unsupported color format YUV422, no Tanager sampler shader available.");
-            break;
+            switch (colorInfo->outputColorInfo.colorDepth)
+            {
+            case 8:
+                return ComputeShaders::Sampler_422_8bpc;
+            case 10:
+                return ComputeShaders::Sampler_422_10bpc;
+            default:
+                Logger().LogError(L"Unsupported bit depth, no Tanager sampler shader available.");
+                throw winrt::hresult_not_implemented();
+            }
         case IteIt68051Plugin::AviColorFormat::YUV420:
-            Logger().LogError(L"Unsupported color format YUV422, no Tanager sampler shader available.");
+            switch (colorInfo->outputColorInfo.colorDepth)
+            {
+            case 8:
+                return ComputeShaders::Sampler_420_8bpc;
+            case 10:
+                return ComputeShaders::Sampler_420_10bpc;
+            default:
+                Logger().LogError(L"Unsupported bit depth, no Tanager sampler shader available.");
+                throw winrt::hresult_not_implemented();
+            }
+        default:
+            Logger().LogError(L"Unsupported color format, no Tanager sampler shader available.");
             break;
         }
 
@@ -200,10 +287,19 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
 
         switch (aviInfoframe->GetColorimetry())
         {
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: Should be customized for the EDID colorimetry
+                                                              // (not an issue unless using non709 EDID primaries)
         case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
 			return ComputeShaders::Ycbcr_ITUR_BT709;
+        case IteIt68051Plugin::AviColorimetry::SMPTE170M: // SMPTE170M uses BT601 YCbCr-RGB conversion
+        case IteIt68051Plugin::AviColorimetry::opRGB: // opRGB uses BT601 YCbCr-RGB conversion
+            return ComputeShaders::Ycbcr_ITUR_BT601; 
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr:
+			return ComputeShaders::Ycbcr_ITUR_BT2020;
         default:
-            Logger().LogError(L"Unsupported colorimetry, no Tanager color format shader available.");
+            Logger().LogError(winrt::hstring(L"Unsupported colorimetry ") + 
+                std::to_wstring(static_cast<uint32_t>(aviInfoframe->GetColorimetry())) + 
+                L", no Tanager color format shader available.");
 			throw winrt::hresult_not_implemented();
         }
     }
@@ -214,10 +310,24 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         switch (aviInfoframe->GetColorimetry())
         {
         case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
-        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: temporary
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: Should be customized for the EDID colorimetry 
+                                                              // (not an issue unless using non709 EDID primaries)
+        case IteIt68051Plugin::AviColorimetry::SMPTE170M: // SMPTE170M uses BT709 transfer function
             return ComputeShaders::Linearize_ITUR_BT709;
+        case IteIt68051Plugin::AviColorimetry::opRGB:
+            return ComputeShaders::Linearize_opRGB;
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_RGB:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YcCbcCrc:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr: // 2020 is interesting... _technically_ the transfer function is
+                                                                  // defined as 709, but it's actually usually SMPTE 2084
+                                                                  // TODO: confirming that we can figure out the proper transfer
+                                                                  // function from the ITE data without looking at the pixels directly
+            return ComputeShaders::Linearize_SMPTE2084;
         default:
-            Logger().LogError(L"Unsupported colorimetry, no Tanager transfer function shader available.");
+            Logger().LogError(
+                winrt::hstring(L"Unsupported colorimetry ") + 
+                std::to_wstring(static_cast<uint32_t>(aviInfoframe->GetColorimetry())) +
+                L", no Tanager transfer function shader available.");
             throw winrt::hresult_not_implemented();
         }
     }
@@ -228,10 +338,22 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
         switch (aviInfoframe->GetColorimetry())
         {
         case IteIt68051Plugin::AviColorimetry::ITUR_BT709:
-        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: temporary
+        case IteIt68051Plugin::AviColorimetry::DefaultForVIC: // TODO: Should be customized for the EDID colorimetry
+                                                              // (not an issue unless using non709 EDID primaries)
 			return ComputeShaders::Color_ITUR_709;
-		default:
-			Logger().LogError(L"Unsupported colorimetry, no Tanager colorspace shader available.");
+        case IteIt68051Plugin::AviColorimetry::SMPTE170M: // SMPTE170M has defined primaries
+			return ComputeShaders::Color_SMPTE170M;
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_RGB:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YCbCr:
+        case IteIt68051Plugin::AviColorimetry::ITUR_BT2020_YcCbcCrc:
+            return ComputeShaders::Color_ITUR_2020;
+        case IteIt68051Plugin::AviColorimetry::opRGB:
+            return ComputeShaders::Color_opRGB;
+        default:
+            Logger().LogError(
+                winrt::hstring(L"Unsupported colorimetry ") + 
+                std::to_wstring(static_cast<uint32_t>(aviInfoframe->GetColorimetry())) +
+                L", no Tanager colorspace shader available.");
 			throw winrt::hresult_not_implemented();
 		}
     }
@@ -735,15 +857,15 @@ namespace winrt::MicrosoftDisplayCaptureTools::TanagerPlugin::DataProcessing {
             std::span<float> pixelSums(sumTexturePtr, numPixels);
 
             constexpr uint32_t threadCount = 8;
-            auto threads = std::vector<winrt::IAsyncOperation<double>>(threadCount);
+            auto threads = std::array<winrt::IAsyncOperation<double>, threadCount>();
             for (uint32_t i = 0; i < threadCount - 1; i++)
             {
                 auto subSpan = pixelSums.subspan(i * numPixels / threadCount, numPixels / threadCount);
-                threads.push_back(AddPixelSums(subSpan));
+                threads[i] = std::move(AddPixelSums(subSpan));
             }
 
             // In the last thread account for any pixels that don't fall into a whole number of threadCount buckets
-            threads.push_back(AddPixelSums(pixelSums.subspan((threadCount - 1) * numPixels / threadCount, std::dynamic_extent)));
+            threads[threadCount - 1] = std::move(AddPixelSums(pixelSums.subspan((threadCount - 1) * numPixels / threadCount, std::dynamic_extent)));
 
             for (auto& sumThread : threads)
             {
