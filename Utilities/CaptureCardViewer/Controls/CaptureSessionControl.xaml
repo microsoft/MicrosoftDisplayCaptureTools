@@ -40,34 +40,6 @@
                     <Run Text="Rendering to GPU output: " />
                     <Run Text="{Binding SelectedEngineOutputName, Mode=OneWay}" />
                 </TextBlock>
-                <ui:DropDownButton
-                    Margin="20,5"
-                    Content="Render to..."
-                    DockPanel.Dock="Right">
-                    <ui:DropDownButton.Flyout>
-                        <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
-                            <ui:MenuFlyout.MenuFlyoutPresenterStyle>
-                                <Style TargetType="ui:MenuFlyoutPresenter">
-                                    <Setter Property="ItemTemplate">
-                                        <Setter.Value>
-                                            <DataTemplate>
-                                                <TextBlock Margin="5" Text="{Binding Name, Mode=OneWay}" />
-                                            </DataTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Setter Property="ItemContainerStyle">
-                                        <Setter.Value>
-                                            <Style TargetType="MenuItem">
-                                                <Setter Property="Command" Value="{Binding ConnectCommand}" />
-                                            </Style>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Setter Property="ItemsSource" Value="{Binding AvailableEngineOutputs, Mode=OneWay}" />
-                                </Style>
-                            </ui:MenuFlyout.MenuFlyoutPresenterStyle>
-                        </ui:MenuFlyout>
-                    </ui:DropDownButton.Flyout>
-                </ui:DropDownButton>
             </DockPanel>
 
             <StackPanel

@@ -3,8 +3,10 @@
 #include "DisplayEngine.g.cpp"
 #include "DisplayEngineFactory.g.cpp"
 
-namespace winrt
-{
+import MonitorControl;
+
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
+namespace winrt {
     // Standard WinRT inclusions
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Foundation::Collections;
@@ -15,7 +17,7 @@ namespace winrt
     // JSON Parser
     using namespace winrt::Windows::Data::Json;
 
-    // Direct Display 
+    // Direct Display
     using namespace winrt::Windows::Devices::Display;
     using namespace winrt::Windows::Devices::Display::Core;
 
@@ -34,92 +36,15 @@ namespace winrt
 #pragma warning(push)
 #pragma warning(disable : 4100)
 
-namespace MonitorUtilities
-{
-    static LUID LuidFromAdapterId(winrt::Windows::Graphics::DisplayAdapterId id)
+namespace winrt::BasicDisplayControl::implementation {
+    winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine()
     {
-        return { id.LowPart, id.HighPart };
-    }
-
-    class MonitorControl
-    {
-    public:
-        MonitorControl(LUID adapterId, UINT targetId, winrt::ILogger const& logger) :
-            m_luid(adapterId), m_targetId(targetId), m_removeSpecializationOnExit(true), m_logger(logger)
-        {
-            DISPLAYCONFIG_GET_MONITOR_SPECIALIZATION getSpecialization{};
-            getSpecialization.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_SPECIALIZATION;
-            getSpecialization.header.id = m_targetId;
-            getSpecialization.header.adapterId = m_luid;
-            getSpecialization.header.size = sizeof(getSpecialization);
-
-            winrt::check_win32(DisplayConfigGetDeviceInfo(&getSpecialization.header));
-
-            if (0 == getSpecialization.isSpecializationAvailableForSystem)
-            {
-                m_logger.LogError(L"Monitor specialization is not available - have you enabled test signing?");
-                throw winrt::hresult_error();
-            }
-
-            if (1 == getSpecialization.isSpecializationEnabled)
-            {
-                m_removeSpecializationOnExit = false;
-            }
-            else
-            {
-                Toggle();
-            }
-        }
-
-        ~MonitorControl()
-        {
-            if (m_removeSpecializationOnExit)
-            {
-                Toggle(true);
-            }
-        }
-
-    private:
-        void Toggle(bool reset = false)
-        {
-            DISPLAYCONFIG_SET_MONITOR_SPECIALIZATION setSpecialization{};
-            setSpecialization.header.type = DISPLAYCONFIG_DEVICE_INFO_SET_MONITOR_SPECIALIZATION;
-            setSpecialization.header.id = m_targetId;
-            setSpecialization.header.adapterId = m_luid;
-            setSpecialization.header.size = sizeof(setSpecialization);
-
-            setSpecialization.isSpecializationEnabled = reset ? 0 : 1;
-            wsprintf(setSpecialization.specializationApplicationName, L"%s", L"HardwareHLK - BasicDisplayControl");
-            setSpecialization.specializationType = GUID_MONITOR_OVERRIDE_PSEUDO_SPECIALIZED;
-            setSpecialization.specializationSubType = GUID_NULL;
-
-            winrt::check_win32(DisplayConfigSetDeviceInfo(&setSpecialization.header));
-        }
-
-        LUID m_luid;
-        UINT m_targetId;
-        bool m_removeSpecializationOnExit;
-        const winrt::ILogger m_logger;
-    };
-}
-
-namespace winrt::BasicDisplayControl::implementation
-{
-    winrt::IDisplayEngine DisplayEngineFactory::CreateDisplayEngine(winrt::ILogger const& logger)
-    {
-        return winrt::make<DisplayEngine>(logger);
-    }
-
-    DisplayEngine::DisplayEngine(winrt::ILogger const& logger) : 
-        m_logger(logger)
-    {
-        m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
+        return winrt::make<DisplayEngine>();
     }
 
     DisplayEngine::DisplayEngine()
     {
-        // Throw - callers should explicitly instantiate through the factory
-        throw winrt::hresult_illegal_method_call();
+        m_displayManager = winrt::DisplayManager::Create(winrt::DisplayManagerOptions::None);
     }
 
     DisplayEngine::~DisplayEngine()
@@ -132,15 +57,23 @@ namespace winrt::BasicDisplayControl::implementation
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::DisplayTarget const& target)
     {
-        auto output = winrt::make<DisplayOutput>(m_logger, target, m_displayManager);
+        try
+        {
+            auto output = winrt::make<DisplayOutput>(target, m_displayManager);
 
-        return output;
+            return output;
+        }
+        catch (...)
+        {
+            Logger().LogError(L"Unable to initialize display output.");
+            return nullptr;
+        }
     }
 
     IDisplayOutput DisplayEngine::InitializeOutput(winrt::hstring target)
     {
         // Translate the target string to a DisplayTarget and call 'InitializeForDisplayTarget'
-        winrt::DisplayTarget chosenTarget{ nullptr };
+        winrt::DisplayTarget chosenTarget{nullptr};
         auto allDisplayTargets = m_displayManager.GetCurrentTargets();
         for (auto&& displayTarget : allDisplayTargets)
         {
@@ -154,21 +87,16 @@ namespace winrt::BasicDisplayControl::implementation
         if (!chosenTarget)
         {
             // The chosen target was not found - was the config file generated for this machine?
-            m_logger.LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
+            Logger().LogError(L"The chosen target was not found - was the configuration used generated for this machine?");
             throw winrt::hresult_invalid_argument();
         }
 
         return InitializeOutput(chosenTarget);
     }
 
-    MicrosoftDisplayCaptureTools::Display::IDisplayPrediction DisplayEngine::CreateDisplayPrediction()
-    {
-        return winrt::make<DisplayPrediction>(m_logger);
-    }
-
     // DisplayOutput
-    DisplayOutput::DisplayOutput(ILogger const& logger, DisplayTarget const& target, DisplayManager const& manager) :
-        m_logger(logger), m_displayTarget(target), m_displayManager(manager)
+    DisplayOutput::DisplayOutput(DisplayTarget const& target, DisplayManager const& manager) :
+        m_displayTarget(target), m_displayManager(manager)
     {
         // Refresh the display target
         RefreshTarget();
@@ -176,7 +104,7 @@ namespace winrt::BasicDisplayControl::implementation
         if (!target)
         {
             // The chosen target was not found - was the config file generated for this machine?
-            m_logger.LogError(L"Attempted to initialize with a null display target.");
+            Logger().LogError(L"Attempted to initialize with a null display target.");
             throw winrt::hresult_invalid_argument();
         }
 
@@ -184,9 +112,9 @@ namespace winrt::BasicDisplayControl::implementation
         if (m_displayTarget.UsageKind() != winrt::DisplayMonitorUsageKind::SpecialPurpose)
         {
             m_monitorControl = std::make_unique<MonitorUtilities::MonitorControl>(
-                MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId(), m_logger);
+                MonitorUtilities::LuidFromAdapterId(m_displayTarget.Adapter().Id()), m_displayTarget.AdapterRelativeId());
 
-            // If we change the UsageKind for the displayTarget, make sure to go refresh the target 
+            // If we change the UsageKind for the displayTarget, make sure to go refresh the target
             DisplayTarget refreshedTarget = nullptr;
             for (auto&& currTarget : m_displayManager.GetCurrentTargets())
             {
@@ -199,7 +127,7 @@ namespace winrt::BasicDisplayControl::implementation
 
             if (!refreshedTarget)
             {
-                m_logger.LogError(L"Unable to locate the target display after marking it as 'Specialized'");
+                Logger().LogError(L"Unable to locate the target display after marking it as 'Specialized'");
                 throw winrt::hresult_changed_state();
             }
 
@@ -209,10 +137,10 @@ namespace winrt::BasicDisplayControl::implementation
         ConnectTarget();
 
         // Instantiate properties object
-        m_properties = winrt::make_self<DisplayEngineProperties>(m_logger);
-        
+        m_properties = winrt::make_self<DisplayEngineProperties>();
+
         // This DisplayEngine implementation only supports 1 plane
-        auto planeProperties = winrt::make_self<DisplayEnginePlaneProperties>(m_logger);
+        auto planeProperties = winrt::make_self<DisplayEnginePlaneProperties>();
         m_properties->m_planeProperties.push_back(planeProperties);
 
         // Mark the base plane as active
@@ -244,11 +172,14 @@ namespace winrt::BasicDisplayControl::implementation
         // Create an object to stop the rendering when destroyed/closed.
         auto renderWatchdog = make_self<RenderWatchdog>(this);
 
-        // Start the rendering process - first this will determine eligible modes and then it will spin off a thread to run 
+        // Start the rendering process - first this will determine eligible modes and then it will spin off a thread to run
         // a render loop. This function won't return until the thread has started.
-        PrepareRender();
+        if (PrepareRender())
+        {
+            return renderWatchdog.as<IClosable>();
+        }
 
-        return renderWatchdog.as<IClosable>();
+        return nullptr;
     }
 
     event_token DisplayOutput::DisplaySetupCallback(Windows::Foundation::EventHandler<IDisplaySetupToolArgs> const& handler)
@@ -296,7 +227,7 @@ namespace winrt::BasicDisplayControl::implementation
             }
 
             // The selected target is no longer showing up as current or connected!
-            m_logger.LogError(L"The selected target can no longer be found. Selected Target: " + m_displayTarget.StableMonitorId());
+            Logger().LogError(L"The selected target can no longer be found. Selected Target: " + m_displayTarget.StableMonitorId());
             throw winrt::hresult_changed_state();
         }
     }
@@ -330,7 +261,8 @@ namespace winrt::BasicDisplayControl::implementation
         if (result.ErrorCode() != winrt::DisplayManagerResult::Success)
         {
             // We failed to acquire control of the target.
-            m_logger.LogError(winrt::hstring(L"Failed to acquire control of the target. Error: ") + winrt::to_hstring(result.ExtendedErrorCode()));
+            Logger().LogError(
+                winrt::hstring(L"Failed to acquire control of the target. Error: ") + winrt::to_hstring(result.ExtendedErrorCode()));
             throw result.ExtendedErrorCode();
         }
 
@@ -342,7 +274,7 @@ namespace winrt::BasicDisplayControl::implementation
     // Rendering
     void DisplayOutput::StopRender()
     {
-        m_logger.LogNote(L"Stopping Renderer Thread");
+        Logger().LogNote(L"Stopping Renderer Thread");
 
         if (m_valid)
         {
@@ -355,60 +287,60 @@ namespace winrt::BasicDisplayControl::implementation
         }
     }
 
-    void DisplayOutput::RefreshMode()
+    bool DisplayOutput::RefreshMode()
     {
         if (m_properties->RequeryMode())
         {
             auto modeList = m_displayPath.FindModes(winrt::DisplayModeQueryOptions::None);
-            std::vector<DisplayModeInfo> modeListVec;
 
             for (auto&& mode : modeList)
             {
-                if (mode.SourceResolution().Width == 3840 && 5 > fabs(
-                                                                 ((double)mode.PresentationRate().VerticalSyncRate.Numerator /
-                                                                 (double)mode.PresentationRate().VerticalSyncRate.Denominator) - 60))
-                    modeListVec.push_back(mode);
-
                 // Check to see if this mode is acceptable
                 if (m_displaySetupCallback)
                 {
                     auto displaySetupArgs =
-                        winrt::make_self<DisplaySetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>(), mode);
+                        winrt::make_self<DisplaySetupToolArgs>(m_properties.as<IDisplayEngineProperties>(), mode);
 
                     m_displaySetupCallback(*this, displaySetupArgs.as<IDisplaySetupToolArgs>());
 
                     if (displaySetupArgs->Compatible())
                     {
                         // we have a mode matching the requirements.
-                        m_logger.LogNote(L"Found an acceptable mode.");
+                        Logger().LogNote(L"Found an acceptable mode.");
 
                         m_properties->ActiveMode(mode);
-                        return;
+                        return true;
                     }
                 }
             }
 
             // No mode fit the set tools - this _may_ indicate an error, but it may also just indicate that we are attempting
-            // to auto-configure. So log a warning instead of an error to assist the user.
-            m_logger.LogWarning(L"No display mode fit the selected options");
-            throw winrt::hresult_invalid_argument();
+            // to auto-configure. So log a warning instead of an error to assist the user. If this is an actual error case, 
+            // later operations will fail from this case and log the error.
+            Logger().LogWarning(L"No display mode fit the selected options");
+            return false;
         }
+
+        return true;
     }
 
-    void DisplayOutput::PrepareRender()
+    bool DisplayOutput::PrepareRender()
     {
-        m_logger.LogNote(L"Preparing Renderer Thread");
+        Logger().LogNote(L"Preparing Renderer Thread");
 
         m_presenting = false;
 
-        RefreshMode();
+        if (!RefreshMode())
+        {
+            return false;
+        }
 
         m_displayPath.ApplyPropertiesFromMode(m_properties->ActiveMode());
         auto result = m_displayState.TryApply(winrt::DisplayStateApplyOptions::FailIfStateChanged);
 
         if (result.Status() != DisplayStateOperationStatus::Success)
         {
-            m_logger.LogError(L"Applying modes to the display failed.");
+            Logger().LogError(L"Applying modes to the display failed.");
         }
 
         m_renderThread = std::thread(&DisplayOutput::RenderLoop, this);
@@ -418,13 +350,15 @@ namespace winrt::BasicDisplayControl::implementation
         {
             std::this_thread::yield();
         }
+
+        return true;
     }
 
     void DisplayOutput::RenderLoop()
     {
         winrt::init_apartment();
 
-        m_logger.LogNote(L"Starting Render");
+        Logger().LogNote(L"Starting Render");
 
         uint64_t frameCounter = 0;
 
@@ -476,43 +410,36 @@ namespace winrt::BasicDisplayControl::implementation
             m_displayPath.SourcePixelFormat(),
             winrt::DirectXColorSpace::RgbFullG22NoneP709,
             false,
-            multisampleDesc};
-
-        winrt::DisplaySurface primarySurface{nullptr};
-        winrt::DisplayScanout primaryScanout{nullptr};
-
-        primarySurface = m_displayDevice.CreatePrimary(m_displayTarget, primaryDesc);
-        primaryScanout = m_displayDevice.CreateSimpleScanout(source, primarySurface, 0, 1);
+            multisampleDesc };
 
         auto interopDevice = m_displayDevice.as<IDisplayDeviceInterop>();
-        auto rawSurface = primarySurface.as<::IInspectable>();
 
-        winrt::handle primarySurfaceHandle;
-        winrt::check_hresult(
-            interopDevice->CreateSharedHandle(rawSurface.get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandle.put()));
+        winrt::DisplaySurface primarySurfaces[2]{ nullptr, nullptr };
+        winrt::DisplayScanout primaryScanouts[2]{ nullptr, nullptr };
+        winrt::com_ptr<::IInspectable> rawSurfaces[2];
+        winrt::handle primarySurfaceHandles[2];
+        winrt::com_ptr<ID3D11Texture2D> d3dSurfaces[2];
 
-        winrt::com_ptr<ID3D11RenderTargetView> d3dRenderTarget;
-
+        for (int n = 0; n < 2; ++n)
         {
-            winrt::com_ptr<ID3D11Texture2D> d3dSurface;
-            d3dSurface.capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandle.get());
-            basePlaneProperties->SetPlaneTexture(d3dSurface.get());
+            primarySurfaces[n] = m_displayDevice.CreatePrimary(m_displayTarget, primaryDesc);
+            primaryScanouts[n] = m_displayDevice.CreateSimpleScanout(source, primarySurfaces[n], 0, 1);
+
+            rawSurfaces[n] = primarySurfaces[n].as<::IInspectable>();
+
+            winrt::check_hresult(
+                interopDevice->CreateSharedHandle(rawSurfaces[n].get(), nullptr, GENERIC_ALL, nullptr, primarySurfaceHandles[n].put()));
+
+            d3dSurfaces[n].capture(d3dDevice, &ID3D11Device5::OpenSharedResource1, primarySurfaceHandles[n].get());
+            
+            basePlaneProperties->SetPlaneTexture(d3dSurfaces[n].get());
+
+            // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
+            // actual scan out starts. This is being called in this loop as it needs to happen for each surface.
+            auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_properties.as<IDisplayEngineProperties>());
+            if (m_renderSetupCallback)
+                m_renderSetupCallback(*this, renderSetupArgs);
         }
-
-        winrt::com_ptr<ID3D11Texture2D> basePlaneSurface;
-        winrt::check_hresult(basePlaneProperties->GetPlaneTexture(basePlaneSurface.put()));
-
-
-        D3D11_TEXTURE2D_DESC d3dTextureDesc{};
-        basePlaneSurface->GetDesc(&d3dTextureDesc);
-
-        D3D11_RENDER_TARGET_VIEW_DESC d3dRenderTargetViewDesc{};
-        d3dRenderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        d3dRenderTargetViewDesc.Texture2D.MipSlice = 0;
-        d3dRenderTargetViewDesc.Format = d3dTextureDesc.Format;
-
-        // Create the render target view
-        winrt::check_hresult(d3dDevice->CreateRenderTargetView(basePlaneSurface.get(), &d3dRenderTargetViewDesc, d3dRenderTarget.put()));
 
         // Get a fence to wait for render work to complete
         winrt::handle fenceHandle;
@@ -521,26 +448,24 @@ namespace winrt::BasicDisplayControl::implementation
         displayFenceIInspectable.capture(interopDevice, &IDisplayDeviceInterop::OpenSharedHandle, fenceHandle.get());
         winrt::DisplayFence fence = displayFenceIInspectable.as<winrt::DisplayFence>();
 
-        // Callback to any tools which need to perform operations post mode selection, post surface creation, but before
-        // actual scan out starts.
-        auto renderSetupArgs = winrt::make<RenderSetupToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
-        if (m_renderSetupCallback) m_renderSetupCallback(*this, renderSetupArgs);
-
         // Create the callback args object for per-frame rendering tools
-        auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_logger, m_properties.as<IDisplayEngineProperties>());
+        auto renderLoopArgs = winrt::make_self<RenderingToolArgs>(m_properties.as<IDisplayEngineProperties>());
 
         // Render and present until termination is signaled
+        UINT SurfaceIndex = 0;
         while (m_valid)
         {
+            basePlaneProperties->SetPlaneTexture(d3dSurfaces[SurfaceIndex].get());
             auto d3dContext4 = d3dContext.as<ID3D11DeviceContext4>();
             d3dContext4->Signal(d3dFence.get(), ++d3dFenceValue);
 
+            basePlaneProperties->SetPlaneTexture(d3dSurfaces[SurfaceIndex].get());
             // Callback to any tools which need to perform per-scanout operations
             if (m_renderLoopCallback)
                 m_renderLoopCallback(*this, renderLoopArgs.as<IRenderingToolArgs>());
 
             winrt::DisplayTask task = taskPool.CreateTask();
-            task.SetScanout(primaryScanout);
+            task.SetScanout(primaryScanouts[SurfaceIndex]);
             task.SetWait(fence, d3dFenceValue);
             taskPool.ExecuteTask(task);
             m_displayDevice.WaitForVBlank(source);
@@ -549,18 +474,16 @@ namespace winrt::BasicDisplayControl::implementation
 
             // Increment the frame counter
             renderLoopArgs->FrameNumber(++frameCounter);
+
+            SurfaceIndex = 1 - SurfaceIndex;
         }
 
-        m_logger.LogNote(L"Stopping Render");
+        Logger().LogNote(L"Stopping Render");
     }
 
     // DisplayEngineProperties
-    DisplayEngineProperties::DisplayEngineProperties(winrt::ILogger const& logger) :
-        m_resolution({ 0,0 }),
-        m_refreshRate(0.),
-        m_mode(nullptr),
-        m_requeryMode(true), 
-        m_logger(logger)
+    DisplayEngineProperties::DisplayEngineProperties() :
+        m_resolution({0, 0}), m_refreshRate(0.), m_mode(nullptr), m_requeryMode(true)
     {
     }
 
@@ -607,13 +530,17 @@ namespace winrt::BasicDisplayControl::implementation
         return winrt::com_array<winrt::IDisplayEnginePlaneProperties>(retVector);
     }
 
+    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayEngineProperties::Properties()
+    {
+        return m_properties;
+    }
+
     bool DisplayEngineProperties::RequeryMode()
     {
         return m_requeryMode;
     }
 
-    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
-        m_logger(logger),
+    DisplayEnginePlaneProperties::DisplayEnginePlaneProperties() :
         m_Properties(winrt::single_threaded_map<winrt::hstring, winrt::IInspectable>())
     {
     }
@@ -629,12 +556,12 @@ namespace winrt::BasicDisplayControl::implementation
         m_active = active;
     }
 
-    winrt::BitmapBounds DisplayEnginePlaneProperties::Rect()
+    winrt::RectInt32 DisplayEnginePlaneProperties::Rect()
     {
         return m_rect;
     }
 
-    void DisplayEnginePlaneProperties::Rect(winrt::BitmapBounds bounds)
+    void DisplayEnginePlaneProperties::Rect(winrt::RectInt32 bounds)
     {
         m_rect = bounds;
     }
@@ -655,130 +582,6 @@ namespace winrt::BasicDisplayControl::implementation
     void DisplayEnginePlaneProperties::SetPlaneTexture(ID3D11Texture2D* texture)
     {
         m_planeTexture.copy_from(texture);
-    }
-
-    DisplayPredictionData::DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) :
-        m_logger(logger)
-    {
-        m_properties = winrt::single_threaded_map<hstring, IInspectable>();
-        m_frameData = MicrosoftDisplayCaptureTools::Framework::FrameData(m_logger);
-    }
-
-    MicrosoftDisplayCaptureTools::Framework::IFrameData DisplayPredictionData::FrameData()
-    {
-        return m_frameData;
-    }
-
-    Windows::Foundation::Collections::IMap<hstring, IInspectable> DisplayPredictionData::Properties()
-    {
-        return m_properties;
-    }
-
-    DisplayPrediction::DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger) : 
-        m_logger(logger)
-    {
-    }
-
-    IAsyncOperation<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> DisplayPrediction::GeneratePredictionDataAsync()
-    {
-        // This operation is expected to be heavyweight, as tools are moving a lot of memory. So 
-        // we return the thread control and resume this function on the thread pool.
-        co_await winrt::resume_background();
-      
-        // Create the prediction data object
-        auto predictionData = winrt::make<DisplayPredictionData>(m_logger);
-
-        // Set any desired format defaults - tools may override these
-        {
-            auto formatDesc = predictionData.FrameData().FormatDescription();
-
-            formatDesc.Eotf = winrt::Windows::Devices::Display::Core::DisplayWireFormatEotf::Sdr;
-            formatDesc.PixelEncoding = winrt::Windows::Devices::Display::Core::DisplayWireFormatPixelEncoding::Rgb444;
-
-            predictionData.FrameData().FormatDescription(formatDesc);
-        }
-
-        // Invoke any tools registering as display setup (format, resolution, etc.)
-        if (m_displaySetupCallback)
-        {
-            m_displaySetupCallback(*this, predictionData);
-        }
-
-        // Perform any changes to the format description required before buffer allocation
-        {
-            auto formatDesc = predictionData.FrameData().FormatDescription();
-            formatDesc.Stride = formatDesc.BitsPerPixel * predictionData.FrameData().Resolution().Width;
-            predictionData.FrameData().FormatDescription(formatDesc);
-        }
-
-        // From the data set in the predictionData, allocate buffers
-        auto resolution = predictionData.FrameData().Resolution();
-        auto desc = predictionData.FrameData().FormatDescription();
-
-        if (resolution.Width == 0 || resolution.Height == 0)
-        {
-            std::wstringstream buf{};
-            buf << L"Resolution of (" << resolution.Width << L", " << resolution.Height << L") not valid!";
-
-            m_logger.LogError(buf.str());
-        }
-
-        if (desc.BitsPerPixel == 0 || desc.Stride == 0)
-        {
-            m_logger.LogError(L"BitsPerPixel and Stride must be defined sizes for us to reserve buffers!");
-        }
-
-        // reserve enough memory for the output frame.
-        auto pixelBuffer = winrt::Buffer(resolution.Height * desc.Stride);
-
-        predictionData.FrameData().Data(pixelBuffer);
-
-        // Invoke any tools registering as render setup
-        if (m_renderSetupCallback)
-        {
-            m_renderSetupCallback(*this, predictionData);
-        }
-
-        // Invoke any tools registering as rendering
-        if (m_renderLoopCallback)
-        {
-            m_renderLoopCallback(*this, predictionData);
-        }
-
-        co_return predictionData.as<IDisplayPredictionData>();
-    }
-
-    event_token DisplayPrediction::DisplaySetupCallback(
-        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
-    {
-        return m_displaySetupCallback.add(handler);
-    }
-
-    void DisplayPrediction::DisplaySetupCallback(event_token const& token) noexcept
-    {
-        m_displaySetupCallback.remove(token);
-    }
-
-    event_token DisplayPrediction::RenderSetupCallback(
-        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
-    {
-        return m_renderSetupCallback.add(handler);
-    }
-
-    void DisplayPrediction::RenderSetupCallback(event_token const& token) noexcept
-    {
-        m_renderSetupCallback.remove(token);
-    }
-
-    event_token DisplayPrediction::RenderLoopCallback(
-        Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler)
-    {
-        return m_renderLoopCallback.add(handler);
-    }
-
-    void DisplayPrediction::RenderLoopCallback(event_token const& token) noexcept
-    {
-        m_renderLoopCallback.remove(token);
     }
 
     void DisplaySetupToolArgs::IsModeCompatible(bool accept)

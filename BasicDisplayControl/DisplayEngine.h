@@ -11,48 +11,10 @@ namespace MonitorUtilities
 
 namespace winrt::BasicDisplayControl::implementation
 {
-    struct DisplayPredictionData : implements<DisplayPredictionData, MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>
-    {
-        DisplayPredictionData(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
-
-        MicrosoftDisplayCaptureTools::Framework::IFrameData FrameData();
-
-        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
-
-    private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-
-        MicrosoftDisplayCaptureTools::Framework::IFrameData m_frameData{nullptr};
-        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_properties;
-    };
-
-    struct DisplayPrediction : implements<DisplayPrediction, MicrosoftDisplayCaptureTools::Display::IDisplayPrediction>
-    {
-        DisplayPrediction(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
-
-        Windows::Foundation::IAsyncOperation<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> GeneratePredictionDataAsync();
-
-        event_token DisplaySetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler);
-        void DisplaySetupCallback(event_token const& token) noexcept;
-
-        event_token RenderSetupCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler);
-        void RenderSetupCallback(event_token const& token) noexcept;
-
-        event_token RenderLoopCallback(Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData> const& handler);
-        void RenderLoopCallback(event_token const& token) noexcept;
-
-    private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-
-        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_displaySetupCallback;
-        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_renderSetupCallback;
-        event<Windows::Foundation::EventHandler<MicrosoftDisplayCaptureTools::Display::IDisplayPredictionData>> m_renderLoopCallback;
-    };
-
     struct DisplayEnginePlaneProperties
         : implements<DisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlanePropertiesInterop>
     {
-        DisplayEnginePlaneProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        DisplayEnginePlaneProperties();
 
         ~DisplayEnginePlaneProperties()
         {
@@ -61,8 +23,8 @@ namespace winrt::BasicDisplayControl::implementation
         // Required plane properties
         bool Active();
         void Active(bool active);        
-        Windows::Graphics::Imaging::BitmapBounds Rect();
-        void Rect(Windows::Graphics::Imaging::BitmapBounds bounds);
+        Windows::Graphics::RectInt32 Rect();
+        void Rect(Windows::Graphics::RectInt32 bounds);
         Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
 
         // Properties defined in the interop header
@@ -72,9 +34,8 @@ namespace winrt::BasicDisplayControl::implementation
         void SetPlaneTexture(ID3D11Texture2D* texture);
 
     private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         bool m_active = false;
-        Windows::Graphics::Imaging::BitmapBounds m_rect{0};
+        Windows::Graphics::RectInt32 m_rect{0};
         Windows::Graphics::DirectX::DirectXPixelFormat m_format{ Windows::Graphics::DirectX::DirectXPixelFormat::Unknown };
         Windows::Foundation::Collections::IMap<hstring, IInspectable> m_Properties;
 
@@ -83,10 +44,9 @@ namespace winrt::BasicDisplayControl::implementation
 
     struct DisplaySetupToolArgs : implements<DisplaySetupToolArgs, MicrosoftDisplayCaptureTools::Display::IDisplaySetupToolArgs>
     {
-        DisplaySetupToolArgs(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger,
+        DisplaySetupToolArgs(
             MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties,
             Windows::Devices::Display::Core::DisplayModeInfo const& mode) :
-            m_logger(logger),
             m_properties(properties),
             m_mode(mode)
         {};
@@ -109,7 +69,6 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
     private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties m_properties;
         const Windows::Devices::Display::Core::DisplayModeInfo m_mode;
 
@@ -118,8 +77,8 @@ namespace winrt::BasicDisplayControl::implementation
 
     struct RenderSetupToolArgs : implements<RenderSetupToolArgs, MicrosoftDisplayCaptureTools::Display::IRenderSetupToolArgs>
     {
-        RenderSetupToolArgs(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger, MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties) :
-            m_logger(logger), m_properties(properties){};
+        RenderSetupToolArgs(MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties) :
+            m_properties(properties){};
 
         MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties Properties()
         {
@@ -127,14 +86,13 @@ namespace winrt::BasicDisplayControl::implementation
         }
 
     private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties m_properties;
     };
 
     struct RenderingToolArgs : implements<RenderingToolArgs, MicrosoftDisplayCaptureTools::Display::IRenderingToolArgs>
     {
-        RenderingToolArgs(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger, MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties) :
-            m_logger(logger), m_properties(properties){};
+        RenderingToolArgs(MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties properties) :
+            m_properties(properties){};
 
         MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties Properties()
         {
@@ -153,13 +111,12 @@ namespace winrt::BasicDisplayControl::implementation
 
     private:
         uint64_t m_frameNumber = 0;
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties m_properties;
     };
 
     struct DisplayEngineProperties : implements<DisplayEngineProperties, MicrosoftDisplayCaptureTools::Display::IDisplayEngineProperties>
     {
-        DisplayEngineProperties(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        DisplayEngineProperties();
 
         Windows::Devices::Display::Core::DisplayModeInfo ActiveMode();
         void ActiveMode(Windows::Devices::Display::Core::DisplayModeInfo mode);
@@ -171,6 +128,7 @@ namespace winrt::BasicDisplayControl::implementation
         void Resolution(Windows::Graphics::SizeInt32 resolution);
 
         com_array<MicrosoftDisplayCaptureTools::Display::IDisplayEnginePlaneProperties> GetPlaneProperties();
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> Properties();
 
         double m_refreshRate;
         Windows::Graphics::SizeInt32 m_resolution;
@@ -181,7 +139,7 @@ namespace winrt::BasicDisplayControl::implementation
         bool RequeryMode();
 
     private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
+        Windows::Foundation::Collections::IMap<hstring, IInspectable> m_properties;
     };
 
     //
@@ -192,7 +150,6 @@ namespace winrt::BasicDisplayControl::implementation
     struct DisplayOutput : implements<DisplayOutput, MicrosoftDisplayCaptureTools::Display::IDisplayOutput>
     {
         DisplayOutput(
-            MicrosoftDisplayCaptureTools::Framework::ILogger const& logger, 
             Windows::Devices::Display::Core::DisplayTarget const& target,
             Windows::Devices::Display::Core::DisplayManager const& manager);
 
@@ -216,13 +173,11 @@ namespace winrt::BasicDisplayControl::implementation
     private:
         void RefreshTarget();
         void ConnectTarget();
-        void RefreshMode();
-        void PrepareRender();
+        bool RefreshMode();
+        bool PrepareRender();
         void RenderLoop();
 
     private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
-
         Windows::Devices::Display::Core::DisplayDevice m_displayDevice{nullptr};
         Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
         Windows::Devices::Display::Core::DisplayTarget m_displayTarget{nullptr};
@@ -265,7 +220,6 @@ namespace winrt::BasicDisplayControl::implementation
     struct DisplayEngine : DisplayEngineT<DisplayEngine>
     {
         DisplayEngine();
-        DisplayEngine(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
 
         ~DisplayEngine();
 
@@ -281,12 +235,9 @@ namespace winrt::BasicDisplayControl::implementation
         MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(Windows::Devices::Display::Core::DisplayTarget const& target);
         MicrosoftDisplayCaptureTools::Display::IDisplayOutput InitializeOutput(hstring target);
 
-        MicrosoftDisplayCaptureTools::Display::IDisplayPrediction CreateDisplayPrediction();
-
         void SetConfigData(Windows::Data::Json::IJsonValue data);
 
     private:
-        const MicrosoftDisplayCaptureTools::Framework::ILogger m_logger{nullptr};
         Windows::Devices::Display::Core::DisplayManager m_displayManager{nullptr};
     };
 
@@ -294,7 +245,7 @@ namespace winrt::BasicDisplayControl::implementation
     {
         DisplayEngineFactory() = default;
 
-        MicrosoftDisplayCaptureTools::Display::IDisplayEngine CreateDisplayEngine(MicrosoftDisplayCaptureTools::Framework::ILogger const& logger);
+        MicrosoftDisplayCaptureTools::Display::IDisplayEngine CreateDisplayEngine();
     };
 }
 

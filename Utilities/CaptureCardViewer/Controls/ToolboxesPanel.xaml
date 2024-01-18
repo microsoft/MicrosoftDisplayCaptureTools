@@ -21,9 +21,6 @@
                 Label="Load Plugin">
                 <ui:AppBarButton.Flyout>
                     <ui:MenuFlyout Placement="Bottom">
-                        <MenuItem Header="Default Toolbox" />
-                        <MenuItem Header="Private API Toolbox" />
-                        <Separator />
                         <MenuItem Command="{Binding ViewModel.LoadToolboxFromFileCommand}" Header="Load from file..." />
                     </ui:MenuFlyout>
                 </ui:AppBarButton.Flyout>

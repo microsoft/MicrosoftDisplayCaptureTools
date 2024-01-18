@@ -22,19 +22,19 @@ DEFINE_GUID(GUID_DEVINTERFACE_Tanager, 0x237e1ed8, 0x4c6b, 0x421e, 0xbe, 0x8f, 0
 
 namespace winrt::TanagerPlugin::implementation
 {
-    CaptureCard::IController ControllerFactory::CreateController(ILogger const& logger)
+    CaptureCard::IController ControllerFactory::CreateController()
     {
-        return winrt::make<Controller>(logger);
+        return winrt::make<Controller>();
     }
 
-    Controller::Controller(ILogger const& logger) : m_logger(logger)
+    Controller::Controller()
     {
         DiscoverCaptureBoards();
 
         // If no board is detected, this object will not be valid.
         if (m_captureBoards.size() == 0)
         {
-            m_logger.LogWarning(L"No board detected!");
+            Logger().LogWarning(L"No board detected!");
             throw winrt::hresult_access_denied();
         }
 
@@ -47,12 +47,6 @@ namespace winrt::TanagerPlugin::implementation
                 m_displayInputs.push_back(boardInput);
             }
         }
-    }
-
-    Controller::Controller()
-    {
-        // Throw - callers should explicitly instantiate through the factory
-        throw winrt::hresult_illegal_method_call();
     }
 
     hstring Controller::Name()
@@ -127,7 +121,7 @@ namespace winrt::TanagerPlugin::implementation
     {
 		for (auto&& device : DeviceInformation::FindAllAsync(UsbDevice::GetDeviceSelector(GUID_DEVINTERFACE_Tanager)).get())
 		{
-			auto input = std::make_shared<TanagerDevice>(device.Id(), m_logger);
+			auto input = std::make_shared<TanagerDevice>(device.Id());
 			m_captureBoards.push_back(input);
 		}
     }

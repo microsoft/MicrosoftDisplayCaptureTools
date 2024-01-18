@@ -14,13 +14,13 @@ namespace CaptureCardViewer
 			InitializeComponent();
 		}
 
-		[ICommand]
+		[RelayCommand]
 		async void ShowAbout()
 		{
 			await aboutDialog.ShowAsync();
 		}
 
-		[ICommand]
+		[RelayCommand]
 		void ShowDocumentation()
 		{
 			try

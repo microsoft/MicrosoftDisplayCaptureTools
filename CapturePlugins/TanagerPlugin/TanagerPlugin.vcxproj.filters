@@ -9,6 +9,7 @@
     <ClCompile Include="InputHDMI.cpp" />
     <ClCompile Include="InputDisplayPort.cpp" />
     <ClCompile Include="DisplayHelpers.cpp" />
+    <ClCompile Include="FrameProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Fx3FpgaInterface.h" />
@@ -16,6 +17,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="TanagerDevice.h" />
     <ClInclude Include="DisplayHelpers.h" />
+    <ClInclude Include="FrameProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="TanagerPlugin.idl" />
@@ -27,5 +29,69 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Compute Shaders">
+      <UniqueIdentifier>{22c49885-8290-4bc8-b8df-531c808016b8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="ComputeShaders\Color_ITUR_709.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Dequantizer.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\FrameSquaredDifferenceBucketSum.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Linearize_ITUR_BT709.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_444_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_444_10bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Ycbcr_ITUR_BT709.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Ycbcr_ITUR_BT601.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Color_SMPTE170M.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Color_ITUR_2020.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Ycbcr_ITUR_BT2020.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Color_opRGB.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Linearize_opRGB.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Linearize_SMPTE2084.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Color_DCI_P3.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_422_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_422_10bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_420_8bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputeShaders\Sampler_420_10bpc.hlsl">
+      <Filter>Compute Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

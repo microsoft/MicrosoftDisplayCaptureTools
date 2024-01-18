@@ -1,9 +1,8 @@
 namespace BasicDisplayConfiguration
 {
-    [default_interface]
-    runtimeclass Toolbox : MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox
+    [default_interface] runtimeclass Toolbox : MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox
     {
-        Toolbox(MicrosoftDisplayCaptureTools.Framework.ILogger logger);
+        Toolbox();
     }
 
     [default_interface] runtimeclass ToolboxFactory : MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolboxFactory

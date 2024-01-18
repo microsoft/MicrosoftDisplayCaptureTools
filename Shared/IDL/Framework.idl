@@ -1,91 +1,113 @@
-import "ConfigurationTools.idl";
-import "CaptureCardPlugin.idl";
-import "DisplayManager.idl";
+// © Microsoft Corporation. All rights reserved.
 
-namespace MicrosoftDisplayCaptureTools.Framework 
-{
-    // IFrameData Implementations
-    struct FrameDataDescription
-    {
-        // The number of bits to represent each pixel, regardless of subsampling mode.
-        UInt32 BitsPerPixel;
+// Forward declare
+namespace MicrosoftDisplayCaptureTools.Framework {
+    interface IRawFrame;
+    interface IRawFrameSet;
+    interface IRawFrameRenderable;
+    interface ILoggerMode;
+    interface ILogger;
+    interface IRuntimeSettings;
+    interface IMonitorDescriptor;
+    interface ISourceToSinkMapping;
+    interface ICore;
 
-        // The number of bytes for one scanline of the image
-        UInt32 Stride;
+    runtimeclass Runtime;
+    runtimeclass Version;
+    runtimeclass MonitorDescriptorLoader;
 
-        // The DirectX pixel format of the buffer - If the pixel structure cannot be expressed with this enum, use 'Unknown' and
-        // use PixelEncoding to specify. If this value is set to anything other than 'Unknown', this is used.
-        Windows.Graphics.DirectX.DirectXPixelFormat PixelFormat;
+    [contractversion(1)] apicontract MicrosoftDisplayCaptureToolsContract {}
+} // namespace MicrosoftDisplayCaptureTools. Framework
 
-        // Pixel encoding mode - i.e. RGB444, YCC420
-        Windows.Devices.Display.Core.DisplayWireFormatPixelEncoding PixelEncoding;
+namespace MicrosoftDisplayCaptureTools.CaptureCard {
+    interface ICaptureCapabilities;
+    interface ICaptureTrigger;
+    interface IDisplayCapture;
+    interface IDisplayInput;
+    interface IController;
+    interface IControllerFactory;
+    interface IControllerWithFirmware;
+} // namespace MicrosoftDisplayCaptureTools. CaptureCard
 
-        // The transfer function of the pixels (essentially the gamma encoding)
-        Windows.Devices.Display.Core.DisplayWireFormatEotf Eotf;
-    };
+namespace MicrosoftDisplayCaptureTools.Display {
+    interface IDisplayEnginePlaneProperties;
+    interface IDisplayEngineProperties;
+    interface IDisplaySetupToolArgs;
+    interface IRenderSetupToolArgs;
+    interface IRenderingToolArgs;
+    interface IDisplayOutput;
+    interface IDisplayEngine;
+    interface IDisplayEngineFactory;
+} // namespace MicrosoftDisplayCaptureTools. Display
 
+namespace MicrosoftDisplayCaptureTools.ConfigurationTools {
+    interface IConfigurationToolRequirements;
+    interface IConfigurationTool;
+    interface IPredictionData;
+    interface IPrediction;
+    interface IConfigurationToolbox;
+    interface IConfigurationToolboxFactory;
+} // namespace MicrosoftDisplayCaptureTools. ConfigurationTools
+
+namespace MicrosoftDisplayCaptureTools.Framework {
     //
-    // An interface representing any additional non-pixel data describing the link or pixel data (i.e. An AVI Infoframe)
+    // An interface representing a single output frame
     //
-    runtimeclass FrameMetadata
-    {
-        FrameMetadata(String Format, Windows.Storage.Streams.IBuffer Data);
-
-        Windows.Storage.Streams.IBuffer Data
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface IRawFrame {
+        // A description of how the frame and pixels are formatted
+        Windows.Devices.Display.Core.DisplayWireFormat DataFormat
         {
             get;
         };
 
-        String Name
+        // The resolution of the frame
+        Windows.Graphics.SizeInt32 Resolution
         {
             get;
         };
-    };
 
-    //
-    // An interface representing formatted pixel data
-    //
-    interface IFrameData
-    {
         // The raw data buffer - this may contain raw pixel data or other representations of the frame (i.e. a CRC).
         Windows.Storage.Streams.IBuffer Data
         {
             get;
-            set;
         };
 
-        // The resolution of the image
-        Windows.Graphics.SizeInt32 Resolution
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h).
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
         {
             get;
-            set;
         };
-
-        // A description of how the pixels are formatted
-        FrameDataDescription FormatDescription
-        {
-            get;
-            set;
-        };
-
-        FrameMetadata[] GetFrameMetadata();
-        void AddMetadata(FrameMetadata data);
     };
 
     //
-    // An interface representing optional extended features on top of IFrameData to assist in tooling
+    // An interface representing a set of captured or predicted frames
     //
-    interface IFrameDataComparisons
-    {
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface IRawFrameSet {
+        // Get the frames in this frame set
+        Windows.Foundation.Collections.IVector<IRawFrame> Frames();
+
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h)
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    //
+    // An interface representing optional extended features to assist in tooling
+    //
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface IRawFrameRenderable {
         // Get an easily renderable approximation of the image data, in RGBA8 format
         Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap> GetRenderableApproximationAsync();
 
-        // Compute a delta image between this and another IFrameData implementation. This should fail if the image formats
-        // do not match.
-        IFrameDataComparisons GetImageDelta(IFrameData other);
+        // Get a string representation of a particular pixel in the frame. This should be in the original pixel format
+        // and be as close to raw data as possible.
+        String GetPixelInfo(UInt32 x, UInt32 y);
     };
 
-    runtimeclass Version : Windows.Foundation.IStringable
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] runtimeclass Version : Windows.Foundation.IStringable
     {
         Version(UInt32 major, UInt32 minor, UInt32 patch);
 
@@ -102,8 +124,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // the components loaded.
     //
     interface ILoggerMode;
-    interface ILogger
-    {
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface ILogger {
         // LogNote
         // ----------------------------------------------------------------------------------------------------------------
         // Notes:
@@ -179,41 +200,54 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // this object exists the ILogger will continue logging errors as warnings. Calling .HasErrored will return if any errors
     // were logged while this object lived.
     //
-    interface ILoggerMode
-    {
-        Boolean HasErrored();
-    };
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface ILoggerMode { Boolean HasErrored(); };
 
     //
-    // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
-    // descriptor from the framework - plugins are largely expected to only need the memory block.
+    // A small interface which the executable should implement and use to provide runtime setting overrides to the various
+    // components
     //
-    enum MonitorDescriptorType
-    {
-        EDID,
-        DisplayID,
-        EmbeddedDisplayID
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface IRuntimeSettings {
+        IInspectable GetSettingValue(String settingName);
+        Boolean GetSettingValueAsBool(String settingName);
+        String GetSettingValueAsString(String settingName);
+        Double GetSettingValueAsDouble(String settingName);
     };
+
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] runtimeclass Runtime {
+        static Runtime GetRuntime();
+
+        IRuntimeSettings RuntimeSettings();
+        ILogger Logger();
+    }
+
+        //
+        // Indicates the type of monitor descriptor. This is used as a hint in how to best add/query information in the
+        // descriptor from the framework - plugins are largely expected to only need the memory block.
+        //
+        [contract(MicrosoftDisplayCaptureToolsContract, 1)] enum MonitorDescriptorType {
+            EDID,
+            DisplayID,
+            EmbeddedDisplayID
+        };
 
     //
     // Represents a monitor descriptor (i.e. EDID, DisplayID).
     //
-    interface IMonitorDescriptor
-    {
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface IMonitorDescriptor {
         // The type of the monitor descriptor, various forms of EDID/DisplayID
         MonitorDescriptorType Type
         {
             get;
         };
 
-        // The main data of the descriptor is returned in a read only vector to make
+        // The main data of the descriptor is returned in a read only vector
         IVectorView<UInt8> Data
         {
             get;
         };
 
-        // Allow getting and setting the serial number from the descriptor. This is primarily used to identify synthetic displays. A
-        // 4-byte unsigned integer is used as the serial number fields for both EDID and DisplayID match this size.
+        // Allow getting and setting the serial number from the descriptor. This is primarily used to identify synthetic displays.
+        // A 4-byte unsigned integer is used as the serial number fields for both EDID and DisplayID match this size.
         UInt32 SerialNumber
         {
             get;
@@ -223,12 +257,17 @@ namespace MicrosoftDisplayCaptureTools.Framework
         Boolean IsSame(IMonitorDescriptor other);
     };
 
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] runtimeclass MonitorDescriptorLoader {
+        static IMonitorDescriptor LoadDescriptorFromFile(String filePath);
+        static IMonitorDescriptor LoadDescriptorFromBuffer(Windows.Storage.Streams.IBuffer data);
+        static IMonitorDescriptor LoadDescriptorFromVectorView(IVectorView<UInt8> data);
+    };
+
     //
     // A mapping of a display source (the output of a GPU) to a capture input. This describes the actual physical connection
     // for the test setup.
     //
-    interface ISourceToSinkMapping
-    {
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface ISourceToSinkMapping {
         // The DisplayTarget object representing the particular output (display source) for this connection
         Windows.Devices.Display.Core.DisplayTarget Source
         {
@@ -246,16 +285,9 @@ namespace MicrosoftDisplayCaptureTools.Framework
     // The core of the Hardware HLK project, this object manages communication and coordination between the various other
     // components of this framework.
     //
-    interface ICore
-    {
+    [contract(MicrosoftDisplayCaptureToolsContract, 1)] interface ICore {
         // Get the version, in Major.Minor.Patch format
         MicrosoftDisplayCaptureTools.Framework.Version Version
-        {
-            get;
-        };
-
-        // Get the logger for this instance
-        ILogger Logger
         {
             get;
         };
@@ -351,7 +383,7 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //      Attempt to discover and load other installed components. This assumes that everything has been installed
         //      via the standard nuget packages. This does not automatically mean that tests will use specific components,
         //      just that they have the option. If specific components have already been loaded using LoadConfigFile, this
-        //      function will not load futher components of the same categories. For example, if the config file specified 
+        //      function will not load futher components of the same categories. For example, if the config file specified
         //      with LoadConfigFile specifies a particular capture card plugin, DiscoverInstalledPlugins will not attempt
         //      to load any other capture card plugins.
         //
@@ -381,12 +413,30 @@ namespace MicrosoftDisplayCaptureTools.Framework
         //          only whichever mappings were provided by configuration file. If false and no mappings were provided via
         //          config files, an empty array will be returned.
         //      displayEngine (optional)
-        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false.
+        //          The DisplayEngine to use when regenerating mappings, this is not used when regenerateMappings = false
+        //      toolbox (optional)
+        //          The ConfigurationToolbox to use when regenerating mappings, this is not used when regenerateMappings =
+        //          false. This is also not used if the displayEngine supports customized display descriptors (EDIDs or
+        //          DisplayIDs) as those provide a faster and more reliable mapping path.
+        //      captureCard (optional)
+        //          The specific capture card to use when regenerating mappings, this is not used when regenerateMappings =
+        //          false. If this is not provided, the framework will attempt to map using all loaded capture cards. Mappings
+        //          will be generated for all inputs on the capture card unless displayInput is provided.
+        //      displayInput (optional)
+        //          The specific capture card input to map the input-output for, this is not used when regenerateMappings = false.
+        //          If this is not provided, the framework will attempt to map using the inputs from all capture cards or any
+        //          specfic capture card provided with captureCard. If this is provided, captureCard must also be provided, and
+        //          this displayInput must be a valid input on the specific captureCard.
         //
         // Returns:
         //      An array of structs containing the source and sink references.
         //
-        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(Boolean regenerateMappings, MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine);
+        IVector<ISourceToSinkMapping> GetSourceToSinkMappings(
+            Boolean regenerateMappings,
+            MicrosoftDisplayCaptureTools.Display.IDisplayEngine displayEngine,
+            MicrosoftDisplayCaptureTools.ConfigurationTools.IConfigurationToolbox toolbox,
+            MicrosoftDisplayCaptureTools.CaptureCard.IController captureCard,
+            MicrosoftDisplayCaptureTools.CaptureCard.IDisplayInput displayInput);
 
         // GetConfigurationToolboxes
         // ----------------------------------------------------------------------------------------------------------------
@@ -410,3 +460,747 @@ namespace MicrosoftDisplayCaptureTools.Framework
         MicrosoftDisplayCaptureTools.Display.IDisplayEngine[] GetDisplayEngines();
     }
 } // namespace MicrosoftDisplayCaptureTools. Framework
+
+// © Microsoft Corporation. All rights reserved.
+
+namespace MicrosoftDisplayCaptureTools.CaptureCard {
+    //
+    // ICaptureCapabilities represents the capabilities of the frame capture device and plugin. This is used to
+    // determine if test cases are applicable and how the framework should proceed.
+    //
+    // Other capabilities of the capture card are exposed by simply exposing various configuration tools, see
+    // ConfigurationTools.idl for more information.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface ICaptureCapabilities {
+        // Can the capture card return captured frames to the host _without_ any compression or artifacts
+        Boolean CanReturnRawFramesToHost();
+
+        // Can the capture card return captured frames to the host - to be used for diagnostics/debugging
+        Boolean CanReturnFramesToHost();
+
+        // Can the capture card capture multiple subsequent frames
+        Boolean CanCaptureFrameSeries();
+
+        // Can hot plug/unplug as a monitor.
+        Boolean CanHotPlug();
+
+        // Supports hotplugging with a variable EDID
+        Boolean CanConfigureEDID();
+
+        // Supports hotplugging with a variable DisplayID
+        Boolean CanConfigureDisplayID();
+
+        // The maximum size supported for an EDID/DisplayID descriptor.
+        UInt32 GetMaxDescriptorSize();
+
+        // ValidateAgainstDisplayOutput
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Allows capture cards to deny selected output modes if they are can't be captured by the active input.
+        //
+        // Parameters:
+        //      displayOutput
+        //          This represents the monitor descriptor to represent to represent the emulated display.
+        //
+        void ValidateAgainstDisplayOutput(MicrosoftDisplayCaptureTools.Display.IDisplayOutput displayOutput);
+
+        // Note: While there are only a few of these types defined now, we anticipate this list to grow as we
+        // define more test scenarios.
+    };
+
+    //
+    // CaptureTriggerType defines the different types of capture triggers
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] enum CaptureTriggerType {
+        // Immediately capture the next available frame
+        Immediate,
+
+        // Capture the next available frame after some time period
+        Timer,
+
+        // Capture first frame that is not completely black
+        FirstNonEmpty,
+
+        // Note: While there are only a few of these types defined now, we anticipate this list to grow as we
+        // define more test scenarios.
+    };
+
+    //
+    // A CaptureTrigger represents settings for what should 'trigger' the capture device to single out a frame.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface ICaptureTrigger {
+        // Define the type of this trigger
+        CaptureTriggerType Type
+        {
+            get;
+            set;
+        };
+
+        // For CaptureTriggerType::Timer, this specifies the amount of time (in ms) to wait before capturing.
+        UInt32 TimeToCapture
+        {
+            get;
+            set;
+        };
+
+        // Note: As with CaptureTriggerType, we expect this struct to grow as we define more test scenarios and any
+        // trigger types that they may necessitate.
+    };
+
+    //
+    // Represents a captured frame. The actual data for the captured frame can be either on PC or on the capture card
+    // itself, this object merely controls access.
+    //
+    // This is to be implemented by capture card producer.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayCapture {
+        // CompareCaptureToPrediction
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Compares the captured image against a software-generated reference image.
+        //
+        // Returns:
+        //      A boolean value indicating if the comparison succeeded (true) or failed (false).
+        //
+        // Parameters:
+        //      name
+        //          A string name uniquely identifying the set of parameters specifying this particular test run.
+        //      prediction
+        //          The reference data generated by the various configuration tools.
+        //
+        Boolean CompareCaptureToPrediction(String name, MicrosoftDisplayCaptureTools.Framework.IRawFrameSet prediction);
+
+        // GetFrameData
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns a buffer reference to the raw data of this capture.
+        //
+        MicrosoftDisplayCaptureTools.Framework.IRawFrameSet GetFrameData();
+
+        // ExtendedProperties
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      A map of properties describing the display capture. These are not required for function, but may assist
+        //      tools in interpreting this data.
+        //
+        Windows.Foundation.Collections.IMapView<String, Object> ExtendedProperties
+        {
+            get;
+        };
+    }
+
+        //
+        // This represents a single input port on a capture device. Analagous to a single HDMI or DisplayPort input port. For
+        // Capture Cards that support multiple inputs, the IController implementation should instantiate and return
+        // implementations for each port.
+        //
+        // This is to be implemented by capture card producer.
+        //
+        [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayInput {
+        // A string identifier for this particular captured display, to be used for logging.
+        String Name
+        {
+            get;
+        };
+
+        // SetDescriptor
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Sets the descriptor to be used when this monitor is initialized. This will only be set if one or both of
+        //      supportsEdid or supportsDisplayID is set to true from the GetCapabilities call.
+        //      handle it.
+        //
+        // Parameters:
+        //      descriptor
+        //          This represents the monitor descriptor to represent to represent the emulated display.
+        //
+        void SetDescriptor(MicrosoftDisplayCaptureTools.Framework.IMonitorDescriptor descriptor);
+
+        // GetCaptureTrigger
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns the capture trigger that will be used to trigger frame capture after 'CaptureFrame' is called.
+        //      These conditions can range from 'capture the next frame' to 'capture the next non-empty frame' to 'capture
+        //      the next frame matching a specific pattern'. Supported triggers should be reported in this object's
+        //      GetCapabilities method, and this method should fail if an unsupported trigger is supplied.
+        //
+        ICaptureTrigger GetCaptureTrigger();
+
+        // GetCaptureTrigger
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns the capabilities of the capture card for this display. These will be used to determine which tools
+        //      are applicable and which are not.
+        //
+        ICaptureCapabilities GetCapabilities();
+
+        // CaptureFrame
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Captures a display frame on the device when certain conditions are met. We expressly do not specify that
+        //      the captured pixels must be brought back to the host computer - it is valid to keep a representation of the
+        //      frame only on the capture device, although this inherently limits debuggability.
+        //
+        IDisplayCapture CaptureFrame();
+
+        // FinalizeDisplayState
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This is called by the framework after iterating through every "DisplaySetup" configuration tool. If this
+        //      plugin has tools that require some device reset or some time consuming operation (for example, HPD'ing with
+        //      a specific EDID), that operation should be performed when this function is called.
+        //
+        void FinalizeDisplayState();
+    }
+
+        //
+        // The entry-point object for a capture card plugin, this object is instantiated by the framework and is used to
+        // access the functionalities of the hardware.
+        //
+        // This is to be implemented by capture card producer.
+        //
+        [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IController {
+        // A string identifier for this particular implementation of the framework, this is only to be used for logging.
+        String Name
+        {
+            get;
+        };
+
+        // Get the version of this implementation, in Major.Minor.Patch format.
+        MicrosoftDisplayCaptureTools.Framework.Version Version
+        {
+            get;
+        };
+
+        // EnumerateDisplayInputs
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Enumerates
+        //
+        // Parameters:
+        //      pluginPath
+        //          This string represents a filepath from which a conformant capture card plugin implementation is exposed.
+        //
+        IDisplayInput[] EnumerateDisplayInputs();
+
+        // SetConfigData
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Initialize tools with settings from a configuration file loaded by the framework
+        //
+        // Parameters:
+        //      data
+        //          The subsection of the json file for this toolbox
+        //
+        void SetConfigData(Windows.Data.Json.IJsonValue data);
+    }
+
+        //
+        // The required static initializer for IController implementations. This is how other components of this project will
+        // instantiate IController implementations.
+        //
+        // This is to be implemented by capture card producer.
+        //
+        [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IControllerFactory {
+        // Create
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates an IController implementation instance
+        //
+        IController CreateController();
+    };
+
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] enum ControllerFirmwareState {
+        // The firmware isn't recognized or can't be updated to a known-good state by the
+        ManualUpdateNeeded,
+
+        // A firmware update is required
+        UpdateRequired,
+
+        // A firmware update is available but not required
+        UpdateAvailable,
+
+        // No update is needed
+        UpToDate
+    };
+
+    /// <summary>
+    /// An interface implemented by capture cards that support firmware updates.
+    /// </summary>
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IControllerWithFirmware {
+        ControllerFirmwareState FirmwareState
+        {
+            get;
+        };
+        String FirmwareVersion
+        {
+            get;
+        };
+
+        Windows.Foundation.IAsyncAction UpdateFirmwareAsync();
+    };
+} // namespace MicrosoftDisplayCaptureTools. CaptureCard
+
+// © Microsoft Corporation. All rights reserved.
+
+namespace MicrosoftDisplayCaptureTools.Display {
+    // Used to set parameters for this particular output plane.
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayEnginePlaneProperties {
+        // Should this plane be rendered
+        Boolean Active
+        {
+            get;
+            set;
+        };
+
+        // The location of this plane, relative to the top left corner of the source.
+        Windows.Graphics.RectInt32 Rect
+        {
+            get;
+            set;
+        };
+
+        // A generic property bag of items - these IInspectable objects may be either WinRT runtime classes, wrapped
+        // scalars/arrays, or even wrapped classic-com objects (see Shared\DisplayToolComInterop.h). It is intended
+        // for tools to retrieve/set items to this list in any callbacks to the DisplayEngine rendering pipeline.
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    // Used to set parameters to the selected display
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayEngineProperties {
+        // The active mode of this display
+        Windows.Devices.Display.Core.DisplayModeInfo ActiveMode
+        {
+            get;
+            set;
+        };
+
+        // Get the per-plane property set for this display
+        // The first entry of the returned array will always represent the base plane
+        IDisplayEnginePlaneProperties[] GetPlaneProperties();
+
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    // The arguments passed to tool display setup callback events. Specifically
+    // these events are called for available modes on the test sytem until one
+    // is found to be compatible with all registered display setup tools.
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplaySetupToolArgs {
+        // Properties of the current display engine.
+        IDisplayEngineProperties Properties
+        {
+            get;
+        };
+
+        // The current mode being tested to see if all tools can accept it
+        Windows.Devices.Display.Core.DisplayModeInfo Mode
+        {
+            get;
+        };
+
+        // All registered display setup tools must be compatible with a mode
+        // before it can be selected for a test. If no available mode can
+        // meet the tool requirements, the test with those tool settings is
+        // blocked from running.
+        void IsModeCompatible(Boolean accept);
+    };
+
+    // The arguments passed to tool render setup callback events. Specifically
+    // these events are called once, just before the start of the render loop,
+    // to construct any needed objects before the actual rendering.
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IRenderSetupToolArgs {
+        // Properties of the current display engine.
+        IDisplayEngineProperties Properties
+        {
+            get;
+        };
+    };
+
+    // The arguments passed to tool render loop callback events. Specifically
+    // these events are called for each sync when drawing to the output.
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IRenderingToolArgs {
+        // Properties of the current display engine.
+        IDisplayEngineProperties Properties
+        {
+            get;
+        };
+
+        // Indicates the current frame number of the output
+        UInt64 FrameNumber
+        {
+            get;
+        };
+    };
+
+    // Represents a particular display managed with this DisplayEngine
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayOutput {
+        // The display target tracked by this object
+        Windows.Devices.Display.Core.DisplayTarget Target
+        {
+            get;
+        };
+
+        // GetProperties
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Get the properties object for this IDisplayEngine implementation. ConfigurationTools will manipulate the
+        //     various members of this object to change how and what is rendered to the display
+        //
+        IDisplayEngineProperties GetProperties();
+
+        // StartRender
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Using all set properties on this object and all child planes, actually begins physically rendering to
+        //     the target display. The rendering will stop when Close() is called on the returned object.
+        //
+        Windows.Foundation.IClosable StartRender();
+
+        // DisplaySetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
+        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
+        //     rate, etc.
+        //
+        event Windows.Foundation.EventHandler<IDisplaySetupToolArgs> DisplaySetupCallback;
+
+        // RenderSetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
+        //     created, but before the core render loop begins.
+        //
+        event Windows.Foundation.EventHandler<IRenderSetupToolArgs> RenderSetupCallback;
+
+        // RenderLoopCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
+        //     called for each frame, so high-latency callbacks may cause problems.
+        //
+        event Windows.Foundation.EventHandler<IRenderingToolArgs> RenderLoopCallback;
+    };
+
+    // The engine managing both physical and predicted output to the display
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayEngine {
+        // Get the name of this IDisplayEngine implementation
+        String Name
+        {
+            get;
+        };
+
+        // Get the version of this implementation, in Major.Minor.Patch format
+        MicrosoftDisplayCaptureTools.Framework.Version Version
+        {
+            get;
+        };
+
+        // InitializeOutput
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Initializes the display engine for a particular target
+        //
+        [default_overload] IDisplayOutput InitializeOutput(Windows.Devices.Display.Core.DisplayTarget target);
+
+        // InitializeOutput
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Initializes the display engine for a particular target, using the StableMonitorId string to identify the
+        //     display. This is expected to be sourced from a pre-generated config file.
+        //
+        IDisplayOutput InitializeOutput(String target);
+
+        // SetConfigData
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Initialize tools with settings from a configuration file loaded by the framework
+        //
+        // Parameters:
+        //      data
+        //          The subsection of the json file for this toolbox
+        //
+        void SetConfigData(Windows.Data.Json.IJsonValue data);
+    };
+
+    //
+    // The required initializer for IDisplayEngine implementations. This is how other components of this project will
+    // instantiate IDisplayEngine implementations.
+    //
+    // This is to be implemented by capture card producer.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IDisplayEngineFactory {
+        // Create
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates an IDisplayEngine implementation instance
+        //
+        IDisplayEngine CreateDisplayEngine();
+    };
+
+} // namespace MicrosoftDisplayCaptureTools. Display
+
+// © Microsoft Corporation. All rights reserved.
+
+namespace MicrosoftDisplayCaptureTools.ConfigurationTools {
+    //
+    // This enum defines what a particular tool is used for. The testing framework uses this information to determine in
+    // which order to run the tools.
+    //
+    // This list as currently stands is used for illustrative purposes, we anticipate adding several more categories
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] enum ConfigurationToolCategory {
+        // This tool assists in device setup, and should be run first. Examples might include setting a custom display EDID
+        DisplaySetup,
+
+        // This tool prepares the OS to draw pixels to the screen. Examples include creation of MPO planes or changing mode
+        RenderSetup,
+
+        // This tool actively modifies the output pixels directly. An example would be rendering a base pattern for each plane.
+        Render,
+    };
+
+    //
+    // The requirements that the system under test and the capture card must meet for this tool to be valid. This is also
+    // used to determine allowable tolerances on the output image.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IConfigurationToolRequirements {
+        // The maximum capture tolerance that we expect this tool to contribute. If a capture card cannot support comparisons
+        // with a tolerance, a non-zero value here will disallow the test run - this tool should not be used for that capture
+        // card.
+        Single ContributedComparisonTolerance;
+
+        // The maximum capture tolerance that we can accept for this tool's operation. If the combined
+        // ContributedComparisonTolerance's of all tools selected for this run exceeds this amount, the run will be disallowed
+        Single MaxComparisonTolerance;
+
+        // This tool requires access to the raw pixel data when applying its changes to a reference image. A tool reporting
+        // 'true' for this *must* use ITestOutput.GetFrameFromCPU instead of the GPU analogue when implementing the
+        // ApplyToSoftwareReference function. This can allow more complicated changes, but will disable many performance
+        // optimizations and cause significantly slower performance.
+        Boolean RequiresRawFrameAccess;
+    };
+
+    //
+    // A ConfigurationTool represents a single operation that can be taken on a display according to the PICT parameters.
+    // Tools are intended to be used together to define many different possible states for the entire display pipeline.
+    // For example, a tool might modify the gamma lookup tables.
+    //
+    // ConfigurationTools must be able to apply whatever transform they are doing to a reference image as well, this
+    // reference image
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IConfigurationTool {
+        // The name of the configuration tool, this should exactly match the PICT parameter name that this supports.
+        String Name
+        {
+            get;
+        };
+
+        // The category for this configuration tool, this will determine when the framework interacts with this tool in
+        // relation to other tools in the test run.
+        ConfigurationToolCategory Category
+        {
+            get;
+        };
+
+        // The system and capture card requirements for this tool to be used.
+        IConfigurationToolRequirements Requirements
+        {
+            get;
+        };
+
+        // GetSupportedConfigurations
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This returns an array of strings which represent the supported PICT configurations for this tool.
+        //
+        String[] GetSupportedConfigurations();
+
+        // GetDefaultConfiguration
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This returns a string representing the default configuration for this tool. The returned string must also
+        //      be one of the options returned by GetSupportedConfigurations().
+        //
+        String GetDefaultConfiguration();
+
+        // SetConfiguration
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This sets the PICT configuration to use for this tool. This value should be used for any subsequent calls
+        //      to apply this tool.
+        //
+        // Parameters:
+        //      configuration
+        //          This string specifies which PICT configuration for the Tool to use. This value must be in the list
+        //          returned by GetSupportedConfigurations and must exactly match the PICT parameter values.
+        //
+        void SetConfiguration(String configuration);
+
+        // GetConfiguration
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This gets the PICT configuration set to use for this tool.
+        //
+        String GetConfiguration();
+
+        // ApplyToOutput
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Effect the tool's changes to the supplied output
+        //
+        // Parameters:
+        //      displayOutput
+        //          The output to apply this tool's changes on
+        //
+        void ApplyToOutput(MicrosoftDisplayCaptureTools.Display.IDisplayOutput displayOutput);
+
+        // ApplyToPrediction
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Effect the tool's changes to the supplied output
+        //
+        // Parameters:
+        //      displayPrediction
+        //          The prediction object to apply this tool's changes to
+        //
+        void ApplyToPrediction(MicrosoftDisplayCaptureTools.ConfigurationTools.IPrediction displayPrediction);
+    }
+
+        //
+        // Represents the the data making up a prediction before it is 'finalized' into a single composed set of frames
+        // and properties.
+        //
+        [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IPredictionData {
+        // Properties
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     retrieves a collection of properties that apply to the entire prediction
+        //
+        Windows.Foundation.Collections.IMap<String, IInspectable> Properties
+        {
+            get;
+        };
+    };
+
+    //
+    // Represents the collective state that tools modify to generate what the display output of those settings should
+    // correspond to.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IPrediction {
+        // FinalizePredictionAsync
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Go through and generate the predicted output data using any and all tools which have registered with
+        //     this object
+        //
+        Windows.Foundation.IAsyncOperation<MicrosoftDisplayCaptureTools.Framework.IRawFrameSet> FinalizePredictionAsync();
+
+        // DisplaySetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings before display mode has been chosen and applied.
+        //     Tools availing themselves of this callback are expected to be modifying things like resolution, refresh
+        //     rate, etc.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> DisplaySetupCallback;
+
+        // RenderSetupCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings after the display mode has been chosen and surfaces
+        //     created, but before the core render loop begins.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> RenderSetupCallback;
+
+        // RenderLoopCallback
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Register a callback to modify DisplayOutput settings during the render loop. These callbacks will be
+        //     called for each frame, so high-latency callbacks may cause problems.
+        //
+        event Windows.Foundation.EventHandler<IPredictionData> RenderLoopCallback;
+    };
+
+    //
+    // This object simply holds a slate of ConfigurationTools.
+    //
+    [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IConfigurationToolbox {
+        // An identifier for this specific toolbox implementation. This is only intended to be used for logging.
+        String Name
+        {
+            get;
+        };
+
+        // Get the version of this implementation, in Major.Minor.Patch format
+        MicrosoftDisplayCaptureTools.Framework.Version Version
+        {
+            get;
+        };
+
+        // GetSupportedTools
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Returns the full set of tools that are supported by this Toolbox
+        //
+        // Parameters:
+        //      tools
+        //          This output array contains the string identifier for every configuration tool that this toolbox can
+        //          supply. These strings must match the 'name' field of the individual tools, as well as the identifiers
+        //          specified in the PICT file.
+        //
+        String[] GetSupportedTools();
+
+        // GetTool
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      This constructs and returns a specific tool
+        //
+        // Parameters:
+        //      toolName
+        //          The identifier for the desired tool
+        //
+        IConfigurationTool GetTool(String toolName);
+
+        // SetConfigData
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //      Initialize tools with settings from a configuration file loaded by the framework
+        //
+        // Parameters:
+        //      data
+        //          The subsection of the json config file for this toolbox
+        //
+        void SetConfigData(Windows.Data.Json.IJsonValue data);
+
+        // CreatePrediction
+        // ------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates a prediction object, these are used by tools to create a prediction of what the display output
+        //     should contain
+        //
+        IPrediction CreatePrediction();
+    }
+
+        //
+        // The required static initializer for IConfigurationToolbox implementations. This is how other components of this
+        // project will instantiate IConfigurationToolbox implementations.
+        //
+        // This is to be implemented by toolbox producer.
+        //
+        [contract(MicrosoftDisplayCaptureTools.Framework.MicrosoftDisplayCaptureToolsContract, 1)] interface IConfigurationToolboxFactory {
+
+        // CreateConfigurationToolbox
+        // ----------------------------------------------------------------------------------------------------------------
+        // Notes:
+        //     Creates an IConfigurationToolbox implementation instance
+        //
+        IConfigurationToolbox CreateConfigurationToolbox();
+    };
+} // namespace MicrosoftDisplayCaptureTools. ConfigurationTools

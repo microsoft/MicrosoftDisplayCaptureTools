@@ -21,8 +21,6 @@
                 Label="Load Plugin">
                 <ui:AppBarButton.Flyout>
                     <ui:MenuFlyout Placement="Bottom">
-                        <MenuItem Header="Default Engine" />
-                        <Separator />
                         <MenuItem Command="{Binding ViewModel.LoadDisplayEngineFromFileCommand}" Header="Load from file..." />
                     </ui:MenuFlyout>
                 </ui:AppBarButton.Flyout>

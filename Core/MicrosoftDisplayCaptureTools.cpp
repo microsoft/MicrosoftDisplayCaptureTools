@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "MicrosoftDisplayCaptureTools.h"
 #include "Framework.Core.g.cpp"
+#include "Utils.h"
 
 namespace winrt
 {
@@ -25,15 +26,14 @@ namespace std
 }
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
-// Constructor that uses the default logger
-Core::Core() : m_logger(winrt::make<winrt::Logger>().as<ILogger>())
-{
-    m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
-}
+// Constructor that uses the default logger and no runtime settings
+Core::Core() : Core(winrt::make<winrt::Logger>().as<ILogger>(), nullptr) {}
 
-// Constructor taking a caller-defined logging class
-Core::Core(ILogger const& logger) : m_logger(logger)
+// Constructor taking a caller-defined logging class and a runtime settings object (which can be null)
+Core::Core(ILogger const& logger, IRuntimeSettings const& settings) : m_logger(logger), m_runtimeSettings(settings)
 {
+    Runtime::CreateRuntime(logger, settings);
+
     m_logger.LogNote(L"Initializing MicrosoftDisplayCaptureTools v" + this->Version().ToString());
 }
 
@@ -49,7 +49,7 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& cl
     // Load the capture card from the provided path.
     auto captureCardFactory = LoadInterfaceFromPath<IControllerFactory>(pluginPath, className);
 
-    auto captureCardController = captureCardFactory.CreateController(m_logger);
+    auto captureCardController = captureCardFactory.CreateController();
 
     m_logger.LogNote(L"Loaded Capture Plugin: " + captureCardController.Name() + L", Version " + captureCardController.Version().ToString());
 
@@ -75,7 +75,7 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
     // Load the toolbox from the provided path.
     auto toolboxFactory = LoadInterfaceFromPath<IConfigurationToolboxFactory>(toolboxPath, className);
 
-    auto toolbox = toolboxFactory.CreateConfigurationToolbox(m_logger);
+    auto toolbox = toolboxFactory.CreateConfigurationToolbox();
 
     m_logger.LogNote(L"Loaded Toolbox: " + toolbox.Name() + L", Version " + toolbox.Version().ToString());
 
@@ -105,7 +105,7 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring
     
     try
     {
-        displayEngine = displayEngineFactory.CreateDisplayEngine(m_logger);
+        displayEngine = displayEngineFactory.CreateDisplayEngine();
     }
     catch (...)
     {
@@ -341,7 +341,12 @@ com_array<IDisplayEngine> Core::GetDisplayEngines()
     return com_array<IDisplayEngine>(m_displayEngines);
 }
 
-IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappings, IDisplayEngine displayEngine)
+IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(
+    bool regenerateMappings,
+    IDisplayEngine displayEngine,
+    IConfigurationToolbox toolbox,
+    IController captureCard,
+    IDisplayInput displayInput)
 {
     // Prevent component changes while we are attempting configuration
     auto lock = LockFramework();
@@ -350,11 +355,11 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
     if (regenerateMappings)
     {
-        // If the framework is requested to regenerate display-to-capture mappings, a display capture plugin and a display engine
-        // are both required.
-        if (m_captureCards.empty() || !displayEngine)
+        // If the framework is requested to regenerate display-to-capture mappings, a display capture plugin, a display engine,
+        // and a toolbox must be provided.
+        if ((m_captureCards.empty() && !captureCard) || !displayEngine || !toolbox)
         {
-            m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine and a capture card.");
+            m_logger.LogAssert(L"Cannot generate display to capture mappings without a display engine, capture card, and toolbox.");
             return mappings;
         }
 
@@ -364,7 +369,35 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
 
             // Get all display inputs, add to 2 unassigned lists (supports edid, doesn't support edid)
             std::list<std::tuple<winrt::IController, winrt::IDisplayInput>> unassignedInputs_EDID, unassignedInputs_NoEDID;
-            for (auto&& card : m_captureCards)
+            std::vector<IController> captureCardsToUse;
+
+            if (captureCard)
+            {
+				captureCardsToUse.push_back(captureCard);
+			}
+            else
+            {
+				captureCardsToUse = m_captureCards;
+			}
+
+            if (displayInput)
+            {
+                if (displayInput.GetCapabilities().CanConfigureEDID() && displayInput.GetCapabilities().CanHotPlug())
+                {
+                    // This input can HPD with a specified EDID
+                    unassignedInputs_EDID.push_back({captureCard, displayInput});
+                }
+                else
+                {
+                    // This input cannot HPD with a specified EDID
+                    unassignedInputs_NoEDID.push_back({captureCard, displayInput});
+                }
+
+                // We have already found the input we want to use, so we don't need to iterate through the rest of the inputs
+                captureCardsToUse.clear();
+            }
+
+            for (auto&& card : captureCardsToUse)
             {
                 for (auto&& input : card.EnumerateDisplayInputs())
                 {
@@ -412,7 +445,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         // Try to get the EDID from this monitor - the display we are looking for will have the same EDID we plugged in earlier
                         auto retrievedEDID = winrt::make<EDIDDescriptor>(monitor.GetDescriptor(DisplayMonitorDescriptorKind::Edid));
 
-                        if (standardEDID.IsSame(retrievedEDID))
+                        if (standardEDID.SerialNumber() == retrievedEDID.SerialNumber())
                         {
                             auto pluginName = card.Name();
                             auto pluginInputName = input.Name();
@@ -434,28 +467,28 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                 serialNum++;
             }
 
-            // If a capture card input cannot hotplug in a display with a custom descriptor, the next mechanism is to take control of each 
-            // display and setup a scanout and prediction - similar to how a basic test works, just with all default options. 
-            // 
-            // NOTE: We will not remove any displays from composition for this - to prevent a user accidentally making their system unusable.
-            //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
-            //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
-            //       device. For the latter case, this auto-config method will print out the possible display IDs.
-            auto toolList = GetAllTools();
-            if (toolList.empty())
-            {
-                m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
-                                    L"- capture input mapping.");
-            }
-
-            m_logger.LogNote(L"Using default values for all tools.");
-
             // For all still unassigned targets
             //    Initialize the displayengine's output and use default tool settings to generate an output/prediction.
             //    For every still unassigned inputs
             //        Pass prediction to input until one succeeds.
             if (unassignedInputs_NoEDID.size() > 0)
             {
+                // If a capture card input cannot hotplug in a display with a custom descriptor, the next mechanism is to take control of each
+                // display and setup a scanout and prediction - similar to how a basic test works, just with all default options.
+                //
+                // NOTE: We will not remove any displays from composition for this - to prevent a user accidentally making their system unusable.
+                //       Instead for this type of capture card we will only consider displays already marked as 'specialized'. The user may have to
+                //       manually mark the applicable display as specialized in display settings, or specify the target in the config file for this
+                //       device. For the latter case, this auto-config method will print out the possible display IDs.
+                auto toolList = GetAllTools(toolbox);
+                if (toolList.empty())
+                {
+                    m_logger.LogWarning(L"No tools have been loaded - it is impossible to automatically determine display output "
+                                        L"- capture input mapping.");
+                }
+
+                m_logger.LogNote(L"Using default values for all tools.");
+
                 auto targets = manager.GetCurrentTargets();
                 for (auto&& target : targets)
                 {
@@ -500,7 +533,7 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         // We have a target which has not yet been mapped - take control of it and see if any capture input
                         // matches it, using default settings for the tools.
                         auto output = displayEngine.InitializeOutput(target);
-                        auto prediction = displayEngine.CreateDisplayPrediction();
+                        auto prediction = toolbox.CreatePrediction();
                         for (auto&& tool : toolList)
                         {
                             tool.SetConfiguration(tool.GetDefaultConfiguration());
@@ -509,14 +542,14 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                         }
 
                         // Start generating the prediction in the background
-                        auto predictionDataAsync = prediction.GeneratePredictionDataAsync();
+                        auto predictionAsync = prediction.FinalizePredictionAsync();
 
                         // Start outputting to the target with the current settings
                         auto renderer = output.StartRender();
-                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                        std::this_thread::sleep_for(std::chrono::seconds(2));
 
                         // Iterate through the still unassigned inputs to find any matches
-                        for (auto&& unassignedInput: unassignedInputs_NoEDID)
+                        for (auto&& unassignedInput : unassignedInputs_NoEDID)
                         {
                             auto [card, input] = unassignedInput;
 
@@ -531,8 +564,8 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                     card.Name() + L"." + input.Name());
 
                                 // Make sure that we finished generating the prediction
-                                auto predictionData = predictionDataAsync.get();
-                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", predictionData);
+                                auto predictedFrames = predictionAsync.get();
+                                auto captureResult = capture.CompareCaptureToPrediction(L"ConfigurationPass", predictedFrames);
 
                                 if (captureResult && !suppressErrors.HasErrored())
                                 {
@@ -550,8 +583,6 @@ IVector<ISourceToSinkMapping> Core::GetSourceToSinkMappings(bool regenerateMappi
                                 }
                             }
                         }
-
-                        std::this_thread::sleep_for(std::chrono::seconds(5));
                     }
                     catch (...)
                     {
@@ -710,9 +741,19 @@ void Core::DiscoverInstalledPlugins()
     }
 }
 
-std::vector<ConfigurationTools::IConfigurationTool> Core::GetAllTools()
+std::vector<ConfigurationTools::IConfigurationTool> Core::GetAllTools(IConfigurationToolbox specificToolbox = nullptr)
 {
     std::vector<IConfigurationTool> tools;
+
+    if (specificToolbox)
+    {
+        for (auto&& toolName : specificToolbox.GetSupportedTools())
+        {
+            tools.push_back(specificToolbox.GetTool(toolName));
+        }
+
+        return tools;
+    }
 
     for (auto&& toolbox : m_toolboxes)
     {

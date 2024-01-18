@@ -1,0 +1,285 @@
+#####################################################################################################################################
+#                                               OneBranch Pipelines - Official                                                      #
+#####################################################################################################################################
+#                                                                                                                                   #
+# This pipeline was created by EasyStart from a sample located at:                                                                  #
+#                               https://aka.ms/obpipelines/easystart/samples                                                        #
+#                                                                                                                                   #
+# Windows Undocked Wiki:        https://www.osgwiki.com/wiki/Windows_Undocked_Template                                              #
+# General OB Documentation:     https://aka.ms/obpipelines                                                                          #
+# Build MSBuild project:        https://dev.azure.com/onebranch/OneBranch/_wiki/wikis/OneBranch.wiki/6045/Build-MSBuild-project     #
+# Yaml Schema:                  https://aka.ms/obpipelines/yaml/schema                                                              #
+# Retail Tasks:                 https://aka.ms/obpipelines/tasks                                                                    #
+# Support:                      https://aka.ms/onebranchsup                                                                         #
+#                                                                                                                                   #
+#####################################################################################################################################
+
+# Add this for VPack versioning when using Package ES Setup task
+name: $(Date:yyMMdd-HHmm)$(Rev:.r).$(SourceBranchName).$(SourceVersion)
+
+# https://aka.ms/obpipelines/triggers
+trigger: none 
+
+parameters: # parameters are shown up in ADO UI in a build queue time
+- name: PackageNameSuffix
+  type: string
+  default: Ge
+  values:
+  - Ge
+- name: Major
+  type: number
+  default: 0
+- name: Minor
+  type: number
+  default: 0
+- name: Patch
+  type: number
+  default: 1
+
+variables:
+  CDP_DEFINITION_BUILD_COUNT: $[counter('', 0)] # needed for onebranch.pipeline.version task https://aka.ms/obpipelines/versioning
+  system.debug: false
+  ENABLE_PRS_DELAYSIGN: 1
+  ROOT: $(Build.SourcesDirectory)
+  REPOROOT: $(Build.SourcesDirectory)
+  OUTPUTROOT: $(REPOROOT)\out
+  NUGET_XMLDOC_MODE: none
+  OWNER_ALIAS: microsoftdisplaycapturetools@microsoft.com
+  BRANCH_NAME: ${{replace(replace(variables['Build.SourceBranch'], 'refs/heads/', ''), '/', '_')}}
+  VPACK_NAME: Microsoft.$(Build.Repository.Name)Undocked-$(BRANCH_NAME)-${{parameters.PackageNameSuffix}}
+  PRE_RELEASE_VERSION: $(Build.BuildId)
+  VPACK_METADATA: $(Build.SourceVersion)
+  VPackVersion.Major: ${{parameters.Major}}
+  VPackVersion.Minor: ${{parameters.Minor}}
+  VPackVersion.Patch: ${{parameters.Patch}}
+
+
+  # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2019/vse2022:latest' 
+
+resources:
+  repositories: 
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  template: v2/Microsoft.Official.yml@templates # https://aka.ms/obpipelines/templates
+  parameters:
+    platform:
+      name: 'windows_undocked' # windows undocked
+
+    cloudvault: # Please refer the wiki for more information: https://aka.ms/obpipelines/cloudvault
+      enabled: false
+
+    globalSdl: # Refer the wiki for more options in this parameter: https://aka.ms/obpipelines/sdl
+      tsa:
+        enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+      # suppression:
+      #   suppressionFile: $(Build.SourcesDirectory)\.gdn\global.gdnsuppress
+
+    featureFlags:
+      createVPack: # Information for Trusted Vpack (https://www.osgwiki.com/wiki/Windows_Build_Tools_Template)
+        enabled: true
+        packagename: $(VPACK_NAME)
+        description: 'DisplayHardwareHLK Undocked Files'
+        owneralias: $(OWNER_ALIAS)
+        provData: true
+        versionAs: Parts
+        majorVer: $(VPackVersion.Major)
+        minorVer: $(VPackVersion.Minor)
+        patchVer: $(VPackVersion.Patch)
+        prereleaseVer: $(PRE_RELEASE_VERSION)
+        metadata: $(VPACK_METADATA)
+
+    stages:
+    - stage: build
+      jobs:
+      - job: DisplayHardwareHLKUndockedVpack
+        pool:
+          # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+          type: windows
+
+        variables:
+          # binaries scanning tools are run on this directory ( https://onebranch.visualstudio.com/OneBranch/_wiki/wikis/OneBranch.wiki/4634/SDL-(Static-Analysis)-for-Containerized-Workflows ) and 
+          # this directory is uploaded to pipeline artifacts. More info at https://aka.ms/obpipelines/artifacts
+          ob_outputDirectory: '$(REPOROOT)\outputDirectory'
+          ob_sdl_codeSignValidation_excludes: -|**\*.js;-|**\*.ps1;-|**\*.wsf;-|**\*.exp
+          ob_artifactsBaseName: 'DisplayHardwareHLK_Undocked_Binaries_and_Source'
+
+        steps:
+          - checkout: self
+            env:
+              ob_restore_phase: true
+            clean: true
+            fetchDepth: 1
+            submodules: true
+            persistCredentials: true
+
+          - task: DeleteFiles@1
+            env:
+              ob_restore_phase: true
+            displayName: 'Clean packages directory'
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
+              Contents: '*'
+              RemoveSourceFolder: true
+
+          - task: NuGetAuthenticate@1
+            env:
+              ob_restore_phase: true
+            inputs:
+              forceReinstallCredentialProvider: true
+
+          - task: NuGetCommand@2
+            displayName: 'NuGet Restore Core'
+            env:
+              ob_restore_phase: true
+            inputs:
+              command: 'restore'
+              restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Core\packages.config'
+              feedsToUse: 'config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
+
+          - task: NuGetCommand@2
+            displayName: 'NuGet Restore Tanager'
+            env:
+              ob_restore_phase: true
+            inputs:
+              command: 'restore'
+              restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\CapturePlugins\TanagerCaptureCardPlugin\packages.config'
+              feedsToUse: 'config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
+
+          # Build the solution
+          - task: VSBuild@1
+            displayName: 'Visual Studio 2022 Build, Debug x64'
+            inputs:
+              solution: '**\hwhlk_ADO.sln'
+              vsVersion: '17.0'
+              platform: 'x64'
+              configuration: 'debug'
+              
+          - task: VSBuild@1
+            displayName: 'Visual Studio 2022 Build, Release x64'
+            inputs:
+              solution: '**\hwhlk_ADO.sln'
+              vsVersion: '17.0'
+              platform: 'x64'
+              configuration: 'release'
+              
+          - task: VSBuild@1
+            displayName: 'Visual Studio 2022 Build, Debug ARM64'
+            inputs:
+              solution: '**\hwhlk_ADO.sln'
+              vsVersion: '17.0'
+              platform: 'ARM64'
+              configuration: 'debug'
+              
+          - task: VSBuild@1
+            displayName: 'Visual Studio 2022 Build, Release ARM64'
+            inputs:
+              solution: '**\hwhlk_ADO.sln'
+              vsVersion: '17.0'
+              platform: 'ARM64'
+              configuration: 'release'
+
+          # Copy the WinMD file, the core and capture card binaries & symbols
+          - task: CopyFiles@2
+            displayName: 'Copy idl to output directory'
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Shared\IDL'
+              Contents: '**\*.idl'
+              TargetFolder: '$(ob_outputDirectory)\idl'
+
+          - task: CopyFiles@2
+            displayName: 'Copy shared headers to output directory'
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Shared\Inc'
+              Contents: '**\*.h'
+              TargetFolder: '$(ob_outputDirectory)\inc'
+
+          - task: onebranch.pipeline.signing@1
+            displayName: 'Code Signing'
+            inputs:
+              command: 'sign'
+              signing_environment: 'azure-ado'
+              signing_profile: 'internal_azure_service'
+              files_to_sign: '**/*.dll'
+              search_root: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools'
+              use_testsign: false
+              in_container: true
+
+          - task: PowerShell@2
+            displayName: 'Copy undocked binaries to output directory'
+            inputs:
+              targetType: 'inline'
+              script: |
+                New-Item $(ob_outputDirectory)\bin\objchk\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\bin\objfre\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\bin\objchk\arm64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\bin\objfre\arm64 -ItemType Directory -Force
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\MicrosoftDisplayCaptureTools.* $(ob_outputDirectory)\bin\objfre\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\GenericCaptureCardPlugin\GenericCaptureCardPlugin.* $(ob_outputDirectory)\bin\objfre\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\TanagerPlugin\TanagerPlugin.* $(ob_outputDirectory)\bin\objfre\arm64
+        
+          - task: PowerShell@2
+            displayName: 'Copy winmd to output directory'
+            inputs:
+              targetType: 'inline'
+              script: |
+                New-Item $(ob_outputDirectory)\winmd\objchk\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\winmd\objfre\amd64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\winmd\objchk\arm64 -ItemType Directory -Force
+                New-Item $(ob_outputDirectory)\winmd\objfre\arm64 -ItemType Directory -Force
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Debug\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objchk\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\x64\Release\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objfre\amd64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Debug\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objchk\arm64
+                Copy-Item $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\ARM64\Release\MicrosoftDisplayCaptureTools.winmd $(ob_outputDirectory)\winmd\objfre\arm64
+
+          - task: PublishSymbols@2
+            inputs:
+              symbolsFolder: $(ob_outputDirectory)\bin
+              searchPattern: |
+                **/*.pdb
+                **/*.dll
+              symbolServerType: teamServices
+
+          - task: PowerShell@2
+            displayName: 'How To Update Windows'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host 'To import this VPack into Windows, edit:'
+                Write-Host
+                Write-Host '%SDXROOT%\build\onecoreuap\internal\config\OSDependencies.Manifest'
+                Write-Host
+                Write-Host 'and find the entry with the key "$(VPACK_NAME)". Typically only the version number changes.'
+                Write-Host 'Modify the entry to match:'
+                Write-Host
+                Write-Host '// Description: MicrosoftDisplayCaptureTools Binaries'
+                Write-Host '// Source: https://microsoft.visualstudio.com/DisplayHardwareHLK'
+                Write-Host '// Owner: $(OWNER_ALIAS)'
+                Write-Host '$(VPACK_NAME),[$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)+$(VPACK_METADATA)],Drop,CollectionOfFiles,$(MSASURI),,$(OSDependsRoot)\Microsoft.DisplayHardwareHLKUndocked'
+                Write-Host
+
+          - task: PowerShell@2
+            displayName: 'Create tag for the latest commit'
+            inputs:
+              targetType: 'inline'
+              script: |
+                cd MicrosoftDisplayCaptureTools
+                $TagName = "$(VPACK_NAME).$(VPackVersion.Major).$(VPackVersion.Minor).$(VPackVersion.Patch)-$(PRE_RELEASE_VERSION)"
+                echo $TagName

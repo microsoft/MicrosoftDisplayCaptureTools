@@ -1,100 +1,76 @@
-#include "pch.h"
-#include "ResolutionTool.h"
+module ResolutionTool;
+import PredictionRenderer;
 
+import "pch.h";
+
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
 namespace winrt
 {
-	using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
-	using namespace MicrosoftDisplayCaptureTools::Display;
-	using namespace MicrosoftDisplayCaptureTools::Framework;
-}
+    using namespace MicrosoftDisplayCaptureTools::ConfigurationTools;
+    using namespace MicrosoftDisplayCaptureTools::Display;
+    using namespace MicrosoftDisplayCaptureTools::Framework;
+} // namespace winrt
 
-namespace winrt::BasicDisplayConfiguration::implementation
+namespace winrt::BasicDisplayConfiguration::implementation {
+
+static const winrt::hstring DefaultConfiguration = L"1920x1080";
+
+ResolutionTool::ResolutionTool(ResolutionToolKind kind) :
+    ToolBase::SizeTool<ResolutionTool>(L"Resolution", DefaultConfiguration, {L"1600x900", L"1920x1080", L"3840x2160"}),
+    m_kind(kind)
 {
-	static const std::wstring DefaultConfiguration = L"1920x1080";
-	std::map<std::wstring, Windows::Graphics::SizeInt32> ConfigurationMap
-	{
-		{ L"1600x900",  {1600,  900} },
-		{ L"1920x1080", {1920, 1080} },
-		{ L"3840x2160", {3840, 2160} }
-	};
-
-	ResolutionTool::ResolutionTool(winrt::ILogger const& logger) : 
-		m_currentConfig(DefaultConfiguration), 
-		m_logger(logger)
-	{
-	}
-
-	hstring ResolutionTool::Name()
-	{
-		return L"Resolution";
-	}
-
-	ConfigurationToolCategory ResolutionTool::Category()
-	{
-		return ConfigurationToolCategory::DisplaySetup;
-	}
-
-	IConfigurationToolRequirements ResolutionTool::Requirements()
-	{
-		return nullptr;
-	}
-
-	com_array<hstring> ResolutionTool::GetSupportedConfigurations()
-    {
-        std::vector<hstring> configs;
-        for (auto&& config : ConfigurationMap)
-        {
-            hstring configName(config.first);
-            configs.push_back(configName);
-        }
-
-        return com_array<hstring>(configs);
-	}
-
-	hstring ResolutionTool::GetDefaultConfiguration()
-    {
-        hstring defaultConfig(DefaultConfiguration);
-        return defaultConfig;
-	}
-
-    hstring ResolutionTool::GetConfiguration()
-    {
-        hstring currentConfig(m_currentConfig);
-        return currentConfig;
-	}
-
-	void ResolutionTool::SetConfiguration(hstring configuration)
-    {
-        if (ConfigurationMap.find(configuration.c_str()) == ConfigurationMap.end())
-        {
-            // An invalid configuration was asked for
-            m_logger.LogError(L"An invalid configuration was requested: " + configuration);
-
-            throw winrt::hresult_invalid_argument();
-        }
-
-        m_currentConfig = configuration.c_str();
-	}
-
-	void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
-    {
-        m_displaySetupEventToken = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) 
-		{
-            auto sourceRes = args.Mode().SourceResolution();
-            auto targetRes = args.Mode().TargetResolution();
-
-            auto& configRes = ConfigurationMap[m_currentConfig];
-            args.IsModeCompatible(sourceRes == configRes && targetRes == configRes);
-        });
-
-        m_logger.LogNote(L"Registering " + Name() + L": " + m_currentConfig + L" to be applied.");
-	}
-
-	void ResolutionTool::ApplyToPrediction(IDisplayPrediction displayPrediction)
-    {
-        m_drawPredictionEventToken = displayPrediction.DisplaySetupCallback([this](const auto&, IDisplayPredictionData predictionData) 
-		{ 
-            predictionData.FrameData().Resolution(ConfigurationMap[m_currentConfig]);
-		});
-	}
 }
+
+hstring ResolutionTool::Name()
+{
+    switch (m_kind)
+    {
+    case ResolutionToolKind::TargetResolution:
+        return L"TargetResolution";
+    case ResolutionToolKind::SourceResolution:
+        return L"SourceResolution";
+    case ResolutionToolKind::PlaneResolution:
+        return L"PlaneResolution";
+    }
+
+    return L"Resolution";
+}
+
+void ResolutionTool::ApplyToOutput(IDisplayOutput displayOutput)
+{
+    m_eventTokens[L"DisplaySetup"] = displayOutput.DisplaySetupCallback([this](const auto&, IDisplaySetupToolArgs args) {
+        auto sourceRes = args.Mode().SourceResolution();
+        auto targetRes = args.Mode().TargetResolution();
+
+        if (m_kind == ResolutionToolKind::SourceResolution)
+        {
+            args.IsModeCompatible(sourceRes == m_configuration && targetRes == m_configuration);
+        }
+        else if (m_kind == ResolutionToolKind::TargetResolution)
+        {
+            args.IsModeCompatible(targetRes == m_configuration);
+        }
+    });
+
+    Logger().LogNote(L"Registering " + Name() + L": " + GetCurrentConfigurationString() + L" to be applied.");
+}
+
+void ResolutionTool::ApplyToPrediction(IPrediction displayPrediction)
+{
+    if (m_kind == ResolutionToolKind::TargetResolution)
+    {
+        m_eventTokens[L"PredictionEvent"] = displayPrediction.DisplaySetupCallback([this](const auto&, IPredictionData predictionData) 
+        {
+            auto prediction = predictionData.as<PredictionRenderer::PredictionData>();
+
+            for (auto&& frame : prediction->Frames())
+            {
+                frame.TargetModeSize.Width = static_cast<float>(m_configuration.Width);
+                frame.TargetModeSize.Height = static_cast<float>(m_configuration.Height);
+                frame.SourceModeSize.Width = static_cast<float>(m_configuration.Width);
+                frame.SourceModeSize.Height = static_cast<float>(m_configuration.Height);
+            }
+        });
+    }
+}
+} // namespace winrt::BasicDisplayConfiguration::implementation

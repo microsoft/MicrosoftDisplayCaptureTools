@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <iostream>
 #include <format>
+#include <mutex>
+#include <span>
 
 #include <unknwn.h>
 #include <winrt/Windows.Foundation.h>
@@ -29,4 +31,23 @@
 #include <winrt/Windows.Graphics.Imaging.h>
 
 // Include the headers for the displayengine components of these tools
-#include "winrt\MicrosoftDisplayCaptureTools.Display.h"
+#include "winrt/MicrosoftDisplayCaptureTools.CaptureCard.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Framework.h"
+#include "winrt/MicrosoftDisplayCaptureTools.Display.h"
+
+// Include the header for the current test runtime
+#include "TestRuntime.h"
+
+// Include the D3D headers for doing shader-based math
+#include <Windows.Graphics.DirectX.Direct3D11.interop.h>
+#include <dxgi.h>
+#include <d3d11.h>
+#include <d3d11shader.h>
+
+// Include the header for processing frame data into consistent formats
+#include "FrameProcessor.h"
+
+// Include the header for the Generic Capture Card Plugin
+#include "GenericCaptureCardPlugin.h"
+
+using namespace winrt::MicrosoftDisplayCaptureTools::Framework::Helpers;
