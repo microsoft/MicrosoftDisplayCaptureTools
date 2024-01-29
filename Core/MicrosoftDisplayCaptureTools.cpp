@@ -174,14 +174,12 @@ void Core::LoadConfigFile(hstring const& configFile)
         return;
     }
 
-    m_configFile = jsonObject;
-
     // Dump the config file to the log - this is to make debugging easier
-    m_logger.LogConfig(L"Using Config File: " + m_configFile.ToString());
+    m_logger.LogConfig(L"Using Config File: " + jsonObject.ToString());
 
     // Parse component information out of the config file
     {
-        auto configComponents = m_configFile.TryLookup(L"Components");
+        auto configComponents = jsonObject.TryLookup(L"Components");
 
         if (!configComponents || configComponents.ValueType() == winrt::JsonValueType::Null)
         {
@@ -261,7 +259,7 @@ void Core::LoadConfigFile(hstring const& configFile)
 
     // Parse test system information out of the config file
     {
-        auto testSystemConfigDataValue = m_configFile.TryLookup(L"TestSystem");
+        auto testSystemConfigDataValue = jsonObject.TryLookup(L"TestSystem");
 
         if (!testSystemConfigDataValue || testSystemConfigDataValue.ValueType() == winrt::JsonValueType::Null)
         {

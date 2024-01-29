@@ -113,9 +113,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
         // A list of all ConfigurationToolboxes that have been loaded
         std::vector<ConfigurationTools::IConfigurationToolbox> m_toolboxes;
 
-        // A JSON object representing the configfile
-        winrt::Windows::Data::Json::JsonObject m_configFile;
-
         // A map parsed from the configuration file which identifies which DisplayTargets match up with which IDisplayInputs
         // from the IController plugin.
         std::vector<ISourceToSinkMapping> m_displayMappingsFromFile;
