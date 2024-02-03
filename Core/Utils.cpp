@@ -5,15 +5,11 @@
 
 #include <format>
 
-#include <winrt/Windows.ApplicationModel.h>
-#include <winrt/Windows.ApplicationModel.Core.h>
-
-namespace winrt 
-{
-    using namespace winrt::Windows::ApplicationModel::Core;
-}
+#include <wil\com_apartment_variable.h>
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
+
+wil::apartment_variable<winrt::com_ptr<Runtime>> g_runtime;
 
 Version::Version(uint32_t major, uint32_t minor, uint32_t patch) :
     m_version{major, minor, patch}
@@ -50,19 +46,26 @@ Runtime::Runtime(
 void Runtime::CreateRuntime(
     winrt::MicrosoftDisplayCaptureTools::Framework::ILogger logger, winrt::MicrosoftDisplayCaptureTools::Framework::IRuntimeSettings settings)
 {
-    auto runtime = winrt::make<Runtime>(logger, settings);
-    runtime.as<IUnknown>()->AddRef(); // Add a reference to the runtime so it doesn't get destroyed when the caller releases it.
-    auto processProperties = CoreApplication::Properties();
-    processProperties.Insert(L"MicrosoftDisplayCaptureToolsRuntimeStore", runtime);
+    g_runtime.get_or_create([&logger, &settings]() -> winrt::com_ptr<Runtime>
+        {
+            auto runtime = winrt::make_self<Runtime>(logger, settings);
+            runtime->AddRef();
+
+            winrt::com_ptr<Runtime> rawRuntime;
+            rawRuntime.attach(runtime.get());
+
+            return rawRuntime;
+        });
 }
 
 winrt::MicrosoftDisplayCaptureTools::Framework::Runtime Runtime::GetRuntime()
 {
-    auto processProperties = CoreApplication::Properties();
-    if (auto found = processProperties.TryLookup(L"MicrosoftDisplayCaptureToolsRuntimeStore"))
+    auto runtime = g_runtime.get_if();
+    if (runtime)
     {
-        return found.as<winrt::MicrosoftDisplayCaptureTools::Framework::Runtime>();
+        return runtime->as<winrt::MicrosoftDisplayCaptureTools::Framework::Runtime>();
     }
+
     return nullptr;
 }
 winrt::MicrosoftDisplayCaptureTools::Framework::IRuntimeSettings Runtime::RuntimeSettings()
