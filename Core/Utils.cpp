@@ -48,13 +48,7 @@ void Runtime::CreateRuntime(
 {
     g_runtime.get_or_create([&logger, &settings]() -> winrt::com_ptr<Runtime>
         {
-            auto runtime = winrt::make_self<Runtime>(logger, settings);
-            runtime->AddRef();
-
-            winrt::com_ptr<Runtime> rawRuntime;
-            rawRuntime.attach(runtime.get());
-
-            return rawRuntime;
+            return winrt::make_self<Runtime>(logger, settings);
         });
 }
 
