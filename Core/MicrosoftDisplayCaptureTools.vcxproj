@@ -254,6 +254,7 @@
     <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.231008000\build\native\Microsoft.WindowsAppSDK.targets" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.1.4.231008000\build\native\Microsoft.WindowsAppSDK.targets')" />
     <Import Project="..\packages\Microsoft.Graphics.Win2D.1.1.0\build\native\Microsoft.Graphics.Win2D.targets" Condition="Exists('..\packages\Microsoft.Graphics.Win2D.1.1.0\build\native\Microsoft.Graphics.Win2D.targets')" />
     <Import Project="..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets" Condition="Exists('..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -267,5 +268,6 @@
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.1.4.231008000\build\native\Microsoft.WindowsAppSDK.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.1.4.231008000\build\native\Microsoft.WindowsAppSDK.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Graphics.Win2D.1.1.0\build\native\Microsoft.Graphics.Win2D.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Graphics.Win2D.1.1.0\build\native\Microsoft.Graphics.Win2D.targets'))" />
     <Error Condition="!Exists('..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\build\native\Microsoft.Windows.ImplementationLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\build\native\Microsoft.Windows.ImplementationLibrary.targets'))" />
   </Target>
 </Project>
