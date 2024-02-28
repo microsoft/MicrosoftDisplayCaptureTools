@@ -10,6 +10,7 @@ variables:
   semantic: ${{variables.major}}.${{variables.minor}}
   semanticVersion: $[counter(variables['semantic'], 0)]
   buildConfiguration: 'Debug'
+  OFFICIAL_PIPELINE_BUILD: 1
 
 name: $(semantic).$(semanticVersion).$(rev:r)
 
