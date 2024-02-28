@@ -18,9 +18,16 @@
 #define VER_DEBUG VS_FF_DEBUG
 #endif
 
-// These can be set to VER_FF_PRIVATEBUILD and VER_FF_PRERELEASE if they are used, and then the string for PrivateBuild should be set
+#ifdef BUILD_PRIVATE_BUILD_STRING
+#define VER_PRIVATEBUILD VS_FF_PRIVATEBUILD
+#else
 #define VER_PRIVATEBUILD 0
+#endif
+#ifdef BUILD_PRERELEASE
+#define VER_PRERELEASE VS_FF_PRERELEASE
+#else
 #define VER_PRERELEASE 0
+#endif
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
@@ -45,6 +52,9 @@ BEGIN
             VALUE "OriginalFilename", VER_ORIGINALFILENAME_STR
             VALUE "ProductName",      VER_PRODUCTNAME_STR
             VALUE "ProductVersion",   VER_PRODUCTVERSION_STR
+#ifdef BUILD_PRIVATE_BUILD_STRING
+            VALUE "PrivateBuild",     BUILD_PRIVATE_BUILD_STRING
+#endif
         END
     END
 

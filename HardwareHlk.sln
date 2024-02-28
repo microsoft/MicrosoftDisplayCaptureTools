@@ -31,7 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Inc", "Inc", "{E5372F34-CA9
 	ProjectSection(SolutionItems) = preProject
 		Shared\Inc\BinaryLoader.h = Shared\Inc\BinaryLoader.h
 		Shared\Inc\DisplayEngineInterop.h = Shared\Inc\DisplayEngineInterop.h
-		Shared\Inc\CommonResources.h = Shared\Inc\CommonResources.h
+		Shared\Inc\CommonResources.rc = Shared\Inc\CommonResources.rc
 		Shared\Inc\DisplayToolComInterop.h = Shared\Inc\DisplayToolComInterop.h
 		Shared\Inc\TestRuntime.h = Shared\Inc\TestRuntime.h
 	EndProjectSection
