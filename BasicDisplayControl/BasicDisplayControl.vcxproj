@@ -261,6 +261,9 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <None Include="BasicDisplayControl.def" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="BasicDisplayControl.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
     <Text Include="readme.txt">

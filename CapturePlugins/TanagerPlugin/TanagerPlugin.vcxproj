@@ -237,6 +237,9 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <ClCompile Include="TanagerDevice.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="TanagerPlugin.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="packages.config" />
     <None Include="TanagerPlugin.def" />
   </ItemGroup>

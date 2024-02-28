@@ -272,6 +272,9 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <ClCompile Include="Toolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="BasicDisplayConfiguration.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <Midl Include="Toolbox.idl" />
   </ItemGroup>
   <ItemGroup>

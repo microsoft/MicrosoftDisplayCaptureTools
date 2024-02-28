@@ -1,0 +1,7 @@
+#include <windows.h>
+
+#define VER_FILEDESCRIPTION_STR "Implements a display engine plugin using public APIs"
+#define VER_INTERNALNAME_STR "BasicDisplayControl"
+#define VER_ORIGINALFILENAME_STR "BasicDisplayControl.dll"
+
+#include "CommonResources.h"

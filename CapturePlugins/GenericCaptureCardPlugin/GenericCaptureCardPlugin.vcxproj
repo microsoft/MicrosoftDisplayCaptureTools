@@ -249,6 +249,9 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     <None Include="GenericCaptureCardPlugin.def" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="GenericCaptureCardPlugin.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
     <Text Include="readme.txt">

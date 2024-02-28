@@ -1,0 +1,7 @@
+#include <windows.h>
+
+#define VER_FILEDESCRIPTION_STR "Core framework for Microsoft Display Capture Tools"
+#define VER_INTERNALNAME_STR "MicrosoftDisplayCaptureTools"
+#define VER_ORIGINALFILENAME_STR "MicrosoftDisplayCaptureTools.dll"
+
+#include "CommonResources.h"
