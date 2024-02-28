@@ -649,7 +649,7 @@ void Core::DiscoverInstalledPlugins()
                     catch (...)
                     {
                         HRESULT hr = LOG_CAUGHT_EXCEPTION();
-                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem(), hr));
+                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem().wstring(), hr));
                     }
                 }
             }
@@ -686,7 +686,7 @@ void Core::DiscoverInstalledPlugins()
                     catch (...)
                     {
                         HRESULT hr = LOG_CAUGHT_EXCEPTION();
-                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem(), hr));
+                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem().wstring(), hr));
                     }
                 }
             }
@@ -723,7 +723,7 @@ void Core::DiscoverInstalledPlugins()
                     catch (...)
                     {
                         HRESULT hr = LOG_CAUGHT_EXCEPTION();
-                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem(), hr));
+                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem().wstring(), hr));
                     }
                 }
             }
