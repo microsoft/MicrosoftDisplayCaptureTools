@@ -1,0 +1,7 @@
+#include <windows.h>
+
+#define VER_FILEDESCRIPTION_STR "Plugin for the Tanager capture board"
+#define VER_INTERNALNAME_STR "TanagerPlugin"
+#define VER_ORIGINALFILENAME_STR "TanagerPlugin.dll"
+
+#include "CommonResources.rc"

@@ -103,6 +103,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         std::vector<ConfigurationTools::IConfigurationTool> GetAllTools(ConfigurationTools::IConfigurationToolbox specificToolbox);
 
+        winrt::hstring GetNamespaceForPlugin(winrt::hstring const& pluginPath);
+
     private:
         // A list of all capture card plugins wthat have been loaded
         std::vector<CaptureCard::IController> m_captureCards;

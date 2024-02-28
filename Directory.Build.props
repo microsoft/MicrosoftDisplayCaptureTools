@@ -28,6 +28,19 @@
 
   </PropertyGroup>
 
+  <!-- For local builds, we stamp the computer and user name and set the PrivateBuild flag-->
+  <PropertyGroup Condition="'$(OFFICIAL_PIPELINE_BUILD)' == ''">
+    <IsPrivateBuild>true</IsPrivateBuild>
+    <PrivateBuildString>Built by $(USERNAME) on $(COMPUTERNAME)</PrivateBuildString>
+    <IsPrerelease>true</IsPrerelease>
+  </PropertyGroup>
+
+  <!-- For official builds, we stamp the build number and set the OfficialBuild flag-->
+  <PropertyGroup Condition="'$(OFFICIAL_PIPELINE_BUILD)' != ''">
+    <IsPrivateBuild>false</IsPrivateBuild>
+    <IsPrerelease>$(OFFICIAL_PIPELINE_BUILD_ISPRERELEASE)</IsPrerelease>
+  </PropertyGroup>
+
   <ItemDefinitionGroup>
 
     <!--  Enable parallel compilation (cl.exe /MP) -->
@@ -39,6 +52,15 @@
     <CustomBuild>
       <BuildInParallel>true</BuildInParallel>
     </CustomBuild>
+
+    <!-- Stamp the private build string into all files -->
+    <ResourceCompile Condition="$(IsPrivateBuild)">
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);BUILD_PRIVATE_BUILD_STRING=\"$(PrivateBuildString)\"</PreprocessorDefinitions>
+    </ResourceCompile>
+
+    <ResourceCompile Condition="$(IsPrerelease)">
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);BUILD_PRERELEASE=1</PreprocessorDefinitions>
+    </ResourceCompile>
 
   </ItemDefinitionGroup>
 

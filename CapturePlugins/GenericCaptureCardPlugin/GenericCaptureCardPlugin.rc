@@ -1,0 +1,7 @@
+#include <windows.h>
+
+#define VER_FILEDESCRIPTION_STR "Plugin for capture devices that expose generic video capture to Windows"
+#define VER_INTERNALNAME_STR "GenericCaptureCardPlugin"
+#define VER_ORIGINALFILENAME_STR "GenericCaptureCardPlugin.dll"
+
+#include "CommonResources.rc"
