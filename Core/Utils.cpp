@@ -9,7 +9,7 @@
 
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation {
 
-wil::apartment_variable<winrt::com_ptr<Runtime>> g_runtime;
+wil::apartment_variable<winrt::com_ptr<Runtime>, wil::apartment_variable_leak_action::ignore> g_runtime;
 
 Version::Version(uint32_t major, uint32_t minor, uint32_t patch) :
     m_version{major, minor, patch}
@@ -50,6 +50,8 @@ void Runtime::CreateRuntime(
         {
             return winrt::make_self<Runtime>(logger, settings);
         });
+
+    wil::ensure_module_stays_loaded();
 }
 
 winrt::MicrosoftDisplayCaptureTools::Framework::Runtime Runtime::GetRuntime()
