@@ -18,7 +18,7 @@ void DescriptorTests::EdidManyBlocks()
 {
     if (Helpers::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
-        WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, "Cannot do descriptor tests in prediction-only mode.");
+        WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, L"Cannot do descriptor tests in prediction-only mode.");
         return;
     }
 }
@@ -27,7 +27,7 @@ void DescriptorTests::DisplayId2InEdid()
 {
     if (Helpers::RuntimeSettings().GetSettingValueAsBool(RunPredictionOnlyRuntimeParameter))
     {
-        WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, "Cannot do descriptor tests in prediction-only mode.");
+        WEX::Logging::Log::Result(WEX::Logging::TestResults::Blocked, L"Cannot do descriptor tests in prediction-only mode.");
         return;
     }
 }

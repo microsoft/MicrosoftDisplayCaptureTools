@@ -255,7 +255,7 @@ void SingleScreenTestMatrix::Test()
              auto renderer = displayOutput.StartRender();
              if (!renderer)
              {
-                 Log::Result(TestResults::Blocked, "Could not run this test due to mode incompatibilities.");
+                 Log::Result(TestResults::Blocked, L"Could not run this test due to mode incompatibilities.");
                  return;
              }
 
