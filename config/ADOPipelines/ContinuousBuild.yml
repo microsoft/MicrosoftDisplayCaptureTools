@@ -12,7 +12,7 @@ steps:
     displayName: 'Restore Nuget Packages'
     inputs:
       restoreDirectory: packages
-      nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config.officialbuild'
+      nugetConfigPath: '$(Build.SourcesDirectory)\NuGet.config.officialbuild'
       restoreSolution: '*.sln'
       feedsToUse: 'config'
       command: 'restore'
