@@ -127,13 +127,6 @@ extends:
               Contents: '*'
               RemoveSourceFolder: true
 
-          - task: PowerShell@2
-            displayName: 'Replace standard nuget.config with official build nuget.config'
-            inputs:
-              targetType: 'inline'
-              script: |
-                Copy-Item -Path $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\nuget.config.officialbuild -Destination $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\nuget.config -Force
-
           - task: NuGetAuthenticate@1
             env:
               ob_restore_phase: true
@@ -148,7 +141,7 @@ extends:
               command: 'restore'
               restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Core\packages.config'
               feedsToUse: 'config'
-              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config.officialbuild'
               restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
           - task: NuGetCommand@2
@@ -159,7 +152,7 @@ extends:
               command: 'restore'
               restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\CapturePlugins\TanagerCaptureCardPlugin\packages.config'
               feedsToUse: 'config'
-              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config.officialbuild'
               restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
           # Build the solution
