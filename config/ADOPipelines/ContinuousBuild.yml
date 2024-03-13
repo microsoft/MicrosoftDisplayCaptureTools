@@ -12,9 +12,10 @@ steps:
     displayName: 'Restore Nuget Packages'
     inputs:
       restoreDirectory: packages
-      nugetConfigPath: 'nuget.config'
+      nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config.officialbuild'
       restoreSolution: '*.sln'
       feedsToUse: 'config'
+      command: 'restore'
       
   - task: VSBuild@1
     displayName: 'Visual Studio 2022 Build, Release x64'
