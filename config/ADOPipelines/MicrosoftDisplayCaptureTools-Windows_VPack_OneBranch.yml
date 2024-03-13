@@ -26,6 +26,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: Ge
   values:
   - Ge
+  - Dt
 - name: Major
   type: number
   default: 0
@@ -125,6 +126,13 @@ extends:
               SourceFolder: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
               Contents: '*'
               RemoveSourceFolder: true
+
+          - task: PowerShell@2
+            displayName: 'Replace standard nuget.config with official build nuget.config'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Copy-Item -Path $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\nuget.config.officialbuild -Destination $(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\nuget.config -Force
 
           - task: NuGetAuthenticate@1
             env:
