@@ -40,7 +40,10 @@ A step by step series of examples that tell you how to get a development environ
 2. Open the solution file (HardwareHLK.sln) from an admin Visual Studio 2022 instance.
     * Due to the nature of these tests, admin is required for most testing situations.
 3. Right click on the solution and select "restore nuget packages"
+    * During initial set up for a machine, this will fail to restore the MicrosoftIteIt68051 package. See [Nuget Authentication.](#nuget-authentication)
 4. Build the solution.
+
+Note
 
 ### Starting a Test
 
@@ -60,6 +63,10 @@ This entire code project is meant to be executed as a series of tests using a di
 ### Troubleshooting
 
 Generally, the command line output of the tests will indicate what the problem is and next steps. Problems can be raised as Github issues or you can [contact the authors](#contact-us).
+
+#### Nuget Authentication
+
+The MicrosoftIteIt68051 and TAEF nuget packages are sourced directly from this Github repo. However, to access a feed such as this you must authenticate your nuget requests, which will require a Github account. To do this, first create an access token as described [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry). To maintain best practices and prevent accidentally seeing tokens checked-in, use a nuget.config file in a parent directory to your clone - or a user-wide nuget.config for this authentication. Please see [the nuget documentation](https://learn.microsoft.com/en-us/nuget/consume-packages/consuming-packages-authenticated-feeds#security-best-practices-for-managing-credentials) for more information.
 
 ## Contributing
 
