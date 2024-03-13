@@ -344,7 +344,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
-	<Import Project="..\packages\Microsoft.Taef.Redist.Wlk.10.52.200221001\build\Taef.Redist.Wlk.targets" Condition="Exists('..\packages\Microsoft.Taef.Redist.Wlk.10.52.200221001\build\Taef.Redist.Wlk.targets')" />
+    <Import Project="..\packages\Microsoft.Taef.10.84.230927001\build\Microsoft.Taef.targets" Condition="Exists('..\packages\Microsoft.Taef.10.84.230927001\build\Microsoft.Taef.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -352,6 +352,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
-	<Error Condition="!Exists('..\packages\Microsoft.Taef.Redist.Wlk.10.52.200221001\build\Taef.Redist.Wlk.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Taef.Redist.Wlk.10.52.200221001\build\Taef.Redist.Wlk.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Taef.10.84.230927001\build\Microsoft.Taef.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Taef.10.84.230927001\build\Microsoft.Taef.targets'))" />
   </Target>
 </Project>
