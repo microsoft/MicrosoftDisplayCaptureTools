@@ -26,6 +26,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: Ge
   values:
   - Ge
+  - Dt
 - name: Major
   type: number
   default: 0
@@ -140,7 +141,7 @@ extends:
               command: 'restore'
               restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\Core\packages.config'
               feedsToUse: 'config'
-              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config.officialbuild'
               restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
           - task: NuGetCommand@2
@@ -151,7 +152,7 @@ extends:
               command: 'restore'
               restoreSolution: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\CapturePlugins\TanagerCaptureCardPlugin\packages.config'
               feedsToUse: 'config'
-              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config'
+              nugetConfigPath: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\NuGet.config.officialbuild'
               restoreDirectory: '$(Build.SourcesDirectory)\MicrosoftDisplayCaptureTools\packages'
 
           # Build the solution
