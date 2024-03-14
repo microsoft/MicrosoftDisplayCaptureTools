@@ -24,11 +24,3 @@ steps:
       vsVersion: '17.0'
       platform: 'x64'
       configuration: 'release'
-      
-  - task: VSBuild@1
-    displayName: 'Visual Studio 2022 Build, Release ARM64'
-    inputs:
-      solution: '**\*.sln'
-      vsVersion: '17.0'
-      platform: 'ARM64'
-      configuration: 'release'
