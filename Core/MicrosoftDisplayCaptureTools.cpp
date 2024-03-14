@@ -58,9 +58,8 @@ IController Core::LoadCapturePlugin(hstring const& pluginPath, hstring const& cl
 
 IController Core::LoadCapturePlugin(hstring const& pluginPath)
 {
-    // Create the className string from
-    winrt::hstring className = std::path(pluginPath.c_str()).stem().c_str();
-    return LoadCapturePlugin(pluginPath, className + c_CapturePluginDefaultName);
+    winrt::hstring namespaceName = GetNamespaceForPlugin(pluginPath);
+    return LoadCapturePlugin(pluginPath, namespaceName + c_CapturePluginDefaultName);
 }
 
 IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring const& className)
@@ -84,9 +83,8 @@ IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath, hstring cons
 
 IConfigurationToolbox Core::LoadToolbox(hstring const& toolboxPath)
 {
-    // Create the className string from
-    winrt::hstring className = std::path(toolboxPath.c_str()).stem().c_str();
-    return LoadToolbox(toolboxPath, className + c_ConfigurationToolboxDefaultName);
+    winrt::hstring namespaceName = GetNamespaceForPlugin(toolboxPath);
+    return LoadToolbox(toolboxPath, namespaceName + c_ConfigurationToolboxDefaultName);
 }
 
 IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring const& className)
@@ -122,9 +120,8 @@ IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath, hstring
 
 IDisplayEngine Core::LoadDisplayEngine(hstring const& displayEnginePath)
 {
-    // Create the className string from
-    winrt::hstring className = std::path(displayEnginePath.c_str()).stem().c_str();
-    return LoadDisplayEngine(displayEnginePath, className + c_DisplayEngineDefaultName);
+    winrt::hstring namespaceName = GetNamespaceForPlugin(displayEnginePath);
+    return LoadDisplayEngine(displayEnginePath, namespaceName + c_DisplayEngineDefaultName);
 }
 
 void Core::LoadConfigFile(hstring const& configFile)
@@ -174,14 +171,12 @@ void Core::LoadConfigFile(hstring const& configFile)
         return;
     }
 
-    m_configFile = jsonObject;
-
     // Dump the config file to the log - this is to make debugging easier
-    m_logger.LogConfig(L"Using Config File: " + m_configFile.ToString());
+    m_logger.LogConfig(L"Using Config File: " + jsonObject.ToString());
 
     // Parse component information out of the config file
     {
-        auto configComponents = m_configFile.TryLookup(L"Components");
+        auto configComponents = jsonObject.TryLookup(L"Components");
 
         if (!configComponents || configComponents.ValueType() == winrt::JsonValueType::Null)
         {
@@ -261,7 +256,7 @@ void Core::LoadConfigFile(hstring const& configFile)
 
     // Parse test system information out of the config file
     {
-        auto testSystemConfigDataValue = m_configFile.TryLookup(L"TestSystem");
+        auto testSystemConfigDataValue = jsonObject.TryLookup(L"TestSystem");
 
         if (!testSystemConfigDataValue || testSystemConfigDataValue.ValueType() == winrt::JsonValueType::Null)
         {
@@ -653,7 +648,8 @@ void Core::DiscoverInstalledPlugins()
                     }
                     catch (...)
                     {
-                        m_logger.LogNote(L"Failed to load " + file.path().stem());
+                        HRESULT hr = LOG_CAUGHT_EXCEPTION();
+                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem().wstring(), hr));
                     }
                 }
             }
@@ -689,7 +685,8 @@ void Core::DiscoverInstalledPlugins()
                     }
                     catch (...)
                     {
-                        m_logger.LogNote(L"Failed to load " + file.path().stem());
+                        HRESULT hr = LOG_CAUGHT_EXCEPTION();
+                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem().wstring(), hr));
                     }
                 }
             }
@@ -725,7 +722,8 @@ void Core::DiscoverInstalledPlugins()
                     }
                     catch (...)
                     {
-                        m_logger.LogNote(L"Failed to load " + file.path().stem());
+                        HRESULT hr = LOG_CAUGHT_EXCEPTION();
+                        m_logger.LogNote(std::format(L"Failed to load {} with error {:#x}", file.path().stem().wstring(), hr));
                     }
                 }
             }
@@ -764,6 +762,60 @@ std::vector<ConfigurationTools::IConfigurationTool> Core::GetAllTools(IConfigura
     }
 
     return tools;
+}
+
+winrt::hstring Core::GetNamespaceForPlugin(winrt::hstring const& pluginPath)
+{
+    auto defaultNamespace = winrt::hstring(std::path(pluginPath.c_str()).stem().wstring());
+
+    // We will try to get the InternalName resource from the plugin DLL, if it exists, to use as the namespace
+    try
+    {
+        DWORD versionInfoSize = GetFileVersionInfoSizeExW(FILE_VER_GET_NEUTRAL, pluginPath.c_str(), nullptr);
+        if (versionInfoSize == 0)
+        {
+            THROW_WIN32(ERROR_NOT_FOUND);
+        }
+
+        std::vector<uint8_t> versionInfo(versionInfoSize);
+        THROW_IF_WIN32_BOOL_FALSE(GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, pluginPath.c_str(), 0, versionInfoSize, versionInfo.data()));
+
+        struct LANGANDCODEPAGE
+        {
+            WORD wLanguage;
+            WORD wCodePage;
+        }* lpTranslate;
+
+        UINT cbTranslate = 0;
+        if (!VerQueryValueW(versionInfo.data(), L"\\VarFileInfo\\Translation", (LPVOID*)&lpTranslate, &cbTranslate))
+        {
+            THROW_WIN32(ERROR_NOT_FOUND);
+        }
+
+        // Read the file description from the version info
+        for (UINT i = 0; i < (cbTranslate / sizeof(struct LANGANDCODEPAGE)); i++)
+        {
+            wchar_t subBlock[256];
+            swprintf_s(subBlock, L"\\StringFileInfo\\%04x%04x\\InternalName", lpTranslate[i].wLanguage, lpTranslate[i].wCodePage);
+
+            LPVOID fileDescription;
+            UINT fileDescriptionSize;
+            if (VerQueryValueW(versionInfo.data(), subBlock, &fileDescription, &fileDescriptionSize))
+            {
+                // Remove the file extension if it has it
+                return winrt::hstring(std::path(std::wstring_view(reinterpret_cast<wchar_t*>(fileDescription), fileDescriptionSize)).stem().c_str());
+            }
+        }
+
+        THROW_WIN32(ERROR_NOT_FOUND);
+    }
+    catch (...)
+    {
+        LOG_CAUGHT_EXCEPTION_MSG("The plugin %ws does not have an InternalName, falling back to the filename", pluginPath.c_str());
+    }
+
+    // Simply use the file name
+    return defaultNamespace;
 }
 
 winrt::Windows::Foundation::IClosable Core::LockFramework()

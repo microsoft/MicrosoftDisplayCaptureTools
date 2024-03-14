@@ -40,6 +40,7 @@ A step by step series of examples that tell you how to get a development environ
 2. Open the solution file (HardwareHLK.sln) from an admin Visual Studio 2022 instance.
     * Due to the nature of these tests, admin is required for most testing situations.
 3. Right click on the solution and select "restore nuget packages"
+    * During initial set up for a machine, this will fail to restore the MicrosoftIteIt68051 and Microsoft.TAEF packages. See [Nuget Authentication.](#nuget-authentication)
 4. Build the solution.
 
 ### Starting a Test
@@ -60,6 +61,27 @@ This entire code project is meant to be executed as a series of tests using a di
 ### Troubleshooting
 
 Generally, the command line output of the tests will indicate what the problem is and next steps. Problems can be raised as Github issues or you can [contact the authors](#contact-us).
+
+#### Nuget Authentication
+
+The MicrosoftIteIt68051 package is sourced directly from this Github repo. However, to access a feed such as this you must authenticate your nuget requests, which will require a Github account. To do this, first create an access token as described [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry). To maintain best practices and prevent accidentally seeing tokens checked-in, use a nuget.config file in a parent directory to your clone - or a user-wide nuget.config for this authentication. Please see [the nuget documentation](https://learn.microsoft.com/en-us/nuget/consume-packages/consuming-packages-authenticated-feeds#security-best-practices-for-managing-credentials) for more information.
+
+A working parent nuget.config file might look something like this:
+```
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+    <add key="github" value="https://nuget.pkg.github.com/microsoft/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <github>
+        <add key="Username" value="Spruill-1" />
+        <!-- Github token as described in their documentation -->
+      </github>
+  </packageSourceCredentials>
+</configuration>
+```
 
 ## Contributing
 

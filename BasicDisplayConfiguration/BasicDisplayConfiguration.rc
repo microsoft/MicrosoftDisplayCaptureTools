@@ -1,0 +1,7 @@
+#include <windows.h>
+
+#define VER_FILEDESCRIPTION_STR "Implements a toolbox plugin for basic display functionality"
+#define VER_INTERNALNAME_STR "BasicDisplayConfiguration"
+#define VER_ORIGINALFILENAME_STR "BasicDisplayConfiguration.dll"
+
+#include "CommonResources.rc"

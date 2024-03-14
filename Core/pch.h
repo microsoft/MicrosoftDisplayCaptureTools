@@ -19,6 +19,11 @@
 #include <Windows.h>
 #include <hstring.h>
 
+// WIL Headers
+#include <wil\resource.h>
+#include <wil\result.h>
+#include <wil\cppwinrt.h>
+
 // Shared Utilities
 #include "BinaryLoader.h"
 #include "TestRuntime.h"

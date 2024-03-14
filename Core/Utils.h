@@ -37,8 +37,6 @@ struct Runtime : RuntimeT<Runtime>
     winrt::MicrosoftDisplayCaptureTools::Framework::ILogger m_logger;
 };
 
-static winrt::com_ptr<Runtime> g_runtime{nullptr};
-
 } // namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 namespace winrt::MicrosoftDisplayCaptureTools::Framework::factory_implementation {
 struct Version : VersionT<Version, implementation::Version>

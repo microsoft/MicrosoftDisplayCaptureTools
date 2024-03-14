@@ -103,6 +103,8 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         std::vector<ConfigurationTools::IConfigurationTool> GetAllTools(ConfigurationTools::IConfigurationToolbox specificToolbox);
 
+        winrt::hstring GetNamespaceForPlugin(winrt::hstring const& pluginPath);
+
     private:
         // A list of all capture card plugins wthat have been loaded
         std::vector<CaptureCard::IController> m_captureCards;
@@ -112,9 +114,6 @@ namespace winrt::MicrosoftDisplayCaptureTools::Framework::implementation
 
         // A list of all ConfigurationToolboxes that have been loaded
         std::vector<ConfigurationTools::IConfigurationToolbox> m_toolboxes;
-
-        // A JSON object representing the configfile
-        winrt::Windows::Data::Json::JsonObject m_configFile;
 
         // A map parsed from the configuration file which identifies which DisplayTargets match up with which IDisplayInputs
         // from the IController plugin.

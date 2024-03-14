@@ -87,15 +87,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <IncludePath>$(SolutionDir)Shared\Inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <IncludePath>$(SolutionDir)Shared\Inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <IncludePath>$(SolutionDir)Shared\Inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <IncludePath>$(SolutionDir)Shared\Inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <IncludePath>$(SolutionDir)Shared\Inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <IncludePath>$(SolutionDir)Shared\Inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -120,14 +130,18 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">stdcpp20</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
       <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</EnableModules>
       <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</EnableModules>
       <BuildStlModules Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</BuildStlModules>
       <BuildStlModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</BuildStlModules>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(FrameworkSdkDir)Testing\Development\lib\$(PlatformShortName)\*.lib;WindowsApp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -163,14 +177,18 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDirFullPath)ComputeShaders;$(SolutionDir)Shared\Inc;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">stdcpp20</LanguageStandard>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp20</LanguageStandard>
       <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</EnableModules>
       <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</EnableModules>
       <BuildStlModules Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</BuildStlModules>
       <BuildStlModules Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</BuildStlModules>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(IntDirFullPath)ComputeShaders;$(TargetPlatformSdkPath)Testing\Development\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -229,6 +247,9 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="TanagerDevice.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TanagerPlugin.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -1091,7 +1112,7 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
-    <Import Project="..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets" Condition="Exists('..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets')" />
+    <Import Project="..\..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets" Condition="Exists('..\..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -1099,6 +1120,6 @@ copy $(OutputPath)$(ProjectName).pdb $(SolutionDir)$(Platform)\$(Configuration)\
     </PropertyGroup>
     <Error Condition="!Exists('..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
-    <Error Condition="!Exists('..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\MicrosoftIteIt68051.0.1.31.1\build\native\MicrosoftIteIt68051.targets'))" />
+    <Error Condition="!Exists('..\..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\MicrosoftIteIt68051.0.1.35.1\build\native\MicrosoftIteIt68051.targets'))" />
   </Target>
 </Project>
